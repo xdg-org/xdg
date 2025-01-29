@@ -14,6 +14,12 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    - name: Apt dependencies
+      run: |
+        sudo apt -y update
+        sudo apt install -y doxygen \
+                            cmake
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
