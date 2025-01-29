@@ -1,0 +1,1143 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="C++" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XDG Interface &mdash; XDG 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../_static/theme_override.css?v=a7aec203" />
+      <link rel="stylesheet" type="text/css" href="../_static/_static/theme_override.css" />
+
+  
+    <link rel="shortcut icon" href="../_static/xdg-favicon.png"/>
+    <link rel="canonical" href="localhost:8888/api/cpp_xdg.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=0d3201d4"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Methods" href="../methods/index.html" />
+    <link rel="prev" title="C++ API" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            XDG
+              <img src="../_static/xdg-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../intro/index.html">Introduction to XDG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usersguide/index.html">User's Guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">C++ API</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">XDG Interface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv43xdg"><code class="docutils literal notranslate"><span class="pre">xdg</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg3XDGE"><code class="docutils literal notranslate"><span class="pre">xdg::XDG</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xdg11MeshManagerE"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg11MeshManager9load_fileERKNSt6stringE"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::load_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg11MeshManager4initEv"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::init()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager11num_volumesEv"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::num_volumes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager12num_surfacesEv"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::num_surfaces()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager21num_ents_of_dimensionEi"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::num_ents_of_dimension()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager19num_volume_elementsE6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::num_volume_elements()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager20num_surface_elementsE6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::num_surface_elements()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager19get_volume_elementsE6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::get_volume_elements()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager20get_surface_elementsE6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::get_surface_elements()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager16element_verticesE6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::element_vertices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager17triangle_verticesE6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::triangle_vertices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager15triangle_normalE6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::triangle_normal()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager20element_bounding_boxE6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::element_bounding_box()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager19volume_bounding_boxE6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::volume_bounding_box()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager20surface_bounding_boxE6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::surface_bounding_box()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager18get_parent_volumesE6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::get_parent_volumes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager19get_volume_surfacesE6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::get_volume_surfaces()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager13surface_senseE6MeshID6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::surface_sense()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg11MeshManager13create_volumeEv"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::create_volume()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg11MeshManager21add_surface_to_volumeE6MeshID6MeshID5Senseb"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::add_surface_to_volume()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager11next_volumeE6MeshID6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::next_volume()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager14next_volume_idEv"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::next_volume_id()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager15next_surface_idEv"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::next_surface_id()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg11MeshManager26create_implicit_complementEv"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::create_implicit_complement()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg11MeshManager14parse_metadataEv"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::parse_metadata()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager19volume_has_propertyE6MeshID12PropertyType"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::volume_has_property()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager20surface_has_propertyE6MeshID12PropertyType"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::surface_has_property()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager19get_volume_propertyE6MeshID12PropertyType"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::get_volume_property()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager20get_surface_propertyE6MeshID12PropertyType"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::get_surface_property()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager7volumesEv"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::volumes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg11MeshManager7volumesEv"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::volumes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager8surfacesEv"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::surfaces()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg11MeshManager8surfacesEv"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::surfaces()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager19implicit_complementEv"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::implicit_complement()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager12mesh_libraryEv"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::mesh_library()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg11MeshManager16volume_metadata_E"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::volume_metadata_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg11MeshManager17surface_metadata_E"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::surface_metadata_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg11MeshManager8volumes_E"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::volumes_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg11MeshManager9surfaces_E"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::surfaces_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg11MeshManager20implicit_complement_E"><code class="docutils literal notranslate"><span class="pre">xdg::MeshManager::implicit_complement_</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xdg6TreeIDE"><code class="docutils literal notranslate"><span class="pre">xdg::TreeID</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xdg9RayTracerE"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer9RayTracerEv"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::RayTracer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracerD0Ev"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::~RayTracer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer4initEv"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::init()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer12create_sceneEv"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::create_scene()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer15register_volumeEKNSt10shared_ptrI11MeshManagerEE6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::register_volume()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer15point_in_volumeE6TreeIDRK8PositionPK9DirectionPKNSt6vectorI6MeshIDEE"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::point_in_volume()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer8ray_fireE6TreeIDRK8PositionRK9DirectionKdPCNSt6vectorI6MeshIDEE"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::ray_fire()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer7closestE6TreeIDRK8PositionRdR6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::closest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer7closestE6TreeIDRK8PositionRd"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::closest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer8occludedE6TreeIDRK8PositionRK9DirectionRd"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::occluded()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer21num_registered_scenesEv"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::num_registered_scenes()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer13geometry_dataE6MeshID"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::geometry_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer7device_E"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::device_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer7scenes_E"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::scenes_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer11geometries_E"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::geometries_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer21surface_to_scene_map_E"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::surface_to_scene_map_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer24surface_to_geometry_map_E"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::surface_to_geometry_map_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer14gloabal_scene_E"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::gloabal_scene_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer14user_data_map_E"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::user_data_map_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer20numerical_precision_E"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::numerical_precision_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer22primitive_ref_storage_E"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer::primitive_ref_storage_</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4IEN3fmt9formatterIN3xdg6Vec3daEEE"><code class="docutils literal notranslate"><span class="pre">formatter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3fmt9formatterIN3xdg6Vec3daEE6formatEDaRKN3xdg6Vec3daER13FormatContext"><code class="docutils literal notranslate"><span class="pre">formatter::format()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xdg7RTCDHitE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDHit</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDHit7RTCDHitEv"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDHit::RTCDHit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDHit13primitive_refE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDHit::primitive_ref</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDHit7surfaceE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDHit::surface</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDHit3dNgE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDHit::dNg</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xdg14RTCDPointQueryE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDPointQuery</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg14RTCDPointQuery14RTCDPointQueryEv"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDPointQuery::RTCDPointQuery()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg14RTCDPointQuery10set_radiusEd"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDPointQuery::set_radius()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg14RTCDPointQuery9set_pointEAL3E_Kd"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDPointQuery::set_point()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg14RTCDPointQuery9set_pointERK8Position"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDPointQuery::set_point()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg14RTCDPointQuery6primIDE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDPointQuery::primID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg14RTCDPointQuery6geomIDE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDPointQuery::geomID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg14RTCDPointQuery4dblxE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDPointQuery::dblx</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg14RTCDPointQuery4dblyE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDPointQuery::dbly</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg14RTCDPointQuery4dblzE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDPointQuery::dblz</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg14RTCDPointQuery13primitive_refE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDPointQuery::primitive_ref</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg14RTCDPointQuery7dradiusE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDPointQuery::dradius</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRayE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRay7RTCDRayEv"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay::RTCDRay()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRay7set_orgEAL3E_d"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay::set_org()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRay7set_orgEAL3E_Kd"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay::set_org()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRay7set_orgERK6Vec3da"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay::set_org()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRay7set_dirEAL3E_d"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay::set_dir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRay7set_dirEAL3E_Kd"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay::set_dir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRay7set_dirERK6Vec3da"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay::set_dir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRay8set_tfarEd"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay::set_tfar()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRay9set_tnearEd"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay::set_tnear()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRay7rf_typeE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay::rf_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRay4dorgE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay::dorg</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRay4ddirE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay::ddir</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRay5dtfarE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay::dtfar</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRay11orientationE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay::orientation</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg7RTCDRay18exclude_primitivesE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRay::exclude_primitives</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xdg10RTCDRayHitE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRayHit</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg10RTCDRayHit8dot_prodEv"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRayHit::dot_prod()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg10RTCDRayHit3rayE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRayHit::ray</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg10RTCDRayHit3hitE"><code class="docutils literal notranslate"><span class="pre">xdg::RTCDRayHit::hit</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#_CPPv43fmt"><code class="docutils literal notranslate"><span class="pre">fmt</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4I0EN3fmt19PhonyNameDueToError6formatEDaRKN3xdg6Vec3daER13FormatContext"><code class="docutils literal notranslate"><span class="pre">fmt::PhonyNameDueToError::format()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../methods/index.html">Methods</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">XDG</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">C++ API</a></li>
+      <li class="breadcrumb-item active">XDG Interface</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/cpp_xdg.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="xdg-interface">
+<span id="api-rti"></span><h1>XDG Interface<a class="headerlink" href="#xdg-interface" title="Link to this heading"></a></h1>
+<dl class="cpp type">
+<dt class="sig sig-object cpp" id="_CPPv43xdg">
+<span id="_CPPv33xdg"></span><span id="_CPPv23xdg"></span><span id="xdg"></span><span class="target" id="namespacexdg"></span><span class="k"><span class="pre">namespace</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">xdg</span></span></span><a class="headerlink" href="#_CPPv43xdg" title="Link to this definition"></a><br /></dt>
+<dd><dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDGE">
+<span id="_CPPv3N3xdg3XDGE"></span><span id="_CPPv2N3xdg3XDGE"></span><span id="xdg::XDG"></span><span class="target" id="classxdg_1_1XDG"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">XDG</span></span></span><a class="headerlink" href="#_CPPv4N3xdg3XDGE" title="Link to this definition"></a><br /></dt>
+<dd><div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG3XDGEv">
+<span id="_CPPv3N3xdg3XDG3XDGEv"></span><span id="_CPPv2N3xdg3XDG3XDGEv"></span><span id="xdg::XDG::XDG"></span><span class="target" id="classxdg_1_1XDG_1a0605475a2f099981a525f1ed0e66fc9e"></span><span class="sig-name descname"><span class="n"><span class="pre">XDG</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">default</span></span><a class="headerlink" href="#_CPPv4N3xdg3XDG3XDGEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG3XDGENSt10shared_ptrI11MeshManagerEE">
+<span id="_CPPv3N3xdg3XDG3XDGENSt10shared_ptrI11MeshManagerEE"></span><span id="_CPPv2N3xdg3XDG3XDGENSt10shared_ptrI11MeshManagerEE"></span><span id="xdg::XDG::XDG__std::shared_ptr:MeshManager:"></span><span class="target" id="classxdg_1_1XDG_1a830b39c7adff267bb393a918cb7cb4f0"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">XDG</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N3xdg11MeshManagerE" title="xdg::MeshManager"><span class="n"><span class="pre">MeshManager</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">mesh_manager</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg3XDG3XDGENSt10shared_ptrI11MeshManagerEE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG17prepare_raytracerEv">
+<span id="_CPPv3N3xdg3XDG17prepare_raytracerEv"></span><span id="_CPPv2N3xdg3XDG17prepare_raytracerEv"></span><span id="xdg::XDG::prepare_raytracer"></span><span class="target" id="classxdg_1_1XDG_1a3165b961cedc84206b86484a9b3f4517"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">prepare_raytracer</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg3XDG17prepare_raytracerEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG11find_volumeERK8PositionRK9Direction">
+<span id="_CPPv3NK3xdg3XDG11find_volumeERK8PositionRK9Direction"></span><span id="_CPPv2NK3xdg3XDG11find_volumeERK8PositionRK9Direction"></span><span id="xdg::XDG::find_volume__PositionCR.DirectionCRC"></span><span class="target" id="classxdg_1_1XDG_1a243248270e63edb8b7ef27bd6923f3c0"></span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">find_volume</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">point</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Direction</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">direction</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG11find_volumeERK8PositionRK9Direction" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG15point_in_volumeE6MeshIDK8PositionPK9DirectionPKNSt6vectorI6MeshIDEE">
+<span id="_CPPv3NK3xdg3XDG15point_in_volumeE6MeshIDK8PositionPK9DirectionPKNSt6vectorI6MeshIDEE"></span><span id="_CPPv2NK3xdg3XDG15point_in_volumeE6MeshIDK8PositionPK9DirectionPKNSt6vectorI6MeshIDEE"></span><span id="xdg::XDG::point_in_volume__MeshID.PositionC.DirectionCP.std::vector:MeshID:CPC"></span><span class="target" id="classxdg_1_1XDG_1a2cb253d0ea80e9167377987936fa0d40"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">point_in_volume</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">point</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Direction</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">direction</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">nullptr</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">exclude_primitives</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">nullptr</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG15point_in_volumeE6MeshIDK8PositionPK9DirectionPKNSt6vectorI6MeshIDEE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG8ray_fireE6MeshIDRK8PositionRK9DirectionKdPCNSt6vectorI6MeshIDEE">
+<span id="_CPPv3NK3xdg3XDG8ray_fireE6MeshIDRK8PositionRK9DirectionKdPCNSt6vectorI6MeshIDEE"></span><span id="_CPPv2NK3xdg3XDG8ray_fireE6MeshIDRK8PositionRK9DirectionKdPCNSt6vectorI6MeshIDEE"></span><span id="xdg::XDG::ray_fire__MeshID.PositionCR.DirectionCR.doubleC.std::vector:MeshID:PCC"></span><span class="target" id="classxdg_1_1XDG_1ad590cab2eae9f3b9836e8b0c344de56d"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ray_fire</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">origin</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Direction</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">direction</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">dist_limit</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INFTY</span></span>,</dd>
+<dd><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">exclude_primitives</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">nullptr</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG8ray_fireE6MeshIDRK8PositionRK9DirectionKdPCNSt6vectorI6MeshIDEE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG7closestE6MeshIDRK8PositionRdR6MeshID">
+<span id="_CPPv3NK3xdg3XDG7closestE6MeshIDRK8PositionRdR6MeshID"></span><span id="_CPPv2NK3xdg3XDG7closestE6MeshIDRK8PositionRdR6MeshID"></span><span id="xdg::XDG::closest__MeshID.PositionCR.doubleR.MeshIDRC"></span><span class="target" id="classxdg_1_1XDG_1a1ec7e5f7e3ef935c6cf58cfe3176c689"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">closest</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">origin</span></span>,</dd>
+<dd><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">dist</span></span>,</dd>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">triangle</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG7closestE6MeshIDRK8PositionRdR6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG7closestE6MeshIDRK8PositionRd">
+<span id="_CPPv3NK3xdg3XDG7closestE6MeshIDRK8PositionRd"></span><span id="_CPPv2NK3xdg3XDG7closestE6MeshIDRK8PositionRd"></span><span id="xdg::XDG::closest__MeshID.PositionCR.doubleRC"></span><span class="target" id="classxdg_1_1XDG_1ace71f09484faa73eb452fe743a23a6bf"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">closest</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">origin</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">dist</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG7closestE6MeshIDRK8PositionRd" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG8occludedE6MeshIDRK8PositionRK9DirectionRd">
+<span id="_CPPv3NK3xdg3XDG8occludedE6MeshIDRK8PositionRK9DirectionRd"></span><span id="_CPPv2NK3xdg3XDG8occludedE6MeshIDRK8PositionRK9DirectionRd"></span><span id="xdg::XDG::occluded__MeshID.PositionCR.DirectionCR.doubleRC"></span><span class="target" id="classxdg_1_1XDG_1a6eadb5125fbae1b90d30959760198d86"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">occluded</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">origin</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Direction</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">direction</span></span>,</dd>
+<dd><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">dist</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG8occludedE6MeshIDRK8PositionRK9DirectionRd" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG14surface_normalE6MeshID8PositionPKNSt6vectorI6MeshIDEE">
+<span id="_CPPv3NK3xdg3XDG14surface_normalE6MeshID8PositionPKNSt6vectorI6MeshIDEE"></span><span id="_CPPv2NK3xdg3XDG14surface_normalE6MeshID8PositionPKNSt6vectorI6MeshIDEE"></span><span id="xdg::XDG::surface_normal__MeshID.Position.std::vector:MeshID:CPC"></span><span class="target" id="classxdg_1_1XDG_1acf5405b07d16a7b791ba448a60ce8d57"></span><span class="n"><span class="pre">Direction</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_normal</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span>,</dd>
+<dd><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">point</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">exclude_primitives</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">nullptr</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG14surface_normalE6MeshID8PositionPKNSt6vectorI6MeshIDEE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG14measure_volumeE6MeshID">
+<span id="_CPPv3NK3xdg3XDG14measure_volumeE6MeshID"></span><span id="_CPPv2NK3xdg3XDG14measure_volumeE6MeshID"></span><span id="xdg::XDG::measure_volume__MeshIDC"></span><span class="target" id="classxdg_1_1XDG_1aeb121ac12a53d90a9a41a6c76de4f3b0"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">measure_volume</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG14measure_volumeE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG20measure_surface_areaE6MeshID">
+<span id="_CPPv3NK3xdg3XDG20measure_surface_areaE6MeshID"></span><span id="_CPPv2NK3xdg3XDG20measure_surface_areaE6MeshID"></span><span id="xdg::XDG::measure_surface_area__MeshIDC"></span><span class="target" id="classxdg_1_1XDG_1aa8b7e0bcd1cdbf8e7d75077e303656b4"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">measure_surface_area</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG20measure_surface_areaE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG19measure_volume_areaE6MeshID">
+<span id="_CPPv3NK3xdg3XDG19measure_volume_areaE6MeshID"></span><span id="_CPPv2NK3xdg3XDG19measure_volume_areaE6MeshID"></span><span id="xdg::XDG::measure_volume_area__MeshIDC"></span><span class="target" id="classxdg_1_1XDG_1a9f60716542f61153eb82c2f07dbe9f89"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">measure_volume_area</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG19measure_volume_areaE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG26set_mesh_manager_interfaceENSt10shared_ptrI11MeshManagerEE">
+<span id="_CPPv3N3xdg3XDG26set_mesh_manager_interfaceENSt10shared_ptrI11MeshManagerEE"></span><span id="_CPPv2N3xdg3XDG26set_mesh_manager_interfaceENSt10shared_ptrI11MeshManagerEE"></span><span id="xdg::XDG::set_mesh_manager_interface__std::shared_ptr:MeshManager:"></span><span class="target" id="classxdg_1_1XDG_1a227df3e1a80b15721617de3eb5d86808"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_mesh_manager_interface</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N3xdg11MeshManagerE" title="xdg::MeshManager"><span class="n"><span class="pre">MeshManager</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">mesh_manager</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg3XDG26set_mesh_manager_interfaceENSt10shared_ptrI11MeshManagerEE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG21ray_tracing_interfaceEv">
+<span id="_CPPv3NK3xdg3XDG21ray_tracing_interfaceEv"></span><span id="_CPPv2NK3xdg3XDG21ray_tracing_interfaceEv"></span><span id="xdg::XDG::ray_tracing_interfaceC"></span><span class="target" id="classxdg_1_1XDG_1a714b38030c73080130c0595e76ea4621"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N3xdg9RayTracerE" title="xdg::RayTracer"><span class="n"><span class="pre">RayTracer</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ray_tracing_interface</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG21ray_tracing_interfaceEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG12mesh_managerEv">
+<span id="_CPPv3NK3xdg3XDG12mesh_managerEv"></span><span id="_CPPv2NK3xdg3XDG12mesh_managerEv"></span><span id="xdg::XDG::mesh_managerC"></span><span class="target" id="classxdg_1_1XDG_1aa44a36b7459de20fd135c011a6261c3b"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N3xdg11MeshManagerE" title="xdg::MeshManager"><span class="n"><span class="pre">MeshManager</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">mesh_manager</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG12mesh_managerEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-static-functions">Public Static Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG6createE11MeshLibrary">
+<span id="_CPPv3N3xdg3XDG6createE11MeshLibrary"></span><span id="_CPPv2N3xdg3XDG6createE11MeshLibrary"></span><span id="xdg::XDG::create__MeshLibrary"></span><span class="target" id="classxdg_1_1XDG_1afc92fae17acc2c646c08f231197fde78"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N3xdg3XDGE" title="xdg::XDG"><span class="n"><span class="pre">XDG</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">create</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshLibrary</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">library</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg3XDG6createE11MeshLibrary" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-private-functions">Private Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG29_triangle_volume_contributionERK12PrimitiveRef">
+<span id="_CPPv3NK3xdg3XDG29_triangle_volume_contributionERK12PrimitiveRef"></span><span id="_CPPv2NK3xdg3XDG29_triangle_volume_contributionERK12PrimitiveRef"></span><span id="xdg::XDG::_triangle_volume_contribution__PrimitiveRefCRC"></span><span class="target" id="classxdg_1_1XDG_1a9277705f81a165416d1b538b91abbf83"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_triangle_volume_contribution</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">PrimitiveRef</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">triangle</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG29_triangle_volume_contributionERK12PrimitiveRef" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG27_triangle_area_contributionERK12PrimitiveRef">
+<span id="_CPPv3NK3xdg3XDG27_triangle_area_contributionERK12PrimitiveRef"></span><span id="_CPPv2NK3xdg3XDG27_triangle_area_contributionERK12PrimitiveRef"></span><span id="xdg::XDG::_triangle_area_contribution__PrimitiveRefCRC"></span><span class="target" id="classxdg_1_1XDG_1a2186360d996041b8f95a71b0683e8306"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">_triangle_area_contribution</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">PrimitiveRef</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">triangle</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG27_triangle_area_contributionERK12PrimitiveRef" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-private-members">Private Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG22ray_tracing_interface_E">
+<span id="_CPPv3N3xdg3XDG22ray_tracing_interface_E"></span><span id="_CPPv2N3xdg3XDG22ray_tracing_interface_E"></span><span id="xdg::XDG::ray_tracing_interface___std::shared_ptr:RayTracer:C"></span><span class="target" id="classxdg_1_1XDG_1a1deaf06d341ffbef4fb3e9c05f90c766"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N3xdg9RayTracerE" title="xdg::RayTracer"><span class="n"><span class="pre">RayTracer</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ray_tracing_interface_</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">make_shared</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N3xdg9RayTracerE" title="xdg::RayTracer"><span class="n"><span class="pre">RayTracer</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv4N3xdg3XDG22ray_tracing_interface_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG13mesh_manager_E">
+<span id="_CPPv3N3xdg3XDG13mesh_manager_E"></span><span id="_CPPv2N3xdg3XDG13mesh_manager_E"></span><span id="xdg::XDG::mesh_manager___std::shared_ptr:MeshManager:"></span><span class="target" id="classxdg_1_1XDG_1a7f0d4c0c5437923a40b02a2e38542c43"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N3xdg11MeshManagerE" title="xdg::MeshManager"><span class="n"><span class="pre">MeshManager</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mesh_manager_</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="k"><span class="pre">nullptr</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv4N3xdg3XDG13mesh_manager_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG20volume_to_scene_map_E">
+<span id="_CPPv3N3xdg3XDG20volume_to_scene_map_E"></span><span id="_CPPv2N3xdg3XDG20volume_to_scene_map_E"></span><span id="xdg::XDG::volume_to_scene_map___std::map:MeshID.TreeID:"></span><span class="target" id="classxdg_1_1XDG_1a01ff1770a4e8eacd1183a14c27ffb86b"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xdg6TreeIDE" title="xdg::TreeID"><span class="n"><span class="pre">TreeID</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">volume_to_scene_map_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg3XDG20volume_to_scene_map_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG21surface_to_scene_map_E">
+<span id="_CPPv3N3xdg3XDG21surface_to_scene_map_E"></span><span id="_CPPv2N3xdg3XDG21surface_to_scene_map_E"></span><span id="xdg::XDG::surface_to_scene_map___std::map:MeshID.TreeID:"></span><span class="target" id="classxdg_1_1XDG_1a94c2a67f822fbb994e5482242c5f3bd0"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xdg6TreeIDE" title="xdg::TreeID"><span class="n"><span class="pre">TreeID</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_to_scene_map_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg3XDG21surface_to_scene_map_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG24surface_to_geometry_map_E">
+<span id="_CPPv3N3xdg3XDG24surface_to_geometry_map_E"></span><span id="_CPPv2N3xdg3XDG24surface_to_geometry_map_E"></span><span id="xdg::XDG::surface_to_geometry_map___std::map:MeshID.RTCGeometry:"></span><span class="target" id="classxdg_1_1XDG_1a74e9e43f74b2fb6a55c3d775edeedaa4"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">RTCGeometry</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_to_geometry_map_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg3XDG24surface_to_geometry_map_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG14gloabal_scene_E">
+<span id="_CPPv3N3xdg3XDG14gloabal_scene_E"></span><span id="_CPPv2N3xdg3XDG14gloabal_scene_E"></span><span id="xdg::XDG::gloabal_scene___TreeID"></span><span class="target" id="classxdg_1_1XDG_1a33eae208a4137a9acb67936379dcf017"></span><a class="reference internal" href="#_CPPv4N3xdg6TreeIDE" title="xdg::TreeID"><span class="n"><span class="pre">TreeID</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">gloabal_scene_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg3XDG14gloabal_scene_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="cpp type">
+<dt class="sig sig-object cpp">
+<span class="target" id="namespacexdg"></span><span class="k"><span class="pre">namespace</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">xdg</span></span></span><br /></dt>
+<dd><dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg11MeshManagerE">
+<span id="_CPPv3N3xdg11MeshManagerE"></span><span id="_CPPv2N3xdg11MeshManagerE"></span><span id="xdg::MeshManager"></span><span class="target" id="classxdg_1_1MeshManager"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MeshManager</span></span></span><a class="headerlink" href="#_CPPv4N3xdg11MeshManagerE" title="Link to this definition"></a><br /></dt>
+<dd><p>Subclassed by xdg::MOABMeshManager</p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg11MeshManager9load_fileERKNSt6stringE">
+<span id="_CPPv3N3xdg11MeshManager9load_fileERKNSt6stringE"></span><span id="_CPPv2N3xdg11MeshManager9load_fileERKNSt6stringE"></span><span id="xdg::MeshManager::load_file__ssCR"></span><span class="target" id="classxdg_1_1MeshManager_1a6185b533bf69918f5d68632c0221a32d"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">load_file</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">filepath</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xdg11MeshManager9load_fileERKNSt6stringE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg11MeshManager4initEv">
+<span id="_CPPv3N3xdg11MeshManager4initEv"></span><span id="_CPPv2N3xdg11MeshManager4initEv"></span><span id="xdg::MeshManager::init"></span><span class="target" id="classxdg_1_1MeshManager_1ac09e7295c0ec5305da606ef22001399e"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">init</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xdg11MeshManager4initEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager11num_volumesEv">
+<span id="_CPPv3NK3xdg11MeshManager11num_volumesEv"></span><span id="_CPPv2NK3xdg11MeshManager11num_volumesEv"></span><span id="xdg::MeshManager::num_volumesC"></span><span class="target" id="classxdg_1_1MeshManager_1aaa6c05a3cddb5af1bcca9bbd2ee2c2d5"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">num_volumes</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager11num_volumesEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager12num_surfacesEv">
+<span id="_CPPv3NK3xdg11MeshManager12num_surfacesEv"></span><span id="_CPPv2NK3xdg11MeshManager12num_surfacesEv"></span><span id="xdg::MeshManager::num_surfacesC"></span><span class="target" id="classxdg_1_1MeshManager_1ae1d00a97785ef701f2773d82812cb80d"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">num_surfaces</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager12num_surfacesEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager21num_ents_of_dimensionEi">
+<span id="_CPPv3NK3xdg11MeshManager21num_ents_of_dimensionEi"></span><span id="_CPPv2NK3xdg11MeshManager21num_ents_of_dimensionEi"></span><span id="xdg::MeshManager::num_ents_of_dimension__iC"></span><span class="target" id="classxdg_1_1MeshManager_1a7febc152fbd4dc5d1319fb96f4e29f8d"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">num_ents_of_dimension</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">dim</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager21num_ents_of_dimensionEi" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager19num_volume_elementsE6MeshID">
+<span id="_CPPv3NK3xdg11MeshManager19num_volume_elementsE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager19num_volume_elementsE6MeshID"></span><span id="xdg::MeshManager::num_volume_elements__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1afd23cba84d6774f85781c8fcb0283c1e"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">num_volume_elements</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager19num_volume_elementsE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager20num_surface_elementsE6MeshID">
+<span id="_CPPv3NK3xdg11MeshManager20num_surface_elementsE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager20num_surface_elementsE6MeshID"></span><span id="xdg::MeshManager::num_surface_elements__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1a86a1e1dada13f4f21b3663a6415c8f65"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">num_surface_elements</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager20num_surface_elementsE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager19get_volume_elementsE6MeshID">
+<span id="_CPPv3NK3xdg11MeshManager19get_volume_elementsE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager19get_volume_elementsE6MeshID"></span><span id="xdg::MeshManager::get_volume_elements__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1a878f2e71ea1fd484d5e22391e74ec924"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">get_volume_elements</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager19get_volume_elementsE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager20get_surface_elementsE6MeshID">
+<span id="_CPPv3NK3xdg11MeshManager20get_surface_elementsE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager20get_surface_elementsE6MeshID"></span><span id="xdg::MeshManager::get_surface_elements__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1a005524eb4409f60a73911642dc166264"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">get_surface_elements</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager20get_surface_elementsE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager16element_verticesE6MeshID">
+<span id="_CPPv3NK3xdg11MeshManager16element_verticesE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager16element_verticesE6MeshID"></span><span id="xdg::MeshManager::element_vertices__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1a99eb5b86ec6e8b2e0ef2fa45c4b63323"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">Vertex</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">element_vertices</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">element</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager16element_verticesE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager17triangle_verticesE6MeshID">
+<span id="_CPPv3NK3xdg11MeshManager17triangle_verticesE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager17triangle_verticesE6MeshID"></span><span id="xdg::MeshManager::triangle_vertices__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1af6a1c48cbef51f0c6738a77f1727987b"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">Vertex</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">triangle_vertices</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">element</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager17triangle_verticesE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager15triangle_normalE6MeshID">
+<span id="_CPPv3NK3xdg11MeshManager15triangle_normalE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager15triangle_normalE6MeshID"></span><span id="xdg::MeshManager::triangle_normal__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1aba8ecbe39001489a11a94e62d42b6dbb"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">Direction</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">triangle_normal</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">element</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager15triangle_normalE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager20element_bounding_boxE6MeshID">
+<span id="_CPPv3NK3xdg11MeshManager20element_bounding_boxE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager20element_bounding_boxE6MeshID"></span><span id="xdg::MeshManager::element_bounding_box__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1aeab3b099774a81ff8e0e3354b355f247"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">BoundingBox</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">element_bounding_box</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">element</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager20element_bounding_boxE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager19volume_bounding_boxE6MeshID">
+<span id="_CPPv3NK3xdg11MeshManager19volume_bounding_boxE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager19volume_bounding_boxE6MeshID"></span><span id="xdg::MeshManager::volume_bounding_box__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1af16531536e2b9168550669e8fa1e389b"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">BoundingBox</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">volume_bounding_box</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager19volume_bounding_boxE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager20surface_bounding_boxE6MeshID">
+<span id="_CPPv3NK3xdg11MeshManager20surface_bounding_boxE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager20surface_bounding_boxE6MeshID"></span><span id="xdg::MeshManager::surface_bounding_box__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1a6ef3d05943437e2c07030dfb04192dcb"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">BoundingBox</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_bounding_box</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager20surface_bounding_boxE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager18get_parent_volumesE6MeshID">
+<span id="_CPPv3NK3xdg11MeshManager18get_parent_volumesE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager18get_parent_volumesE6MeshID"></span><span id="xdg::MeshManager::get_parent_volumes__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1acd6d1fd115557cee9e48c2661d90f54e"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">get_parent_volumes</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager18get_parent_volumesE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager19get_volume_surfacesE6MeshID">
+<span id="_CPPv3NK3xdg11MeshManager19get_volume_surfacesE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager19get_volume_surfacesE6MeshID"></span><span id="xdg::MeshManager::get_volume_surfaces__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1aed6cbc459025ef28dac7351fbf2606e0"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">get_volume_surfaces</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager19get_volume_surfacesE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager13surface_senseE6MeshID6MeshID">
+<span id="_CPPv3NK3xdg11MeshManager13surface_senseE6MeshID6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager13surface_senseE6MeshID6MeshID"></span><span id="xdg::MeshManager::surface_sense__MeshID.MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1a247ec6f538e7cebe894db3df9ee1a30e"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">Sense</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_sense</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span>, <span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager13surface_senseE6MeshID6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg11MeshManager13create_volumeEv">
+<span id="_CPPv3N3xdg11MeshManager13create_volumeEv"></span><span id="_CPPv2N3xdg11MeshManager13create_volumeEv"></span><span id="xdg::MeshManager::create_volume"></span><span class="target" id="classxdg_1_1MeshManager_1afa9e855ab6a44b6e8e62e9519d10ea8c"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">create_volume</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xdg11MeshManager13create_volumeEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg11MeshManager21add_surface_to_volumeE6MeshID6MeshID5Senseb">
+<span id="_CPPv3N3xdg11MeshManager21add_surface_to_volumeE6MeshID6MeshID5Senseb"></span><span id="_CPPv2N3xdg11MeshManager21add_surface_to_volumeE6MeshID6MeshID5Senseb"></span><span id="xdg::MeshManager::add_surface_to_volume__MeshID.MeshID.Sense.b"></span><span class="target" id="classxdg_1_1MeshManager_1a256be4798ae110cd8f53d97cf910d699"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">add_surface_to_volume</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span>,</dd>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span>,</dd>
+<dd><span class="n"><span class="pre">Sense</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">sense</span></span>,</dd>
+<dd><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">overwrite</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xdg11MeshManager21add_surface_to_volumeE6MeshID6MeshID5Senseb" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager11next_volumeE6MeshID6MeshID">
+<span id="_CPPv3NK3xdg11MeshManager11next_volumeE6MeshID6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager11next_volumeE6MeshID6MeshID"></span><span id="xdg::MeshManager::next_volume__MeshID.MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1a9a3170fd4b920eef0c8f96b5f4694a49"></span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">next_volume</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">current_volume</span></span>, <span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager11next_volumeE6MeshID6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager14next_volume_idEv">
+<span id="_CPPv3NK3xdg11MeshManager14next_volume_idEv"></span><span id="_CPPv2NK3xdg11MeshManager14next_volume_idEv"></span><span id="xdg::MeshManager::next_volume_idC"></span><span class="target" id="classxdg_1_1MeshManager_1a5aeaca4d2313beb928d68be2debe2720"></span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">next_volume_id</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager14next_volume_idEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager15next_surface_idEv">
+<span id="_CPPv3NK3xdg11MeshManager15next_surface_idEv"></span><span id="_CPPv2NK3xdg11MeshManager15next_surface_idEv"></span><span id="xdg::MeshManager::next_surface_idC"></span><span class="target" id="classxdg_1_1MeshManager_1a6ffa40c19c81a9568c9cb7a000a5c628"></span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">next_surface_id</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager15next_surface_idEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg11MeshManager26create_implicit_complementEv">
+<span id="_CPPv3N3xdg11MeshManager26create_implicit_complementEv"></span><span id="_CPPv2N3xdg11MeshManager26create_implicit_complementEv"></span><span id="xdg::MeshManager::create_implicit_complement"></span><span class="target" id="classxdg_1_1MeshManager_1ab76321d8e1c04680c48ca287f8c86851"></span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">create_implicit_complement</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg11MeshManager26create_implicit_complementEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg11MeshManager14parse_metadataEv">
+<span id="_CPPv3N3xdg11MeshManager14parse_metadataEv"></span><span id="_CPPv2N3xdg11MeshManager14parse_metadataEv"></span><span id="xdg::MeshManager::parse_metadata"></span><span class="target" id="classxdg_1_1MeshManager_1af30c337eedcf94953232bd98d8dbcc5a"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">parse_metadata</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xdg11MeshManager14parse_metadataEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager19volume_has_propertyE6MeshID12PropertyType">
+<span id="_CPPv3NK3xdg11MeshManager19volume_has_propertyE6MeshID12PropertyType"></span><span id="_CPPv2NK3xdg11MeshManager19volume_has_propertyE6MeshID12PropertyType"></span><span id="xdg::MeshManager::volume_has_property__MeshID.PropertyTypeC"></span><span class="target" id="classxdg_1_1MeshManager_1a363d1f01568cf195730d4150c567f7ae"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">volume_has_property</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span>, <span class="n"><span class="pre">PropertyType</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">type</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager19volume_has_propertyE6MeshID12PropertyType" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager20surface_has_propertyE6MeshID12PropertyType">
+<span id="_CPPv3NK3xdg11MeshManager20surface_has_propertyE6MeshID12PropertyType"></span><span id="_CPPv2NK3xdg11MeshManager20surface_has_propertyE6MeshID12PropertyType"></span><span id="xdg::MeshManager::surface_has_property__MeshID.PropertyTypeC"></span><span class="target" id="classxdg_1_1MeshManager_1afa3cf54343104017cc0e8b14a08526ad"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_has_property</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span>, <span class="n"><span class="pre">PropertyType</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">type</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager20surface_has_propertyE6MeshID12PropertyType" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager19get_volume_propertyE6MeshID12PropertyType">
+<span id="_CPPv3NK3xdg11MeshManager19get_volume_propertyE6MeshID12PropertyType"></span><span id="_CPPv2NK3xdg11MeshManager19get_volume_propertyE6MeshID12PropertyType"></span><span id="xdg::MeshManager::get_volume_property__MeshID.PropertyTypeC"></span><span class="target" id="classxdg_1_1MeshManager_1aef02016bf2a0b3784c9201ab2c9d150e"></span><span class="n"><span class="pre">Property</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">get_volume_property</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span>, <span class="n"><span class="pre">PropertyType</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">type</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager19get_volume_propertyE6MeshID12PropertyType" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager20get_surface_propertyE6MeshID12PropertyType">
+<span id="_CPPv3NK3xdg11MeshManager20get_surface_propertyE6MeshID12PropertyType"></span><span id="_CPPv2NK3xdg11MeshManager20get_surface_propertyE6MeshID12PropertyType"></span><span id="xdg::MeshManager::get_surface_property__MeshID.PropertyTypeC"></span><span class="target" id="classxdg_1_1MeshManager_1a00a040883221737b005c8c412906ebee"></span><span class="n"><span class="pre">Property</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">get_surface_property</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span>, <span class="n"><span class="pre">PropertyType</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">type</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager20get_surface_propertyE6MeshID12PropertyType" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager7volumesEv">
+<span id="_CPPv3NK3xdg11MeshManager7volumesEv"></span><span id="_CPPv2NK3xdg11MeshManager7volumesEv"></span><span id="xdg::MeshManager::volumesC"></span><span class="target" id="classxdg_1_1MeshManager_1a374a1d8ef30f7d558aa60eecd4b202a7"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">volumes</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager7volumesEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg11MeshManager7volumesEv">
+<span id="_CPPv3N3xdg11MeshManager7volumesEv"></span><span id="_CPPv2N3xdg11MeshManager7volumesEv"></span><span id="xdg::MeshManager::volumes"></span><span class="target" id="classxdg_1_1MeshManager_1ae7ad552f1a5d5db268ff5f995472e128"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">volumes</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg11MeshManager7volumesEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager8surfacesEv">
+<span id="_CPPv3NK3xdg11MeshManager8surfacesEv"></span><span id="_CPPv2NK3xdg11MeshManager8surfacesEv"></span><span id="xdg::MeshManager::surfacesC"></span><span class="target" id="classxdg_1_1MeshManager_1a11e49e469bc4e14af1107d2bdcb10ce4"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">surfaces</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager8surfacesEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg11MeshManager8surfacesEv">
+<span id="_CPPv3N3xdg11MeshManager8surfacesEv"></span><span id="_CPPv2N3xdg11MeshManager8surfacesEv"></span><span id="xdg::MeshManager::surfaces"></span><span class="target" id="classxdg_1_1MeshManager_1accc8038342043a0184b8491d4d30f923"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">surfaces</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg11MeshManager8surfacesEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager19implicit_complementEv">
+<span id="_CPPv3NK3xdg11MeshManager19implicit_complementEv"></span><span id="_CPPv2NK3xdg11MeshManager19implicit_complementEv"></span><span id="xdg::MeshManager::implicit_complementC"></span><span class="target" id="classxdg_1_1MeshManager_1aa7e5bb02283e0e3c06a05f014017c87d"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">implicit_complement</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager19implicit_complementEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager12mesh_libraryEv">
+<span id="_CPPv3NK3xdg11MeshManager12mesh_libraryEv"></span><span id="_CPPv2NK3xdg11MeshManager12mesh_libraryEv"></span><span id="xdg::MeshManager::mesh_libraryC"></span><span class="target" id="classxdg_1_1MeshManager_1aefc92477f2cc01eb823995fad4b3b371"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">MeshLibrary</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">mesh_library</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager12mesh_libraryEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-protected-attributes">Protected Attributes</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg11MeshManager16volume_metadata_E">
+<span id="_CPPv3N3xdg11MeshManager16volume_metadata_E"></span><span id="_CPPv2N3xdg11MeshManager16volume_metadata_E"></span><span id="xdg::MeshManager::volume_metadata___std::map:std::pair:MeshID.PropertyType:.Property:"></span><span class="target" id="classxdg_1_1MeshManager_1a0ebcd5a1466e58d8ae14d95881f1a6a8"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">PropertyType</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">Property</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">volume_metadata_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg11MeshManager16volume_metadata_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg11MeshManager17surface_metadata_E">
+<span id="_CPPv3N3xdg11MeshManager17surface_metadata_E"></span><span id="_CPPv2N3xdg11MeshManager17surface_metadata_E"></span><span id="xdg::MeshManager::surface_metadata___std::map:std::pair:MeshID.PropertyType:.Property:"></span><span class="target" id="classxdg_1_1MeshManager_1a7565e5953c4d163e478e93868c0ed8bc"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">PropertyType</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">Property</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_metadata_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg11MeshManager17surface_metadata_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg11MeshManager8volumes_E">
+<span id="_CPPv3N3xdg11MeshManager8volumes_E"></span><span id="_CPPv2N3xdg11MeshManager8volumes_E"></span><span id="xdg::MeshManager::volumes___std::vector:MeshID:"></span><span class="target" id="classxdg_1_1MeshManager_1a43f40226cdde63dfe40977eba66e7d11"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">volumes_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg11MeshManager8volumes_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg11MeshManager9surfaces_E">
+<span id="_CPPv3N3xdg11MeshManager9surfaces_E"></span><span id="_CPPv2N3xdg11MeshManager9surfaces_E"></span><span id="xdg::MeshManager::surfaces___std::vector:MeshID:"></span><span class="target" id="classxdg_1_1MeshManager_1a68ff1b2f893f8c54556332cfc430854e"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surfaces_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg11MeshManager9surfaces_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg11MeshManager20implicit_complement_E">
+<span id="_CPPv3N3xdg11MeshManager20implicit_complement_E"></span><span id="_CPPv2N3xdg11MeshManager20implicit_complement_E"></span><span id="xdg::MeshManager::implicit_complement___MeshID"></span><span class="target" id="classxdg_1_1MeshManager_1a4fd7d756dcd7c59444e4588f09340239"></span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">implicit_complement_</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="n"><span class="pre">ID_NONE</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv4N3xdg11MeshManager20implicit_complement_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="cpp type">
+<dt class="sig sig-object cpp">
+<span class="target" id="namespacexdg"></span><span class="k"><span class="pre">namespace</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">xdg</span></span></span><br /></dt>
+<dd><div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-typedefs">Typedefs</p>
+<dl class="cpp type">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg6TreeIDE">
+<span id="_CPPv3N3xdg6TreeIDE"></span><span id="_CPPv2N3xdg6TreeIDE"></span><span class="target" id="ray__tracing__interface_8h_1a8450a76f69c91d68630ec1bfaea280e6"></span><span class="k"><span class="pre">using</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">TreeID</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">RTCScene</span></span><a class="headerlink" href="#_CPPv4N3xdg6TreeIDE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracerE">
+<span id="_CPPv3N3xdg9RayTracerE"></span><span id="_CPPv2N3xdg9RayTracerE"></span><span id="xdg::RayTracer"></span><span class="target" id="classxdg_1_1RayTracer"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RayTracer</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracerE" title="Link to this definition"></a><br /></dt>
+<dd><div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer9RayTracerEv">
+<span id="_CPPv3N3xdg9RayTracer9RayTracerEv"></span><span id="_CPPv2N3xdg9RayTracer9RayTracerEv"></span><span id="xdg::RayTracer::RayTracer"></span><span class="target" id="classxdg_1_1RayTracer_1aabe438b10a39e2f2e8c5b04f4e3a7fa4"></span><span class="sig-name descname"><span class="n"><span class="pre">RayTracer</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer9RayTracerEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracerD0Ev">
+<span id="_CPPv3N3xdg9RayTracerD0Ev"></span><span id="_CPPv2N3xdg9RayTracerD0Ev"></span><span id="xdg::RayTracer::~RayTracer"></span><span class="target" id="classxdg_1_1RayTracer_1ae8dac44f5f1b7b0909d925d91e586ca1"></span><span class="sig-name descname"><span class="n"><span class="pre">~RayTracer</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg9RayTracerD0Ev" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer4initEv">
+<span id="_CPPv3N3xdg9RayTracer4initEv"></span><span id="_CPPv2N3xdg9RayTracer4initEv"></span><span id="xdg::RayTracer::init"></span><span class="target" id="classxdg_1_1RayTracer_1a694ff5a67d26562b431a7ba3a664fe84"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">init</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer4initEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer12create_sceneEv">
+<span id="_CPPv3N3xdg9RayTracer12create_sceneEv"></span><span id="_CPPv2N3xdg9RayTracer12create_sceneEv"></span><span id="xdg::RayTracer::create_scene"></span><span class="target" id="classxdg_1_1RayTracer_1a7c6d32d63a4f2847b090a1ab8e23870c"></span><span class="n"><span class="pre">RTCScene</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">create_scene</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer12create_sceneEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer15register_volumeEKNSt10shared_ptrI11MeshManagerEE6MeshID">
+<span id="_CPPv3N3xdg9RayTracer15register_volumeEKNSt10shared_ptrI11MeshManagerEE6MeshID"></span><span id="_CPPv2N3xdg9RayTracer15register_volumeEKNSt10shared_ptrI11MeshManagerEE6MeshID"></span><span id="xdg::RayTracer::register_volume__std::shared_ptr:MeshManager:C.MeshID"></span><span class="target" id="classxdg_1_1RayTracer_1ae59a990c8d9ed1f9eb15d9656164369b"></span><a class="reference internal" href="#_CPPv4N3xdg6TreeIDE" title="xdg::TreeID"><span class="n"><span class="pre">TreeID</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">register_volume</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N3xdg11MeshManagerE" title="xdg::MeshManager"><span class="n"><span class="pre">MeshManager</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">mesh_manager</span></span>,</dd>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer15register_volumeEKNSt10shared_ptrI11MeshManagerEE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg9RayTracer15point_in_volumeE6TreeIDRK8PositionPK9DirectionPKNSt6vectorI6MeshIDEE">
+<span id="_CPPv3NK3xdg9RayTracer15point_in_volumeE6TreeIDRK8PositionPK9DirectionPKNSt6vectorI6MeshIDEE"></span><span id="_CPPv2NK3xdg9RayTracer15point_in_volumeE6TreeIDRK8PositionPK9DirectionPKNSt6vectorI6MeshIDEE"></span><span id="xdg::RayTracer::point_in_volume__TreeID.PositionCR.DirectionCP.std::vector:MeshID:CPC"></span><span class="target" id="classxdg_1_1RayTracer_1a2a1ad64546e159dce0b7f922a4b082a7"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">point_in_volume</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><a class="reference internal" href="#_CPPv4N3xdg6TreeIDE" title="xdg::TreeID"><span class="n"><span class="pre">TreeID</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">scene</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">point</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Direction</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">direction</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">nullptr</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">exclude_primitives</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">nullptr</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg9RayTracer15point_in_volumeE6TreeIDRK8PositionPK9DirectionPKNSt6vectorI6MeshIDEE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer8ray_fireE6TreeIDRK8PositionRK9DirectionKdPCNSt6vectorI6MeshIDEE">
+<span id="_CPPv3N3xdg9RayTracer8ray_fireE6TreeIDRK8PositionRK9DirectionKdPCNSt6vectorI6MeshIDEE"></span><span id="_CPPv2N3xdg9RayTracer8ray_fireE6TreeIDRK8PositionRK9DirectionKdPCNSt6vectorI6MeshIDEE"></span><span id="xdg::RayTracer::ray_fire__TreeID.PositionCR.DirectionCR.doubleC.std::vector:MeshID:PC"></span><span class="target" id="classxdg_1_1RayTracer_1aec4069b416a252c39305f690a680c240"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ray_fire</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><a class="reference internal" href="#_CPPv4N3xdg6TreeIDE" title="xdg::TreeID"><span class="n"><span class="pre">TreeID</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">scene</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">origin</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Direction</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">direction</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">dist_limit</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INFTY</span></span>,</dd>
+<dd><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">exclude_primitives</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">nullptr</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer8ray_fireE6TreeIDRK8PositionRK9DirectionKdPCNSt6vectorI6MeshIDEE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer7closestE6TreeIDRK8PositionRdR6MeshID">
+<span id="_CPPv3N3xdg9RayTracer7closestE6TreeIDRK8PositionRdR6MeshID"></span><span id="_CPPv2N3xdg9RayTracer7closestE6TreeIDRK8PositionRdR6MeshID"></span><span id="xdg::RayTracer::closest__TreeID.PositionCR.doubleR.MeshIDR"></span><span class="target" id="classxdg_1_1RayTracer_1a091a6b1f91b9b371395f65b60ef39684"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">closest</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><a class="reference internal" href="#_CPPv4N3xdg6TreeIDE" title="xdg::TreeID"><span class="n"><span class="pre">TreeID</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">scene</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">origin</span></span>,</dd>
+<dd><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">dist</span></span>,</dd>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">triangle</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer7closestE6TreeIDRK8PositionRdR6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer7closestE6TreeIDRK8PositionRd">
+<span id="_CPPv3N3xdg9RayTracer7closestE6TreeIDRK8PositionRd"></span><span id="_CPPv2N3xdg9RayTracer7closestE6TreeIDRK8PositionRd"></span><span id="xdg::RayTracer::closest__TreeID.PositionCR.doubleR"></span><span class="target" id="classxdg_1_1RayTracer_1a85582dc5b80b5a184930c1080eb669f8"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">closest</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N3xdg6TreeIDE" title="xdg::TreeID"><span class="n"><span class="pre">TreeID</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">scene</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">origin</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">dist</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer7closestE6TreeIDRK8PositionRd" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg9RayTracer8occludedE6TreeIDRK8PositionRK9DirectionRd">
+<span id="_CPPv3NK3xdg9RayTracer8occludedE6TreeIDRK8PositionRK9DirectionRd"></span><span id="_CPPv2NK3xdg9RayTracer8occludedE6TreeIDRK8PositionRK9DirectionRd"></span><span id="xdg::RayTracer::occluded__TreeID.PositionCR.DirectionCR.doubleRC"></span><span class="target" id="classxdg_1_1RayTracer_1a83dcedf3c036b53f83501a554f879f1d"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">occluded</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><a class="reference internal" href="#_CPPv4N3xdg6TreeIDE" title="xdg::TreeID"><span class="n"><span class="pre">TreeID</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">scene</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">origin</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Direction</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">direction</span></span>,</dd>
+<dd><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">dist</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg9RayTracer8occludedE6TreeIDRK8PositionRK9DirectionRd" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg9RayTracer21num_registered_scenesEv">
+<span id="_CPPv3NK3xdg9RayTracer21num_registered_scenesEv"></span><span id="_CPPv2NK3xdg9RayTracer21num_registered_scenesEv"></span><span id="xdg::RayTracer::num_registered_scenesC"></span><span class="target" id="classxdg_1_1RayTracer_1acbc1f3a425631285243caffca261427f"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">num_registered_scenes</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg9RayTracer21num_registered_scenesEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg9RayTracer13geometry_dataE6MeshID">
+<span id="_CPPv3NK3xdg9RayTracer13geometry_dataE6MeshID"></span><span id="_CPPv2NK3xdg9RayTracer13geometry_dataE6MeshID"></span><span id="xdg::RayTracer::geometry_data__MeshIDC"></span><span class="target" id="classxdg_1_1RayTracer_1ab2491a28900ae70b4a1a2cd54bcf7fad"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">GeometryUserData</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">geometry_data</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg9RayTracer13geometry_dataE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-private-members">Private Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer7device_E">
+<span id="_CPPv3N3xdg9RayTracer7device_E"></span><span id="_CPPv2N3xdg9RayTracer7device_E"></span><span id="xdg::RayTracer::device___RTCDevice"></span><span class="target" id="classxdg_1_1RayTracer_1a936a6c0cc7d5ccfafd36971e5f944110"></span><span class="n"><span class="pre">RTCDevice</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">device_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer7device_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer7scenes_E">
+<span id="_CPPv3N3xdg9RayTracer7scenes_E"></span><span id="_CPPv2N3xdg9RayTracer7scenes_E"></span><span id="xdg::RayTracer::scenes___std::vector:RTCScene:"></span><span class="target" id="classxdg_1_1RayTracer_1a2c7187267769eb37336ccd1e1bbb5ae4"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">RTCScene</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">scenes_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer7scenes_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer11geometries_E">
+<span id="_CPPv3N3xdg9RayTracer11geometries_E"></span><span id="_CPPv2N3xdg9RayTracer11geometries_E"></span><span id="xdg::RayTracer::geometries___std::vector:RTCGeometry:"></span><span class="target" id="classxdg_1_1RayTracer_1ab7973f3e1a3982518e2fb1eff0b7d9af"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">RTCGeometry</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">geometries_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer11geometries_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer21surface_to_scene_map_E">
+<span id="_CPPv3N3xdg9RayTracer21surface_to_scene_map_E"></span><span id="_CPPv2N3xdg9RayTracer21surface_to_scene_map_E"></span><span id="xdg::RayTracer::surface_to_scene_map___std::map:MeshID.RTCScene:"></span><span class="target" id="classxdg_1_1RayTracer_1a9b5dc2e1c4b3f54608055f125ca135a1"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">RTCScene</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_to_scene_map_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer21surface_to_scene_map_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer24surface_to_geometry_map_E">
+<span id="_CPPv3N3xdg9RayTracer24surface_to_geometry_map_E"></span><span id="_CPPv2N3xdg9RayTracer24surface_to_geometry_map_E"></span><span id="xdg::RayTracer::surface_to_geometry_map___std::map:MeshID.RTCGeometry:"></span><span class="target" id="classxdg_1_1RayTracer_1a1ae1f0169d714f067ab9caf5c039e656"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">RTCGeometry</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_to_geometry_map_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer24surface_to_geometry_map_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer14gloabal_scene_E">
+<span id="_CPPv3N3xdg9RayTracer14gloabal_scene_E"></span><span id="_CPPv2N3xdg9RayTracer14gloabal_scene_E"></span><span id="xdg::RayTracer::gloabal_scene___RTCScene"></span><span class="target" id="classxdg_1_1RayTracer_1ac18d2e91aefe226173b61fc38565be40"></span><span class="n"><span class="pre">RTCScene</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">gloabal_scene_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer14gloabal_scene_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer14user_data_map_E">
+<span id="_CPPv3N3xdg9RayTracer14user_data_map_E"></span><span id="_CPPv2N3xdg9RayTracer14user_data_map_E"></span><span id="xdg::RayTracer::user_data_map___std::unordered_map:RTCGeometry.std::shared_ptr:GeometryUserData::"></span><span class="target" id="classxdg_1_1RayTracer_1a3d23d0d8dc3c643114c5a0ae697f68e0"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unordered_map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">RTCGeometry</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">GeometryUserData</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">user_data_map_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer14user_data_map_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer20numerical_precision_E">
+<span id="_CPPv3N3xdg9RayTracer20numerical_precision_E"></span><span id="_CPPv2N3xdg9RayTracer20numerical_precision_E"></span><span id="xdg::RayTracer::numerical_precision___double"></span><span class="target" id="classxdg_1_1RayTracer_1a17412d7082e57936c46847aae1f55e84"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">numerical_precision_</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="m"><span class="pre">1e-3</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer20numerical_precision_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer22primitive_ref_storage_E">
+<span id="_CPPv3N3xdg9RayTracer22primitive_ref_storage_E"></span><span id="_CPPv2N3xdg9RayTracer22primitive_ref_storage_E"></span><span id="xdg::RayTracer::primitive_ref_storage___std::unordered_map:RTCScene.std::vector:PrimitiveRef::"></span><span class="target" id="classxdg_1_1RayTracer_1a3bc88cead9e1b070157a6e058728c6e5"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unordered_map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">RTCScene</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">PrimitiveRef</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">primitive_ref_storage_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer22primitive_ref_storage_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4IEN3fmt9formatterIN3xdg6Vec3daEEE">
+<span id="_CPPv3IEN3fmt9formatterIN3xdg6Vec3daEEE"></span><span id="_CPPv2IEN3fmt9formatterIN3xdg6Vec3daEEE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="structfmt_1_1formatter_3_01xdg_1_1Vec3da_01_4"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">formatter</span></span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv43xdg" title="xdg"><span class="n"><span class="pre">xdg</span></span></a><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">Vec3da</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">formatter</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><a class="headerlink" href="#_CPPv4IEN3fmt9formatterIN3xdg6Vec3daEEE" title="Link to this definition"></a><br /></dt>
+<dd><div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN3fmt9formatterIN3xdg6Vec3daEE6formatEDaRKN3xdg6Vec3daER13FormatContext">
+<span id="_CPPv3I0EN3fmt9formatterIN3xdg6Vec3daEE6formatERKN3xdg6Vec3daER13FormatContext"></span><span id="_CPPv2I0EN3fmt9formatterIN3xdg6Vec3daEE6formatERKN3xdg6Vec3daER13FormatContext"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">FormatContext</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="structfmt_1_1formatter_3_01xdg_1_1Vec3da_01_4_1a537224dab92427514107bc17130ea4bf"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">auto</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">format</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv43xdg" title="xdg"><span class="n"><span class="pre">xdg</span></span></a><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">Vec3da</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">v</span></span>,</dd>
+<dd><a class="reference internal" href="#_CPPv4I0EN3fmt9formatterIN3xdg6Vec3daEE6formatEDaRKN3xdg6Vec3daER13FormatContext" title="fmt::formatter&lt;xdg::Vec3da&gt;::format::FormatContext"><span class="n"><span class="pre">FormatContext</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">ctx</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN3fmt9formatterIN3xdg6Vec3daEE6formatEDaRKN3xdg6Vec3daER13FormatContext" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp type">
+<dt class="sig sig-object cpp">
+<span class="target" id="namespacexdg"></span><span class="k"><span class="pre">namespace</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">xdg</span></span></span><br /></dt>
+<dd><dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDHitE">
+<span id="_CPPv3N3xdg7RTCDHitE"></span><span id="_CPPv2N3xdg7RTCDHitE"></span><span id="xdg::RTCDHit"></span><span class="target" id="structxdg_1_1RTCDHit"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RTCDHit</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">RTCHit</span></span><a class="headerlink" href="#_CPPv4N3xdg7RTCDHitE" title="Link to this definition"></a><br /></dt>
+<dd><div class="docutils container">
+<em>#include &lt;ray.h&gt;</em></div>
+<p>Structure extending Embree's RayHit to include a double precision version of the primitive normal </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDHit7RTCDHitEv">
+<span id="_CPPv3N3xdg7RTCDHit7RTCDHitEv"></span><span id="_CPPv2N3xdg7RTCDHit7RTCDHitEv"></span><span id="xdg::RTCDHit::RTCDHit"></span><span class="target" id="structxdg_1_1RTCDHit_1a7f1a318d11de1be5678eaddc38157056"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RTCDHit</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg7RTCDHit7RTCDHitEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDHit13primitive_refE">
+<span id="_CPPv3N3xdg7RTCDHit13primitive_refE"></span><span id="_CPPv2N3xdg7RTCDHit13primitive_refE"></span><span id="xdg::RTCDHit::primitive_ref__PrimitiveRefCP"></span><span class="target" id="structxdg_1_1RTCDHit_1ac2a73c61fde663e67dfc019c7b455112"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">PrimitiveRef</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">primitive_ref</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="k"><span class="pre">nullptr</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv4N3xdg7RTCDHit13primitive_refE" title="Link to this definition"></a><br /></dt>
+<dd><p>Pointer to the primitive reference for this hit. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDHit7surfaceE">
+<span id="_CPPv3N3xdg7RTCDHit7surfaceE"></span><span id="_CPPv2N3xdg7RTCDHit7surfaceE"></span><span id="xdg::RTCDHit::surface__MeshID"></span><span class="target" id="structxdg_1_1RTCDHit_1a6083a6c40bde86c5061373272625c702"></span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="n"><span class="pre">ID_NONE</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv4N3xdg7RTCDHit7surfaceE" title="Link to this definition"></a><br /></dt>
+<dd><p>ID of the surface this hit belongs to. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDHit3dNgE">
+<span id="_CPPv3N3xdg7RTCDHit3dNgE"></span><span id="_CPPv2N3xdg7RTCDHit3dNgE"></span><span id="xdg::RTCDHit::dNg__Vec3da"></span><span class="target" id="structxdg_1_1RTCDHit_1a2e514d6c9cd092141237daa6f10bfda2"></span><span class="n"><span class="pre">Vec3da</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dNg</span></span></span><a class="headerlink" href="#_CPPv4N3xdg7RTCDHit3dNgE" title="Link to this definition"></a><br /></dt>
+<dd><p>Double precision version of the primitive normal. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg14RTCDPointQueryE">
+<span id="_CPPv3N3xdg14RTCDPointQueryE"></span><span id="_CPPv2N3xdg14RTCDPointQueryE"></span><span id="xdg::RTCDPointQuery"></span><span class="target" id="structxdg_1_1RTCDPointQuery"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RTCDPointQuery</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">RTCPointQuery</span></span><a class="headerlink" href="#_CPPv4N3xdg14RTCDPointQueryE" title="Link to this definition"></a><br /></dt>
+<dd><div class="docutils container">
+<em>#include &lt;ray.h&gt;</em></div>
+<p>Structure extending Embree's RTCPointQuery to include double precision values </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg14RTCDPointQuery14RTCDPointQueryEv">
+<span id="_CPPv3N3xdg14RTCDPointQuery14RTCDPointQueryEv"></span><span id="_CPPv2N3xdg14RTCDPointQuery14RTCDPointQueryEv"></span><span id="xdg::RTCDPointQuery::RTCDPointQuery"></span><span class="target" id="structxdg_1_1RTCDPointQuery_1a7fae67c3480b3067b80f32f78531296d"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RTCDPointQuery</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg14RTCDPointQuery14RTCDPointQueryEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg14RTCDPointQuery10set_radiusEd">
+<span id="_CPPv3N3xdg14RTCDPointQuery10set_radiusEd"></span><span id="_CPPv2N3xdg14RTCDPointQuery10set_radiusEd"></span><span id="xdg::RTCDPointQuery::set_radius__double"></span><span class="target" id="structxdg_1_1RTCDPointQuery_1a57fae7cdce46bd72af154708c3e041c9"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_radius</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">rad</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg14RTCDPointQuery10set_radiusEd" title="Link to this definition"></a><br /></dt>
+<dd><p>Set both the single and double precision versions of the query radius. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg14RTCDPointQuery9set_pointEAL3E_Kd">
+<span id="_CPPv3N3xdg14RTCDPointQuery9set_pointEAL3E_Kd"></span><span id="_CPPv2N3xdg14RTCDPointQuery9set_pointEA3_Kd"></span><span id="xdg::RTCDPointQuery::set_point__doubleCA"></span><span class="target" id="structxdg_1_1RTCDPointQuery_1aa51a3be85883bcca03254565e2b754dc"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_point</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">xyz</span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">]</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg14RTCDPointQuery9set_pointEAL3E_Kd" title="Link to this definition"></a><br /></dt>
+<dd><p>Set both the single and double precision versions of the query location. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg14RTCDPointQuery9set_pointERK8Position">
+<span id="_CPPv3N3xdg14RTCDPointQuery9set_pointERK8Position"></span><span id="_CPPv2N3xdg14RTCDPointQuery9set_pointERK8Position"></span><span id="xdg::RTCDPointQuery::set_point__PositionCR"></span><span class="target" id="structxdg_1_1RTCDPointQuery_1a3f8ea3d6eb56e7baf0bbadda7932dfad"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_point</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">xyz</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg14RTCDPointQuery9set_pointERK8Position" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg14RTCDPointQuery6primIDE">
+<span id="_CPPv3N3xdg14RTCDPointQuery6primIDE"></span><span id="_CPPv2N3xdg14RTCDPointQuery6primIDE"></span><span id="xdg::RTCDPointQuery::primID__unsigned-i"></span><span class="target" id="structxdg_1_1RTCDPointQuery_1ae6f40896d007bcad52b61e488b1a81fc"></span><span class="kt"><span class="pre">unsigned</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">primID</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">RTC_INVALID_GEOMETRY_ID</span></span><a class="headerlink" href="#_CPPv4N3xdg14RTCDPointQuery6primIDE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg14RTCDPointQuery6geomIDE">
+<span id="_CPPv3N3xdg14RTCDPointQuery6geomIDE"></span><span id="_CPPv2N3xdg14RTCDPointQuery6geomIDE"></span><span id="xdg::RTCDPointQuery::geomID__unsigned-i"></span><span class="target" id="structxdg_1_1RTCDPointQuery_1acbe8946349a62c1fabe680c6ae68b073"></span><span class="kt"><span class="pre">unsigned</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">geomID</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">RTC_INVALID_GEOMETRY_ID</span></span><a class="headerlink" href="#_CPPv4N3xdg14RTCDPointQuery6geomIDE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg14RTCDPointQuery4dblxE">
+<span id="_CPPv3N3xdg14RTCDPointQuery4dblxE"></span><span id="_CPPv2N3xdg14RTCDPointQuery4dblxE"></span><span id="xdg::RTCDPointQuery::dblx__double"></span><span class="target" id="structxdg_1_1RTCDPointQuery_1ad001909b8d5903d04e585321cd2f0080"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dblx</span></span></span><a class="headerlink" href="#_CPPv4N3xdg14RTCDPointQuery4dblxE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg14RTCDPointQuery4dblyE">
+<span id="_CPPv3N3xdg14RTCDPointQuery4dblyE"></span><span id="_CPPv2N3xdg14RTCDPointQuery4dblyE"></span><span id="xdg::RTCDPointQuery::dbly__double"></span><span class="target" id="structxdg_1_1RTCDPointQuery_1a6439830b209661adbcbd8b217a061671"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dbly</span></span></span><a class="headerlink" href="#_CPPv4N3xdg14RTCDPointQuery4dblyE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg14RTCDPointQuery4dblzE">
+<span id="_CPPv3N3xdg14RTCDPointQuery4dblzE"></span><span id="_CPPv2N3xdg14RTCDPointQuery4dblzE"></span><span id="xdg::RTCDPointQuery::dblz__double"></span><span class="target" id="structxdg_1_1RTCDPointQuery_1ae4d34330413481a155e1e92990de3f86"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dblz</span></span></span><a class="headerlink" href="#_CPPv4N3xdg14RTCDPointQuery4dblzE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg14RTCDPointQuery13primitive_refE">
+<span id="_CPPv3N3xdg14RTCDPointQuery13primitive_refE"></span><span id="_CPPv2N3xdg14RTCDPointQuery13primitive_refE"></span><span id="xdg::RTCDPointQuery::primitive_ref__PrimitiveRefCP"></span><span class="target" id="structxdg_1_1RTCDPointQuery_1a2ccd9302cab7d372b5ae305634598dee"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">PrimitiveRef</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">primitive_ref</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="k"><span class="pre">nullptr</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv4N3xdg14RTCDPointQuery13primitive_refE" title="Link to this definition"></a><br /></dt>
+<dd><p>Pointer to the primitive reference for this hit. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg14RTCDPointQuery7dradiusE">
+<span id="_CPPv3N3xdg14RTCDPointQuery7dradiusE"></span><span id="_CPPv2N3xdg14RTCDPointQuery7dradiusE"></span><span id="xdg::RTCDPointQuery::dradius__double"></span><span class="target" id="structxdg_1_1RTCDPointQuery_1a4a13b640d6a0f0680e13fdc8037d3cfc"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dradius</span></span></span><a class="headerlink" href="#_CPPv4N3xdg14RTCDPointQuery7dradiusE" title="Link to this definition"></a><br /></dt>
+<dd><p>Double precision version of the query distance. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRayE">
+<span id="_CPPv3N3xdg7RTCDRayE"></span><span id="_CPPv2N3xdg7RTCDRayE"></span><span id="xdg::RTCDRay"></span><span class="target" id="structxdg_1_1RTCDRay"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RTCDRay</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">RTCRay</span></span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRayE" title="Link to this definition"></a><br /></dt>
+<dd><div class="docutils container">
+<em>#include &lt;ray.h&gt;</em></div>
+<p>Stucture that is an extension of Embree's RTCRay with double precision versions of the origin, direction and intersection distance. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRay7RTCDRayEv">
+<span id="_CPPv3N3xdg7RTCDRay7RTCDRayEv"></span><span id="_CPPv2N3xdg7RTCDRay7RTCDRayEv"></span><span id="xdg::RTCDRay::RTCDRay"></span><span class="target" id="structxdg_1_1RTCDRay_1a7a62f8c13df9d595b6fa3beae838b4aa"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RTCDRay</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRay7RTCDRayEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRay7set_orgEAL3E_d">
+<span id="_CPPv3N3xdg7RTCDRay7set_orgEAL3E_d"></span><span id="_CPPv2N3xdg7RTCDRay7set_orgEA3_d"></span><span id="xdg::RTCDRay::set_org__doubleA"></span><span class="target" id="structxdg_1_1RTCDRay_1a3c71cbc4858d72f3b8988bb8869f7f9d"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_org</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">o</span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">]</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRay7set_orgEAL3E_d" title="Link to this definition"></a><br /></dt>
+<dd><p>Set both the single and double precision versions of the ray origin. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRay7set_orgEAL3E_Kd">
+<span id="_CPPv3N3xdg7RTCDRay7set_orgEAL3E_Kd"></span><span id="_CPPv2N3xdg7RTCDRay7set_orgEA3_Kd"></span><span id="xdg::RTCDRay::set_org__doubleCA"></span><span class="target" id="structxdg_1_1RTCDRay_1a5e7266536a7ce46688651eac967c628b"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_org</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">o</span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">]</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRay7set_orgEAL3E_Kd" title="Link to this definition"></a><br /></dt>
+<dd><p>Set both the single and double precision versions of the ray origin. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRay7set_orgERK6Vec3da">
+<span id="_CPPv3N3xdg7RTCDRay7set_orgERK6Vec3da"></span><span id="_CPPv2N3xdg7RTCDRay7set_orgERK6Vec3da"></span><span id="xdg::RTCDRay::set_org__Vec3daCR"></span><span class="target" id="structxdg_1_1RTCDRay_1af900f625cc7d0c819b9792c1634d4b41"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_org</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Vec3da</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">o</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRay7set_orgERK6Vec3da" title="Link to this definition"></a><br /></dt>
+<dd><p>Set both the single and double precision versions of the ray origin. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRay7set_dirEAL3E_d">
+<span id="_CPPv3N3xdg7RTCDRay7set_dirEAL3E_d"></span><span id="_CPPv2N3xdg7RTCDRay7set_dirEA3_d"></span><span id="xdg::RTCDRay::set_dir__doubleA"></span><span class="target" id="structxdg_1_1RTCDRay_1a6b171f83b21243c343cadb40bb060163"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_dir</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">o</span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">]</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRay7set_dirEAL3E_d" title="Link to this definition"></a><br /></dt>
+<dd><p>Set both the single and double precision versions of the ray direction. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRay7set_dirEAL3E_Kd">
+<span id="_CPPv3N3xdg7RTCDRay7set_dirEAL3E_Kd"></span><span id="_CPPv2N3xdg7RTCDRay7set_dirEA3_Kd"></span><span id="xdg::RTCDRay::set_dir__doubleCA"></span><span class="target" id="structxdg_1_1RTCDRay_1a0059b63e08e4f741926a33485dab5fe1"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_dir</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">o</span></span><span class="p"><span class="pre">[</span></span><span class="m"><span class="pre">3</span></span><span class="p"><span class="pre">]</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRay7set_dirEAL3E_Kd" title="Link to this definition"></a><br /></dt>
+<dd><p>Set both the single and double precision versions of the ray direction. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRay7set_dirERK6Vec3da">
+<span id="_CPPv3N3xdg7RTCDRay7set_dirERK6Vec3da"></span><span id="_CPPv2N3xdg7RTCDRay7set_dirERK6Vec3da"></span><span id="xdg::RTCDRay::set_dir__Vec3daCR"></span><span class="target" id="structxdg_1_1RTCDRay_1a33d1d02cf50a88c0bcb73e7cdc5a136e"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_dir</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Vec3da</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">o</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRay7set_dirERK6Vec3da" title="Link to this definition"></a><br /></dt>
+<dd><p>Set both the single and double precision versions of the ray direction. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRay8set_tfarEd">
+<span id="_CPPv3N3xdg7RTCDRay8set_tfarEd"></span><span id="_CPPv2N3xdg7RTCDRay8set_tfarEd"></span><span id="xdg::RTCDRay::set_tfar__double"></span><span class="target" id="structxdg_1_1RTCDRay_1a00637dfa52732b7028dca247f44d7470"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_tfar</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">d</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRay8set_tfarEd" title="Link to this definition"></a><br /></dt>
+<dd><p>Set both the single and double precision versions of the ray max distance. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRay9set_tnearEd">
+<span id="_CPPv3N3xdg7RTCDRay9set_tnearEd"></span><span id="_CPPv2N3xdg7RTCDRay9set_tnearEd"></span><span id="xdg::RTCDRay::set_tnear__double"></span><span class="target" id="structxdg_1_1RTCDRay_1a4fda09abd6328e9e54bf5c7a7c3cf276"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">set_tnear</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">d</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRay9set_tnearEd" title="Link to this definition"></a><br /></dt>
+<dd><p>Set both the single and double precision versions of the ray near distance. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRay7rf_typeE">
+<span id="_CPPv3N3xdg7RTCDRay7rf_typeE"></span><span id="_CPPv2N3xdg7RTCDRay7rf_typeE"></span><span id="xdg::RTCDRay::rf_type__RayFireType"></span><span class="target" id="structxdg_1_1RTCDRay_1a06a9f42ec111d4984aee820ba50428a6"></span><span class="n"><span class="pre">RayFireType</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rf_type</span></span></span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRay7rf_typeE" title="Link to this definition"></a><br /></dt>
+<dd><p>Enum indicating the type of query this ray is used for. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRay4dorgE">
+<span id="_CPPv3N3xdg7RTCDRay4dorgE"></span><span id="_CPPv2N3xdg7RTCDRay4dorgE"></span><span id="xdg::RTCDRay::dorg__Vec3da"></span><span class="target" id="structxdg_1_1RTCDRay_1a4b616ef1d153d50538b40afba7c370a3"></span><span class="n"><span class="pre">Vec3da</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dorg</span></span></span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRay4dorgE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRay4ddirE">
+<span id="_CPPv3N3xdg7RTCDRay4ddirE"></span><span id="_CPPv2N3xdg7RTCDRay4ddirE"></span><span id="xdg::RTCDRay::ddir__Vec3da"></span><span class="target" id="structxdg_1_1RTCDRay_1a379c06d45fc10fd6cc50cf5748d406fb"></span><span class="n"><span class="pre">Vec3da</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ddir</span></span></span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRay4ddirE" title="Link to this definition"></a><br /></dt>
+<dd><p>double precision versions of the origin and ray direction </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRay5dtfarE">
+<span id="_CPPv3N3xdg7RTCDRay5dtfarE"></span><span id="_CPPv2N3xdg7RTCDRay5dtfarE"></span><span id="xdg::RTCDRay::dtfar__double"></span><span class="target" id="structxdg_1_1RTCDRay_1af06b52a083b68109f70a46e29a3ea183"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dtfar</span></span></span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRay5dtfarE" title="Link to this definition"></a><br /></dt>
+<dd><p>double precision version of the ray far distance </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRay11orientationE">
+<span id="_CPPv3N3xdg7RTCDRay11orientationE"></span><span id="_CPPv2N3xdg7RTCDRay11orientationE"></span><span id="xdg::RTCDRay::orientation__HitOrientation"></span><span class="target" id="structxdg_1_1RTCDRay_1afd1b4efceed79ebb71f04ab2d4ec5ade"></span><span class="n"><span class="pre">HitOrientation</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">orientation</span></span></span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRay11orientationE" title="Link to this definition"></a><br /></dt>
+<dd><p>Enum indicating what hits to accept based on orientation. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg7RTCDRay18exclude_primitivesE">
+<span id="_CPPv3N3xdg7RTCDRay18exclude_primitivesE"></span><span id="_CPPv2N3xdg7RTCDRay18exclude_primitivesE"></span><span id="xdg::RTCDRay::exclude_primitives__std::vector:MeshID:CP"></span><span class="target" id="structxdg_1_1RTCDRay_1a0fd3014adf2e5249752dec223e7d25de"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">exclude_primitives</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="k"><span class="pre">nullptr</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv4N3xdg7RTCDRay18exclude_primitivesE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg10RTCDRayHitE">
+<span id="_CPPv3N3xdg10RTCDRayHitE"></span><span id="_CPPv2N3xdg10RTCDRayHitE"></span><span id="xdg::RTCDRayHit"></span><span class="target" id="structxdg_1_1RTCDRayHit"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RTCDRayHit</span></span></span><a class="headerlink" href="#_CPPv4N3xdg10RTCDRayHitE" title="Link to this definition"></a><br /></dt>
+<dd><div class="docutils container">
+<em>#include &lt;ray.h&gt;</em></div>
+<p>Stucture combining the ray and ray-hit structures to be passed to Embree queries </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg10RTCDRayHit8dot_prodEv">
+<span id="_CPPv3N3xdg10RTCDRayHit8dot_prodEv"></span><span id="_CPPv2N3xdg10RTCDRayHit8dot_prodEv"></span><span id="xdg::RTCDRayHit::dot_prod"></span><span class="target" id="structxdg_1_1RTCDRayHit_1a42d7c570e9abb6c3db7f927e48e5fecb"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dot_prod</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg10RTCDRayHit8dot_prodEv" title="Link to this definition"></a><br /></dt>
+<dd><p>Compute the dot product of the ray direction and current hit normal. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg10RTCDRayHit3rayE">
+<span id="_CPPv3N3xdg10RTCDRayHit3rayE"></span><span id="_CPPv2N3xdg10RTCDRayHit3rayE"></span><span id="xdg::RTCDRayHit::ray__RTCDRay"></span><span class="target" id="structxdg_1_1RTCDRayHit_1ae2d8f8e62c8cb420cd7348ec514a0b2b"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xdg7RTCDRayE" title="xdg::RTCDRay"><span class="n"><span class="pre">RTCDRay</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ray</span></span></span><a class="headerlink" href="#_CPPv4N3xdg10RTCDRayHit3rayE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg10RTCDRayHit3hitE">
+<span id="_CPPv3N3xdg10RTCDRayHit3hitE"></span><span id="_CPPv2N3xdg10RTCDRayHit3hitE"></span><span id="xdg::RTCDRayHit::hit__RTCDHit"></span><span class="target" id="structxdg_1_1RTCDRayHit_1aaae05055b2cc8dfa592a31eff818de9c"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N3xdg7RTCDHitE" title="xdg::RTCDHit"><span class="n"><span class="pre">RTCDHit</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">hit</span></span></span><a class="headerlink" href="#_CPPv4N3xdg10RTCDRayHit3hitE" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="cpp type">
+<dt class="sig sig-object cpp" id="_CPPv43fmt">
+<span id="_CPPv33fmt"></span><span id="_CPPv23fmt"></span><span id="fmt"></span><span class="target" id="namespacefmt"></span><span class="k"><span class="pre">namespace</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">fmt</span></span></span><a class="headerlink" href="#_CPPv43fmt" title="Link to this definition"></a><br /></dt>
+<dd><dl class="cpp struct">
+<dt class="sig sig-object cpp">
+<span class="target" id="structfmt_1_1formatter_3_01xdg_1_1Vec3da_01_4"></span><span class="sig-name descname"><span class="pre">template&lt;&gt;</span> <span class="pre">Vec3da</span> <span class="pre">&gt;</span> <span class="pre">:</span> <span class="pre">public</span> <span class="pre">formatter&lt;</span> <span class="pre">std::string</span> <span class="pre">&gt;</span></span></dt>
+<dd><div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN3fmt19PhonyNameDueToError6formatEDaRKN3xdg6Vec3daER13FormatContext">
+<span id="_CPPv3I0EN3fmt19PhonyNameDueToError6formatERKN3xdg6Vec3daER13FormatContext"></span><span id="_CPPv2I0EN3fmt19PhonyNameDueToError6formatERKN3xdg6Vec3daER13FormatContext"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">FormatContext</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="structfmt_1_1formatter_3_01xdg_1_1Vec3da_01_4_1a537224dab92427514107bc17130ea4bf"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">auto</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">format</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv43xdg" title="xdg"><span class="n"><span class="pre">xdg</span></span></a><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">Vec3da</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">v</span></span>,</dd>
+<dd><a class="reference internal" href="#_CPPv4I0EN3fmt19PhonyNameDueToError6formatEDaRKN3xdg6Vec3daER13FormatContext" title="fmt::PhonyNameDueToError::format::FormatContext"><span class="n"><span class="pre">FormatContext</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">ctx</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN3fmt19PhonyNameDueToError6formatEDaRKN3xdg6Vec3daER13FormatContext" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="C++ API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../methods/index.html" class="btn btn-neutral float-right" title="Methods" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Argonne National Laboratory and XDG Contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
