@@ -9,3 +9,4 @@ essential aspects of using the XDG library
    :maxdepth: 1
 
    install
+   formats/index

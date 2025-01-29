@@ -26,7 +26,7 @@ Glossary
         A Sandia National Laboratory software package for mesh generation, geometry
         simplification, and mesh-based simulations.
 
-    DAGMC
+    `DAGMC <https://svalinn.github.io/DAGMC/index.html>`_
         Direct Accelerated Geometry Monte Carlo toolkit
 
     FEA
@@ -41,7 +41,7 @@ Glossary
     EntitySet
         An arbitrary collection of entities in MOAB, including other
         `EntitySet`'s. Parent-child relationships between `EntitySet`'s can also
-        be established.
+        be established. Synonymous with the term :term:`MeshSet`.
 
     MeshSet
         A collection of entities in MOAB. Synonymous with :term:`EntitySet`.
@@ -51,5 +51,5 @@ Glossary
         tag has an immutable data type. The size of the data can be fixed or
         variable.
 
-    GPRT
+    `GPRT <https://github.com/gprt-org/GPRT>`_
         General Purpose Raytracing Toolkit
