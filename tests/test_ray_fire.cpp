@@ -2,6 +2,7 @@
 // for testing
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
+#include <catch2/benchmark/catch_benchmark.hpp>
 
 // xdg includes
 #include "xdg/constants.h"
@@ -28,6 +29,10 @@ TEST_CASE("Test Ray Fire Mesh Mock")
   // fire from the origin toward each face, ensuring that the intersection distances are correct
   intersection = rti->ray_fire(volume_tree, origin, direction);
   REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
+
+  BENCHMARK("ray_fire_1"){
+    return rti->ray_fire(volume_tree, origin, direction);
+  };
 
   direction *= -1;
   intersection = rti->ray_fire(volume_tree, origin, direction);
@@ -98,3 +103,18 @@ TEST_CASE("Test Ray Fire Mesh Mock")
   intersection = rti->ray_fire(volume_tree, origin, direction, INFTY, HitOrientation::EXITING, &exclude_primitives);
   REQUIRE(intersection.second == ID_NONE);
 }
+
+
+// TEST_CASE("Micro-Benchmark ray_fire()")
+// {
+//   std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
+//   mm->init(); // this should do nothing, just good practice to call it
+//   REQUIRE(mm->mesh_library() == MeshLibrary::INTERNAL);
+
+//   std::shared_ptr<RayTracer> rti = std::make_shared<RayTracer>();
+//   TreeID volume_tree = rti->register_volume(mm, mm->volumes()[0]);
+
+//   Position origin {0.0, 0.0, 0.0};
+//   Direction direction {1.0, 0.0, 0.0};
+//   std::pair<double, MeshID> intersection;
+// }
