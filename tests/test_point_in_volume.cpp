@@ -4,6 +4,8 @@
 // xdg includes
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/ray_tracing_interface.h"
+#include <catch2/benchmark/catch_benchmark.hpp>
+
 
 #include "mesh_mock.h"
 
@@ -22,9 +24,17 @@ TEST_CASE("Test Point in Volume")
   bool result = rti->point_in_volume(volume_tree, point);
   REQUIRE(result == true);
 
+  BENCHMARK("point_in_vol [Inside]"){
+    return rti->point_in_volume(volume_tree, point);
+  };
+
   point = {0.0, 0.0, 1000.0};
   result = rti->point_in_volume(volume_tree, point);
   REQUIRE(result == false);
+
+  BENCHMARK("point_in_vol [Outside]"){
+    return rti->point_in_volume(volume_tree, point);
+  };
 
   // test a point just inside the positive x boundary
   point = {4.0 - 1e-06, 0.0, 0.0};

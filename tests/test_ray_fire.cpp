@@ -30,7 +30,8 @@ TEST_CASE("Test Ray Fire Mesh Mock")
   intersection = rti->ray_fire(volume_tree, origin, direction);
   REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
 
-  BENCHMARK("ray_fire_1"){
+  // benchmark firing from inside the cube to a face
+  BENCHMARK("ray_fire_from_inside"){
     return rti->ray_fire(volume_tree, origin, direction);
   };
 
@@ -61,6 +62,10 @@ TEST_CASE("Test Ray Fire Mesh Mock")
   intersection = rti->ray_fire(volume_tree, origin, direction);
   REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(15.0, 1e-6));
 
+  BENCHMARK("ray_fire_from_outside_vol [Exiting]"){
+    return rti->ray_fire(volume_tree, origin, direction);
+  };
+
   origin = {10.0, 0.0, 0.0};
   direction = {-1.0, 0.0, 0.0};
   intersection = rti->ray_fire(volume_tree, origin, direction);
@@ -72,6 +77,10 @@ TEST_CASE("Test Ray Fire Mesh Mock")
   direction = {1.0, 0.0, 0.0};
   intersection = rti->ray_fire(volume_tree, origin, direction, INFTY, HitOrientation::ENTERING);
   REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(8.0, 1e-6));
+
+  BENCHMARK("ray_fire_from_outside_vol [Entering]"){
+    return rti->ray_fire(volume_tree, origin, direction);
+  };
 
   origin = {10.0, 0.0, 0.0};
   direction = {-1.0, 0.0, 0.0};
