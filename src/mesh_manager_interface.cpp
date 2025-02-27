@@ -300,6 +300,14 @@ MeshManager::display_model_topology() const
       std::cout << surface << " ";
     }
     std::cout << std::endl;
+
+    // Volume metadata
+    std::cout << "  Metadata: " << std::endl;
+    for (const auto& [key, property] : volume_metadata_) {
+      if (key.first == volume) {
+        std::cout << "    " << PROP_TYPE_TO_STR.at(key.second) << ": " << property.value << std::endl;
+      }
+    }
   }
   std::cout << std::endl;
 
@@ -314,8 +322,16 @@ MeshManager::display_model_topology() const
     std::cout << "  Parent Volumes: ";
     std::cout << parent_volumes.first << " ";
     std::cout << parent_volumes.second << std::endl;
-    std::cout << std::endl;
     std::cout << "  Number of Triangles: " << num_triangles << std::endl;
+
+    // Surface metadata
+    std::cout << "  Metadata: " << std::endl;
+    for (const auto& [key, property] : surface_metadata_) {
+      if (key.first == surface) {
+        std::cout << "    " << PROP_TYPE_TO_STR.at(key.second) << ": " << property.value << std::endl;
+      }
+    }
+    std::cout << std::endl;
   }
   std::cout << std::endl;
 }
