@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include "xdg/mesh_manager_interface.h"
 
 #include <algorithm>
@@ -334,6 +336,85 @@ MeshManager::display_model_topology() const
     std::cout << std::endl;
   }
   std::cout << std::endl;
+}
+
+void MeshManager::write_topology_to_xml(const std::string filename) const
+{
+  std::ofstream file(filename);
+  if (!file.is_open()) {
+    throw std::runtime_error("Unable to open file: " + filename);
+  }
+  file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+  file << "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\">\n";
+
+  // Write key definitions
+  file << "    <key id=\"type\" for=\"node\" attr.name=\"type\" attr.type=\"string\"/>\n";
+  file << "    <key id=\"id\" for=\"node\" attr.name=\"id\" attr.type=\"string\"/>\n";
+  file << "    <key id=\"num_triangles\" for=\"node\" attr.name=\"num_triangles\" attr.type=\"int\"/>\n";
+  for (const auto& [key, _] : volume_metadata_) {
+    file << "    <key id=\"" << PROP_TYPE_TO_STR.at(key.second) << "\" for=\"node\" attr.name=\"" << PROP_TYPE_TO_STR.at(key.second) << "\" attr.type=\"string\"/>\n";
+    break;
+  }
+  for (const auto& [key, _] : surface_metadata_) {
+    file << "    <key id=\"" << PROP_TYPE_TO_STR.at(key.second) << "\" for=\"node\" attr.name=\"" << PROP_TYPE_TO_STR.at(key.second) << "\" attr.type=\"string\"/>\n";
+    break;
+  }
+
+  // Start graph
+  file << "  <graph edgedefault=\"undirected\">\n";
+
+  // Write volume nodes
+  for (auto volume : this->volumes()) {
+    auto surfaces = this->get_volume_surfaces(volume);
+    size_t num_triangles = 0;
+    for (auto surface : surfaces) {
+      num_triangles += this->get_surface_elements(surface).size();
+    }
+
+    file << "    <node id=\"Volume " << volume << "\">\n";
+    file << "      <data key=\"type\">volume</data>\n";
+    file << "      <data key=\"id\">" << volume << "</data>\n";
+    file << "      <data key=\"num_triangles\">" << num_triangles << "</data>\n";
+    for (const auto& [key, property] : volume_metadata_) {
+      if (key.first == volume) {
+        file << "      <data key=\"" << PROP_TYPE_TO_STR.at(key.second) << "\">" << property.value << "</data>\n";
+      }
+    }
+    file << "    </node>\n";
+  }
+
+  // Write surface nodes
+  for (auto surface : this->surfaces()) {
+    auto parent_volumes = this->get_parent_volumes(surface);
+    size_t num_triangles = this->get_surface_elements(surface).size();
+
+    file << "    <node id=\"Surface " << surface << "\">\n";
+    file << "      <data key=\"type\">surface</data>\n";
+    file << "      <data key=\"id\">" << surface << "</data>\n";
+    file << "      <data key=\"num_triangles\">" << num_triangles << "</data>\n";
+    for (const auto& [key, property] : surface_metadata_) {
+      if (key.first == surface) {
+        file << "      <data key=\"" << PROP_TYPE_TO_STR.at(key.second) << "\">" << property.value << "</data>\n";
+      }
+    }
+    file << "    </node>\n";
+  }
+
+  // Write edges between volumes and surfaces
+  for (auto surface : this->surfaces()) {
+    auto parent_volumes = this->get_parent_volumes(surface);
+    if (parent_volumes.first != ID_NONE) {
+      file << "    <edge source=\"Volume " << parent_volumes.first << "\" target=\"Surface " << surface << "\"/>\n";
+    }
+    if (parent_volumes.second != ID_NONE) {
+      file << "    <edge source=\"Volume " << parent_volumes.second << "\" target=\"Surface " << surface << "\"/>\n";
+    }
+  }
+
+  file << "  </graph>\n";
+  file << "</graphml>\n";
+
+  file.close();
 }
 
 } // namespace xdg
