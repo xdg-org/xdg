@@ -7,6 +7,7 @@ ray_fire
 find_volume
 point_in_volume
 overlap_check
+model_info
 )
 
 foreach(tool ${TOOL_NAMES})

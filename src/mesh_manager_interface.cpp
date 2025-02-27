@@ -263,5 +263,61 @@ MeshManager::get_parent_volumes(MeshID surface) const
   return this->surface_senses(surface);
 }
 
+void
+MeshManager::display_model_topology() const
+{
+  // First section: total counts
+  size_t total_volumes = this->volumes().size();
+  size_t total_surfaces = this->surfaces().size();
+  size_t total_triangles = 0;
+
+  for (auto surface : this->surfaces()) {
+    total_triangles += this->get_surface_elements(surface).size();
+  }
+
+  std::cout << "Model Topology Information" << std::endl;
+  std::cout << "==========================" << std::endl;
+  std::cout << "Total Volumes: " << total_volumes << std::endl;
+  std::cout << "Total Surfaces: " << total_surfaces << std::endl;
+  std::cout << "Total Triangles: " << total_triangles << std::endl;
+  std::cout << std::endl;
+
+  // Second section: volume information
+  std::cout << "Volume Information" << std::endl;
+  std::cout << "==================" << std::endl;
+  for (auto volume : this->volumes()) {
+    auto surfaces = this->get_volume_surfaces(volume);
+    size_t num_triangles = 0;
+    for (auto surface : surfaces) {
+      num_triangles += this->get_surface_elements(surface).size();
+    }
+
+    std::cout << "Volume ID: " << volume << std::endl;
+    std::cout << "  Number of Triangles: " << num_triangles << std::endl;
+    std::cout << "  Number of Surfaces: " << surfaces.size() << std::endl;
+    std::cout << "  Surface IDs: ";
+    for (auto surface : surfaces) {
+      std::cout << surface << " ";
+    }
+    std::cout << std::endl;
+  }
+  std::cout << std::endl;
+
+  // Third section: surface information
+  std::cout << "Surface Information" << std::endl;
+  std::cout << "===================" << std::endl;
+  for (auto surface : this->surfaces()) {
+    auto parent_volumes = this->get_parent_volumes(surface);
+    size_t num_triangles = this->get_surface_elements(surface).size();
+
+    std::cout << "Surface ID: " << surface << std::endl;
+    std::cout << "  Parent Volumes: ";
+    std::cout << parent_volumes.first << " ";
+    std::cout << parent_volumes.second << std::endl;
+    std::cout << std::endl;
+    std::cout << "  Number of Triangles: " << num_triangles << std::endl;
+  }
+  std::cout << std::endl;
+}
 
 } // namespace xdg
