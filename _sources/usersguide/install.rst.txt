@@ -37,3 +37,18 @@ which mesh libraries are part of the XDG build.
 
 Testing of the XDG library can be done by running the ``ctest`` command in the
 build directory.
+
+Mesh Library-Specific Installation Instructions
+===============================================
+
+libMesh
+=======
+
+By default libMesh is compiled and installed with various levels of optimization
+enabled, denoted by the suffixes "opt", "dbg", "devel". When configuring
+:term:`XDG` with :term:`libMesh`, the environment variable ``METHOD`` can be set
+to one of these values to ensure that the discovered version of libMesh is
+compiled with the desired level of optimization. If ``METHOD`` is not set, the
+default :term:`libMesh` package configuration will will be used (typically
+configured as "opt"). Please refer to the :term:`libMesh` documentation for
+the full set of allowed values for ``METHOD``.

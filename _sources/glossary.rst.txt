@@ -53,3 +53,16 @@ Glossary
 
     `GPRT <https://github.com/gprt-org/GPRT>`_
         General Purpose Raytracing Toolkit
+
+    XDG
+        Accelerated Discretized Geometry
+
+    subdomain
+        A region of a mesh that is bounded by surfaces. In the context of XDG,
+        a subdomain is a region of a mesh that is bounded by surfaces that are
+        treated as interfaces between different materials. Also refferred to as
+        a mesh block.
+
+    `libMesh <https://libmesh.github.io/>`_
+        A C++ finite element library that provides a framework for the
+        development of parallel adaptive finite element methods.

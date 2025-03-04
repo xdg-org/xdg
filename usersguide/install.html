@@ -57,6 +57,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#testing">Testing</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#mesh-library-specific-installation-instructions">Mesh Library-Specific Installation Instructions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">libMesh</a></li>
 <li class="toctree-l2"><a class="reference internal" href="formats/index.html">File Formats</a></li>
 </ul>
 </li>
@@ -125,6 +127,20 @@ which mesh libraries are part of the XDG build.</p>
 <p>Testing of the XDG library can be done by running the <code class="docutils literal notranslate"><span class="pre">ctest</span></code> command in the
 build directory.</p>
 </section>
+</section>
+<section id="mesh-library-specific-installation-instructions">
+<h1>Mesh Library-Specific Installation Instructions<a class="headerlink" href="#mesh-library-specific-installation-instructions" title="Link to this heading"></a></h1>
+</section>
+<section id="id1">
+<h1>libMesh<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>By default libMesh is compiled and installed with various levels of optimization
+enabled, denoted by the suffixes &quot;opt&quot;, &quot;dbg&quot;, &quot;devel&quot;. When configuring
+<a class="reference internal" href="../glossary.html#term-XDG"><span class="xref std std-term">XDG</span></a> with <a class="reference internal" href="../glossary.html#term-libMesh"><span class="xref std std-term">libMesh</span></a>, the environment variable <code class="docutils literal notranslate"><span class="pre">METHOD</span></code> can be set
+to one of these values to ensure that the discovered version of libMesh is
+compiled with the desired level of optimization. If <code class="docutils literal notranslate"><span class="pre">METHOD</span></code> is not set, the
+default <a class="reference internal" href="../glossary.html#term-libMesh"><span class="xref std std-term">libMesh</span></a> package configuration will will be used (typically
+configured as &quot;opt&quot;). Please refer to the <a class="reference internal" href="../glossary.html#term-libMesh"><span class="xref std std-term">libMesh</span></a> documentation for
+the full set of allowed values for <code class="docutils literal notranslate"><span class="pre">METHOD</span></code>.</p>
 </section>
 
 

@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MOAB File Format &mdash; XDG 0.0.1 documentation</title>
+  <title>libMesh File Format &mdash; XDG 0.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
@@ -15,7 +15,7 @@
 
   
     <link rel="shortcut icon" href="../../_static/xdg-favicon.png"/>
-    <link rel="canonical" href="localhost:8888/usersguide/formats/moab.html" />
+    <link rel="canonical" href="localhost:8888/usersguide/formats/libmesh.html" />
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../../_static/documentation_options.js?v=0d3201d4"></script>
@@ -24,8 +24,8 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="libMesh File Format" href="libmesh.html" />
-    <link rel="prev" title="File Formats" href="index.html" /> 
+    <link rel="next" title="C++ API" href="../../api/index.html" />
+    <link rel="prev" title="MOAB File Format" href="moab.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -55,8 +55,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../install.html#mesh-library-specific-installation-instructions">Mesh Library-Specific Installation Instructions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../install.html#id1">libMesh</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="index.html">File Formats</a><ul class="current">
-<li class="toctree-l3 current"><a class="current reference internal" href="#">MOAB File Format</a></li>
-<li class="toctree-l3"><a class="reference internal" href="libmesh.html">libMesh File Format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="moab.html">MOAB File Format</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">libMesh File Format</a></li>
 </ul>
 </li>
 </ul>
@@ -82,9 +82,9 @@
       <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../index.html">User's Guide</a></li>
           <li class="breadcrumb-item"><a href="index.html">File Formats</a></li>
-      <li class="breadcrumb-item active">MOAB File Format</li>
+      <li class="breadcrumb-item active">libMesh File Format</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../../_sources/usersguide/formats/moab.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../../_sources/usersguide/formats/libmesh.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -92,21 +92,35 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="moab-file-format">
-<span id="moab-format"></span><h1>MOAB File Format<a class="headerlink" href="#moab-file-format" title="Link to this heading"></a></h1>
-<p>The file format for <a class="reference internal" href="../../glossary.html#term-MOAB"><span class="xref std std-term">MOAB</span></a> meshes comes from the file specification for
-<a class="reference internal" href="../../glossary.html#term-DAGMC"><span class="xref std std-term">DAGMC</span></a> meshes. These files are in the native <cite>.h5m</cite> format, which is an
-HDF5 file containing the mesh itself along with associated metadata. In lieu of reproducing
-the entire specification here, we refer the reader to the <a class="reference external" href="https://pshriwise.github.io/dagmc-docs/filespec/index.html">DAGMC file specification</a>.</p>
-<p>Instructions for building <a class="reference internal" href="../../glossary.html#term-DAGMC"><span class="xref std std-term">DAGMC</span></a> using Cubit can be found here: <a class="reference external" href="https://svalinn.github.io/DAGMC/usersguide/codes/openmc.html">OpenMC preparation instructions</a>.</p>
+  <section id="libmesh-file-format">
+<span id="libmesh-format"></span><h1>libMesh File Format<a class="headerlink" href="#libmesh-file-format" title="Link to this heading"></a></h1>
+<p>XDG supports ray tracing of the subdomain interfaces (element faces that are the
+boundary between subdomains or are on the boundary of the mesh) in a
+<a class="reference internal" href="../../glossary.html#term-libMesh"><span class="xref std std-term">libMesh</span></a> mesh. The input mesh is expected to be volumetric. The faces of
+elements on the boundary of these subdomains are treated as surfaces in the XDG
+geometry by shelling the volumetric elements of the subdomain. The element faces
+that lie between subdomain boundaries (i.e. faces at the interface of two
+different subdomains) are discovered automatically and surfaces are created in
+the XDG topology with a transmission boundary condition.</p>
+<p>Sidesets with names that match supported boundary conditions
+(&quot;boundary:reflective&quot;, &quot;boundary:vacuum&quot;, etc.) are treated as such in XDG's
+metadata system. Such user-defined sidesets can partially replace discovered
+interface surfaces. It is expected that user-defined sidesets with names that
+XDG will recognize contain faces between no more than two subdomains.</p>
+<p>Current restrictions:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>meshes of linear tetrahedra</p></li>
+</ul>
+</div></blockquote>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="File Formats" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="libmesh.html" class="btn btn-neutral float-right" title="libMesh File Format" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="moab.html" class="btn btn-neutral float-left" title="MOAB File Format" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../api/index.html" class="btn btn-neutral float-right" title="C++ API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

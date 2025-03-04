@@ -7,9 +7,5 @@ var searchData=
   ['set_5ftfar_4',['set_tfar',['../structxdg_1_1RTCDRay.html#a00637dfa52732b7028dca247f44d7470',1,'xdg::RTCDRay']]],
   ['set_5ftnear_5',['set_tnear',['../structxdg_1_1RTCDRay.html#a4fda09abd6328e9e54bf5c7a7c3cf276',1,'xdg::RTCDRay']]],
   ['setup_6',['setup',['../classMBDirectAccess.html#ac3043611ac3d84487af43b494dc28478',1,'MBDirectAccess']]],
-  ['stride_7',['stride',['../classMBDirectAccess.html#ade06f3d5429620c7b111391919eb7944',1,'MBDirectAccess']]],
-  ['subdomain_5finterface_5fmap_5f_8',['subdomain_interface_map_',['../classxdg_1_1LibMeshManager.html#ae4ef0ee60b1a5645b64f3605b9947dea',1,'xdg::LibMeshManager']]],
-  ['surface_9',['surface',['../structxdg_1_1RTCDHit.html#a6083a6c40bde86c5061373272625c702',1,'xdg::RTCDHit']]],
-  ['surface_5fmap_5f_10',['surface_map_',['../classxdg_1_1LibMeshManager.html#aaa11bbcf6b8a658214b0731ee46ed20e',1,'xdg::LibMeshManager']]],
-  ['surface_5fsenses_5f_11',['surface_senses_',['../classxdg_1_1LibMeshManager.html#a045269c7d16cbc246a6129055450fccf',1,'xdg::LibMeshManager']]]
+  ['stride_7',['stride',['../classMBDirectAccess.html#ade06f3d5429620c7b111391919eb7944',1,'MBDirectAccess']]]
 ];
