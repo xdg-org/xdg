@@ -119,6 +119,8 @@ src/ray_tracing_interface.cpp
 src/triangle_intersect.cpp
 src/util/str_utils.cpp
 src/tetrahedron_contain.cpp
+src/config.cpp
+src/xdg.cpp
 src/overlap_check/overlap.cpp
 src/element_face_accessor.cpp
 src/xdg.cpp
@@ -199,6 +201,15 @@ endif()
 
 if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
   target_compile_definitions(xdg PUBLIC XDG_DEBUG)
+endif()
+
+target_link_libraries(xdg embree fmt::fmt)
+
+# attempt to find OpenMP and include it if found
+find_package(OpenMP)
+if (OpenMP_CXX_FOUND)
+  target_link_libraries(xdg OpenMP::OpenMP_CXX)
+  target_compile_definitions(xdg PUBLIC XDG_HAVE_OPENMP)
 endif()
 
 if (XDG_BUILD_TESTS)
