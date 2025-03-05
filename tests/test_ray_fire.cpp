@@ -35,6 +35,13 @@ TEST_CASE("Test Ray Fire Mesh Mock")
     return rti->ray_fire(volume_tree, origin, direction);
   };
 
+  // advanced benchmark
+  BENCHMARK_ADVANCED("Advanced ray_fire benchmark")(Catch::Benchmark::Chronometer meter){
+    meter.measure([]{
+      return rti->ray_fire(volume_tree, origin, direction);
+    });
+  };
+
   direction *= -1;
   intersection = rti->ray_fire(volume_tree, origin, direction);
   REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
