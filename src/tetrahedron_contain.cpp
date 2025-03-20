@@ -1,3 +1,5 @@
+#include "xdg/ray_tracing_interface.h"
+#include "xdg/ray.h"
 #include "xdg/vec3da.h"
 
 namespace xdg
@@ -42,6 +44,57 @@ bool plucker_tet_containment_test(const Position& point,
   if ((sv3 > 0) != is_positive) return false; // Early exit if signs differ
 
   return true; // All volumes have the same sign → point is inside
+}
+
+// Embree callbacks
+
+void TetrahedronBoundsFunc(RTCBoundsFunctionArguments* args)
+{
+  const GeometryUserData* user_data = (const GeometryUserData*)args->geometryUserPtr;
+  const MeshManager* mesh_manager = user_data->mesh_manager;
+
+  const PrimitiveRef& primitive_ref = user_data->prim_ref_buffer[args->primID];
+
+  BoundingBox bounds = mesh_manager->element_bounding_box(primitive_ref.primitive_id);
+
+  // the bump value can be localized to this element
+  double bump = bounds.maximum_chord_length();
+
+  args->bounds_o->lower_x = bounds.min_x - bump;
+  args->bounds_o->lower_y = bounds.min_y - bump;
+  args->bounds_o->lower_z = bounds.min_z - bump;
+  args->bounds_o->upper_x = bounds.max_x + bump;
+  args->bounds_o->upper_y = bounds.max_y + bump;
+  args->bounds_o->upper_z = bounds.max_z + bump;
+}
+
+void TetrahedronContainmentFunc(RTCIntersectFunctionNArguments* args) {
+  const GeometryUserData* user_data = (const GeometryUserData*)args->geometryUserPtr;
+  const MeshManager* mesh_manager = user_data->mesh_manager;
+
+  const PrimitiveRef& primitive_ref = user_data->prim_ref_buffer[args->primID];
+
+  auto vertices = mesh_manager->triangle_vertices(primitive_ref.primitive_id);
+
+  RTCDRayHit* rayhit = (RTCDRayHit*)args->rayhit;
+  RTCDRay& ray = rayhit->ray;
+  RTCDHit& hit = rayhit->hit;
+
+  Position ray_origin = {ray.dorg[0], ray.dorg[1], ray.dorg[2]};
+
+  // check the containment of the point
+  bool inside = plucker_tet_containment_test(ray_origin, vertices[0], vertices[1], vertices[2], vertices[3]);
+
+  if (!inside) return;
+  // zero out the hit information
+  rayhit->hit.u = 0.0;
+  rayhit->hit.v = 0.0;
+  rayhit->hit.Ng_x = 0.0;
+  rayhit->hit.Ng_y = 0.0;
+  rayhit->hit.Ng_z = 0.0;
+  // set the hit information
+  rayhit->hit.geomID = args->geomID;
+  rayhit->hit.primID = args->primID;
 }
 
 } // namespace xdg

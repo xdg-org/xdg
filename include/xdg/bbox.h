@@ -58,6 +58,16 @@ Position center() const {
   return Position {(min_x + max_x), (min_y + max_y), (min_z + max_z)} * 0.5;
 }
 
+Vec3da width() const {
+  return Vec3da {max_x - min_x, max_y - min_y, max_z - min_z};
+}
+
+double maximum_chord_length() const {
+  Vec3da w = width();
+  double max_chord = std::sqrt(w.dot(w));
+  return max_chord * std::pow(10, -std::numeric_limits<float>::digits10);
+}
+
 template <typename T>
 static BoundingBox from_points(const T& points) {
   BoundingBox bbox {INFTY, INFTY, INFTY, -INFTY, -INFTY, -INFTY};
