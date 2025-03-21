@@ -16,5 +16,10 @@ struct GeometryUserData {
   double box_bump; //! Bump distance for the bounding boxes in this geometry
 };
 
+struct VolumeElementsUserData {
+  MeshID volume_id {ID_NONE};
+  MeshManager* mesh_manager {nullptr};
+}
+
 } // namespace xdg
 #endif // include guard

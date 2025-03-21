@@ -111,8 +111,35 @@ EmbreeRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager
   }
   rtcCommitScene(volume_scene);
 
+  // set up point location tree for any volumetric elements
+
   tree_to_scene_map_[tree] = volume_scene;
   return tree;
+}
+
+void EmbreeRayTracer::create_point_location_tree(MeshID volume)
+{
+  int num_elements = mesh_manager->num_volume_elements(volume);
+  if (num_elements == 0) return;
+
+  // create a new geometry
+  RTCScene volume_element_scene = create_embree_scene();
+  RTCGeometry element_geometry = rtcNewGeometry(device_, RTC_GEOMETRY_TYPE_USER);
+  rtcSetGeometryUserPrimitiveCount(element_geometry, num_elements);
+  unsigned int embree_geometry = rtcAttachGeometry(volume_element_scene, element_geometry);
+  std::shared_ptr<VolumeElementsUserData> volume_elements_data = std::make_shared<VolumeElementsUserData>();
+  volume_elements_data->volume_id = volume;
+  volume_elements_data->mesh_manager = mesh_manager.get();
+  this->volume_element_user_data_map_[element_geometry] = volume_elements_data;
+
+  rtcSetGeometryUserData(element_geometry, volume_elements_data.get());
+
+  ///
+  rtcSetGeometryBoundsFunction(element_geometry,)
+
+
+  rtcCommitGeometry(element_geometry);
+  rtcCommitScene(volume_element_scene);
 }
 
 bool EmbreeRayTracer::point_in_volume(TreeID tree,

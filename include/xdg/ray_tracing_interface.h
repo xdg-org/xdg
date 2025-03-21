@@ -67,7 +67,8 @@ protected:
   // Common member variables across RayTracers
 
   TreeID global_tree_; //<! TreeID for the global tree
-  std::map<MeshID, TreeID> surface_to_tree_map_; //<! Map from mesh surface to embree scene
+  std::map<MeshID, TreeID> surface_to_tree_map_; //<! Map from mesh surface to ray tracing tree
+  std::map<MeshID, TreeID> point_location_tree_map_; //<! Map from mesh surface to embree scene
   std::vector<TreeID> trees_; //<! All trees created by this ray tracer
   // Internal parameters
   double numerical_precision_ {1e-3};
