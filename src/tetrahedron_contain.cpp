@@ -48,7 +48,7 @@ bool plucker_tet_containment_test(const Position& point,
 
 // Embree callbacks
 
-void TetrahedronBoundsFunc(RTCBoundsFunctionArguments* args)
+void VolumeElementBoundsFunc(RTCBoundsFunctionArguments* args)
 {
   const GeometryUserData* user_data = (const GeometryUserData*)args->geometryUserPtr;
   const MeshManager* mesh_manager = user_data->mesh_manager;
@@ -69,11 +69,11 @@ void TetrahedronBoundsFunc(RTCBoundsFunctionArguments* args)
 }
 
 void TetrahedronContainmentFunc(RTCIntersectFunctionNArguments* args) {
-  const GeometryUserData* user_data = (const GeometryUserData*)args->geometryUserPtr;
+  const VolumeElementsUserData* user_data = (const VolumeElementsUserData*)args->geometryUserPtr;
   const MeshManager* mesh_manager = user_data->mesh_manager;
 
-  const PrimitiveRef& primitive_ref = user_data->prim_ref_buffer[args->primID];
-
+  // TODO: Update this!
+  const PrimitiveRef primitive_ref; // = user_data->prim_ref_buffer[args->primID];
   auto vertices = mesh_manager->face_vertices(primitive_ref.primitive_id);
 
   RTCDRayHit* rayhit = (RTCDRayHit*)args->rayhit;
@@ -95,6 +95,27 @@ void TetrahedronContainmentFunc(RTCIntersectFunctionNArguments* args) {
   // set the hit information
   rayhit->hit.geomID = args->geomID;
   rayhit->hit.primID = args->primID;
+}
+
+void TetrahedronContainmentFunc(RTCOccludedFunctionNArguments* args)
+{
+  const VolumeElementsUserData* user_data = (const VolumeElementsUserData*)args->geometryUserPtr;
+  const MeshManager* mesh_manager = user_data->mesh_manager;
+
+  const PrimitiveRef primitive_ref; // = user_data->prim_ref_buffer[args->primID];
+
+  auto vertices = mesh_manager->face_vertices(primitive_ref.primitive_id);
+
+  RTCDRay* ray = (RTCDRay*)args->ray;
+  Position ray_origin = {ray->dorg[0], ray->dorg[1], ray->dorg[2]};
+
+  // check the containment of the point
+  bool inside = plucker_tet_containment_test(ray_origin, vertices[0], vertices[1], vertices[2], vertices[3]);
+
+  if (!inside) return;
+
+  // set the hit information
+  ray->set_tfar(-INFTY);
 }
 
 } // namespace xdg

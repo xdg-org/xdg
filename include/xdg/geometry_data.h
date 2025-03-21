@@ -19,7 +19,7 @@ struct GeometryUserData {
 struct VolumeElementsUserData {
   MeshID volume_id {ID_NONE};
   MeshManager* mesh_manager {nullptr};
-}
+};
 
 } // namespace xdg
 #endif // include guard

@@ -1,6 +1,7 @@
 #include "xdg/embree/ray_tracer.h"
 #include "xdg/error.h"
 #include "xdg/geometry_data.h"
+#include "xdg/tetrahedron_contain.h"
 #include "xdg/ray.h"
 
 namespace xdg {
@@ -117,7 +118,8 @@ EmbreeRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager
   return tree;
 }
 
-void EmbreeRayTracer::create_point_location_tree(MeshID volume)
+void EmbreeRayTracer::create_point_location_tree(std::shared_ptr<MeshManager> mesh_manager,
+                                                 MeshID volume)
 {
   int num_elements = mesh_manager->num_volume_elements(volume);
   if (num_elements == 0) return;
@@ -134,12 +136,38 @@ void EmbreeRayTracer::create_point_location_tree(MeshID volume)
 
   rtcSetGeometryUserData(element_geometry, volume_elements_data.get());
 
-  ///
-  rtcSetGeometryBoundsFunction(element_geometry,)
-
+  rtcSetGeometryBoundsFunction(element_geometry, (RTCBoundsFunction)&VolumeElementBoundsFunc, nullptr);
+  rtcSetGeometryIntersectFunction(element_geometry, (RTCIntersectFunctionN)&TetrahedronIntersectionFunc);
+  rtcSetGeometryOccludedFunction(element_geometry, (RTCOccludedFunctionN)&TetrahedronOcclusionFunc);
 
   rtcCommitGeometry(element_geometry);
   rtcCommitScene(volume_element_scene);
+}
+
+MeshID EmbreeRayTracer::find_element(TreeID tree,
+                    const Position& point) {
+
+  if (!point_location_tree_map_.count(tree)) {
+    warning("Tree {} does not have a point location tree", tree);
+    return ID_NONE;
+  }
+
+  RTCScene scene = point_location_tree_map_.at(tree);
+
+
+  RTCDRay ray;
+  ray.set_org(point);
+  ray.set_dir({1.0, 0.0, 0.0});
+  ray.set_tfar(0.0);
+  ray.set_tnear(0.0);
+
+  // fire an occlusion ray
+  {
+    rtcOccluded1(scene, (RTCRay*)&ray);
+  }
+
+
+
 }
 
 bool EmbreeRayTracer::point_in_volume(TreeID tree,

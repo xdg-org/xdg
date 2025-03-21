@@ -24,7 +24,8 @@ public:
   void init() override;
   RTCScene create_embree_scene();
   TreeID register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) override;
-  void create_point_location_tree(MeshID volume);
+
+  void create_point_location_tree(std::shared_ptr<MeshManager> mesh_manager, MeshID volume);
 
   // Query Methods
   bool point_in_volume(TreeID scene,
@@ -32,6 +33,8 @@ public:
                       const Direction* direction = nullptr,
                       const std::vector<MeshID>* exclude_primitives = nullptr) const override;
 
+  MeshID find_element(TreeID scene,
+                      const Position& point);
 
   std::pair<double, MeshID> ray_fire(TreeID scene,
                                      const Position& origin,
