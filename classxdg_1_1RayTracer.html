@@ -75,43 +75,74 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-methods">Protected Member Functions</a> &#124;
+<a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="classxdg_1_1RayTracer-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">xdg::RayTracer Class Reference</div></div>
+  <div class="headertitle"><div class="title">xdg::RayTracer Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div></div>
 </div><!--header-->
 <div class="contents">
+<div class="dynheader">
+Inheritance diagram for xdg::RayTracer:</div>
+<div class="dyncontent">
+<div class="center"><img src="classxdg_1_1RayTracer__inherit__graph.png" border="0" usemap="#axdg_1_1RayTracer_inherit__map" alt="Inheritance graph"/></div>
+<center><span class="legend">[<a href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a694ff5a67d26562b431a7ba3a664fe84" id="r_a694ff5a67d26562b431a7ba3a664fe84"><td class="memItemLeft" align="right" valign="top"><a id="a694ff5a67d26562b431a7ba3a664fe84" name="a694ff5a67d26562b431a7ba3a664fe84"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> ()</td></tr>
-<tr class="separator:a694ff5a67d26562b431a7ba3a664fe84"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7c6d32d63a4f2847b090a1ab8e23870c" id="r_a7c6d32d63a4f2847b090a1ab8e23870c"><td class="memItemLeft" align="right" valign="top"><a id="a7c6d32d63a4f2847b090a1ab8e23870c" name="a7c6d32d63a4f2847b090a1ab8e23870c"></a>
-RTCScene&#160;</td><td class="memItemRight" valign="bottom"><b>create_scene</b> ()</td></tr>
-<tr class="separator:a7c6d32d63a4f2847b090a1ab8e23870c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae59a990c8d9ed1f9eb15d9656164369b" id="r_ae59a990c8d9ed1f9eb15d9656164369b"><td class="memItemLeft" align="right" valign="top"><a id="ae59a990c8d9ed1f9eb15d9656164369b" name="ae59a990c8d9ed1f9eb15d9656164369b"></a>
-TreeID&#160;</td><td class="memItemRight" valign="bottom"><b>register_volume</b> (const std::shared_ptr&lt; <a class="el" href="classxdg_1_1MeshManager.html">MeshManager</a> &gt; mesh_manager, MeshID volume)</td></tr>
-<tr class="separator:ae59a990c8d9ed1f9eb15d9656164369b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2a1ad64546e159dce0b7f922a4b082a7" id="r_a2a1ad64546e159dce0b7f922a4b082a7"><td class="memItemLeft" align="right" valign="top"><a id="a2a1ad64546e159dce0b7f922a4b082a7" name="a2a1ad64546e159dce0b7f922a4b082a7"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>point_in_volume</b> (TreeID scene, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;point, const <a class="el" href="structxdg_1_1Vec3da.html">Direction</a> *direction=nullptr, const std::vector&lt; MeshID &gt; *exclude_primitives=nullptr) const</td></tr>
-<tr class="separator:a2a1ad64546e159dce0b7f922a4b082a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a338aa6bab8227daa3765bc7edad29277" id="r_a338aa6bab8227daa3765bc7edad29277"><td class="memItemLeft" align="right" valign="top"><a id="a338aa6bab8227daa3765bc7edad29277" name="a338aa6bab8227daa3765bc7edad29277"></a>
-std::pair&lt; double, MeshID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>ray_fire</b> (TreeID scene, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;origin, const <a class="el" href="structxdg_1_1Vec3da.html">Direction</a> &amp;direction, const double dist_limit=INFTY, HitOrientation orientation=HitOrientation::EXITING, std::vector&lt; MeshID &gt; *const exclude_primitives=nullptr)</td></tr>
-<tr class="separator:a338aa6bab8227daa3765bc7edad29277"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a091a6b1f91b9b371395f65b60ef39684" id="r_a091a6b1f91b9b371395f65b60ef39684"><td class="memItemLeft" align="right" valign="top"><a id="a091a6b1f91b9b371395f65b60ef39684" name="a091a6b1f91b9b371395f65b60ef39684"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>closest</b> (TreeID scene, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;origin, double &amp;dist, MeshID &amp;triangle)</td></tr>
-<tr class="separator:a091a6b1f91b9b371395f65b60ef39684"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a85582dc5b80b5a184930c1080eb669f8" id="r_a85582dc5b80b5a184930c1080eb669f8"><td class="memItemLeft" align="right" valign="top"><a id="a85582dc5b80b5a184930c1080eb669f8" name="a85582dc5b80b5a184930c1080eb669f8"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>closest</b> (TreeID scene, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;origin, double &amp;dist)</td></tr>
-<tr class="separator:a85582dc5b80b5a184930c1080eb669f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a83dcedf3c036b53f83501a554f879f1d" id="r_a83dcedf3c036b53f83501a554f879f1d"><td class="memItemLeft" align="right" valign="top"><a id="a83dcedf3c036b53f83501a554f879f1d" name="a83dcedf3c036b53f83501a554f879f1d"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>occluded</b> (TreeID scene, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;origin, const <a class="el" href="structxdg_1_1Vec3da.html">Direction</a> &amp;direction, double &amp;dist) const</td></tr>
-<tr class="separator:a83dcedf3c036b53f83501a554f879f1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acbc1f3a425631285243caffca261427f" id="r_acbc1f3a425631285243caffca261427f"><td class="memItemLeft" align="right" valign="top"><a id="acbc1f3a425631285243caffca261427f" name="acbc1f3a425631285243caffca261427f"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>num_registered_scenes</b> () const</td></tr>
-<tr class="separator:acbc1f3a425631285243caffca261427f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab2491a28900ae70b4a1a2cd54bcf7fad" id="r_ab2491a28900ae70b4a1a2cd54bcf7fad"><td class="memItemLeft" align="right" valign="top"><a id="ab2491a28900ae70b4a1a2cd54bcf7fad" name="ab2491a28900ae70b4a1a2cd54bcf7fad"></a>
-const std::shared_ptr&lt; <a class="el" href="structxdg_1_1GeometryUserData.html">GeometryUserData</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>geometry_data</b> (MeshID surface) const</td></tr>
-<tr class="separator:ab2491a28900ae70b4a1a2cd54bcf7fad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a37de8e4646e09d4278cd79cb063cf106" id="r_a37de8e4646e09d4278cd79cb063cf106"><td class="memItemLeft" align="right" valign="top"><a id="a37de8e4646e09d4278cd79cb063cf106" name="a37de8e4646e09d4278cd79cb063cf106"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> ()=0</td></tr>
+<tr class="separator:a37de8e4646e09d4278cd79cb063cf106"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6cf747f577134bc9cb3db303a7895c6d" id="r_a6cf747f577134bc9cb3db303a7895c6d"><td class="memItemLeft" align="right" valign="top"><a id="a6cf747f577134bc9cb3db303a7895c6d" name="a6cf747f577134bc9cb3db303a7895c6d"></a>
+virtual TreeID&#160;</td><td class="memItemRight" valign="bottom"><b>register_volume</b> (const std::shared_ptr&lt; <a class="el" href="classxdg_1_1MeshManager.html">MeshManager</a> &gt; mesh_manager, MeshID volume)=0</td></tr>
+<tr class="separator:a6cf747f577134bc9cb3db303a7895c6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1dd6c536860e61f0a66942ddd170dbc1" id="r_a1dd6c536860e61f0a66942ddd170dbc1"><td class="memItemLeft" align="right" valign="top"><a id="a1dd6c536860e61f0a66942ddd170dbc1" name="a1dd6c536860e61f0a66942ddd170dbc1"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>point_in_volume</b> (TreeID tree, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;point, const <a class="el" href="structxdg_1_1Vec3da.html">Direction</a> *direction=nullptr, const std::vector&lt; MeshID &gt; *exclude_primitives=nullptr) const =0</td></tr>
+<tr class="separator:a1dd6c536860e61f0a66942ddd170dbc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55fde95582da18d294f1c4a39fda71a8" id="r_a55fde95582da18d294f1c4a39fda71a8"><td class="memItemLeft" align="right" valign="top"><a id="a55fde95582da18d294f1c4a39fda71a8" name="a55fde95582da18d294f1c4a39fda71a8"></a>
+virtual std::pair&lt; double, MeshID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>ray_fire</b> (TreeID tree, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;origin, const <a class="el" href="structxdg_1_1Vec3da.html">Direction</a> &amp;direction, const double dist_limit=INFTY, HitOrientation orientation=HitOrientation::EXITING, std::vector&lt; MeshID &gt; *const exclude_primitives=nullptr)=0</td></tr>
+<tr class="separator:a55fde95582da18d294f1c4a39fda71a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19c072a24900adc8bace4295c6ad37ba" id="r_a19c072a24900adc8bace4295c6ad37ba"><td class="memItemLeft" align="right" valign="top"><a id="a19c072a24900adc8bace4295c6ad37ba" name="a19c072a24900adc8bace4295c6ad37ba"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>closest</b> (TreeID tree, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;origin, double &amp;dist, MeshID &amp;triangle)=0</td></tr>
+<tr class="separator:a19c072a24900adc8bace4295c6ad37ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8206333839446db09185ae84238ccbde" id="r_a8206333839446db09185ae84238ccbde"><td class="memItemLeft" align="right" valign="top"><a id="a8206333839446db09185ae84238ccbde" name="a8206333839446db09185ae84238ccbde"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>closest</b> (TreeID tree, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;origin, double &amp;dist)=0</td></tr>
+<tr class="separator:a8206333839446db09185ae84238ccbde"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a705684c8c9bef5ddfb74eb84b9861122" id="r_a705684c8c9bef5ddfb74eb84b9861122"><td class="memItemLeft" align="right" valign="top"><a id="a705684c8c9bef5ddfb74eb84b9861122" name="a705684c8c9bef5ddfb74eb84b9861122"></a>
+virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>occluded</b> (TreeID tree, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;origin, const <a class="el" href="structxdg_1_1Vec3da.html">Direction</a> &amp;direction, double &amp;dist) const =0</td></tr>
+<tr class="separator:a705684c8c9bef5ddfb74eb84b9861122"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc804185b7d12c376e990a8c90264fa4" id="r_afc804185b7d12c376e990a8c90264fa4"><td class="memItemLeft" align="right" valign="top"><a id="afc804185b7d12c376e990a8c90264fa4" name="afc804185b7d12c376e990a8c90264fa4"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>num_registered_trees</b> () const</td></tr>
+<tr class="separator:afc804185b7d12c376e990a8c90264fa4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aafe9eb3853452ae3ee05dc7e76803f3f" id="r_aafe9eb3853452ae3ee05dc7e76803f3f"><td class="memItemLeft" align="right" valign="top"><a id="aafe9eb3853452ae3ee05dc7e76803f3f" name="aafe9eb3853452ae3ee05dc7e76803f3f"></a>
+const std::vector&lt; MeshID &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>trees</b> () const</td></tr>
+<tr class="separator:aafe9eb3853452ae3ee05dc7e76803f3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeedad626fc299180d67d413ce390e6b9" id="r_aeedad626fc299180d67d413ce390e6b9"><td class="memItemLeft" align="right" valign="top"><a id="aeedad626fc299180d67d413ce390e6b9" name="aeedad626fc299180d67d413ce390e6b9"></a>
+virtual const std::shared_ptr&lt; <a class="el" href="structxdg_1_1GeometryUserData.html">GeometryUserData</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>geometry_data</b> (MeshID surface) const =0</td></tr>
+<tr class="separator:aeedad626fc299180d67d413ce390e6b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:a834855c400250a3633c4ef711214afe5" id="r_a834855c400250a3633c4ef711214afe5"><td class="memItemLeft" align="right" valign="top"><a id="a834855c400250a3633c4ef711214afe5" name="a834855c400250a3633c4ef711214afe5"></a>
+const double&#160;</td><td class="memItemRight" valign="bottom"><b>bounding_box_bump</b> (const std::shared_ptr&lt; <a class="el" href="classxdg_1_1MeshManager.html">MeshManager</a> &gt; mesh_manager, MeshID volume_id)</td></tr>
+<tr class="separator:a834855c400250a3633c4ef711214afe5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad091eda9a068914dce96f08b22afbab" id="r_aad091eda9a068914dce96f08b22afbab"><td class="memItemLeft" align="right" valign="top"><a id="aad091eda9a068914dce96f08b22afbab" name="aad091eda9a068914dce96f08b22afbab"></a>
+TreeID&#160;</td><td class="memItemRight" valign="bottom"><b>next_tree_id</b> () const</td></tr>
+<tr class="separator:aad091eda9a068914dce96f08b22afbab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-attribs" name="pro-attribs"></a>
+Protected Attributes</h2></td></tr>
+<tr class="memitem:a034e0229569ec183a4b4a39059356c1d" id="r_a034e0229569ec183a4b4a39059356c1d"><td class="memItemLeft" align="right" valign="top"><a id="a034e0229569ec183a4b4a39059356c1d" name="a034e0229569ec183a4b4a39059356c1d"></a>
+TreeID&#160;</td><td class="memItemRight" valign="bottom"><b>global_tree_</b></td></tr>
+<tr class="separator:a034e0229569ec183a4b4a39059356c1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af41381126244fd69131c9696d93f352c" id="r_af41381126244fd69131c9696d93f352c"><td class="memItemLeft" align="right" valign="top"><a id="af41381126244fd69131c9696d93f352c" name="af41381126244fd69131c9696d93f352c"></a>
+std::map&lt; MeshID, TreeID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>surface_to_tree_map_</b></td></tr>
+<tr class="separator:af41381126244fd69131c9696d93f352c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acbe4565dfbb7bd90632515866a26f1b0" id="r_acbe4565dfbb7bd90632515866a26f1b0"><td class="memItemLeft" align="right" valign="top"><a id="acbe4565dfbb7bd90632515866a26f1b0" name="acbe4565dfbb7bd90632515866a26f1b0"></a>
+std::vector&lt; TreeID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>trees_</b></td></tr>
+<tr class="separator:acbe4565dfbb7bd90632515866a26f1b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17412d7082e57936c46847aae1f55e84" id="r_a17412d7082e57936c46847aae1f55e84"><td class="memItemLeft" align="right" valign="top"><a id="a17412d7082e57936c46847aae1f55e84" name="a17412d7082e57936c46847aae1f55e84"></a>
+double&#160;</td><td class="memItemRight" valign="bottom"><b>numerical_precision_</b> {1e-3}</td></tr>
+<tr class="separator:a17412d7082e57936c46847aae1f55e84"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>/home/runner/work/xdg/xdg/include/xdg/<b>ray_tracing_interface.h</b></li>
