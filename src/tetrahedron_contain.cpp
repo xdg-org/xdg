@@ -74,7 +74,7 @@ void TetrahedronContainmentFunc(RTCIntersectFunctionNArguments* args) {
 
   const PrimitiveRef& primitive_ref = user_data->prim_ref_buffer[args->primID];
 
-  auto vertices = mesh_manager->triangle_vertices(primitive_ref.primitive_id);
+  auto vertices = mesh_manager->face_vertices(primitive_ref.primitive_id);
 
   RTCDRayHit* rayhit = (RTCDRayHit*)args->rayhit;
   RTCDRay& ray = rayhit->ray;
