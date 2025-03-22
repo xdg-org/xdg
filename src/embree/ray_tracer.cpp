@@ -121,17 +121,27 @@ EmbreeRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager
 void EmbreeRayTracer::create_point_location_tree(std::shared_ptr<MeshManager> mesh_manager,
                                                  MeshID volume)
 {
-  int num_elements = mesh_manager->num_volume_elements(volume);
-  if (num_elements == 0) return;
+  auto volume_elements = mesh_manager->get_volume_elements(volume);
+  if (volume_elements.size() == 0) return;
 
   // create a new geometry
   RTCScene volume_element_scene = create_embree_scene();
+  // create primitive references for the volumetric elements
+  this->primitive_ref_storage_[volume_element_scene].resize(volume_elements.size());
+  auto& volume_element_storage = this->primitive_ref_storage_[volume_element_scene];
+  for (int i = 0; i < volume_elements.size(); ++i) {
+    auto& primitive_ref = volume_element_storage[i];
+    primitive_ref.primitive_id = volume_elements[i];
+    primitive_ref.sense = Sense::FORWARD;
+  }
+
   RTCGeometry element_geometry = rtcNewGeometry(device_, RTC_GEOMETRY_TYPE_USER);
-  rtcSetGeometryUserPrimitiveCount(element_geometry, num_elements);
+  rtcSetGeometryUserPrimitiveCount(element_geometry, volume_elements.size());
   unsigned int embree_geometry = rtcAttachGeometry(volume_element_scene, element_geometry);
   std::shared_ptr<VolumeElementsUserData> volume_elements_data = std::make_shared<VolumeElementsUserData>();
   volume_elements_data->volume_id = volume;
   volume_elements_data->mesh_manager = mesh_manager.get();
+  volume_elements_data->prim_ref_buffer = volume_element_storage.data();
   this->volume_element_user_data_map_[element_geometry] = volume_elements_data;
 
   rtcSetGeometryUserData(element_geometry, volume_elements_data.get());

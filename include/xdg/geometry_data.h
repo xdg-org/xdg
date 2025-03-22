@@ -19,6 +19,7 @@ struct GeometryUserData {
 struct VolumeElementsUserData {
   MeshID volume_id {ID_NONE};
   MeshManager* mesh_manager {nullptr};
+  PrimitiveRef* prim_ref_buffer {nullptr};
 };
 
 } // namespace xdg

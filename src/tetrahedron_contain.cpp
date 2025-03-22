@@ -50,7 +50,7 @@ bool plucker_tet_containment_test(const Position& point,
 
 void VolumeElementBoundsFunc(RTCBoundsFunctionArguments* args)
 {
-  const GeometryUserData* user_data = (const GeometryUserData*)args->geometryUserPtr;
+  const VolumeElementsUserData* user_data = (const VolumeElementsUserData*)args->geometryUserPtr;
   const MeshManager* mesh_manager = user_data->mesh_manager;
 
   const PrimitiveRef& primitive_ref = user_data->prim_ref_buffer[args->primID];
@@ -68,13 +68,13 @@ void VolumeElementBoundsFunc(RTCBoundsFunctionArguments* args)
   args->bounds_o->upper_z = bounds.max_z + bump;
 }
 
-void TetrahedronContainmentFunc(RTCIntersectFunctionNArguments* args) {
+void TetrahedronIntersectionFunc(RTCIntersectFunctionNArguments* args) {
   const VolumeElementsUserData* user_data = (const VolumeElementsUserData*)args->geometryUserPtr;
   const MeshManager* mesh_manager = user_data->mesh_manager;
 
   // TODO: Update this!
-  const PrimitiveRef primitive_ref; // = user_data->prim_ref_buffer[args->primID];
-  auto vertices = mesh_manager->face_vertices(primitive_ref.primitive_id);
+  const PrimitiveRef primitive_ref = user_data->prim_ref_buffer[args->primID];
+  auto vertices = mesh_manager->element_vertices(primitive_ref.primitive_id);
 
   RTCDRayHit* rayhit = (RTCDRayHit*)args->rayhit;
   RTCDRay& ray = rayhit->ray;
@@ -97,14 +97,14 @@ void TetrahedronContainmentFunc(RTCIntersectFunctionNArguments* args) {
   rayhit->hit.primID = args->primID;
 }
 
-void TetrahedronContainmentFunc(RTCOccludedFunctionNArguments* args)
+void TetrahedronOcclusionFunc(RTCOccludedFunctionNArguments* args)
 {
   const VolumeElementsUserData* user_data = (const VolumeElementsUserData*)args->geometryUserPtr;
   const MeshManager* mesh_manager = user_data->mesh_manager;
 
-  const PrimitiveRef primitive_ref; // = user_data->prim_ref_buffer[args->primID];
+  const PrimitiveRef primitive_ref = user_data->prim_ref_buffer[args->primID];
 
-  auto vertices = mesh_manager->face_vertices(primitive_ref.primitive_id);
+  auto vertices = mesh_manager->element_vertices(primitive_ref.primitive_id);
 
   RTCDRay* ray = (RTCDRay*)args->ray;
   Position ray_origin = {ray->dorg[0], ray->dorg[1], ray->dorg[2]};
