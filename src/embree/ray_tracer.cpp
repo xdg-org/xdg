@@ -111,10 +111,11 @@ EmbreeRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager
     rtcCommitGeometry(surface_geometry);
   }
   rtcCommitScene(volume_scene);
+  tree_to_scene_map_[tree] = volume_scene;
 
   // set up point location tree for any volumetric elements
+  create_point_location_tree(mesh_manager, volume_id);
 
-  tree_to_scene_map_[tree] = volume_scene;
   return tree;
 }
 
@@ -164,8 +165,7 @@ MeshID EmbreeRayTracer::find_element(TreeID tree,
 
   RTCScene scene = point_location_tree_map_.at(tree);
 
-
-  RTCDRay ray;
+  RTCElementRay ray;
   ray.set_org(point);
   ray.set_dir({1.0, 0.0, 0.0});
   ray.set_tfar(0.0);
@@ -176,8 +176,9 @@ MeshID EmbreeRayTracer::find_element(TreeID tree,
     rtcOccluded1(scene, (RTCRay*)&ray);
   }
 
+  if (ray.dtfar != -INFTY) return ID_NONE;
 
-
+  return ray.element;
 }
 
 bool EmbreeRayTracer::point_in_volume(TreeID tree,
@@ -282,7 +283,7 @@ bool EmbreeRayTracer::occluded(TreeID tree,
                          double& distance) const
 {
   RTCScene scene = tree_to_scene_map_.at(tree);
-  RTCDRay ray;
+  RTCSurfaceRay ray;
   ray.set_org(origin);
   ray.set_dir(direction);
   ray.set_tfar(INFTY);

@@ -77,7 +77,7 @@ void TetrahedronIntersectionFunc(RTCIntersectFunctionNArguments* args) {
   auto vertices = mesh_manager->element_vertices(primitive_ref.primitive_id);
 
   RTCDRayHit* rayhit = (RTCDRayHit*)args->rayhit;
-  RTCDRay& ray = rayhit->ray;
+  RTCSurfaceRay& ray = rayhit->ray;
   RTCDHit& hit = rayhit->hit;
 
   Position ray_origin = {ray.dorg[0], ray.dorg[1], ray.dorg[2]};
@@ -106,7 +106,7 @@ void TetrahedronOcclusionFunc(RTCOccludedFunctionNArguments* args)
 
   auto vertices = mesh_manager->element_vertices(primitive_ref.primitive_id);
 
-  RTCDRay* ray = (RTCDRay*)args->ray;
+  RTCElementRay* ray = (RTCElementRay*)args->ray;
   Position ray_origin = {ray->dorg[0], ray->dorg[1], ray->dorg[2]};
 
   // check the containment of the point
@@ -115,6 +115,7 @@ void TetrahedronOcclusionFunc(RTCOccludedFunctionNArguments* args)
   if (!inside) return;
 
   // set the hit information
+  ray->element = primitive_ref.primitive_id;
   ray->set_tfar(-INFTY);
 }
 
