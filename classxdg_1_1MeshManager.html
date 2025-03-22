@@ -106,36 +106,42 @@ virtual int&#160;</td><td class="memItemRight" valign="bottom"><b>num_ents_of_di
 <tr class="memitem:afd23cba84d6774f85781c8fcb0283c1e" id="r_afd23cba84d6774f85781c8fcb0283c1e"><td class="memItemLeft" align="right" valign="top"><a id="afd23cba84d6774f85781c8fcb0283c1e" name="afd23cba84d6774f85781c8fcb0283c1e"></a>
 virtual int&#160;</td><td class="memItemRight" valign="bottom"><b>num_volume_elements</b> (MeshID volume) const =0</td></tr>
 <tr class="separator:afd23cba84d6774f85781c8fcb0283c1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a86a1e1dada13f4f21b3663a6415c8f65" id="r_a86a1e1dada13f4f21b3663a6415c8f65"><td class="memItemLeft" align="right" valign="top"><a id="a86a1e1dada13f4f21b3663a6415c8f65" name="a86a1e1dada13f4f21b3663a6415c8f65"></a>
-virtual int&#160;</td><td class="memItemRight" valign="bottom"><b>num_surface_elements</b> (MeshID surface) const =0</td></tr>
-<tr class="separator:a86a1e1dada13f4f21b3663a6415c8f65"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af93b9d3e8e7373f0dea45d18c4d9b674" id="r_af93b9d3e8e7373f0dea45d18c4d9b674"><td class="memItemLeft" align="right" valign="top"><a id="af93b9d3e8e7373f0dea45d18c4d9b674" name="af93b9d3e8e7373f0dea45d18c4d9b674"></a>
+virtual int&#160;</td><td class="memItemRight" valign="bottom"><b>num_volume_faces</b> (MeshID volume) const =0</td></tr>
+<tr class="separator:af93b9d3e8e7373f0dea45d18c4d9b674"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad526e06ba6e861c16534dfebde1d6c84" id="r_ad526e06ba6e861c16534dfebde1d6c84"><td class="memItemLeft" align="right" valign="top"><a id="ad526e06ba6e861c16534dfebde1d6c84" name="ad526e06ba6e861c16534dfebde1d6c84"></a>
+virtual int&#160;</td><td class="memItemRight" valign="bottom"><b>num_surface_faces</b> (MeshID surface) const =0</td></tr>
+<tr class="separator:ad526e06ba6e861c16534dfebde1d6c84"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a878f2e71ea1fd484d5e22391e74ec924" id="r_a878f2e71ea1fd484d5e22391e74ec924"><td class="memItemLeft" align="right" valign="top"><a id="a878f2e71ea1fd484d5e22391e74ec924" name="a878f2e71ea1fd484d5e22391e74ec924"></a>
 virtual std::vector&lt; MeshID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>get_volume_elements</b> (MeshID volume) const =0</td></tr>
 <tr class="separator:a878f2e71ea1fd484d5e22391e74ec924"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a005524eb4409f60a73911642dc166264" id="r_a005524eb4409f60a73911642dc166264"><td class="memItemLeft" align="right" valign="top"><a id="a005524eb4409f60a73911642dc166264" name="a005524eb4409f60a73911642dc166264"></a>
-virtual std::vector&lt; MeshID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>get_surface_elements</b> (MeshID surface) const =0</td></tr>
-<tr class="separator:a005524eb4409f60a73911642dc166264"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ababf951a2e65392755bcef7bca178879" id="r_ababf951a2e65392755bcef7bca178879"><td class="memItemLeft" align="right" valign="top"><a id="ababf951a2e65392755bcef7bca178879" name="ababf951a2e65392755bcef7bca178879"></a>
+std::vector&lt; MeshID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>get_volume_faces</b> (MeshID volume) const</td></tr>
+<tr class="separator:ababf951a2e65392755bcef7bca178879"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52b632929890ea495632de5a71e18342" id="r_a52b632929890ea495632de5a71e18342"><td class="memItemLeft" align="right" valign="top"><a id="a52b632929890ea495632de5a71e18342" name="a52b632929890ea495632de5a71e18342"></a>
+virtual std::vector&lt; MeshID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>get_surface_faces</b> (MeshID surface) const =0</td></tr>
+<tr class="separator:a52b632929890ea495632de5a71e18342"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a99eb5b86ec6e8b2e0ef2fa45c4b63323" id="r_a99eb5b86ec6e8b2e0ef2fa45c4b63323"><td class="memItemLeft" align="right" valign="top"><a id="a99eb5b86ec6e8b2e0ef2fa45c4b63323" name="a99eb5b86ec6e8b2e0ef2fa45c4b63323"></a>
 virtual std::vector&lt; <a class="el" href="structxdg_1_1Vec3da.html">Vertex</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>element_vertices</b> (MeshID element) const =0</td></tr>
 <tr class="separator:a99eb5b86ec6e8b2e0ef2fa45c4b63323"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af6a1c48cbef51f0c6738a77f1727987b" id="r_af6a1c48cbef51f0c6738a77f1727987b"><td class="memItemLeft" align="right" valign="top"><a id="af6a1c48cbef51f0c6738a77f1727987b" name="af6a1c48cbef51f0c6738a77f1727987b"></a>
-virtual std::array&lt; <a class="el" href="structxdg_1_1Vec3da.html">Vertex</a>, 3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>triangle_vertices</b> (MeshID element) const =0</td></tr>
-<tr class="separator:af6a1c48cbef51f0c6738a77f1727987b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a15eece7838d8de2c97729609e5df13ed" id="r_a15eece7838d8de2c97729609e5df13ed"><td class="memItemLeft" align="right" valign="top"><a id="a15eece7838d8de2c97729609e5df13ed" name="a15eece7838d8de2c97729609e5df13ed"></a>
+virtual std::array&lt; <a class="el" href="structxdg_1_1Vec3da.html">Vertex</a>, 3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>face_vertices</b> (MeshID element) const =0</td></tr>
+<tr class="separator:a15eece7838d8de2c97729609e5df13ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a95e393a2ad364c06b2dddd1924334e5d" id="r_a95e393a2ad364c06b2dddd1924334e5d"><td class="memItemLeft" align="right" valign="top"><a id="a95e393a2ad364c06b2dddd1924334e5d" name="a95e393a2ad364c06b2dddd1924334e5d"></a>
 <a class="el" href="unionxdg_1_1BoundingBox.html">BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><b>element_bounding_box</b> (MeshID element) const</td></tr>
 <tr class="separator:a95e393a2ad364c06b2dddd1924334e5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a06eae2ec2acccd0b3074b762e41d207e" id="r_a06eae2ec2acccd0b3074b762e41d207e"><td class="memItemLeft" align="right" valign="top"><a id="a06eae2ec2acccd0b3074b762e41d207e" name="a06eae2ec2acccd0b3074b762e41d207e"></a>
-<a class="el" href="unionxdg_1_1BoundingBox.html">BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><b>triangle_bounding_box</b> (MeshID element) const</td></tr>
-<tr class="separator:a06eae2ec2acccd0b3074b762e41d207e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9892b3d030534eebea8e7f25233c4069" id="r_a9892b3d030534eebea8e7f25233c4069"><td class="memItemLeft" align="right" valign="top"><a id="a9892b3d030534eebea8e7f25233c4069" name="a9892b3d030534eebea8e7f25233c4069"></a>
+<a class="el" href="unionxdg_1_1BoundingBox.html">BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><b>face_bounding_box</b> (MeshID element) const</td></tr>
+<tr class="separator:a9892b3d030534eebea8e7f25233c4069"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a93481d30af31f483081e51ebe07285cd" id="r_a93481d30af31f483081e51ebe07285cd"><td class="memItemLeft" align="right" valign="top"><a id="a93481d30af31f483081e51ebe07285cd" name="a93481d30af31f483081e51ebe07285cd"></a>
 <a class="el" href="unionxdg_1_1BoundingBox.html">BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><b>volume_bounding_box</b> (MeshID volume) const</td></tr>
 <tr class="separator:a93481d30af31f483081e51ebe07285cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8142eda118459a533baa5c1cb62d9d12" id="r_a8142eda118459a533baa5c1cb62d9d12"><td class="memItemLeft" align="right" valign="top"><a id="a8142eda118459a533baa5c1cb62d9d12" name="a8142eda118459a533baa5c1cb62d9d12"></a>
 <a class="el" href="unionxdg_1_1BoundingBox.html">BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><b>surface_bounding_box</b> (MeshID surface) const</td></tr>
 <tr class="separator:a8142eda118459a533baa5c1cb62d9d12"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1087dbf7ebff6afd484cac2ac6844b08" id="r_a1087dbf7ebff6afd484cac2ac6844b08"><td class="memItemLeft" align="right" valign="top"><a id="a1087dbf7ebff6afd484cac2ac6844b08" name="a1087dbf7ebff6afd484cac2ac6844b08"></a>
-<a class="el" href="structxdg_1_1Vec3da.html">Direction</a>&#160;</td><td class="memItemRight" valign="bottom"><b>triangle_normal</b> (MeshID element) const</td></tr>
-<tr class="separator:a1087dbf7ebff6afd484cac2ac6844b08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa73dcbf89a8d70bf020537e6cab2805c" id="r_aa73dcbf89a8d70bf020537e6cab2805c"><td class="memItemLeft" align="right" valign="top"><a id="aa73dcbf89a8d70bf020537e6cab2805c" name="aa73dcbf89a8d70bf020537e6cab2805c"></a>
+<a class="el" href="structxdg_1_1Vec3da.html">Direction</a>&#160;</td><td class="memItemRight" valign="bottom"><b>face_normal</b> (MeshID element) const</td></tr>
+<tr class="separator:aa73dcbf89a8d70bf020537e6cab2805c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0d579c1f89f907e85cfaad41697a45b7" id="r_a0d579c1f89f907e85cfaad41697a45b7"><td class="memItemLeft" align="right" valign="top"><a id="a0d579c1f89f907e85cfaad41697a45b7" name="a0d579c1f89f907e85cfaad41697a45b7"></a>
 std::pair&lt; MeshID, MeshID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>get_parent_volumes</b> (MeshID surface) const</td></tr>
 <tr class="separator:a0d579c1f89f907e85cfaad41697a45b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
