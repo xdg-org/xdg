@@ -23,9 +23,11 @@ public:
   ~EmbreeRayTracer();
   void init() override;
   RTCScene create_embree_scene();
-  TreeID register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) override;
 
-  void create_point_location_tree(std::shared_ptr<MeshManager> mesh_manager, MeshID volume);
+  std::pair<TreeID, TreeID>
+  register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) override;
+
+  TreeID create_point_location_tree(std::shared_ptr<MeshManager> mesh_manager, MeshID volume);
 
   // Query Methods
   bool point_in_volume(TreeID scene,
@@ -73,9 +75,6 @@ public:
   std::unordered_map<RTCGeometry, std::shared_ptr<VolumeElementsUserData>> volume_element_user_data_map_;
 
   std::unordered_map<TreeID, RTCScene> tree_to_scene_map_; // Map from XDG::TreeID to specific embree scene/tree
-
-  // Volumetric element point location trees
-  std::unordered_map<TreeID, RTCScene> point_location_tree_map_; // Map from XDG::TreeID to specific embree scene/tree
 
   // storage
   std::unordered_map<RTCScene, std::vector<PrimitiveRef>> primitive_ref_storage_;

@@ -16,7 +16,9 @@ TEST_CASE("Test Point in Volume")
   REQUIRE(mm->mesh_library() == MeshLibrary::INTERNAL);
 
   std::shared_ptr<RayTracer> rti = std::make_shared<EmbreeRayTracer>();
-  TreeID volume_tree = rti->register_volume(mm, mm->volumes()[0]);
+  auto [volume_tree, element_tree] = rti->register_volume(mm, mm->volumes()[0]);
+  REQUIRE(volume_tree != ID_NONE);
+  REQUIRE(element_tree == TREE_NONE);
 
   Position point {0.0, 0.0, 0.0};
   bool result = rti->point_in_volume(volume_tree, point);

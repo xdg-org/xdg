@@ -104,8 +104,9 @@ private:
   std::shared_ptr<RayTracer> ray_tracing_interface_ {nullptr};
   std::shared_ptr<MeshManager> mesh_manager_ {nullptr};
 
-  std::unordered_map<MeshID, TreeID> volume_to_scene_map_;  //<! Map from mesh volume to embree scene
+  std::unordered_map<MeshID, TreeID> volume_to_surface_tree_map_;  //<! Map from mesh volume to embree scene
   std::unordered_map<MeshID, TreeID> surface_to_tree_map_; //<! Map from mesh surface to embree scnee
+  std::unordered_map<MeshID, TreeID> volume_to_point_location_tree_map_; //<! Map from mesh volume to embree point location tree
   std::unordered_map<MeshID, RTCGeometry> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
   TreeID global_scene_; // TODO: does this need to be in the RayTacer class or the XDG? class
 };

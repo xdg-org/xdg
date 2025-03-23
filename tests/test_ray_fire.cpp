@@ -19,7 +19,9 @@ TEST_CASE("Test Ray Fire Mesh Mock")
   REQUIRE(mm->mesh_library() == MeshLibrary::INTERNAL);
 
   std::shared_ptr<RayTracer> rti = std::make_shared<EmbreeRayTracer>();
-  TreeID volume_tree = rti->register_volume(mm, mm->volumes()[0]);
+  auto [volume_tree, element_tree] = rti->register_volume(mm, mm->volumes()[0]);
+  REQUIRE(volume_tree != ID_NONE);
+  REQUIRE(element_tree == TREE_NONE);
 
   Position origin {0.0, 0.0, 0.0};
   Direction direction {1.0, 0.0, 0.0};

@@ -68,7 +68,7 @@ constexpr MeshID ID_NONE {-1};
 using TreeID = int32_t;
 
 // Invalid
-constexpr TreeID TREEID_NONE {-1};
+constexpr TreeID TREE_NONE {-1};
 
 // for abs(x) >= min_rcp_input the newton raphson rcp calculation does not fail
 constexpr float min_rcp_input = std::numeric_limits<float>::min() /* FIX ME */ *1E5 /* SHOULDNT NEED TO MULTIPLY BY THIS VALUE */;

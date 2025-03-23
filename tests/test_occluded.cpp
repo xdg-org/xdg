@@ -17,7 +17,7 @@ TEST_CASE("Test Occluded")
   std::shared_ptr<XDG> xdg = std::make_shared<XDG>(mm);
   xdg->prepare_raytracer();
   auto rti = xdg->ray_tracing_interface();
-  TreeID volume_tree = rti->register_volume(mm, mm->volumes()[0]);
+  auto [volume_tree, element_tree] = rti->register_volume(mm, mm->volumes()[0]);
 
   // setup ray to fire that won't hit the mock model
   Position r {-100.0, 0.0, 0.0};

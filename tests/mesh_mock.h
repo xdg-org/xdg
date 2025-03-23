@@ -57,7 +57,7 @@ public:
   }
 
   virtual std::vector<MeshID> get_volume_elements(MeshID volume) const override {
-    return {0};
+    return {};
   }
 
   virtual std::vector<MeshID> get_surface_faces(MeshID surface) const override {

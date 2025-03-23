@@ -23,7 +23,9 @@ TEST_CASE("Test Mesh BVH")
 
   std::unordered_map<MeshID, TreeID> volume_to_scene_map;
   for (auto volume: mm->volumes()) {
-    volume_to_scene_map[volume]= rti->register_volume(mm, volume);
+    auto [volume_tree, element_tree] = rti->register_volume(mm, volume);
+    volume_to_scene_map[volume] = volume_tree;
+    REQUIRE(element_tree == TREE_NONE);
   }
 
   REQUIRE(rti->num_registered_trees() == 1);

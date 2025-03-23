@@ -34,7 +34,7 @@ RTCScene EmbreeRayTracer::create_embree_scene() {
   return rtcscene;
 }
 
-TreeID
+std::pair<TreeID, TreeID>
 EmbreeRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager,
                            MeshID volume_id)
 {
@@ -114,16 +114,16 @@ EmbreeRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager
   tree_to_scene_map_[tree] = volume_scene;
 
   // set up point location tree for any volumetric elements
-  create_point_location_tree(mesh_manager, volume_id);
+  TreeID element_tree = create_point_location_tree(mesh_manager, volume_id);
 
-  return tree;
+  return {tree, element_tree};
 }
 
-void EmbreeRayTracer::create_point_location_tree(std::shared_ptr<MeshManager> mesh_manager,
+TreeID EmbreeRayTracer::create_point_location_tree(std::shared_ptr<MeshManager> mesh_manager,
                                                  MeshID volume)
 {
   auto volume_elements = mesh_manager->get_volume_elements(volume);
-  if (volume_elements.size() == 0) return;
+  if (volume_elements.size() == 0) return TREE_NONE;
 
   // create a new geometry
   RTCScene volume_element_scene = create_embree_scene();
@@ -153,17 +153,23 @@ void EmbreeRayTracer::create_point_location_tree(std::shared_ptr<MeshManager> me
 
   rtcCommitGeometry(element_geometry);
   rtcCommitScene(volume_element_scene);
+
+  TreeID tree = next_tree_id();
+  trees_.push_back(tree);
+  tree_to_scene_map_[tree] = volume_element_scene;
+  return tree;
+
 }
 
 MeshID EmbreeRayTracer::find_element(TreeID tree,
-                    const Position& point) {
+                                     const Position& point) {
 
-  if (!point_location_tree_map_.count(tree)) {
+  if (!tree_to_scene_map_.count(tree)) {
     warning("Tree {} does not have a point location tree", tree);
     return ID_NONE;
   }
 
-  RTCScene scene = point_location_tree_map_.at(tree);
+  RTCScene scene = tree_to_scene_map_.at(tree);
 
   RTCElementRay ray;
   ray.set_org(point);

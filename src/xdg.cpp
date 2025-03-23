@@ -26,8 +26,9 @@ void XDG::prepare_raytracer()
 }
 
 void XDG::prepare_volume_for_raytracing(MeshID volume) {
-    TreeID tree = ray_tracing_interface_->register_volume(mesh_manager_, volume);
-    volume_to_scene_map_[volume] = tree;
+    auto [surface_tree, volume_tree] = ray_tracing_interface_->register_volume(mesh_manager_, volume);
+    volume_to_surface_tree_map_[volume] = surface_tree;
+    volume_to_point_location_tree_map_[volume] = volume_tree;
 }
 
 
@@ -85,14 +86,14 @@ bool XDG::point_in_volume(MeshID volume,
                           const Direction* direction,
                           const std::vector<MeshID>* exclude_primitives) const
 {
-  TreeID scene = volume_to_scene_map_.at(volume);
+  TreeID scene = volume_to_surface_tree_map_.at(volume);
   return ray_tracing_interface()->point_in_volume(scene, point, direction, exclude_primitives);
 }
 
 MeshID XDG::find_volume(const Position& point,
                                                    const Direction& direction) const
 {
-  for (auto volume_scene_pair : volume_to_scene_map_) {
+  for (auto volume_scene_pair : volume_to_surface_tree_map_) {
     MeshID volume = volume_scene_pair.first;
     TreeID scene = volume_scene_pair.second;
     if (ray_tracing_interface()->point_in_volume(scene, point, &direction)) {
@@ -110,7 +111,7 @@ XDG::ray_fire(MeshID volume,
               HitOrientation orientation,
               std::vector<MeshID>* const exclude_primitives) const
 {
-  TreeID scene = volume_to_scene_map_.at(volume);
+  TreeID scene = volume_to_surface_tree_map_.at(volume);
   return ray_tracing_interface()->ray_fire(scene, origin, direction, dist_limit, orientation, exclude_primitives);
 }
 
@@ -119,7 +120,7 @@ void XDG::closest(MeshID volume,
               double& dist,
               MeshID& triangle) const
 {
-  TreeID scene = volume_to_scene_map_.at(volume);
+  TreeID scene = volume_to_surface_tree_map_.at(volume);
   ray_tracing_interface()->closest(scene, origin, dist, triangle);
 }
 
@@ -127,7 +128,7 @@ void XDG::closest(MeshID volume,
               const Position& origin,
               double& dist) const
 {
-  TreeID scene = volume_to_scene_map_.at(volume);
+  TreeID scene = volume_to_surface_tree_map_.at(volume);
   ray_tracing_interface()->closest(scene, origin, dist);
 }
 
@@ -136,7 +137,7 @@ bool XDG::occluded(MeshID volume,
               const Direction& direction,
               double& dist) const
 {
-  TreeID scene = volume_to_scene_map_.at(volume);
+  TreeID scene = volume_to_surface_tree_map_.at(volume);
   return ray_tracing_interface()->occluded(scene, origin, direction, dist);
 }
 
@@ -150,7 +151,7 @@ Direction XDG::surface_normal(MeshID surface,
   } else {
     auto surface_vols = mesh_manager()->get_parent_volumes(surface);
     double dist;
-    TreeID scene = volume_to_scene_map_.at(surface_vols.first);
+    TreeID scene = volume_to_surface_tree_map_.at(surface_vols.first);
     ray_tracing_interface()->closest(scene, point, dist, element);
 
     // TODO: bring this back when we have a better way to handle this
