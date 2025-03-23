@@ -91,7 +91,7 @@ bool XDG::point_in_volume(MeshID volume,
 }
 
 MeshID XDG::find_volume(const Position& point,
-                                                   const Direction& direction) const
+                        const Direction& direction) const
 {
   for (auto volume_scene_pair : volume_to_surface_tree_map_) {
     MeshID volume = volume_scene_pair.first;
@@ -101,6 +101,13 @@ MeshID XDG::find_volume(const Position& point,
     }
   }
   return ID_NONE;
+}
+
+MeshID XDG::find_element(MeshID volume,
+                         const Position& point) const
+{
+  TreeID scene = volume_to_point_location_tree_map_.at(volume);
+  return ray_tracing_interface()->find_element(scene, point);
 }
 
 std::pair<double, MeshID>

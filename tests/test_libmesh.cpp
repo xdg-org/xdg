@@ -315,3 +315,22 @@ TEST_CASE("Test Volume Element Count Cylinder-Brick")
   elements = mesh_manager->get_volume_elements(volume);
   REQUIRE(elements.size() == 9037);
 }
+
+TEST_CASE("Test Find Element Brick")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
+  xdg->mesh_manager()->mesh_library();
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("brick.exo");
+  mesh_manager->init();
+  xdg->prepare_raytracer();
+
+  MeshID volume = 1;
+
+  MeshID element = xdg->find_element(volume, {0.0, 0.0, 0.0});
+  REQUIRE(element != ID_NONE);
+
+  element = xdg->find_element(volume, {0.0, 0.0, 100.0});
+  REQUIRE(element == ID_NONE);
+}

@@ -162,7 +162,8 @@ TreeID EmbreeRayTracer::create_point_location_tree(std::shared_ptr<MeshManager> 
 }
 
 MeshID EmbreeRayTracer::find_element(TreeID tree,
-                                     const Position& point) {
+                                     const Position& point) const
+{
 
   if (!tree_to_scene_map_.count(tree)) {
     warning("Tree {} does not have a point location tree", tree);

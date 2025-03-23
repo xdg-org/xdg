@@ -36,7 +36,7 @@ public:
                       const std::vector<MeshID>* exclude_primitives = nullptr) const override;
 
   MeshID find_element(TreeID scene,
-                      const Position& point);
+                      const Position& point) const;
 
   std::pair<double, MeshID> ray_fire(TreeID scene,
                                      const Position& origin,

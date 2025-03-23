@@ -50,6 +50,8 @@ public:
                                      HitOrientation orientation = HitOrientation::EXITING,
                                      std::vector<MeshID>* const exclude_primitives = nullptr) = 0;
 
+  virtual MeshID find_element(TreeID tree, const Position& point) const = 0;
+
   virtual void closest(TreeID tree,
                const Position& origin,
                double& dist,
@@ -81,7 +83,7 @@ protected:
 
   TreeID global_tree_; //<! TreeID for the global tree
   std::map<MeshID, TreeID> surface_to_tree_map_; //<! Map from mesh surface to ray tracing tree
-  std::map<MeshID, TreeID> point_location_tree_map_; //<! Map from mesh surface to embree scene
+  std::map<MeshID, TreeID> point_location_tree_map_; //<! Map from mesh volume to point location tree
   std::vector<TreeID> trees_; //<! All trees created by this ray tracer
   // Internal parameters
   double numerical_precision_ {1e-3};
