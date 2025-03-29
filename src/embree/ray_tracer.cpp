@@ -38,6 +38,18 @@ std::pair<TreeID, TreeID>
 EmbreeRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager,
                            MeshID volume_id)
 {
+
+  TreeID faces_tree = create_surface_tree(mesh_manager, volume_id);
+
+  // set up point location tree for any volumetric elements
+  TreeID element_tree = create_element_tree(mesh_manager, volume_id);
+
+  return {faces_tree, element_tree};
+}
+
+TreeID EmbreeRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_manager,
+                                            MeshID volume_id)
+{
   TreeID tree = next_tree_id();
   trees_.push_back(tree);
   auto volume_scene = this->create_embree_scene();
@@ -112,15 +124,11 @@ EmbreeRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager
   }
   rtcCommitScene(volume_scene);
   tree_to_scene_map_[tree] = volume_scene;
-
-  // set up point location tree for any volumetric elements
-  TreeID element_tree = create_point_location_tree(mesh_manager, volume_id);
-
-  return {tree, element_tree};
+  return tree;
 }
 
-TreeID EmbreeRayTracer::create_point_location_tree(std::shared_ptr<MeshManager> mesh_manager,
-                                                 MeshID volume)
+TreeID EmbreeRayTracer::create_element_tree(const std::shared_ptr<MeshManager>& mesh_manager,
+                                            MeshID volume)
 {
   auto volume_elements = mesh_manager->get_volume_elements(volume);
   if (volume_elements.size() == 0) return TREE_NONE;

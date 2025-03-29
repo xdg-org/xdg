@@ -31,7 +31,6 @@ void XDG::prepare_volume_for_raytracing(MeshID volume) {
     volume_to_point_location_tree_map_[volume] = volume_tree;
 }
 
-
 std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib)
 {
   std::shared_ptr<XDG> xdg = std::make_shared<XDG>();

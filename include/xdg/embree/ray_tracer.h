@@ -25,9 +25,14 @@ public:
   RTCScene create_embree_scene();
 
   std::pair<TreeID, TreeID>
-  register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) override;
+  register_volume(const std::shared_ptr<MeshManager> mesh_manager,
+                  MeshID volume) override;
 
-  TreeID create_point_location_tree(std::shared_ptr<MeshManager> mesh_manager, MeshID volume);
+  TreeID create_surface_tree(const std::shared_ptr<MeshManager>& mesh_manager,
+                             MeshID volume);
+
+  TreeID create_element_tree(const std::shared_ptr<MeshManager>& mesh_manager,
+                             MeshID volume);
 
   // Query Methods
   bool point_in_volume(TreeID scene,

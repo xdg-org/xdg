@@ -25,14 +25,16 @@ public:
   /**
   * @brief Registers a volume with the ray tracer.
   *
-  * This method associates a volume, represented by a MeshID, with the ray tracer
-  * using the provided MeshManager. It returns a pair of TreeIDs that can be used
-  * for further operations involving the registered volume.
+  * This method associates a volume, represented by a MeshID, with the ray
+  * tracer using the provided MeshManager. It returns a pair of TreeIDs that can
+  * be used for further operations involving the registered volume.
   *
-  * @param mesh_manager A shared pointer to the MeshManager responsible for managing the volume's mesh data.
+  * @param mesh_manager A shared pointer to the MeshManager responsible for
+  * managing the volume's mesh data.
   * @param volume The MeshID representing the volume to be registered.
-  * @return A pair of TreeIDs, where the first TreeID corresponds to the primary tree
-  *         and the second TreeID corresponds to the secondary tree (if applicable).
+  * @return A pair of TreeIDs, where the first TreeID corresponds to the surface
+  *         ray tracing tree and the second TreeID corresponds to the volume
+  *         element point location tree (if applicable).
   */
   virtual std::pair<TreeID, TreeID>
   register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) = 0;
