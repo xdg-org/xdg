@@ -49,6 +49,10 @@ public:
 
   void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override;
 
+  std::vector<std::pair<MeshID, double>>
+  walk_elements(const Position& start,
+                const Position& end) const override;
+
   // Mesh
   int num_volume_elements(MeshID volume) const override;
 

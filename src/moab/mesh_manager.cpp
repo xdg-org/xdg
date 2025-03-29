@@ -136,6 +136,13 @@ void MOABMeshManager::add_surface_to_volume(MeshID volume, MeshID surface, Sense
   this->moab_interface()->tag_set_data(surf_to_volume_sense_tag_, surf_handle_ptr, 1, sense_handles.data());
 }
 
+std::vector<std::pair<MeshID, double>>
+MOABMeshManager::walk_elements(const Position& start,
+                               const Position& end) const
+{
+  return {};
+}
+
 // Mesh Methods
 moab::Range
 MOABMeshManager::_surface_faces(MeshID surface) const

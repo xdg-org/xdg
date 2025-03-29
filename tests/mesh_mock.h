@@ -84,6 +84,12 @@ public:
     return {0, 1, 2, 3, 4, 5};
   }
 
+  std::vector<std::pair<MeshID, double>>
+  walk_elements(const Position& start, const Position& end) const override
+  {
+    return {};
+  }
+
   Sense surface_sense(MeshID surface, MeshID volume) const override {
     return Sense::FORWARD;
   }
