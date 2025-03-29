@@ -85,7 +85,9 @@ public:
   }
 
   std::vector<std::pair<MeshID, double>>
-  walk_elements(const Position& start, const Position& end) const override
+  walk_elements(MeshID starting_element,
+                const Position& start,
+                const Position& end) const override
   {
     return {};
   }

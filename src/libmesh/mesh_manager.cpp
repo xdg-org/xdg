@@ -116,8 +116,9 @@ void LibMeshManager::add_surface_to_volume(MeshID volume, MeshID surface, Sense 
 }
 
 std::vector<std::pair<MeshID, double>>
-LibMeshManager::walk_elements(const Position& start,
-                              const Position& end) const
+LibMeshManager::walk_elements(MeshID starting_element,
+  const Position& start,
+  const Position& end) const
 {
   return {};
 }

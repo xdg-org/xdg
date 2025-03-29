@@ -137,8 +137,9 @@ void MOABMeshManager::add_surface_to_volume(MeshID volume, MeshID surface, Sense
 }
 
 std::vector<std::pair<MeshID, double>>
-MOABMeshManager::walk_elements(const Position& start,
-                               const Position& end) const
+MOABMeshManager::walk_elements(MeshID starting_element,
+  const Position& start,
+  const Position& end) const
 {
   return {};
 }

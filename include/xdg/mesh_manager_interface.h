@@ -71,7 +71,10 @@ public:
   virtual void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) = 0;
 
   virtual std::vector<std::pair<MeshID, double>>
-  walk_elements(const Position& start, const Position& end) const = 0;
+  walk_elements(MeshID starting_element,
+    const Position& start,
+    const Position& end) const = 0;
+
 
   MeshID next_volume(MeshID current_volume, MeshID surface) const;
 
