@@ -48,26 +48,26 @@ EmbreeRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager
 }
 
 TreeID EmbreeRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_manager,
-                                            MeshID volume_id)
+                                            MeshID volume)
 {
   TreeID tree = next_tree_id();
   trees_.push_back(tree);
   auto volume_scene = this->create_embree_scene();
 
   // allocate storage for this volume
-  auto volume_faces = mesh_manager->get_volume_faces(volume_id);
+  auto volume_faces = mesh_manager->get_volume_faces(volume);
   this->primitive_ref_storage_[volume_scene].resize(volume_faces.size());
   auto& triangle_storage = this->primitive_ref_storage_[volume_scene];
 
-  auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
+  auto volume_surfaces = mesh_manager->get_volume_surfaces(volume);
   int storage_offset {0};
   for (auto& surface_id : volume_surfaces) {
     // get the sense of this surface with respect to the volume
     Sense triangle_sense {Sense::UNSET};
     auto surf_to_vol_senses = mesh_manager->get_parent_volumes(surface_id);
-    if (volume_id == surf_to_vol_senses.first) triangle_sense = Sense::FORWARD;
-    else if (volume_id == surf_to_vol_senses.second) triangle_sense = Sense::REVERSE;
-    else fatal_error("Volume {} is not a parent of surface {}", volume_id, surface_id);
+    if (volume == surf_to_vol_senses.first) triangle_sense = Sense::FORWARD;
+    else if (volume == surf_to_vol_senses.second) triangle_sense = Sense::REVERSE;
+    else fatal_error("Volume {} is not a parent of surface {}", volume, surface_id);
 
     auto surface_faces = mesh_manager->get_surface_faces(surface_id);
     for (int i = 0; i < surface_faces.size(); ++i) {
@@ -80,7 +80,7 @@ TreeID EmbreeRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& 
 
   PrimitiveRef* tri_ref_ptr = triangle_storage.data();
 
-  auto bump = bounding_box_bump(mesh_manager, volume_id);
+  auto bump = bounding_box_bump(mesh_manager, volume);
 /*
   TODO: none of the above is ray tracer specific. This can be a part of the common register_volume
   implementation. Then another virtual function can be called register_volume_RT_specific.
