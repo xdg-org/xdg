@@ -103,6 +103,12 @@ public:
 
   void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override;
 
+  std::pair<MeshID, double>
+  next_element(MeshID current_element,
+                              const Position& r,
+                              const Position& u) const;
+
+
   std::vector<std::pair<MeshID, double>>
   walk_elements(MeshID starting_element,
                 const Position& start,

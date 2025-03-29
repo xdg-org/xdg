@@ -1,6 +1,7 @@
 #include "xdg/libmesh/mesh_manager.h"
 
 #include "xdg/error.h"
+#include "xdg/geometry/plucker.h"
 #include "xdg/util/str_utils.h"
 
 #include "libmesh/boundary_info.h"
@@ -115,12 +116,76 @@ void LibMeshManager::add_surface_to_volume(MeshID volume, MeshID surface, Sense 
     }
 }
 
+std::pair<MeshID, double>
+LibMeshManager::next_element(MeshID current_element,
+                             const Position& r,
+                             const Position& u) const
+{
+  const auto& elem_ref = mesh()->elem_ref(current_element);
+
+  const auto& tet = (const libMesh::Tet4&)elem_ref;
+
+  std::array<double, 4> dists = {INFTY, INFTY, INFTY, INFTY};
+  std::array<bool, 4> hit_types;
+  // get the faces (triangles) of this element
+  for (int i = 0; i < elem_ref.n_sides(); i++) {
+    // triangle connectivity
+    std::array<Position, 3> coords;
+    for (int j = 0; j < 3; j++) {
+      const auto& node_ref = elem_ref.node_ref(tet.side_nodes_map[i][j]);
+      coords[j] = {node_ref(0), node_ref(1), node_ref(2)};
+    }
+    // get the normal of the triangle
+    const Position v1 = coords[1] - coords[0];
+    const Position v2 = coords[2] - coords[0];
+
+    const Position normal = (v1.cross(v2)).normalize();
+
+    // perform ray-triangle intersection
+    hit_types[i] = plucker_ray_tri_intersect(coords, r, u, dists[i]);
+  }
+
+  // determine the minimum distance to exit and the face number
+  int idx_out = -1;
+  double min_dist = INFTY;
+  for (int i = 0; i < dists.size(); i++) {
+    if (!hit_types[i])
+      continue;
+    if (dists[i] < min_dist) {
+      min_dist = dists[i];
+      idx_out = i;
+    }
+  }
+
+  if (idx_out == -1) {
+    fatal_error(fmt::format("No exit found in element {}", current_element));
+  }
+
+  const auto& next_elem = elem_ref.neighbor_ptr(idx_out);
+  return {next_elem->id(), dists[idx_out]};
+}
+
 std::vector<std::pair<MeshID, double>>
 LibMeshManager::walk_elements(MeshID starting_element,
-  const Position& start,
-  const Position& end) const
+                              const Position& start,
+                              const Position& end) const
 {
-  return {};
+  const Position& r = start;
+  Position u = (end - start);
+  double distance = u.length();
+  u.normalize();
+
+  std::vector<std::pair<MeshID, double>> result;
+
+  MeshID elem = starting_element;
+  while (distance > 0) {
+    auto exit = next_element(elem, r, u);
+    exit.second = std::min(exit.second, distance);
+    distance -= exit.second;
+    result.push_back(exit);
+  }
+
+  return result;
 }
 
 void LibMeshManager::parse_metadata() {
