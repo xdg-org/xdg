@@ -11,3 +11,6 @@
 [submodule "vendor/argparse"]
 	path = vendor/argparse
 	url = https://github.com/p-ranav/argparse.git
+[submodule "vendor/GPRT"]
+	path = vendor/GPRT
+	url = https://github.com/gprt-org/GPRT.git
