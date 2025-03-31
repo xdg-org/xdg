@@ -162,15 +162,15 @@ private:
     // each tetrahedron is defined by 4 vertices, the last vertex is the center of the bounding box
     {0, 1, 2, 8}, // lower z plane
     {0, 2, 3, 8},
-    {4, 5, 6, 8}, // upper z plane
-    {4, 6, 7, 8},
-    {0, 1, 5, 8}, // lower x plane
-    {0, 5, 4, 8},
-    {2, 3, 7, 8}, // upper x plane
-    {2, 7, 6, 8},
-    {0, 3, 7, 8}, // lower y plane
-    {0, 7, 4, 8},
-    {1, 2, 6, 8}, // upper y plane
-    {1, 6, 5, 8}
-   };
+    {4, 6, 5, 8}, // upper z plane
+    {4, 7, 6, 8},
+    {0, 5, 1, 8}, // lower x plane
+    {0, 4, 5, 8},
+    {2, 6, 7, 8}, // upper x plane
+    {2, 7, 3, 8},
+    {0, 7, 4, 8}, // lower y plane
+    {0, 3, 7, 8},
+    {1, 5, 6, 8}, // upper y plane
+    {1, 6, 2, 8}
+    };
 };
