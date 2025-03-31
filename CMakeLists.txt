@@ -83,6 +83,9 @@ endif()
 # argparse
 add_subdirectory(vendor/argparse)
 
+# GPRT
+add_subdirectory(vendor/GPRT)
+
 list(APPEND xdg_sources
 src/geometry/measure.cpp
 src/geometry/plucker.cpp
