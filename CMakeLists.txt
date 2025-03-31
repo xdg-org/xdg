@@ -93,6 +93,9 @@ add_subdirectory(vendor/argparse)
 set(INDICATORS_INSTALL ON CACHE STRING "Ensure indicators targets are provided")
 add_subdirectory(vendor/indicators)
 
+# GPRT
+add_subdirectory(vendor/GPRT)
+
 list(APPEND xdg_sources
 src/geometry/measure.cpp
 src/geometry/plucker.cpp
