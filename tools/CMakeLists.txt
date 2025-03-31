@@ -15,6 +15,20 @@ foreach(tool ${TOOL_NAMES})
     add_executable(${tool_exec} ${tool}.cpp)
     target_link_libraries(${tool_exec} xdg argparse)
     target_link_libraries(${tool_exec} xdg gprt)
-    target_include_directories(${tool_exec} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/vendor/GPRT/gprt)
     install(TARGETS ${tool_exec} DESTINATION ${CMAKE_INSTALL_BINDIR}/tools)
 endforeach()
+
+# GPRT specific includes
+embed_devicecode(
+  OUTPUT_TARGET
+  gprt_test_deviceCode
+  HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/sharedCode.h
+  SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/deviceCode.slang
+)
+
+target_link_libraries(gprt-test
+    gprt_test_deviceCode
+    gprt::gprt
+)
