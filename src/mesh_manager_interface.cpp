@@ -133,7 +133,7 @@ MeshManager::surface_bounding_box(MeshID surface) const
   auto elements = this->get_surface_faces(surface);
   BoundingBox bb;
   for (const auto& element : elements) {
-    bb.update(this->element_bounding_box(element));
+    bb.update(this->face_bounding_box(element));
   }
   return bb;
 }

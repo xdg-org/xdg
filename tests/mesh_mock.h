@@ -66,13 +66,12 @@ public:
   }
 
   virtual std::vector<Vertex> element_vertices(MeshID element) const override {
-    const auto& conn = triangle_connectivity[element];
-    return {vertices[conn[0]], vertices[conn[1]], vertices[conn[2]]};
+    return {};
   }
 
   virtual std::array<Vertex, 3> face_vertices(MeshID element) const override {
-    const auto vertices = element_vertices(element);
-    return {vertices[0], vertices[1], vertices[2]};
+    const auto& conn = triangle_connectivity[element];
+    return {vertices[conn[0]], vertices[conn[1]], vertices[conn[2]]};
   }
 
   // Topology
