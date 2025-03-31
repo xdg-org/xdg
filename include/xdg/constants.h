@@ -58,11 +58,6 @@ using MeshID = int32_t;
 // Invalid
 constexpr MeshID ID_NONE {-1};
 
-// GPRT stubs
-struct GPRTAccel {}; // equivalent to Embree RTCScene
-struct GPRTGeom {}; // equivalent to Embree RTCGeometry
-struct GPRTContext {}; // equivalent to Embree RTCDevice
-
 // Scene/Tree ID
 using TreeID = int32_t;
 
