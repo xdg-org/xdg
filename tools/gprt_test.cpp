@@ -7,6 +7,7 @@
 #include "xdg/xdg.h"
 #include "gprt/gprt.h"
 #include "sharedCode.h"
+#include "argparse/argparse.hpp"
 
 
 
@@ -32,6 +33,29 @@ const char *outFileName = "gprt-test.png";
 
 
 int main(int argc, char* argv[]) {
+
+  // Argparse
+  argparse::ArgumentParser args("XDG-GPRT Integration Testing Tool", "1.0", argparse::default_arguments::help);
+
+  args.add_argument("filename")
+  .help("Path to the input file");
+
+  try {
+    args.parse_args(argc, argv);
+  }
+  catch (const std::runtime_error& err) {
+    std::cout << err.what() << std::endl;
+    std::cout << args;
+    exit(0);
+  }
+
+  // Initialize XDG
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
+  const auto& mm = xdg->mesh_manager();
+  mm->load_file(args.get<std::string>("filename"));
+  mm->init();
+  xdg->prepare_raytracer();
+
   // A test program to check integration of GPRT into XDG
 
   // Parse command line arguments
