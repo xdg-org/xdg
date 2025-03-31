@@ -11,7 +11,7 @@ using namespace xdg;
 
 class MeshMock : public MeshManager {
 public:
-  MeshMock() {
+  MeshMock(bool volumetric_elements = true) : volumetric_elements_(volumetric_elements) {
     volumes_ = {0};
     surfaces_ = {0, 1, 2, 3, 4, 5};
   }
@@ -45,7 +45,8 @@ public:
   }
 
   virtual int num_volume_elements(MeshID volume) const override {
-    return 0;
+    if (!volumetric_elements_) return 0;
+    return 12;
   }
 
   virtual int num_volume_faces(MeshID volume) const override {
@@ -57,7 +58,8 @@ public:
   }
 
   virtual std::vector<MeshID> get_volume_elements(MeshID volume) const override {
-    return {};
+    if (!volumetric_elements_) return {};
+    return {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}; // returning all tetrahedron elements
   }
 
   virtual std::vector<MeshID> get_surface_faces(MeshID surface) const override {
@@ -66,7 +68,9 @@ public:
   }
 
   virtual std::vector<Vertex> element_vertices(MeshID element) const override {
-    return {};
+    if (!volumetric_elements_) return {};
+    const auto& conn = tetrahedron_connectivity[element];
+    return {vertices[conn[0]], vertices[conn[1]], vertices[conn[2]], vertices[conn[3]]};
   }
 
   virtual std::array<Vertex, 3> face_vertices(MeshID element) const override {
@@ -113,6 +117,8 @@ public:
 
 // Data members
 private:
+  bool volumetric_elements_; // flag to indicate if the mesh has volumetric elements
+
   const BoundingBox bounding_box {-2.0, -3.0, -4.0, 5.0, 6.0, 7.0};
 
   const std::vector<Position> vertices {
@@ -125,7 +131,8 @@ private:
     {bounding_box.max_x, bounding_box.min_y, bounding_box.min_z},
     {bounding_box.max_x, bounding_box.max_y, bounding_box.min_z},
     {bounding_box.min_x, bounding_box.max_y, bounding_box.min_z},
-    {bounding_box.min_x, bounding_box.min_y, bounding_box.min_z}
+    {bounding_box.min_x, bounding_box.min_y, bounding_box.min_z},
+    {bounding_box.center()} // bounding box center for tet elements
   };
 
   const std::vector<std::array<int, 3>>  triangle_connectivity {
@@ -149,4 +156,21 @@ private:
   {6, 1, 5}
   };
 
+  // tetrahedron connectivity for a cube, all elements connect to the center vertex
+  // there are 12 tetrahedron in total
+  const std::vector<std::array<int, 4>> tetrahedron_connectivity {
+    // each tetrahedron is defined by 4 vertices, the last vertex is the center of the bounding box
+    {0, 1, 2, 8}, // lower z plane
+    {0, 2, 3, 8},
+    {4, 5, 6, 8}, // upper z plane
+    {4, 6, 7, 8},
+    {0, 1, 5, 8}, // lower x plane
+    {0, 5, 4, 8},
+    {2, 3, 7, 8}, // upper x plane
+    {2, 7, 6, 8},
+    {0, 3, 7, 8}, // lower y plane
+    {0, 7, 4, 8},
+    {1, 2, 6, 8}, // upper y plane
+    {1, 6, 5, 8}
+   };
 };

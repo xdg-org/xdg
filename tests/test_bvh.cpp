@@ -12,6 +12,8 @@ using namespace xdg;
 
 TEST_CASE("Test Mesh BVH")
 {
+  // create a mock mesh manager without volumetric elements
+
   std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
   mm->init(); // this should do nothing
 
@@ -25,7 +27,23 @@ TEST_CASE("Test Mesh BVH")
   for (auto volume: mm->volumes()) {
     auto [volume_tree, element_tree] = rti->register_volume(mm, volume);
     volume_to_scene_map[volume] = volume_tree;
-    REQUIRE(element_tree == TREE_NONE);
+  }
+
+  REQUIRE(rti->num_registered_trees() == 2);
+
+  mm = std::make_shared<MeshMock>(false); // reset the mesh manager to not have volumetric elements
+  mm->init(); // this should do nothing
+
+  REQUIRE(mm->num_volumes() == 1);
+  REQUIRE(mm->num_surfaces() == 6);
+  REQUIRE(mm->num_volume_faces(1) == 12);
+
+  rti = std::make_shared<EmbreeRayTracer>();
+
+  volume_to_scene_map.clear();
+  for (auto volume: mm->volumes()) {
+    auto [volume_tree, element_tree] = rti->register_volume(mm, volume);
+    volume_to_scene_map[volume] = volume_tree;
   }
 
   REQUIRE(rti->num_registered_trees() == 1);

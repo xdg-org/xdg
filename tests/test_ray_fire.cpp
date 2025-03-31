@@ -14,14 +14,14 @@ using namespace xdg;
 
 TEST_CASE("Test Ray Fire Mesh Mock")
 {
-  std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
+  std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>(false);
   mm->init(); // this should do nothing, just good practice to call it
   REQUIRE(mm->mesh_library() == MeshLibrary::INTERNAL);
 
   std::shared_ptr<RayTracer> rti = std::make_shared<EmbreeRayTracer>();
   auto [volume_tree, element_tree] = rti->register_volume(mm, mm->volumes()[0]);
   REQUIRE(volume_tree != ID_NONE);
-  REQUIRE(element_tree == TREE_NONE);
+  REQUIRE(element_tree == ID_NONE);
 
   Position origin {0.0, 0.0, 0.0};
   Direction direction {1.0, 0.0, 0.0};
