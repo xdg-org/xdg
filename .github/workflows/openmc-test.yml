@@ -33,6 +33,30 @@ jobs:
           echo "OPENMC_ENDF_DATA=$HOME/endf-b-vii.1" >> $GITHUB_ENV
           echo "PATH=$HOME/opt/bin:$PATH" >> $GITHUB_ENV
 
+          - name: Update CMake
+          uses: ssrobins/install-cmake@v1
+          with:
+            version: 3.24.3
+            cache: true
+
+            - name: GPRT Apt Dependencies
+          shell: bash
+          run: |
+            sudo apt install -y \
+            libpthread-stubs0-dev \
+            libx11-xcb-dev \
+            xorg-dev \
+            libxinerama-dev \
+            libglu1-mesa-dev \
+            freeglut3-dev \
+            mesa-common-dev \
+            libglfw3
+
+        - name: Install Vulkan SDK
+          uses: humbletim/install-vulkan-sdk@v1.2
+          with:
+            version: 1.4.309.0
+            cache: true
 
       - name: Clone MOAB
         shell: bash
