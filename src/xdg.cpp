@@ -109,6 +109,19 @@ MeshID XDG::find_element(MeshID volume,
   return ray_tracing_interface()->find_element(scene, point);
 }
 
+std::vector<std::pair<MeshID, double>>
+XDG::segments(MeshID volume,
+              const Position& start,
+              const Position& end) const
+{
+  TreeID volume_tree = volume_to_point_location_tree_map_.at(volume);
+  MeshID starting_element = ray_tracing_interface()->find_element(volume_tree, start);
+  // TODO: trace ray up to surface
+  if (starting_element == ID_NONE) return {};
+  auto segments = mesh_manager()->walk_elements(starting_element, start, end);
+  return segments;
+}
+
 std::pair<double, MeshID>
 XDG::ray_fire(MeshID volume,
               const Position& origin,

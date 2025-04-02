@@ -86,7 +86,6 @@ TEST_CASE("Test Ray Fire MOAB")
   mesh_manager->init();
   xdg->prepare_raytracer();
 
-
   MeshID volume = mesh_manager->volumes()[0];
 
   Position origin {0.0, 0.0, 0.0};

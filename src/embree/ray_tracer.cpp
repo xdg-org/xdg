@@ -166,7 +166,6 @@ TreeID EmbreeRayTracer::create_element_tree(const std::shared_ptr<MeshManager>& 
   trees_.push_back(tree);
   tree_to_scene_map_[tree] = volume_element_scene;
   return tree;
-
 }
 
 MeshID EmbreeRayTracer::find_element(TreeID tree,

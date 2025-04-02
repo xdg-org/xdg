@@ -1,11 +1,12 @@
-
-// Mock data for mesh interface testing
+#include <unordered_map>
 
 #include "xdg/bbox.h"
 #include "xdg/constants.h"
 #include "xdg/error.h"
 #include "xdg/vec3da.h"
 #include "xdg/mesh_manager_interface.h"
+
+#include "xdg/geometry/plucker.h"
 
 using namespace xdg;
 
@@ -92,8 +93,70 @@ public:
                 const Position& start,
                 const Position& end) const override
   {
-    return {};
+    const Position& r = start;
+    Position u = (end - start);
+    double distance = u.length();
+    u.normalize();
+
+    std::vector<std::pair<MeshID, double>> result;
+
+    MeshID elem = starting_element;
+    while (distance > 0) {
+      auto exit = next_element(elem, r, u);
+      exit.second = std::min(exit.second, distance);
+      distance -= exit.second;
+      result.push_back(exit);
+    }
+    return result;
   }
+
+  std::pair<MeshID, double>
+  next_element(MeshID current_element,
+                const Position& r,
+                const Position& u) const
+  {
+    // get the tetrahedron element
+    const auto& elem_ref = tetrahedron_connectivity[current_element];
+
+    std::array<double, 4> dists = {INFTY, INFTY, INFTY, INFTY};
+    std::array<bool, 4> hit_types = {false, false, false, false};
+
+    // get the faces (triangles) of this element
+    for (int i = 0; i < 4; i++) {
+      // triangle connectivity
+      std::array<Position, 3> coords;
+      for (int j = 0; j < 3; j++) {
+        coords[j] = vertices[elem_ref[(i + j) % 4]];
+      }
+      // get the normal of the triangle
+      const Position v1 = coords[1] - coords[0];
+      const Position v2 = coords[2] - coords[0];
+
+      const Position normal = (v1.cross(v2)).normalize();
+
+      // perform ray-triangle intersection
+      hit_types[i] = plucker_ray_tri_intersect(coords, r, u, dists[i]);
+    }
+
+    // determine the minimum distance to exit and the face number
+    int idx_out = -1;
+    double min_dist = INFTY;
+    for (int i = 0; i < dists.size(); i++) {
+      if (!hit_types[i])
+        continue;
+      if (dists[i] < min_dist) {
+        min_dist = dists[i];
+        idx_out = i;
+      }
+    }
+
+    if (idx_out == -1) {
+      fatal_error(fmt::format("No exit found in element {}", current_element));
+    }
+
+    MeshID next_element = element_adjacencies.at(current_element)[idx_out];
+    return {next_element, min_dist};
+ }
 
   Sense surface_sense(MeshID surface, MeshID volume) const override {
     return Sense::FORWARD;
@@ -112,6 +175,10 @@ public:
     fatal_error("MockMesh does not support parse_metadata()");
   }
 
+  BoundingBox bounding_box() const {
+    return bounding_box_;
+  }
+
   // Other
   virtual MeshLibrary mesh_library() const override { return MeshLibrary::INTERNAL; }
 
@@ -119,41 +186,35 @@ public:
 private:
   bool volumetric_elements_; // flag to indicate if the mesh has volumetric elements
 
-  const BoundingBox bounding_box {-2.0, -3.0, -4.0, 5.0, 6.0, 7.0};
+  const BoundingBox bounding_box_ {-2.0, -3.0, -4.0, 5.0, 6.0, 7.0};
 
   const std::vector<Position> vertices {
     // vertices in the upper z plane
-    {bounding_box.max_x, bounding_box.min_y, bounding_box.max_z},
-    {bounding_box.max_x, bounding_box.max_y, bounding_box.max_z},
-    {bounding_box.min_x, bounding_box.max_y, bounding_box.max_z},
-    {bounding_box.min_x, bounding_box.min_y, bounding_box.max_z},
+    {bounding_box_.max_x, bounding_box_.min_y, bounding_box_.max_z},
+    {bounding_box_.max_x, bounding_box_.max_y, bounding_box_.max_z},
+    {bounding_box_.min_x, bounding_box_.max_y, bounding_box_.max_z},
+    {bounding_box_.min_x, bounding_box_.min_y, bounding_box_.max_z},
     // vertices in the lower z plane
-    {bounding_box.max_x, bounding_box.min_y, bounding_box.min_z},
-    {bounding_box.max_x, bounding_box.max_y, bounding_box.min_z},
-    {bounding_box.min_x, bounding_box.max_y, bounding_box.min_z},
-    {bounding_box.min_x, bounding_box.min_y, bounding_box.min_z},
-    {bounding_box.center()} // bounding box center for tet elements
+    {bounding_box_.max_x, bounding_box_.min_y, bounding_box_.min_z},
+    {bounding_box_.max_x, bounding_box_.max_y, bounding_box_.min_z},
+    {bounding_box_.min_x, bounding_box_.max_y, bounding_box_.min_z},
+    {bounding_box_.min_x, bounding_box_.min_y, bounding_box_.min_z},
+    {bounding_box_.center()} // bounding box center for tet elements
   };
 
-  const std::vector<std::array<int, 3>>  triangle_connectivity {
-  // lower z face
-  {0, 1, 3},
-  {3, 1, 2},
-  // upper z face
-  {4, 7, 5},
-  {7, 6, 5},
-  // lower x face
-  {6, 3, 2},
-  {7, 3, 6},
-  // upper x face
-  {0, 4, 1},
-  {5, 1, 4},
-  // lower y face
-  {0, 3, 4},
-  {7, 4, 3},
-  // upper y face
-  {1, 6, 2},
-  {6, 1, 5}
+  const std::vector<std::array<int, 3>> triangle_connectivity {
+    {0, 1, 2},
+    {0, 2, 3},
+    {4, 6, 5},
+    {4, 7, 6},
+    {0, 5, 1},
+    {0, 4, 5},
+    {2, 6, 7},
+    {2, 7, 3},
+    {0, 7, 4},
+    {0, 3, 7},
+    {1, 5, 6},
+    {1, 6, 2}
   };
 
   // tetrahedron connectivity for a cube, all elements connect to the center vertex
@@ -173,4 +234,21 @@ private:
     {1, 5, 6, 8}, // upper y plane
     {1, 6, 2, 8}
     };
+
+    std::unordered_map<MeshID, std::array<MeshID, 4>> element_adjacencies {
+      {0,  {-1, 1, 4, 11}},
+      {1,  {-1, 9, 0, 7}},
+      {2,  {-1, 5, 3, 10}},
+      {3,  {-1, 2, 8, 6}},
+      {4,  {-1, 0, 5, 10}},
+      {5,  {-1, 4, 8, 2}},
+      {6,  {-1, 7, 11, 3}},
+      {7,  {-1, 1, 6, 9}},
+      {8,  {-1, 5, 9, 3}},
+      {9,  {-1, 8, 1, 7}},
+      {10, {-1, 11, 4, 2}},
+      {11, {-1, 0, 10, 6}}
+    };
+
+
 };
