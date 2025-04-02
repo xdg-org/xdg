@@ -15,12 +15,14 @@ EmbreeRayTracer::EmbreeRayTracer()
 {
   device_ = rtcNewDevice(nullptr);
   rtcSetDeviceErrorFunction(device_, (RTCErrorFunction)error, nullptr);
+  global_element_scene_ = create_embree_scene();
 }
 
 EmbreeRayTracer::~EmbreeRayTracer()
 {
   rtcReleaseDevice(device_);
 }
+
 
 void EmbreeRayTracer::init()
 {
@@ -166,6 +168,33 @@ TreeID EmbreeRayTracer::create_element_tree(const std::shared_ptr<MeshManager>& 
   trees_.push_back(tree);
   tree_to_scene_map_[tree] = volume_element_scene;
   return tree;
+}
+
+void EmbreeRayTracer::create_global_surface_tree()
+{
+  if (global_surface_scene_ != nullptr) {
+    rtcReleaseScene(global_surface_scene_);
+  }
+  global_surface_scene_ = create_embree_scene();
+
+  for(auto& [surface, geom] : surface_to_geometry_map_) {
+      rtcAttachGeometry(global_surface_scene_, geom);
+  }
+
+  rtcCommitScene(global_surface_scene_);
+}
+
+void EmbreeRayTracer::create_global_element_tree()
+{
+  if (global_element_scene_ != nullptr) {
+    rtcReleaseScene(global_element_scene_);
+  }
+  global_element_scene_ = create_embree_scene();
+
+  for (auto& [vol_geom, data] : volume_element_user_data_map_) {
+    rtcAttachGeometry(global_element_scene_, vol_geom);
+  }
+  rtcCommitScene(global_element_scene_);
 }
 
 MeshID EmbreeRayTracer::find_element(TreeID tree,

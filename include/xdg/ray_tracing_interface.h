@@ -39,6 +39,16 @@ public:
   virtual std::pair<TreeID, TreeID>
   register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) = 0;
 
+  /**
+  * @brief Builds a global tree for all surfaces registered with the ray tracer.
+  */
+  virtual void create_global_surface_tree() = 0;
+
+  /**
+   * @brief Builds a global tree for all elements registered with the ray tracer.
+   */
+  virtual void create_global_element_tree() = 0;
+
   // Query Methods
   virtual bool point_in_volume(TreeID tree,
                        const Position& point,
@@ -83,7 +93,9 @@ protected:
 
   // Common member variables across RayTracers
 
-  TreeID global_tree_; //<! TreeID for the global tree
+  TreeID global_surface_tree_ {TREE_NONE}; //<! TreeID for the global surface tree
+  TreeID global_element_tree_ {TREE_NONE}; //<! TreeID for the global element tree
+
   std::map<MeshID, TreeID> surface_to_tree_map_; //<! Map from mesh surface to ray tracing tree
   std::map<MeshID, TreeID> point_location_tree_map_; //<! Map from mesh volume to point location tree
   std::vector<TreeID> trees_; //<! All trees created by this ray tracer

@@ -28,6 +28,9 @@ public:
   register_volume(const std::shared_ptr<MeshManager> mesh_manager,
                   MeshID volume) override;
 
+  void create_global_surface_tree() override;
+  void create_global_element_tree() override;
+
   TreeID create_surface_tree(const std::shared_ptr<MeshManager>& mesh_manager,
                              MeshID volume);
 
@@ -80,6 +83,9 @@ public:
   std::unordered_map<RTCGeometry, std::shared_ptr<VolumeElementsUserData>> volume_element_user_data_map_;
 
   std::unordered_map<TreeID, RTCScene> tree_to_scene_map_; // Map from XDG::TreeID to specific embree scene/tree
+
+  RTCScene global_surface_scene_; //<! Global surface tree for point location
+  RTCScene global_element_scene_; //<! Global element tree for point location
 
   // storage
   std::unordered_map<RTCScene, std::vector<PrimitiveRef>> primitive_ref_storage_;

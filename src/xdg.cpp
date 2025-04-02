@@ -114,11 +114,27 @@ XDG::segments(MeshID volume,
               const Position& start,
               const Position& end) const
 {
+  Position start_copy = start;
+  Direction u = (end - start).normalize();
   TreeID volume_tree = volume_to_point_location_tree_map_.at(volume);
   MeshID starting_element = ray_tracing_interface()->find_element(volume_tree, start);
-  // TODO: trace ray up to surface
+
+  // if we're outside of the region of interest, determine the distance to an entering intersection
+  // with the model
+  if (starting_element == ID_NONE) {
+    auto hit = ray_fire(volume, start, u, INFTY, HitOrientation::ENTERING);
+    if (hit.second == ID_NONE) return {};
+    // TODO: use mesh adjaccies to find the element on the other side of the hit face
+    starting_element = ray_tracing_interface()->find_element(volume_tree, start + u * TINY_BIT);
+    if (starting_element == ID_NONE) {
+      warning("Ray fire hit surface {}, but could not find element on the other side of the surface.", hit.second);
+      return {};
+    }
+    start_copy += u * hit.first;
+  }
+
   if (starting_element == ID_NONE) return {};
-  auto segments = mesh_manager()->walk_elements(starting_element, start, end);
+  auto segments = mesh_manager()->walk_elements(starting_element, start_copy, end);
   return segments;
 }
 

@@ -12,7 +12,7 @@
 #include "mesh_mock.h"
 
 
-TEST_CASE("Test Segment Intersection")
+TEST_CASE("Test Internal Tracks")
 {
   std::shared_ptr<MeshMock> mm = std::make_shared<MeshMock>();
   mm->init(); // this should do nothing
@@ -38,7 +38,38 @@ TEST_CASE("Test Segment Intersection")
   REQUIRE(total_length == Catch::Approx((start-end).length()).epsilon(0.00001));
 }
 
-TEST_CASE("Test Random Segments")
+TEST_CASE("Test Intersecting Tracks")
+{
+  std::shared_ptr<MeshMock> mm = std::make_shared<MeshMock>();
+  mm->init(); // this should do nothing
+  mm->create_implicit_complement(); // create the implicit complement
+  std::shared_ptr<XDG> xdg = std::make_shared<XDG>(mm);
+  REQUIRE(mm->num_volumes() == 1);
+  REQUIRE(mm->num_surfaces() == 6);
+  REQUIRE(mm->num_volume_elements(1) == 12); // should return 12 volumetric elements
+
+  xdg->prepare_raytracer();
+  REQUIRE(xdg->ray_tracing_interface()->num_registered_trees() == 2);
+
+  // lay a track onto the tet mesh
+  MeshID volume_id = 0;
+  Position start = mm->bounding_box().center();
+  start.x -= 10;
+  std::cout << "start: " << start << std::endl;
+  Position end = mm->bounding_box().center();
+
+  auto track_segments = xdg->segments(volume_id, start, end);
+
+  double total_length {0.0};
+  for (auto& segment : track_segments) {
+    total_length += segment.second;
+  }
+
+  double exp_distance = (start - end).length() + mm->bounding_box().min_x;
+  REQUIRE(total_length == Catch::Approx(exp_distance).epsilon(0.00001));
+}
+
+TEST_CASE("Test Random Internal Tracks")
 {
   std::shared_ptr<MeshMock> mm = std::make_shared<MeshMock>();
   mm->init(); // this should do nothing

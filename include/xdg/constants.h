@@ -19,6 +19,8 @@ constexpr double INFTY {std::numeric_limits<double>::max()};
   constexpr double INFTYF {std::numeric_limits<float>::max()};
 #endif
 
+constexpr double TINY_BIT {1e-10};
+
 // Whether information pertains to a surface or volume
 enum class GeometryType {
  SURFACE = 2,
