@@ -36,7 +36,7 @@ bool primitive_mask_cull(RTCDRayHit* rayhit, int primID) {
 
 void TriangleBoundsFunc(RTCBoundsFunctionArguments* args)
 {
-  const GeometryUserData* user_data = (const GeometryUserData*)args->geometryUserPtr;
+  const SurfaceUserData* user_data = (const SurfaceUserData*)args->geometryUserPtr;
   const MeshManager* mesh_manager = user_data->mesh_manager;
 
   const PrimitiveRef& primitive_ref = user_data->prim_ref_buffer[args->primID];
@@ -51,7 +51,7 @@ void TriangleBoundsFunc(RTCBoundsFunctionArguments* args)
 }
 
 void TriangleIntersectionFunc(RTCIntersectFunctionNArguments* args) {
-  const GeometryUserData* user_data = (const GeometryUserData*)args->geometryUserPtr;
+  const SurfaceUserData* user_data = (const SurfaceUserData*)args->geometryUserPtr;
   const MeshManager* mesh_manager = user_data->mesh_manager;
 
   const PrimitiveRef& primitive_ref = user_data->prim_ref_buffer[args->primID];
@@ -102,7 +102,7 @@ void TriangleIntersectionFunc(RTCIntersectFunctionNArguments* args) {
 bool TriangleClosestFunc(RTCPointQueryFunctionArguments* args) {
   RTCGeometry g = rtcGetGeometry(*(RTCScene*)args->userPtr, args->geomID);
   // get the array of DblTri's stored on the geometry
-  const GeometryUserData* user_data = (const GeometryUserData*) rtcGetGeometryUserData(g);
+  const SurfaceUserData* user_data = (const SurfaceUserData*) rtcGetGeometryUserData(g);
 
   const MeshManager* mesh_manager = user_data->mesh_manager;
 
@@ -128,7 +128,7 @@ bool TriangleClosestFunc(RTCPointQueryFunctionArguments* args) {
 }
 
 void TriangleOcclusionFunc(RTCOccludedFunctionNArguments* args) {
-  const GeometryUserData* user_data = (const GeometryUserData*) args->geometryUserPtr;
+  const SurfaceUserData* user_data = (const SurfaceUserData*) args->geometryUserPtr;
   const MeshManager* mesh_manager = user_data->mesh_manager;
   const PrimitiveRef& primitive_ref = user_data->prim_ref_buffer[args->primID];
 

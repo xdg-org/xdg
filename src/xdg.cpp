@@ -23,6 +23,9 @@ void XDG::prepare_raytracer()
   for (auto volume : mesh_manager()->volumes()) {
     this->prepare_volume_for_raytracing(volume);
   }
+
+  ray_tracing_interface()->create_global_element_tree();
+  ray_tracing_interface()->create_global_surface_tree();
 }
 
 void XDG::prepare_volume_for_raytracing(MeshID volume) {

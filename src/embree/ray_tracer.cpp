@@ -100,17 +100,16 @@ TreeID EmbreeRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& 
     RTCGeometry surface_geometry = rtcNewGeometry(device_, RTC_GEOMETRY_TYPE_USER);
     rtcSetGeometryUserPrimitiveCount(surface_geometry, surface_triangles.size());
     unsigned int embree_surface = rtcAttachGeometry(volume_scene, surface_geometry);
-    this->surface_to_geometry_map_[surface] = surface_geometry;
 
-    std::shared_ptr<GeometryUserData> surface_data = std::make_shared<GeometryUserData>();
+    std::shared_ptr<SurfaceUserData> surface_data = std::make_shared<SurfaceUserData>();
     surface_data->box_bump = bump;
     surface_data->surface_id = surface;
     surface_data->mesh_manager = mesh_manager.get();
     surface_data->prim_ref_buffer = tri_ref_ptr + buffer_start;
-    user_data_map_[surface_geometry] = surface_data;
+    surface_user_data_map_[surface_geometry] = surface_data;
 
     // TODO: This could be a problem if user_data_map_ is reallocated?
-    rtcSetGeometryUserData(surface_geometry, user_data_map_[surface_geometry].get());
+    rtcSetGeometryUserData(surface_geometry, surface_user_data_map_[surface_geometry].get());
 
     for (int i = 0; i < surface_triangles.size(); ++i) {
       auto& triangle_ref = surface_data->prim_ref_buffer[i];
@@ -153,7 +152,7 @@ TreeID EmbreeRayTracer::create_element_tree(const std::shared_ptr<MeshManager>& 
   volume_elements_data->volume_id = volume;
   volume_elements_data->mesh_manager = mesh_manager.get();
   volume_elements_data->prim_ref_buffer = volume_element_storage.data();
-  this->volume_element_user_data_map_[element_geometry] = volume_elements_data;
+  this->volume_user_data_map_[element_geometry] = volume_elements_data;
 
   rtcSetGeometryUserData(element_geometry, volume_elements_data.get());
 
@@ -177,7 +176,7 @@ void EmbreeRayTracer::create_global_surface_tree()
   }
   global_surface_scene_ = create_embree_scene();
 
-  for(auto& [surface, geom] : surface_to_geometry_map_) {
+  for(auto& [geom, surface_data] : surface_user_data_map_) {
       rtcAttachGeometry(global_surface_scene_, geom);
   }
 
@@ -191,7 +190,7 @@ void EmbreeRayTracer::create_global_element_tree()
   }
   global_element_scene_ = create_embree_scene();
 
-  for (auto& [vol_geom, data] : volume_element_user_data_map_) {
+  for (auto& [vol_geom, data] : volume_user_data_map_) {
     rtcAttachGeometry(global_element_scene_, vol_geom);
   }
   rtcCommitScene(global_element_scene_);
