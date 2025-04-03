@@ -128,7 +128,7 @@ XDG::segments(MeshID volume,
     auto hit = ray_fire(volume, start, u, INFTY, HitOrientation::ENTERING);
     if (hit.second == ID_NONE) return {};
     // TODO: use mesh adjaccies to find the element on the other side of the hit face
-    starting_element = ray_tracing_interface()->find_element(volume_tree, start + u * TINY_BIT);
+    starting_element = ray_tracing_interface()->find_element(volume_tree, start + u * (hit.first + TINY_BIT));
     if (starting_element == ID_NONE) {
       warning("Ray fire hit surface {}, but could not find element on the other side of the surface.", hit.second);
       return {};
