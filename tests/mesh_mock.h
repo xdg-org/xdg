@@ -98,36 +98,6 @@ public:
     return {0, 1, 2, 3, 4, 5};
   }
 
-  std::vector<std::pair<MeshID, double>>
-  walk_elements(MeshID starting_element,
-                const Position& start,
-                const Position& end) const override
-  {
-    Position r = start;
-    Position u = (end - start);
-    double distance = u.length();
-    u.normalize();
-
-    std::vector<std::pair<MeshID, double>> result;
-
-    MeshID elem = starting_element;
-    while (distance > 0) {
-      auto exit = next_element(elem, r, u);
-      // ensure we are not traveling beyond the end of the ray
-      exit.second = std::min(exit.second, distance);
-      distance -= exit.second;
-      // only add to the result if the distance is greater than 0
-      if (exit.second > 0) result.push_back(exit);
-      r += exit.second * u;
-      elem = exit.first;
-
-      if (elem == ID_NONE) {
-        break;
-      }
-    }
-    return result;
-  }
-
   std::array<std::array<int, 3>, 4> tet_faces(const std::array<int, 4>& tet) const {
     return {{
       {tet[0], tet[1], tet[2]},
@@ -140,7 +110,7 @@ public:
   std::pair<MeshID, double>
   next_element(MeshID current_element,
                 const Position& r,
-                const Position& u) const
+                const Position& u) const override
   {
     // get the tetrahedron element
     const auto& elem_ref = tetrahedron_connectivity()[current_element];

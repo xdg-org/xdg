@@ -136,12 +136,44 @@ void MOABMeshManager::add_surface_to_volume(MeshID volume, MeshID surface, Sense
   this->moab_interface()->tag_set_data(surf_to_volume_sense_tag_, surf_handle_ptr, 1, sense_handles.data());
 }
 
-std::vector<std::pair<MeshID, double>>
-MOABMeshManager::walk_elements(MeshID starting_element,
-  const Position& start,
-  const Position& end) const
+std::pair<MeshID, double>
+MOABMeshManager::next_element(MeshID current_element,
+                               const Position& r,
+                               const Position& u) const
 {
-  return {};
+  fatal_error("next_element not implemented");
+  // auto element_adjacencies = this->mb_direct()->element_adjacencies(current_element);
+  // auto element_faces = this->mb_direct()->element_faces(current_element);
+
+  // // get the distances to each face
+  // std::vector<double> dists;
+  // std::vector<bool> hit_types;
+  // for (auto face : element_faces) {
+  //   double dist;
+  //   bool hit_type;
+  //   this->mb_direct()->closest(face, r, dist, hit_type);
+  //   dists.push_back(dist);
+  //   hit_types.push_back(hit_type);
+  // }
+
+  // // find the closest face
+  // int idx_out = -1;
+  // double min_dist = INFTY;
+  // for (int i = 0; i < dists.size(); i++) {
+  //   if (!hit_types[i])
+  //     continue;
+  //   if (dists[i] < min_dist) {
+  //     min_dist = dists[i];
+  //     idx_out = i;
+  //   }
+  // }
+
+  // if (idx_out == -1) {
+  //   fatal_error(fmt::format("No exit found in element {}", current_element));
+  // }
+
+  // MeshID next_element = element_adjacencies[idx_out];
+  // return {next_element, min_dist};
 }
 
 // Mesh Methods

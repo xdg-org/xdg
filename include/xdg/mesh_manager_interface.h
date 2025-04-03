@@ -72,9 +72,13 @@ public:
 
   virtual std::vector<std::pair<MeshID, double>>
   walk_elements(MeshID starting_element,
-    const Position& start,
-    const Position& end) const = 0;
+                const Position& start,
+                const Position& end) const ;
 
+  virtual std::pair<MeshID, double>
+  next_element(MeshID current_element,
+               const Position& r,
+               const Position& u) const = 0;
 
   MeshID next_volume(MeshID current_volume, MeshID surface) const;
 

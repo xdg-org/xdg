@@ -165,29 +165,6 @@ LibMeshManager::next_element(MeshID current_element,
   return {next_elem->id(), dists[idx_out]};
 }
 
-std::vector<std::pair<MeshID, double>>
-LibMeshManager::walk_elements(MeshID starting_element,
-                              const Position& start,
-                              const Position& end) const
-{
-  const Position& r = start;
-  Position u = (end - start);
-  double distance = u.length();
-  u.normalize();
-
-  std::vector<std::pair<MeshID, double>> result;
-
-  MeshID elem = starting_element;
-  while (distance > 0) {
-    auto exit = next_element(elem, r, u);
-    exit.second = std::min(exit.second, distance);
-    distance -= exit.second;
-    result.push_back(exit);
-  }
-
-  return result;
-}
-
 void LibMeshManager::parse_metadata() {
   // surface metadata
   auto boundary_info = mesh()->get_boundary_info();

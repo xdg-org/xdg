@@ -82,6 +82,36 @@ MeshManager::get_surface_property(MeshID surface, PropertyType type) const
   return surface_metadata_.at({surface, type});
 }
 
+std::vector<std::pair<MeshID, double>>
+MeshManager::walk_elements(MeshID starting_element,
+                           const Position& start,
+                           const Position& end) const
+{
+  Position r = start;
+  Position u = (end - start);
+  double distance = u.length();
+  u.normalize();
+
+  std::vector<std::pair<MeshID, double>> result;
+
+  MeshID elem = starting_element;
+  while (distance > 0) {
+    auto exit = next_element(elem, r, u);
+    // ensure we are not traveling beyond the end of the ray
+    exit.second = std::min(exit.second, distance);
+    distance -= exit.second;
+    // only add to the result if the distance is greater than 0
+    if (exit.second > 0) result.push_back(exit);
+    r += exit.second * u;
+    elem = exit.first;
+
+    if (elem == ID_NONE) {
+      break;
+    }
+  }
+  return result;
+}
+
 MeshID MeshManager::next_volume(MeshID current_volume, MeshID surface) const
 {
   auto parent_vols = this->get_parent_volumes(surface);

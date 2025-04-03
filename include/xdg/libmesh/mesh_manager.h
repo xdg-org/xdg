@@ -106,13 +106,7 @@ public:
   std::pair<MeshID, double>
   next_element(MeshID current_element,
                               const Position& r,
-                              const Position& u) const;
-
-
-  std::vector<std::pair<MeshID, double>>
-  walk_elements(MeshID starting_element,
-                const Position& start,
-                const Position& end) const override;
+                              const Position& u) const override;
 
   std::pair<MeshID, MeshID> surface_senses(MeshID surface) const override;
 
