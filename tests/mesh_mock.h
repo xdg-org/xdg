@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <unordered_map>
 
 #include "xdg/bbox.h"
@@ -15,6 +16,12 @@ public:
   MeshMock(bool volumetric_elements = true) : volumetric_elements_(volumetric_elements) {
     volumes_ = {0};
     surfaces_ = {0, 1, 2, 3, 4, 5};
+
+    // Initialize some internal topology data structures
+    volume_surfaces_map_[0] = surfaces_;
+    for (int surface : surfaces_) {
+      surface_sense_map_[surface] = {0, ID_NONE};
+    }
   }
 
   // Required overloads
@@ -84,7 +91,7 @@ public:
 
   // Topology
   virtual std::pair<MeshID, MeshID> surface_senses(MeshID surface) const override {
-    return {0, ID_NONE};
+    return surface_sense_map_.at(surface);
   }
 
   virtual std::vector<MeshID> get_volume_surfaces(MeshID volume) const override {
@@ -96,7 +103,7 @@ public:
                 const Position& start,
                 const Position& end) const override
   {
-    const Position& r = start;
+    Position r = start;
     Position u = (end - start);
     double distance = u.length();
     u.normalize();
@@ -106,11 +113,28 @@ public:
     MeshID elem = starting_element;
     while (distance > 0) {
       auto exit = next_element(elem, r, u);
+      // ensure we are not traveling beyond the end of the ray
       exit.second = std::min(exit.second, distance);
       distance -= exit.second;
-      result.push_back(exit);
+      // only add to the result if the distance is greater than 0
+      if (exit.second > 0) result.push_back(exit);
+      r += exit.second * u;
+      elem = exit.first;
+
+      if (elem == ID_NONE) {
+        break;
+      }
     }
     return result;
+  }
+
+  std::array<std::array<int, 3>, 4> tet_faces(const std::array<int, 4>& tet) const {
+    return {{
+      {tet[0], tet[1], tet[2]},
+      {tet[0], tet[2], tet[3]},
+      {tet[0], tet[3], tet[1]},
+      {tet[1], tet[3], tet[2]}
+    }};
   }
 
   std::pair<MeshID, double>
@@ -124,18 +148,26 @@ public:
     std::array<double, 4> dists = {INFTY, INFTY, INFTY, INFTY};
     std::array<bool, 4> hit_types = {false, false, false, false};
 
+    auto tet_face_conn = tet_faces(elem_ref);
+
     // get the faces (triangles) of this element
     for (int i = 0; i < 4; i++) {
       // triangle connectivity
       std::array<Position, 3> coords;
       for (int j = 0; j < 3; j++) {
-        coords[j] = vertices()[elem_ref[(i + j) % 4]];
+        coords[j] = vertices()[tet_face_conn[i][j]];
       }
+
       // get the normal of the triangle
       const Position v1 = coords[1] - coords[0];
       const Position v2 = coords[2] - coords[0];
 
       const Position normal = (v1.cross(v2)).normalize();
+
+      if (normal.dot(u) < 0.0) {
+        // the ray is not exiting this face
+        continue;
+      }
 
       // perform ray-triangle intersection
       hit_types[i] = plucker_ray_tri_intersect(coords, r, u, dists[i]);
@@ -154,6 +186,7 @@ public:
     }
 
     if (idx_out == -1) {
+
       fatal_error(fmt::format("No exit found in element {}", current_element));
     }
 
@@ -162,16 +195,36 @@ public:
  }
 
   Sense surface_sense(MeshID surface, MeshID volume) const override {
-    return Sense::FORWARD;
+    auto it = surface_sense_map_.find(surface);
+    if (it == surface_sense_map_.end()) {
+      fatal_error(fmt::format("Surface {} not found in surface_sense_map_", surface));
+    }
+    auto sense_pair = it->second;
+    if (sense_pair.first == volume) {
+      return Sense::FORWARD;
+    } else if (sense_pair.second == volume) {
+      return Sense::REVERSE;
+    }
+    fatal_error(fmt::format("Volume {} not found in surface_sense_map_ for surface {}", volume, surface));
+    return Sense::UNSET;
   }
 
   virtual MeshID create_volume() override {
-    fatal_error("MockMesh does not support create_volume()");
-    return ID_NONE;
+    volumes_.push_back(volumes_.size());
+    return volumes_.back();
   }
 
   virtual void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override {
-    fatal_error("MockMesh does not support add_surface_to_volume()");
+    auto& volume_surfaces = volume_surfaces_map_[volume];
+    if (!overwrite && std::find(volume_surfaces.begin(), volume_surfaces.end(), surface) != volume_surfaces.end()) {
+      fatal_error(fmt::format("Surface {} already exists in volume {}", surface, volume));
+    }
+    volume_surfaces.push_back(surface);
+    if (sense == Sense::FORWARD) {
+      surface_sense_map_[surface].first = volume;
+    } else if (sense == Sense::REVERSE) {
+      surface_sense_map_[surface].second = volume;
+    }
   }
 
   virtual void parse_metadata() override {
@@ -206,6 +259,9 @@ private:
   bool volumetric_elements_; // flag to indicate if the mesh has volumetric elements
 
   const BoundingBox bounding_box_ {-2.0, -3.0, -4.0, 5.0, 6.0, 7.0};
+
+  std::unordered_map<MeshID, std::pair<MeshID, MeshID>> surface_sense_map_;
+  std::unordered_map<MeshID, std::vector<MeshID>> volume_surfaces_map_;
 
   const std::vector<Vertex> vertices_ {
     // vertices in the upper z plane
