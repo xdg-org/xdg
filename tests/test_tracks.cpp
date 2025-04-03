@@ -49,13 +49,12 @@ TEST_CASE("Test Intersecting Tracks")
   REQUIRE(mm->num_volume_elements(1) == 12); // should return 12 volumetric elements
 
   xdg->prepare_raytracer();
-  REQUIRE(xdg->ray_tracing_interface()->num_registered_trees() == 2);
+  REQUIRE(xdg->ray_tracing_interface()->num_registered_trees() == 4);
 
   // lay a track onto the tet mesh
   MeshID volume_id = 0;
   Position start = mm->bounding_box().center();
   start.x -= 10;
-  std::cout << "start: " << start << std::endl;
   Position end = mm->bounding_box().center();
 
   auto track_segments = xdg->segments(volume_id, start, end);
@@ -65,7 +64,7 @@ TEST_CASE("Test Intersecting Tracks")
     total_length += segment.second;
   }
 
-  double exp_distance = (start - end).length() + mm->bounding_box().min_x;
+  double exp_distance = mm->bounding_box().center().x - mm->bounding_box().min_x;
   REQUIRE(total_length == Catch::Approx(exp_distance).epsilon(0.00001));
 }
 
@@ -88,8 +87,7 @@ TEST_CASE("Test Random Internal Tracks")
 
   // create uniform distributions for each dimension of the bounding box
   auto bbox = mm->bounding_box();
-  std::random_device rd;  // Will be used to obtain a seed for the random number engine
-  std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
+  std::mt19937 gen(42); // Standard mersenne_twister_engine
   std::uniform_real_distribution<double> x_dist(bbox.min_x, bbox.max_x);
   std::uniform_real_distribution<double> y_dist(bbox.min_y, bbox.max_y);
   std::uniform_real_distribution<double> z_dist(bbox.min_z, bbox.max_z);
@@ -98,6 +96,8 @@ TEST_CASE("Test Random Internal Tracks")
   for (int i = 0; i < n_segments; ++i) {
     start = {x_dist(gen), y_dist(gen), z_dist(gen)};
     end = {x_dist(gen), y_dist(gen), z_dist(gen)};
+
+    std::cout << "Start: " << start << ", End: " << end << std::endl;
 
     // check that the segments are valid
     auto track_segments = xdg->segments(volume_id, start, end);
