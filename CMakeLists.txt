@@ -5,6 +5,7 @@ option(XDG_ENABLE_MOAB    "Enable support for the MOAB mesh library"          ON
 option(XDG_ENABLE_MFEM    "Enable support for the MFEM mesh library"         OFF)
 option(XDG_ENABLE_LIBMESH "Enable support for the libMesh mesh library"      OFF)
 option(XDG_ENABLE_EMBREE  "Enable support for the Embree ray tracing library" ON)
+option(XDG_ENABLE_GPRT    "Enable support for the GPRT ray tracing library"  OFF)
 option(XDG_BUILD_TESTS    "Enable C++ unit testing"                           ON)
 option(XDG_BUILD_TOOLS    "Enable tools and miniapps"                         ON)
 
@@ -94,7 +95,9 @@ set(INDICATORS_INSTALL ON CACHE STRING "Ensure indicators targets are provided")
 add_subdirectory(vendor/indicators)
 
 # GPRT
-add_subdirectory(vendor/GPRT)
+if (XDG_ENABLE_GPRT)
+  add_subdirectory(vendor/GPRT)
+endif() 
 
 list(APPEND xdg_sources
 src/geometry/measure.cpp
