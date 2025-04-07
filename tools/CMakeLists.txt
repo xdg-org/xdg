@@ -19,6 +19,8 @@ foreach(tool ${TOOL_NAMES})
 endforeach()
 
 # GPRT specific includes
+target_link_libraries(gprt-test xdg gprt)
+
 embed_devicecode(
   OUTPUT_TARGET
   gprt_test_deviceCode
