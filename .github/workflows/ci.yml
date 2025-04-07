@@ -48,11 +48,23 @@ jobs:
           mesa-common-dev \
           libglfw3
 
+      - name: Set Vulkan SDK version
+        run: echo "VULKAN_SDK_VERSION=1.4.309.0" >> $GITHUB_ENV
+
       - name: Install Vulkan SDK
         uses: humbletim/install-vulkan-sdk@v1.2
         with:
-          version: 1.4.309.0
+          version: ${{ env.VULKAN_SDK_VERSION }}
           cache: true
+
+      - name: Export Vulkan Paths
+        shell: bash
+        run: |
+          echo "$VULKAN_SDK/lib" >> $GITHUB_PATH
+          echo "$VULKAN_SDK/bin" >> $GITHUB_PATH
+          echo "LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "CMAKE_PREFIX_PATH=$VULKAN_SDK:$CMAKE_PREFIX_PATH" >> $GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$VULKAN_SDK/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
       - name: MOAB Clone
         shell: bash
