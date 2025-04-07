@@ -1,14 +1,18 @@
-
-
-
 set(TOOL_NAMES
 particle_sim
 ray_fire
 find_volume
 point_in_volume
 overlap_check
-gprt_test
 )
+
+# Add GPRT tools
+if (XDG_ENABLE_GPRT)
+  list(APPEND TOOL_NAMES
+    gprt_test
+  )
+endif()
+
 
 foreach(tool ${TOOL_NAMES})
     string(REPLACE "_" "-" tool_exec ${tool})
@@ -18,19 +22,6 @@ foreach(tool ${TOOL_NAMES})
     install(TARGETS ${tool_exec} DESTINATION ${CMAKE_INSTALL_BINDIR}/tools)
 endforeach()
 
-# GPRT specific includes
-target_link_libraries(gprt-test xdg gprt)
-
-embed_devicecode(
-  OUTPUT_TARGET
-  gprt_test_deviceCode
-  HEADERS
-    ${CMAKE_CURRENT_SOURCE_DIR}/sharedCode.h
-  SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/deviceCode.slang
-)
-
-target_link_libraries(gprt-test
-    gprt_test_deviceCode
-    gprt::gprt
-)
+if (XDG_ENABLE_GPRT)
+  add_subdirectory(gprt)
+endif()
