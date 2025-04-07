@@ -6,14 +6,6 @@ point_in_volume
 overlap_check
 )
 
-# Add GPRT tools
-if (XDG_ENABLE_GPRT)
-  list(APPEND TOOL_NAMES
-    gprt_test
-  )
-endif()
-
-
 foreach(tool ${TOOL_NAMES})
     string(REPLACE "_" "-" tool_exec ${tool})
     add_executable(${tool_exec} ${tool}.cpp)
