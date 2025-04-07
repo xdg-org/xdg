@@ -1,26 +1,71 @@
-// This file contains GPU "entry points". An entry point in Slang is like the main() function
-// in a C++ program, marked with attributes like [shader(...)] to define its purpose. Unlike a
-// regular function, an entry point runs many instances in parallel on the GPU, making it
-// ideal for handling large datasets or computations efficiently.
+#include "sharedCode.h"
 
-#include "sharedCode.h"   // contains "struct RayGenData{...}"
+[[vk::push_constant]]
+PushConstants pc;
 
-// Entry points with "raygeneration" initiate rays to trace into the scene. 
+struct Payload {
+    float3 color;
+};
+
+// This closest hit shader runs when a ray hits a triangle.
+// It processes per-geometry data and communicates with the ray generation shader.
+// - The first parameter is the shader record type, representing SBT parameters for this shader.
+// - The second is the ray payload type, used for passing data between shaders.
+// - The third is the intersection attributes. For triangles, these are two "barycentrics", used
+//   for interpolating per-vertex values.
+[shader("closesthit")]
+void TriangleMesh(uniform TrianglesGeomData record, inout Payload payload, in float2 bc) {
+    payload.color = float3(bc.x, bc.y, 1.0 - (bc.x + bc.y));
+}
+
+// This ray generation program will kick off the ray tracing process,
+// generating rays and tracing them into the world.
 [shader("raygeneration")]
-void simpleRayGen(uniform RayGenData record) {
-  uint2 pixelID = DispatchRaysIndex().xy; // Which thread is currently running?
-  uint2 fbSize = DispatchRaysDimensions().xy; // How many threads were launched together?
+void raygen(uniform RayGenData record) {
+    Payload payload;
+    uint2 pixelID = DispatchRaysIndex().xy;
+    uint2 iResolution = DispatchRaysDimensions().xy;
 
-  // Have the first thread print text to console
-  if (pixelID.x == 0 && pixelID.y == 0)
-    printf("Hello from your first raygen program!\n");
+    // camera movement
+    float an = pc.time;
+    float3 ro = float3(-4.0 * sin(an), 0.0, -4.0 * cos(an));
+    float3 ta = float3(0.0, 0.0, 0.0);
 
-  // For now, no rays, just a simple test pattern, showing that pixel (0,0) 
-  // is in the upper left corner
-  int pattern = (pixelID.x*pixelID.x + pixelID.y*pixelID.y) / 10000;
-  float3 color = bool(pattern & 1) ? record.color1 : record.color0;
+    // camera matrix
+    float3 ww = normalize(ta - ro);
+    float3 uu = normalize(cross(ww, float3(0.0, -1.0, 0.0)));
+    float3 vv = normalize(cross(uu, ww));
 
-  // Find the frame buffer location (x + width*y) and put the result there
-  int fbOfs = pixelID.x + fbSize.x * pixelID.y;
-  record.frameBuffer[fbOfs] = gprt::make_bgra(color);
+    float3 tot = float3(0.0);
+
+    for (int m = 0; m < AA; m++)
+        for (int n = 0; n < AA; n++)
+        {
+            // pixel coordinates
+            float2 o = float2(float(m), float(n)) / float(AA) - 0.5;
+            float2 p = (2.0 * (pixelID + o) - iResolution.xy) / iResolution.y;
+
+            // create view ray
+            float3 rd = normalize(p.x * uu + p.y * vv + 3.0 * ww);
+
+            // Trace the ray into the scene
+            RayDesc rayDesc;
+            rayDesc.Origin = ro;
+            rayDesc.Direction = rd;
+            rayDesc.TMin = 0.0;
+            rayDesc.TMax = 10000.0;
+            TraceRay(record.world, RAY_FLAG_NONE, 0xff, 0, 1, 0, rayDesc, payload);
+
+            // Accumulate the color
+            tot += payload.color;
+        }
+    tot /= float(AA * AA);
+
+    const int fbOfs = pixelID.x + iResolution.x * pixelID.y;
+    record.frameBuffer[fbOfs] = gprt::make_bgra(tot);
+}
+
+[shader("miss")]
+void miss(inout Payload payload) {
+    payload.color = float3(0.0);
 }
