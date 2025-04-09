@@ -120,6 +120,12 @@ src/embree/ray_tracer.cpp
 )
 endif()
 
+if (XDG_ENABLE_GPRT)
+list(APPEND xdg_sources
+src/gprt/ray_tracer.cpp
+)
+endif()
+
 if (XDG_ENABLE_LIBMESH)
 list(APPEND xdg_sources
 src/libmesh/mesh_manager.cpp
@@ -208,12 +214,20 @@ if (XDG_ENABLE_EMBREE)
   target_compile_definitions(xdg PUBLIC XDG_ENABLE_EMBREE)
 endif()
 
+if (XDG_ENABLE_GPRT)
+  target_compile_definitions(xdg PUBLIC XDG_ENABLE_GPRT)
+endif()
+
 # ==========================
 # Link ray tracing libraries
 # ==========================
 
 if (XDG_ENABLE_EMBREE)
   target_link_libraries(xdg embree fmt::fmt)
+endif()
+
+if (XDG_ENABLE_GPRT)
+  target_link_libraries(xdg gprt)
 endif()
 
 # ===================
