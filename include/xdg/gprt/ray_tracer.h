@@ -14,6 +14,7 @@
 #include "xdg/error.h"
 
 #include "gprt/gprt.h"
+#include "sharedCode.h"
 
 namespace xdg {
 
