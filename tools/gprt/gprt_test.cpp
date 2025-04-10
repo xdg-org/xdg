@@ -63,16 +63,18 @@ int main(int argc, char* argv[]) {
     exit(0);
   }
 
+  auto hdf_file = args.get<std::string>("filename");
+
   // Initialize XDG
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
   const auto& mm = xdg->mesh_manager();
-  mm->load_file(args.get<std::string>("filename"));
+  mm->load_file(hdf_file);
   mm->init();
   xdg->prepare_raytracer();
   
 
   // Create a rendering window
-  gprtRequestWindow(fbSize.x, fbSize.y, "GPRT Triangle XDG-Test");
+  gprtRequestWindow(fbSize.x, fbSize.y, hdf_file.c_str());
 
   // Initialize GPRT context and modules
   GPRTContext context = gprtContextCreate();
