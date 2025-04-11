@@ -12,9 +12,8 @@
 #include "xdg/ray_tracing_interface.h"
 #include "xdg/ray.h"
 #include "xdg/error.h"
-
 #include "gprt/gprt.h"
-#include "sharedCode.h"
+
 
 namespace xdg {
 
@@ -23,7 +22,9 @@ class GPRTRayTracer : public RayTracer {
 public:
   GPRTRayTracer();
   ~GPRTRayTracer();
+  
   void init() override;
+//   void add_module(GPRTProgam device_code, std::string name);
   TreeID register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) override;
 
   // Query Methods
@@ -61,8 +62,9 @@ public:
   // GPRT members
   GPRTContext context_;
   std::vector<GPRTGeom> geometries_; //<! All geometries created by this ray tracer
-
-  // Mesh-to-Scene maps
+  //std::map<std::string,GPRTModule> device_codes_; //<! All device code modules associated with the GPRTContext
+  
+  // Mesh-to-Scene maps 
   std::map<MeshID, GPRTGeom> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
 
   // Internal GPRT Mappings
