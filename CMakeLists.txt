@@ -214,7 +214,7 @@ if (XDG_ENABLE_EMBREE)
 endif()
 
 if (XDG_ENABLE_GPRT)
-  target_link_libraries(xdg gprt)
+  target_link_libraries(xdg $<BUILD_INTERFACE:gprt>)
 endif()
 
 # ===================
