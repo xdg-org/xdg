@@ -13,27 +13,6 @@ GPRTRayTracer::~GPRTRayTracer()
   gprtContextDestroy(context_);
 }
 
-// void GPRTRayTracer::add_module(GPRTProgram device_code, std::string name)
-// {
-//   GPRTModule module = gprtModuleCreate(context_, device_code);
-//   device_codes_[name] = module;
-// }
-
-#include "xdg/gprt/ray_tracer.h"
-
-
-namespace xdg {
-
-GPRTRayTracer::GPRTRayTracer()
-{
-  context_ = gprtContextCreate();
-}
-
-GPRTRayTracer::~GPRTRayTracer()
-{
-  gprtContextDestroy(context_);
-}
-
 // Ray tracer interface stub methods to be implemented
 void GPRTRayTracer::init() {
   // TODO: Init GPRT context and modules
@@ -86,8 +65,5 @@ bool GPRTRayTracer::occluded(TreeID scene,
   dist = -1.0;
   return false;
 }
-
-} // namespace xdg
-
 
 } // namespace xdg
