@@ -46,6 +46,11 @@ public:
 
   virtual std::array<Vertex, 3> face_vertices(MeshID element) const = 0;
 
+  virtual std::vector<int> get_surface_connectivity(MeshID surface) const = 0;
+
+  virtual std::vector<double> get_surface_vertices(MeshID surface) const = 0;
+
+
   BoundingBox element_bounding_box(MeshID element) const;
 
   BoundingBox face_bounding_box(MeshID element) const;

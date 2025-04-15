@@ -111,6 +111,36 @@ TEST_CASE("Test Ray Fire MOAB")
 
 }
 
+TEST_CASE("MOAB Vertices")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("cube.h5m");
+  mesh_manager->init();
+
+  int vertex_count = 0;
+
+  for (const auto surface: mesh_manager->surfaces()) {
+    auto vertices = mesh_manager->get_surface_vertices(surface);
+    REQUIRE(vertices.size() / 3 == 138); // Each surface should contain exactly 138 nodes
+  }
+}
+
+TEST_CASE("MOAB Connectivity")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("cube.h5m");
+  mesh_manager->init();
+
+  for (const auto surface: mesh_manager->surfaces()) {
+    auto connectivity = mesh_manager->get_surface_connectivity(surface);
+    REQUIRE(connectivity.size() == 138); // Each surface should contain exactly 138 nodes
+  }
+}
+
 TEST_CASE("TEST XDG Factory Method")
 {
 
