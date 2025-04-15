@@ -64,6 +64,10 @@ public:
 
   std::array<Vertex, 3> face_vertices(MeshID element) const override;
 
+  std::vector<int> get_surface_connectivity(MeshID surface) const;
+
+  std::vector<double> get_surface_vertices(MeshID surface) const;
+
   // Topology
   std::pair<MeshID, MeshID> surface_senses(MeshID surface) const override;
 
