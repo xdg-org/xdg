@@ -119,8 +119,6 @@ TEST_CASE("MOAB Vertices")
   mesh_manager->load_file("cube.h5m");
   mesh_manager->init();
 
-  int vertex_count = 0;
-
   for (const auto surface: mesh_manager->surfaces()) {
     auto vertices = mesh_manager->get_surface_vertices(surface);
     REQUIRE(vertices.size() / 3 == 138); // Each surface should contain exactly 138 nodes
