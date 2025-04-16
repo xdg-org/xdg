@@ -269,6 +269,35 @@ MOABMeshManager::get_volume_surfaces(MeshID volume) const
   return surface_ids;
 }
 
+std::vector<int> 
+MOABMeshManager::get_surface_connectivity(MeshID surface) const
+{
+  moab::EntityHandle surf_handle = this->surface_id_map_.at(surface);
+  auto faces = _surface_faces(surface);
+
+  moab::Range conn;
+  this->moab_interface()->get_connectivity(faces, conn);
+
+  std::vector<int> connectivity;
+  connectivity.insert(connectivity.end(), conn.begin(), conn.end());
+
+  return connectivity;
+}
+
+std::vector<double> 
+MOABMeshManager::get_surface_vertices(MeshID surface) const
+{
+  auto conn = get_surface_connectivity(surface);
+  std::vector<moab::EntityHandle> verts;
+
+  verts.insert(verts.end(), conn.begin(), conn.end());
+  std::vector<double> coords(verts.size() * 3);
+
+  this->moab_interface()->get_coords(verts.data(), verts.size(), coords.data());
+
+  return coords;
+}
+
 void
 MOABMeshManager::parse_metadata()
 {

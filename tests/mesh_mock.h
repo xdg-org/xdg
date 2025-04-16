@@ -75,6 +75,32 @@ public:
     return {vertices[0], vertices[1], vertices[2]};
   }
 
+  std::vector<int> get_surface_connectivity(MeshID surface) const override
+  {
+    std::vector<int> flat_connectivity;
+    flat_connectivity.reserve(triangle_connectivity.size() * 3);
+    
+    for (const auto& tri : triangle_connectivity) {
+      flat_connectivity.insert(flat_connectivity.end(), tri.begin(), tri.end());
+    }
+
+    return flat_connectivity;
+  }
+
+  std::vector<double> get_surface_vertices(MeshID surface) const override
+  {
+    std::vector<double> flat_vertices;
+    flat_vertices.reserve(vertices.size() * 3);
+    
+    for (const auto& vertex : vertices) {
+      flat_vertices.push_back(vertex.x);
+      flat_vertices.push_back(vertex.y);
+      flat_vertices.push_back(vertex.z);
+    }
+
+    return flat_vertices;
+  }
+
   // Topology
   virtual std::pair<MeshID, MeshID> surface_senses(MeshID surface) const override {
     return {0, ID_NONE};
