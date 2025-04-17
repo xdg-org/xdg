@@ -28,7 +28,8 @@ void raygen(uniform RayGenData record) {
 
     // camera movement
     float an = pc.time;
-    float3 ro = float3(-4.0 * sin(an), 0.0, -4.0 * cos(an));
+    float zoom = 15 + pc.time; // Increase the radius over time
+    float3 ro = float3(-zoom * sin(an), 0.0, zoom * cos(an));
     float3 ta = float3(0.0, 0.0, 0.0);
 
     // camera matrix
