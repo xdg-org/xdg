@@ -28,18 +28,6 @@ using namespace xdg;
 extern GPRTProgram gprt_test_deviceCode;
 
 
-// Vertices defining the triangle
-const int NUM_VERTICES = 3;
-float3 vertices[NUM_VERTICES] = {
-    {-1.f, -.5f, 0.f},
-    {+1.f, -.5f, 0.f},
-    {0.f, +.5f, 0.f},
-};
-
-// Indices defining the connections between vertices
-const int NUM_INDICES = 1;
-uint3 indices[NUM_INDICES] = {{0, 1, 2}};
-
 // Initial image resolution
 const int2 fbSize = {1400, 460};
 
@@ -71,40 +59,75 @@ int main(int argc, char* argv[]) {
   mm->load_file(hdf_file);
   mm->init();
   xdg->prepare_raytracer();
-  
+
 
   // Create a rendering window
   gprtRequestWindow(fbSize.x, fbSize.y, hdf_file.c_str());
 
   // Initialize GPRT context and modules
   GPRTContext context = gprtContextCreate();
-  GPRTModule module = gprtModuleCreate(context, gprt_test_deviceCode);
+  GPRTModule module = gprtModuleCreate(context, gprt_test_deviceCode);  
 
   // New: Create a "triangle" geometry type and set it's closest-hit program
   auto trianglesGeomType = gprtGeomTypeCreate<TrianglesGeomData>(context, GPRT_TRIANGLES);
   gprtGeomTypeSetClosestHitProg(trianglesGeomType, 0, module, "TriangleMesh");
 
-  // Upload vertex and index data to GPU buffers
-  auto vertexBuffer = gprtDeviceBufferCreate<float3>(context, NUM_VERTICES, vertices);
-  auto indexBuffer = gprtDeviceBufferCreate<uint3>(context, NUM_INDICES, indices);
 
-  // New: Create geometry instance and set vertex and index buffers
-  auto trianglesGeom = gprtGeomCreate<TrianglesGeomData>(context, trianglesGeomType);
-  gprtTrianglesSetVertices(trianglesGeom, vertexBuffer, NUM_VERTICES);
-  gprtTrianglesSetIndices(trianglesGeom, indexBuffer, NUM_INDICES);
+  std::vector<GPRTBufferOf<float3>> vertex_buffers;
+  std::vector<GPRTBufferOf<uint3>> connectivity_buffers;
+  std::vector<GPRTGeomOf<TrianglesGeomData>> trianglesGeom;
+  std::vector<size_t> vertex_counts;
+  std::vector<size_t> connectivity_counts;
 
-  // Place the geometry into a bottom-level acceleration structure (BLAS).
-  // A BLAS organizes triangles into a data structure that allows rays to quickly
-  // determine potential intersections, significantly speeding up ray tracing by narrowing down
-  // the search to relevant geometry instead of testing every triangle.
-  GPRTAccel trianglesAccel = gprtTriangleAccelCreate(context, trianglesGeom);
-  gprtAccelBuild(context, trianglesAccel, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+  for (auto surf : mm->surfaces()) {
+    auto flat_verts = mm->get_surface_vertices(surf);
+    auto flat_indices = mm->get_surface_connectivity(surf);
+    std::vector<float3> verts(flat_verts.size() / 3);
+    std::vector<uint3> inds(flat_indices.size() / 3);
+    
+    for (size_t i = 0; i < flat_verts.size() / 3; i++) {
+      verts[i] = float3(flat_verts[3 * i], flat_verts[3 * i + 1], flat_verts[3 * i + 2]);
+    }
+    vertex_counts.push_back(verts.size());
+    for (size_t i = 0; i < flat_indices.size() / 3; i++) {
+      inds[i] = uint3(flat_indices[3 * i], flat_indices[3 * i + 1], flat_indices[3 * i + 2]);
+    }
+    connectivity_counts.push_back(inds.size());
 
-  // Create a single instance of the BLAS in a top-level acceleration structure (TLAS), required for ray tracing.
-  // (We'll cover TLAS in more depth later)
-  gprt::Instance instance = gprtAccelGetInstance(trianglesAccel);
-  auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context, 1, &instance);
-  GPRTAccel world = gprtInstanceAccelCreate(context, 1, instanceBuffer);
+    vertex_buffers.push_back(gprtDeviceBufferCreate<float3>(context, verts.size(), verts.data()));
+    connectivity_buffers.push_back(gprtDeviceBufferCreate<uint3>(context, inds.size(), inds.data()));
+    trianglesGeom.push_back(gprtGeomCreate<TrianglesGeomData>(context, trianglesGeomType));
+    TrianglesGeomData* geom_data = gprtGeomGetParameters(trianglesGeom.back());
+    // geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffers.back());
+    // geom_data->index = gprtBufferGetDevicePointer(connectivity_buffers.back());
+    // geom_data->id = surf;
+    // geom_data->vols = {mm->get_parent_volumes(surf).first, mm->get_parent_volumes(surf).second};
+
+  }
+
+  for (int i=0; i<mm->num_surfaces(); i++) { 
+    auto &surf = mm->surfaces()[i];
+    // New: Create geometry instance and set vertex and index buffers
+    gprtTrianglesSetVertices(trianglesGeom[i], vertex_buffers[i], vertex_counts[i]);
+    gprtTrianglesSetIndices(trianglesGeom[i], connectivity_buffers[i], connectivity_counts[i]);
+  }
+
+  // Create a BLAS for each geometry
+  std::vector<GPRTAccel> blasList;
+  for (size_t i = 0; i < trianglesGeom.size(); i++) {
+      GPRTAccel blas = gprtTriangleAccelCreate(context, trianglesGeom[i], GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+      gprtAccelBuild(context, blas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+      blasList.push_back(blas);
+  }
+
+  // Create a TLAS (Top-Level Acceleration Structure) for all BLAS instances
+  std::vector<gprt::Instance> instances;
+  for (size_t i = 0; i < blasList.size(); i++) {
+      instances.push_back(gprtAccelGetInstance(blasList[i]));
+  }
+
+  auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context, instances.size(), instances.data());
+  GPRTAccel world = gprtInstanceAccelCreate(context, instances.size(), instanceBuffer);
   gprtAccelBuild(context, world, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
 
   // Set up ray generation and miss programs
@@ -137,6 +160,11 @@ int main(int argc, char* argv[]) {
 
   // Clean up resources
   gprtContextDestroy(context);
+  for (auto& blas : blasList) gprtAccelDestroy(blas);
+  gprtAccelDestroy(world);
+  for (auto& vert_buff : vertex_buffers) gprtBufferDestroy(vert_buff);
+  for (auto& conn_buff : connectivity_buffers) gprtBufferDestroy(conn_buff);
+  for (auto& geom : trianglesGeom) gprtGeomDestroy(geom);
 
   return 0;
 }
