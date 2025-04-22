@@ -15,7 +15,7 @@ MBDirectAccess::setup() {
   Range tris;
   rval = mbi->get_entities_by_dimension(0, 2, tris, true);
   MB_CHK_SET_ERR_CONT(rval, "Failed to get all elements of dimension 2 (tris)");
-  num_elements_ = tris.size();
+  num_faces_ = tris.size();
 
   // only supporting triangle elements for now
   if (!tris.all_of_type(MBTRI)) { throw std::runtime_error("Not all 2D elements are triangles"); }
@@ -24,16 +24,16 @@ MBDirectAccess::setup() {
   while(tris_it != tris.end()) {
     // set connectivity pointer, element stride and the number of elements
     EntityHandle* conntmp;
-    int n_elements;
-    rval = mbi->connect_iterate(tris_it, tris.end(), conntmp, element_stride_, n_elements);
+    int n_tris;
+    rval = mbi->connect_iterate(tris_it, tris.end(), conntmp, element_stride_, n_tris);
     MB_CHK_SET_ERR_CONT(rval, "Failed to get direct access to triangle elements");
 
     // set const pointers for the connectivity array and add first element/length pair to the set of first elements
     vconn_.push_back(conntmp);
-    first_elements_.push_back({*tris_it, n_elements});
+    first_face_elements_.push_back({*tris_it, n_tris});
 
     // move iterator forward by the number of triangles in this contiguous memory block
-    tris_it += n_elements;
+    tris_it += n_tris;
   }
 
   // setup vertices
@@ -65,11 +65,11 @@ MBDirectAccess::setup() {
 void
 MBDirectAccess::clear()
 {
-  num_elements_ = -1;
+  num_faces_ = -1;
   num_vertices_ = -1;
   element_stride_ = -1;
 
-  first_elements_.clear();
+  first_face_elements_.clear();
   vconn_.clear();
   tx_.clear();
   ty_.clear();
