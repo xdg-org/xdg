@@ -16,7 +16,7 @@ class MBDirectAccess {
 
 public:
   // constructor
-  MBDirectAccess(Interface* mbi);
+  MBDirectAccess(Interface* mbi, EntityType ent_type);
 
   //! \brief Initialize internal structures
   void setup();
@@ -65,30 +65,6 @@ public:
     return {v0, v1, v2};
   }
 
-  // //! \brief Get the coordinates of a triangle as Vec3da's
-  // inline std::array<Vec3da, 3> get_coords(const EntityHandle& tri) {
-
-  //   // determine the correct index to use
-  //   int idx = 0;
-  //   auto fe = first_elements_[idx];
-  //   while(true) {
-  //     if (tri - fe.first < fe.second) { break; }
-  //     idx++;
-  //     fe = first_elements_[idx];
-  //   }
-
-  //   size_t conn_idx = element_stride_ * (tri - fe.first);
-  //   size_t i0 = vconn_[idx][conn_idx] - 1;
-  //   size_t i1 = vconn_[idx][conn_idx + 1] - 1;
-  //   size_t i2 = vconn_[idx][conn_idx + 2] - 1;
-
-  //   Vec3da v0(tx_[idx][i0], ty_[idx][i0], tz_[idx][i0]);
-  //   Vec3da v1(tx_[idx][i1], ty_[idx][i1], tz_[idx][i1]);
-  //   Vec3da v2(tx_[idx][i2], ty_[idx][i2], tz_[idx][i2]);
-
-  //   return {v0, v1, v2};
-  // }
-
   // Accessors
   //! \brief return the number of elements being managed
   inline int n_elements() { return num_elements_; }
@@ -99,14 +75,15 @@ public:
 
 private:
   Interface* mbi {nullptr}; //!< MOAB instance for the managed data
+  EntityType entity_type_ {MBMAXTYPE}; //!< Type of entity stored in this manager
   int num_elements_ {-1}; //!< Number of elements in the manager
   int num_vertices_ {-1}; //!< Number of vertices in the manager
   int element_stride_ {-1}; //!< Number of vertices used by each element
   std::vector<std::pair<EntityHandle, size_t>> first_elements_; //!< Pairs of first element and length pairs for contiguous blocks of memory
   std::vector<const EntityHandle*> vconn_; //!< Storage array(s) for the connectivity array
-  std::vector<double*> tx_; //!< Storage array(s) for vertex x coordinates
-  std::vector<double*> ty_; //!< Storage array(s) for vertex y coordinates
-  std::vector<double*> tz_; //!< Storage array(s) for vertex z coordinates
+  std::vector<const double*> tx_; //!< Storage array(s) for vertex x coordinates
+  std::vector<const double*> ty_; //!< Storage array(s) for vertex y coordinates
+  std::vector<const double*> tz_; //!< Storage array(s) for vertex z coordinates
 };
 
 #endif // include guard

@@ -5,7 +5,11 @@
 
 #include "xdg/moab/direct_access.h"
 
-MBDirectAccess::MBDirectAccess(Interface* mbi) : mbi(mbi) { setup(); }
+MBDirectAccess::MBDirectAccess(Interface* mbi, EntityType entity_type)
+: mbi(mbi), entity_type_(entity_type)
+{
+  setup();
+}
 
 void
 MBDirectAccess::setup() {
@@ -13,12 +17,12 @@ MBDirectAccess::setup() {
 
   // setup triangles
   Range tris;
-  rval = mbi->get_entities_by_dimension(0, 2, tris, true);
+  rval = mbi->get_entities_by_type(0, entity_type_, tris, true);
   MB_CHK_SET_ERR_CONT(rval, "Failed to get all elements of dimension 2 (tris)");
   num_elements_ = tris.size();
 
   // only supporting triangle elements for now
-  if (!tris.all_of_type(MBTRI)) { throw std::runtime_error("Not all 2D elements are triangles"); }
+  if (!tris.all_of_type(entity_type_)) { throw std::runtime_error("Not all 2D elements are triangles"); }
 
   moab::Range::iterator tris_it = tris.begin();
   while(tris_it != tris.end()) {
