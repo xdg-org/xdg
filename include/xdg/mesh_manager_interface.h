@@ -44,6 +44,9 @@ public:
   // TODO: can we accomplish this without allocating memory?
   virtual std::vector<Vertex> element_vertices(MeshID element) const = 0;
 
+  // Return the volume ID for a given element
+  virtual MeshID element_volume_id(MeshID element) const = 0;
+
   virtual std::array<Vertex, 3> face_vertices(MeshID element) const = 0;
 
   BoundingBox element_bounding_box(MeshID element) const;

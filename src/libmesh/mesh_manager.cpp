@@ -398,6 +398,12 @@ LibMeshManager::element_vertices(MeshID element) const {
   return vertices;
 }
 
+MeshID
+LibMeshManager::element_volume_id (MeshID element) const {
+  return mesh()->elem_ptr(element)->subdomain_id();
+}
+
+
 std::array<Vertex, 3>
 LibMeshManager::face_vertices(MeshID element) const {
   const auto& side_pair = sidepair(element);

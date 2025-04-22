@@ -68,6 +68,14 @@ void MOABMeshManager::init() {
   }
 
   MeshID ipc = create_implicit_complement();
+
+  // populate element to volume ID mapping
+  for (auto volume : volumes_) {
+    auto elements = get_volume_elements(volume);
+    for (auto element : elements) {
+      element_volume_ids_[element] = volume;
+    }
+  }
 }
 
 // Methods
@@ -244,6 +252,12 @@ std::vector<Vertex> MOABMeshManager::element_vertices(MeshID element) const
   auto out = this->mb_direct()->get_mb_coords(element_handle);
   return std::vector<Vertex>(out.begin(), out.end());
 }
+
+MeshID MOABMeshManager::element_volume_id(MeshID element) const
+{
+  return element_volume_ids_.at(element);
+}
+
 
 std::array<Vertex, 3> MOABMeshManager::face_vertices(MeshID element) const
 {
