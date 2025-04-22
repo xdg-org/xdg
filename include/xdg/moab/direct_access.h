@@ -16,7 +16,7 @@ class MBDirectAccess {
 
 public:
   // constructor
-  MBDirectAccess(Interface* mbi, EntityType ent_type);
+  MBDirectAccess(Interface* mbi);
 
   //! \brief Initialize internal structures
   void setup();
@@ -31,12 +31,12 @@ public:
   inline bool accessible(EntityHandle tri) {
     // determine the correct index to use
     int idx = 0;
-    auto fe = first_elements_[idx];
+    auto fe = face_data_.first_elements[idx];
     while(true) {
       if (tri - fe.first < fe.second) { break; }
       idx++;
-      if (idx >= first_elements_.size()) { return false; }
-      fe = first_elements_[idx];
+      if (idx >= face_data_.first_elements.size()) { return false; }
+      fe = face_data_.first_elements[idx];
     }
     return true;
   }
@@ -46,17 +46,17 @@ public:
 
     // determine the correct index to use
     int idx = 0;
-    auto fe = first_elements_[idx];
+    auto fe = face_data_.first_elements[idx];
     while(true) {
       if (tri - fe.first < fe.second) { break; }
       idx++;
-      fe = first_elements_[idx];
+      fe = face_data_.first_elements[idx];
     }
 
-    size_t conn_idx = element_stride_ * (tri - fe.first);
-    size_t i0 = vconn_[idx][conn_idx] - 1;
-    size_t i1 = vconn_[idx][conn_idx + 1] - 1;
-    size_t i2 = vconn_[idx][conn_idx + 2] - 1;
+    size_t conn_idx = face_data_.element_stride * (tri - fe.first);
+    size_t i0 = face_data_.vconn[idx][conn_idx] - 1;
+    size_t i1 = face_data_.vconn[idx][conn_idx + 1] - 1;
+    size_t i2 = face_data_.vconn[idx][conn_idx + 2] - 1;
 
     xdg::Vertex v0(tx_[idx][i0], ty_[idx][i0], tz_[idx][i0]);
     xdg::Vertex v1(tx_[idx][i1], ty_[idx][i1], tz_[idx][i1]);
@@ -66,21 +66,32 @@ public:
   }
 
   // Accessors
-  //! \brief return the number of elements being managed
-  inline int n_elements() { return num_elements_; }
   //! \brief return the number of vertices being managed
   inline int n_vertices() { return num_vertices_; }
-  //! \brief return the stride between elements in the coordinate arrays
-  inline int stride() { return element_stride_;}
 
 private:
   Interface* mbi {nullptr}; //!< MOAB instance for the managed data
-  EntityType entity_type_ {MBMAXTYPE}; //!< Type of entity stored in this manager
-  int num_elements_ {-1}; //!< Number of elements in the manager
+
+  struct ConnectivityData {
+    EntityType entity_type {MBMAXTYPE}; //!< Type of entity stored in this manager
+    int num_entities {-1}; //!< Number of elements in the manager
+    int element_stride {-1}; //!< Number of vertices used by each element
+    std::vector<std::pair<EntityHandle, size_t>> first_elements; //!< Pairs of first element and length pairs for contiguous blocks of memory
+    std::vector<const EntityHandle*> vconn; //!< Storage array(s) for the connectivity array
+
+    void clear() {
+      num_entities = -1;
+      element_stride = -1;
+      first_elements.clear();
+      vconn.clear();
+    }
+  };
+
+  ConnectivityData face_data_;
+  ConnectivityData element_data_;
+
+
   int num_vertices_ {-1}; //!< Number of vertices in the manager
-  int element_stride_ {-1}; //!< Number of vertices used by each element
-  std::vector<std::pair<EntityHandle, size_t>> first_elements_; //!< Pairs of first element and length pairs for contiguous blocks of memory
-  std::vector<const EntityHandle*> vconn_; //!< Storage array(s) for the connectivity array
   std::vector<const double*> tx_; //!< Storage array(s) for vertex x coordinates
   std::vector<const double*> ty_; //!< Storage array(s) for vertex y coordinates
   std::vector<const double*> tz_; //!< Storage array(s) for vertex z coordinates

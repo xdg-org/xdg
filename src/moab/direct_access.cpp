@@ -5,9 +5,11 @@
 
 #include "xdg/moab/direct_access.h"
 
-MBDirectAccess::MBDirectAccess(Interface* mbi, EntityType entity_type)
-: mbi(mbi), entity_type_(entity_type)
+MBDirectAccess::MBDirectAccess(Interface* mbi)
+: mbi(mbi)
 {
+  face_data_.entity_type = MBTRI;
+  element_data_.entity_type = MBTET;
   setup();
 }
 
@@ -15,29 +17,29 @@ void
 MBDirectAccess::setup() {
   ErrorCode rval;
 
-  // setup triangles
-  Range tris;
-  rval = mbi->get_entities_by_type(0, entity_type_, tris, true);
-  MB_CHK_SET_ERR_CONT(rval, "Failed to get all elements of dimension 2 (tris)");
-  num_elements_ = tris.size();
+  // setup face connectivity data
+  Range faces;
+  rval = mbi->get_entities_by_type(0, face_data_.entity_type, faces, true);
+  MB_CHK_SET_ERR_CONT(rval, "Failed to get all elements of dimension 2 (faces)");
+  face_data_.num_entities = faces.size();
 
   // only supporting triangle elements for now
-  if (!tris.all_of_type(entity_type_)) { throw std::runtime_error("Not all 2D elements are triangles"); }
+  if (!faces.all_of_type(face_data_.entity_type)) { throw std::runtime_error("Not all 2D elements are triangles"); }
 
-  moab::Range::iterator tris_it = tris.begin();
-  while(tris_it != tris.end()) {
+  moab::Range::iterator faces_it = faces.begin();
+  while(faces_it != faces.end()) {
     // set connectivity pointer, element stride and the number of elements
     EntityHandle* conntmp;
     int n_elements;
-    rval = mbi->connect_iterate(tris_it, tris.end(), conntmp, element_stride_, n_elements);
+    rval = mbi->connect_iterate(faces_it, faces.end(), conntmp, face_data_.element_stride, n_elements);
     MB_CHK_SET_ERR_CONT(rval, "Failed to get direct access to triangle elements");
 
     // set const pointers for the connectivity array and add first element/length pair to the set of first elements
-    vconn_.push_back(conntmp);
-    first_elements_.push_back({*tris_it, n_elements});
+    face_data_.vconn.push_back(conntmp);
+    face_data_.first_elements.push_back({*faces_it, n_elements});
 
     // move iterator forward by the number of triangles in this contiguous memory block
-    tris_it += n_elements;
+    faces_it += n_elements;
   }
 
   // setup vertices
@@ -69,12 +71,8 @@ MBDirectAccess::setup() {
 void
 MBDirectAccess::clear()
 {
-  num_elements_ = -1;
-  num_vertices_ = -1;
-  element_stride_ = -1;
-
-  first_elements_.clear();
-  vconn_.clear();
+  face_data_.clear();
+  element_data_.clear();
   tx_.clear();
   ty_.clear();
   tz_.clear();
