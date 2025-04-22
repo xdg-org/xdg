@@ -21,6 +21,15 @@ public:
   //! \brief Initialize internal structures
   void setup();
 
+  //! \brief Setup the face data structures
+  void setup_face_data();
+
+  //! \brief Setup the element data structures
+  void setup_element_data();
+
+  //! \brief Setup the vertex data structures
+  void setup_vertex_data();
+
   //! \brief Reset internal data structures, but maintain MOAB isntance
   void clear();
 
@@ -43,31 +52,18 @@ public:
 
   //! \brief Get the coordinates of a triangle as MOAB CartVect's
   inline std::array<xdg::Vertex, 3> get_mb_coords(const EntityHandle& tri) {
+    auto [idx, i0, i1, i2] = face_data_.get_connectivity_indices(tri);
 
-    // determine the correct index to use
-    int idx = 0;
-    auto fe = face_data_.first_elements[idx];
-    while(true) {
-      if (tri - fe.first < fe.second) { break; }
-      idx++;
-      fe = face_data_.first_elements[idx];
-    }
-
-    size_t conn_idx = face_data_.element_stride * (tri - fe.first);
-    size_t i0 = face_data_.vconn[idx][conn_idx] - 1;
-    size_t i1 = face_data_.vconn[idx][conn_idx + 1] - 1;
-    size_t i2 = face_data_.vconn[idx][conn_idx + 2] - 1;
-
-    xdg::Vertex v0(tx_[idx][i0], ty_[idx][i0], tz_[idx][i0]);
-    xdg::Vertex v1(tx_[idx][i1], ty_[idx][i1], tz_[idx][i1]);
-    xdg::Vertex v2(tx_[idx][i2], ty_[idx][i2], tz_[idx][i2]);
-
-    return {v0, v1, v2};
+    std::array<xdg::Vertex, 3> vertices;
+    vertex_data_.set_coords(idx, i0, vertices[0]);
+    vertex_data_.set_coords(idx, i1, vertices[1]);
+    vertex_data_.set_coords(idx, i2, vertices[2]);
+    return vertices;
   }
 
   // Accessors
   //! \brief return the number of vertices being managed
-  inline int n_vertices() { return num_vertices_; }
+  inline int n_vertices() { return vertex_data_.num_vertices; }
 
 private:
   Interface* mbi {nullptr}; //!< MOAB instance for the managed data
@@ -78,6 +74,57 @@ private:
     int element_stride {-1}; //!< Number of vertices used by each element
     std::vector<std::pair<EntityHandle, size_t>> first_elements; //!< Pairs of first element and length pairs for contiguous blocks of memory
     std::vector<const EntityHandle*> vconn; //!< Storage array(s) for the connectivity array
+
+    void setup(Interface * mbi) {
+      ErrorCode rval;
+
+      // setup face connectivity data
+      Range faces;
+      rval = mbi->get_entities_by_type(0, entity_type, faces, true);
+      MB_CHK_SET_ERR_CONT(rval, "Failed to get all elements of dimension 2 (faces)");
+      num_entities = faces.size();
+
+      // only supporting triangle elements for now
+      if (!faces.all_of_type(entity_type)) { throw std::runtime_error("Not all 2D elements are triangles"); }
+
+      moab::Range::iterator faces_it = faces.begin();
+      while(faces_it != faces.end()) {
+        // set connectivity pointer, element stride and the number of elements
+        EntityHandle* conntmp;
+        int n_elements;
+        rval = mbi->connect_iterate(faces_it, faces.end(), conntmp, element_stride, n_elements);
+        MB_CHK_SET_ERR_CONT(rval, "Failed to get direct access to triangle elements");
+
+        // set const pointers for the connectivity array and add first element/length pair to the set of first elements
+        vconn.push_back(conntmp);
+        first_elements.push_back({*faces_it, n_elements});
+
+        // move iterator forward by the number of triangles in this contiguous memory block
+        faces_it += n_elements;
+      }
+    }
+
+    std::array<size_t, 4>
+    get_connectivity_indices(const EntityHandle& e) {
+      // determine the correct index to use
+      int idx = 0;
+      auto fe = first_elements[idx];
+      while(true) {
+        if (e - fe.first < fe.second) { break; }
+        idx++;
+        // if (idx >= first_elements.size()) { return {-1, -1, -1, -1}; }
+        fe = first_elements[idx];
+      }
+
+      std::array<size_t, 4> indices;
+      indices[0] = idx;
+
+      size_t conn_idx = element_stride * (e - fe.first);
+      indices[1] = vconn[idx][conn_idx] - 1;
+      indices[2] = vconn[idx][conn_idx + 1] - 1;
+      indices[3] = vconn[idx][conn_idx + 2] - 1;
+      return indices;
+    }
 
     void clear() {
       num_entities = -1;
@@ -90,11 +137,58 @@ private:
   ConnectivityData face_data_;
   ConnectivityData element_data_;
 
+  struct VertexData {
+    void setup(Interface* mbi) {
+      ErrorCode rval;
+      // setup vertices
+      Range verts;
+      rval = mbi->get_entities_by_dimension(0, 0, verts, true);
+      MB_CHK_SET_ERR_CONT(rval, "Failed to get all elements of dimension 0 (vertices)");
+      num_vertices = verts.size();
 
-  int num_vertices_ {-1}; //!< Number of vertices in the manager
-  std::vector<const double*> tx_; //!< Storage array(s) for vertex x coordinates
-  std::vector<const double*> ty_; //!< Storage array(s) for vertex y coordinates
-  std::vector<const double*> tz_; //!< Storage array(s) for vertex z coordinates
+      moab::Range::iterator verts_it = verts.begin();
+      while (verts_it != verts.end()) {
+        // set vertex coordinate pointers
+        double* xtmp;
+        double* ytmp;
+        double* ztmp;
+        int n_vertices;
+        rval = mbi->coords_iterate(verts_it, verts.end(), xtmp, ytmp, ztmp, n_vertices);
+        MB_CHK_SET_ERR_CONT(rval, "Failed to get direct access to vertex elements");
+
+        // add the vertex coordinate arrays to their corresponding vector of array pointers
+        tx.push_back(&(*xtmp));
+        ty.push_back(&(*ytmp));
+        tz.push_back(&(*ztmp));
+
+        // move iterator forward by the number of vertices in this contiguous memory block
+        verts_it += n_vertices;
+      }
+    }
+
+    void clear() {
+      num_vertices = -1;
+      tx.clear();
+      ty.clear();
+      tz.clear();
+    }
+
+    //! \brief Set the coordinates of a vertex based on an index into a contiguous block of memory
+    //! \param idx The index of the block of memory
+    //! \param i The index of the vertex in the block of memory
+    //! \param v The vertex to set the coordinates of
+    void set_coords(int idx, int i, xdg::Vertex& v) {
+      v = xdg::Vertex(tx[idx][i], ty[idx][i], tz[idx][i]);
+    }
+
+
+    int num_vertices {-1}; //!< Number of vertices in the manager
+    std::vector<const double*> tx; //!< Storage array(s) for vertex x coordinates
+    std::vector<const double*> ty; //!< Storage array(s) for vertex y coordinates
+    std::vector<const double*> tz; //!< Storage array(s) for vertex z coordinates
+  };
+
+  VertexData vertex_data_;
 };
 
 #endif // include guard
