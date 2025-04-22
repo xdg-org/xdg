@@ -21,15 +21,6 @@ public:
   //! \brief Initialize internal structures
   void setup();
 
-  //! \brief Setup the face data structures
-  void setup_face_data();
-
-  //! \brief Setup the element data structures
-  void setup_element_data();
-
-  //! \brief Setup the vertex data structures
-  void setup_vertex_data();
-
   //! \brief Reset internal data structures, but maintain MOAB isntance
   void clear();
 
@@ -53,6 +44,17 @@ public:
   //! \brief Get the coordinates of a triangle as MOAB CartVect's
   inline std::array<xdg::Vertex, 3> get_mb_coords(const EntityHandle& tri) {
     auto [idx, i0, i1, i2] = face_data_.get_connectivity_indices(tri);
+
+    std::array<xdg::Vertex, 3> vertices;
+    vertex_data_.set_coords(idx, i0, vertices[0]);
+    vertex_data_.set_coords(idx, i1, vertices[1]);
+    vertex_data_.set_coords(idx, i2, vertices[2]);
+    return vertices;
+  }
+
+  //! \brief Get the coordinates of a triangle as MOAB CartVect's
+  inline std::array<xdg::Vertex, 3> get_element_coords(const EntityHandle& element) {
+    auto [idx, i0, i1, i2] = element_data_.get_connectivity_indices(element);
 
     std::array<xdg::Vertex, 3> vertices;
     vertex_data_.set_coords(idx, i0, vertices[0]);
@@ -134,9 +136,6 @@ private:
     }
   };
 
-  ConnectivityData face_data_;
-  ConnectivityData element_data_;
-
   struct VertexData {
     void setup(Interface* mbi) {
       ErrorCode rval;
@@ -188,6 +187,8 @@ private:
     std::vector<const double*> tz; //!< Storage array(s) for vertex z coordinates
   };
 
+  ConnectivityData face_data_;
+  ConnectivityData element_data_;
   VertexData vertex_data_;
 };
 
