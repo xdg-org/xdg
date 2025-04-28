@@ -284,18 +284,25 @@ MOABMeshManager::get_surface_connectivity(MeshID surface) const
   return connectivity;
 }
 
-std::vector<double> 
+std::vector<Vertex> 
 MOABMeshManager::get_surface_vertices(MeshID surface) const
 {
-  auto conn = get_surface_connectivity(surface);
+  auto conn = get_surface_connectivity(surface);  
+  
+  // convert to moab::EntityHandle for get_coords
   std::vector<moab::EntityHandle> verts;
-
   verts.insert(verts.end(), conn.begin(), conn.end());
-  std::vector<double> coords(verts.size() * 3);
 
+  std::vector<double> coords(conn.size() * 3);
   this->moab_interface()->get_coords(verts.data(), verts.size(), coords.data());
 
-  return coords;
+  std::vector<Vertex> vertices;
+  vertices.reserve(conn.size());
+  for (size_t i = 0; i < verts.size(); ++i) {
+      vertices.emplace_back(coords[i * 3], coords[i * 3 + 1], coords[i * 3 + 2]);
+  }
+
+  return vertices;
 }
 
 SurfaceElementType 

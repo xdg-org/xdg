@@ -66,7 +66,7 @@ public:
 
   std::vector<int> get_surface_connectivity(MeshID surface) const override;
 
-  std::vector<double> get_surface_vertices(MeshID surface) const override;
+  std::vector<Vertex> get_surface_vertices(MeshID surface) const override;
 
   SurfaceElementType get_surface_element_type(MeshID surface) const override;
 

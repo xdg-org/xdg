@@ -87,18 +87,10 @@ public:
     return flat_connectivity;
   }
 
-  std::vector<double> get_surface_vertices(MeshID surface) const override
+  std::vector<Vertex> get_surface_vertices(MeshID surface) const override
   {
-    std::vector<double> flat_vertices;
-    flat_vertices.reserve(vertices.size() * 3);
-    
-    for (const auto& vertex : vertices) {
-      flat_vertices.push_back(vertex.x);
-      flat_vertices.push_back(vertex.y);
-      flat_vertices.push_back(vertex.z);
-    }
+    fatal_error("MockMesh does not support get_surface_vertices()");
 
-    return flat_vertices;
   }
 
   // Topology
