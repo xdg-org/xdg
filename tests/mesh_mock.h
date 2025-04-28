@@ -120,7 +120,7 @@ public:
   }
 
   virtual SurfaceElementType get_surface_element_type(MeshID surface) const override {
-    fatal_error("MockMesh does not support get_surface_element_type()");
+    return SurfaceElementType::TRI; // hardcoded to Tri for this mock
   }
 
   // Other

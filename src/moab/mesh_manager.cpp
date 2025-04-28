@@ -309,7 +309,8 @@ SurfaceElementType
 MOABMeshManager::get_surface_element_type(MeshID surface) const
 {
   moab::EntityHandle surf_handle = this->surface_id_map_.at(surface);
-  moab::EntityType type =  this->moab_interface()->type_from_handle(surf_handle);
+  
+  moab::EntityType type = moab::MBTRI; // TODO: hardcodeed to tri for now
 
   switch (type)
   {

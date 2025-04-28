@@ -125,6 +125,21 @@ TEST_CASE("MOAB Vertices")
   }
 }
 
+TEST_CASE("MOAB Element Types")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("cube.h5m");
+  mesh_manager->init();
+
+  for (const auto surface: mesh_manager->surfaces()) {
+    auto element_type = mesh_manager->get_surface_element_type(surface);
+    REQUIRE(element_type == SurfaceElementType::TRI); // Each surface should be made up of triangles
+  }
+}
+
+
 TEST_CASE("MOAB Connectivity")
 {
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
@@ -138,6 +153,7 @@ TEST_CASE("MOAB Connectivity")
     REQUIRE(connectivity.size() == 138); // Each surface should contain exactly 138 nodes
   }
 }
+
 
 TEST_CASE("TEST XDG Factory Method")
 {
