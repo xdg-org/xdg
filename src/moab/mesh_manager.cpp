@@ -298,6 +298,23 @@ MOABMeshManager::get_surface_vertices(MeshID surface) const
   return coords;
 }
 
+SurfaceElementType 
+MOABMeshManager::get_surface_element_type(MeshID surface) const
+{
+  moab::EntityHandle surf_handle = this->surface_id_map_.at(surface);
+  moab::EntityType type =  this->moab_interface()->type_from_handle(surf_handle);
+
+  switch (type)
+  {
+  case moab::MBTRI:
+    return SurfaceElementType::TRI;  
+  case moab::MBQUAD:
+    return SurfaceElementType::QUAD;
+  }
+
+  fatal_error("Unsupported surface element type");
+}
+
 void
 MOABMeshManager::parse_metadata()
 {

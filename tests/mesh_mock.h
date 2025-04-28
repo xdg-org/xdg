@@ -127,6 +127,10 @@ public:
     fatal_error("MockMesh does not support parse_metadata()");
   }
 
+  virtual SurfaceElementType get_surface_element_type(MeshID surface) const override {
+    fatal_error("MockMesh does not support get_surface_element_type()");
+  }
+
   // Other
   virtual MeshLibrary mesh_library() const override { return MeshLibrary::INTERNAL; }
 

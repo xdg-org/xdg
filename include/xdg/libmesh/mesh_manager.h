@@ -109,6 +109,11 @@ public:
     fatal_error("LibMeshManager::get_surface_vertices() not implemented yet");
   }
 
+  SurfaceElementType get_surface_element_type(MeshID surface) const override
+  {
+    fatal_error("LibMeshManager::get_surface_element_type() not implemented yet");
+  }
+
   MeshID create_volume() override;
 
   void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override;
