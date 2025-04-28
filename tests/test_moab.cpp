@@ -121,7 +121,7 @@ TEST_CASE("MOAB Vertices")
 
   for (const auto surface: mesh_manager->surfaces()) {
     auto vertices = mesh_manager->get_surface_vertices(surface);
-    REQUIRE(vertices.size() / 3 == 138); // Each surface should contain exactly 138 nodes
+    REQUIRE(vertices.size() == 138); // Each surface should contain exactly 138 nodes
   }
 }
 
