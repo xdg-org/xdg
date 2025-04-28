@@ -48,8 +48,9 @@ public:
 
   virtual std::vector<int> get_surface_connectivity(MeshID surface) const = 0;
 
-  virtual std::vector<double> get_surface_vertices(MeshID surface) const = 0;
+  virtual std::vector<Vertex> get_surface_vertices(MeshID surface) const = 0;
 
+  virtual SurfaceElementType get_surface_element_type(MeshID element) const = 0;
 
   BoundingBox element_bounding_box(MeshID element) const;
 

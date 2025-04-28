@@ -104,9 +104,14 @@ public:
     fatal_error("LibMeshManager::get_surface_connectivity() not implemented yet");
   }
 
-  std::vector<double> get_surface_vertices(MeshID surface) const override
+  std::vector<Vertex> get_surface_vertices(MeshID surface) const override
   {
     fatal_error("LibMeshManager::get_surface_vertices() not implemented yet");
+  }
+
+  SurfaceElementType get_surface_element_type(MeshID surface) const override
+  {
+    fatal_error("LibMeshManager::get_surface_element_type() not implemented yet");
   }
 
   MeshID create_volume() override;

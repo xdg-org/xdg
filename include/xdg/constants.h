@@ -98,6 +98,17 @@ enum class RayFireType { VOLUME, POINT_CONTAINMENT, ACCUMULATE_HITS, FIND_VOLUME
 //
 enum class HitOrientation { ANY, EXITING, ENTERING };
 
+// Enumerator for different element types (maybe we want more here?)
+enum class SurfaceElementType {
+  TRI = 0,
+  QUAD = 1,
+};
+
+enum class VolumeElementType {
+  TET = 0,
+  HEX = 1,
+};
+
 } // namespace xdg
 
 #endif // include guard
