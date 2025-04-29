@@ -2,6 +2,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <set>
 
 #include "xdg/moab/mesh_manager.h"
 
@@ -271,15 +272,23 @@ MOABMeshManager::get_volume_surfaces(MeshID volume) const
 
 std::vector<int> 
 MOABMeshManager::get_surface_connectivity(MeshID surface) const
-{
-  moab::EntityHandle surf_handle = this->surface_id_map_.at(surface);
-  auto faces = _surface_faces(surface);
-
-  moab::Range conn;
-  this->moab_interface()->get_connectivity(faces, conn);
+{ 
+  std::cout << "Surface ID: " << surface << std::endl;
+  this->moab_interface()->list_entity(surface);
 
   std::vector<int> connectivity;
-  connectivity.insert(connectivity.end(), conn.begin(), conn.end());
+  auto faces = get_surface_faces(surface);
+  int nodes;
+  for (auto face : faces) { 
+    moab::EntityHandle element_handle;
+    std::vector<EntityHandle> conn;
+    this->moab_interface()->handle_from_id(moab::MBTRI, face, element_handle);
+    this->moab_interface()->get_connectivity(&element_handle, 1, conn);
+    this->moab_interface()->list_entity(element_handle);
+    connectivity.push_back(conn[0]);
+    connectivity.push_back(conn[1]);
+    connectivity.push_back(conn[2]);
+  }
 
   return connectivity;
 }
@@ -287,23 +296,27 @@ MOABMeshManager::get_surface_connectivity(MeshID surface) const
 std::vector<Vertex> 
 MOABMeshManager::get_surface_vertices(MeshID surface) const
 {
-  auto conn = get_surface_connectivity(surface);  
-  
-  // convert to moab::EntityHandle for get_coords
-  std::vector<moab::EntityHandle> verts;
-  verts.insert(verts.end(), conn.begin(), conn.end());
+  auto conn = get_surface_connectivity(surface);
 
-  std::vector<double> coords(conn.size() * 3);
+  // Use a set to ensure unique vertices
+  std::set<moab::EntityHandle> unique_verts(conn.begin(), conn.end());
+
+  // Convert the set back to a vector for coordinate retrieval
+  std::vector<moab::EntityHandle> verts(unique_verts.begin(), unique_verts.end());
+  std::vector<double> coords(verts.size() * 3);
+
+  // Retrieve coordinates for the unique vertices
   this->moab_interface()->get_coords(verts.data(), verts.size(), coords.data());
 
-  std::vector<Vertex> vertices;
-  vertices.reserve(conn.size());
-  for (size_t i = 0; i < verts.size(); ++i) {
-      vertices.emplace_back(coords[i * 3], coords[i * 3 + 1], coords[i * 3 + 2]);
+  // Create the Vertex vector
+  std::vector<Vertex> vertices(verts.size());
+  for (size_t i = 0; i < verts.size(); i++) {
+      vertices[i] = Vertex(coords[3 * i], coords[3 * i + 1], coords[3 * i + 2]);
   }
 
-  return vertices;
+  return vertices; 
 }
+
 
 SurfaceElementType 
 MOABMeshManager::get_surface_element_type(MeshID surface) const

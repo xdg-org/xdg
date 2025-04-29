@@ -15,7 +15,17 @@ struct Payload {
 //   for interpolating per-vertex values.
 [shader("closesthit")]
 void TriangleMesh(uniform TrianglesGeomData record, inout Payload payload, in float2 bc) {
-    payload.color = float3(bc.x, bc.y, 1.0 - (bc.x + bc.y));
+    // Threshold to determine edge thickness
+    const float edgeThreshold = 0.02;
+
+    // Check if the ray is near an edge using barycentric coordinates
+    if (bc.x < edgeThreshold || bc.y < edgeThreshold || (1.0 - (bc.x + bc.y)) < edgeThreshold) {
+        // Near an edge: set color to black
+        payload.color = float3(0.0, 0.0, 0.0);
+    } else {
+        // Inside the triangle: set color to green
+        payload.color = float3(0.0, 1.0, 0.0);
+    }
 }
 
 // This ray generation program will kick off the ray tracing process,
@@ -27,9 +37,9 @@ void raygen(uniform RayGenData record) {
     uint2 iResolution = DispatchRaysDimensions().xy;
 
     // camera movement
-    float an = pc.time;
-    float zoom = 15 + pc.time; // Increase the radius over time
-    float3 ro = float3(-25 * sin(an), 0.0, 25 * cos(an));
+    float an = pc.time / 1.0; // Divide by 5 to slow down the rotation
+    float zoom = 25; // Keep the zoom level constant
+    float3 ro = float3(-zoom * sin(an), 0.0, zoom * cos(an));
     float3 ta = float3(0.0, 0.0, 0.0);
 
     // camera matrix
@@ -68,5 +78,6 @@ void raygen(uniform RayGenData record) {
 
 [shader("miss")]
 void miss(inout Payload payload) {
-    payload.color = float3(0.0);
+    // Set the background color to light gray
+    payload.color = float3(0.8, 0.8, 0.8);
 }

@@ -64,6 +64,8 @@ public:
 
   std::array<Vertex, 3> face_vertices(MeshID element) const override;
 
+  std::pair<std::vector<Vertex>, std::vector<int>> get_surface_vertices_and_connectivity(MeshID surface) const;
+
   std::vector<int> get_surface_connectivity(MeshID surface) const override;
 
   std::vector<Vertex> get_surface_vertices(MeshID surface) const override;
