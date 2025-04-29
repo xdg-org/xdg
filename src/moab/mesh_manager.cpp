@@ -2,6 +2,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <set>
 
 #include "xdg/moab/mesh_manager.h"
 
@@ -355,6 +356,29 @@ MOABMeshManager::get_volume_surfaces(MeshID volume) const
   return this->tag_data<MeshID>(global_id_tag_, surfaces);
 }
 
+std::vector<int> 
+MOABMeshManager::get_surface_connectivity(MeshID surface) const
+{ 
+  std::cout << "Surface ID: " << surface << std::endl;
+  this->moab_interface()->list_entity(surface);
+
+  std::vector<int> connectivity;
+  auto faces = get_surface_faces(surface);
+  int nodes;
+  for (auto face : faces) { 
+    moab::EntityHandle element_handle;
+    std::vector<EntityHandle> conn;
+    this->moab_interface()->handle_from_id(moab::MBTRI, face, element_handle);
+    this->moab_interface()->get_connectivity(&element_handle, 1, conn);
+    this->moab_interface()->list_entity(element_handle);
+    connectivity.push_back(conn[0]);
+    connectivity.push_back(conn[1]);
+    connectivity.push_back(conn[2]);
+  }
+
+  return connectivity;
+}
+
 std::vector<Vertex>
 MOABMeshManager::get_surface_vertices(MeshID surface) const
 {
@@ -390,6 +414,7 @@ MOABMeshManager::get_surface_mesh(MeshID surface) const
   }
   return {_get_coords(verts), connectivity};
 }
+
 
 SurfaceElementType
 MOABMeshManager::get_surface_element_type(MeshID surface) const
