@@ -79,18 +79,35 @@ int main(int argc, char* argv[]) {
   std::vector<size_t> vertex_counts;
   std::vector<size_t> connectivity_counts;
 
-  for (auto surf : mm->surfaces()) {
-    auto flat_verts = mm->get_surface_vertices(surf);
+  for (int j=0; j<mm->num_surfaces(); j++) {
+    auto &surf = mm->surfaces()[j];
+    std::cout << "Surface - " << surf << std::endl;
+
+    auto vertices = mm->get_surface_vertices(surf);
     auto flat_indices = mm->get_surface_connectivity(surf);
-    std::vector<float3> verts(flat_verts.size() / 3);
+
+    std::cout << "Raw Vertices:\n";
+    for (size_t i = 0; i < vertices.size(); ++i) {
+      std::cout << i << ": (" << vertices[i].x << ", " << vertices[i].y << ", " << vertices[i].z << ")\n";
+    }
+
+    std::cout << "Raw Connectivity:\n";
+    for (size_t i = 0; i < flat_indices.size(); i += 3) {
+      std::cout << "Triangle: " << flat_indices[i] << ", " << flat_indices[i + 1] << ", " << flat_indices[i + 2] << "\n";
+    }
+
+    std::vector<float3> verts(vertices.size());
     std::vector<uint3> inds(flat_indices.size() / 3);
     
-    for (size_t i = 0; i < flat_verts.size() / 3; i++) {
-      verts[i] = float3(flat_verts[3 * i], flat_verts[3 * i + 1], flat_verts[3 * i + 2]);
+    for (size_t n = 0; n < vertices.size(); n++) {
+      verts[n] = float3(vertices[n].x, vertices[n].y, vertices[n].z);
     }
     vertex_counts.push_back(verts.size());
-    for (size_t i = 0; i < flat_indices.size() / 3; i++) {
-      inds[i] = uint3(flat_indices[3 * i], flat_indices[3 * i + 1], flat_indices[3 * i + 2]);
+    for (size_t n = 0; n < inds.size(); n++) {
+      int i = flat_indices[3 * n];
+      int j = flat_indices[3 * n + 1];
+      int k = flat_indices[3 * n + 2];
+      inds[n] = uint3(i, j, k);
     }
     connectivity_counts.push_back(inds.size());
 
@@ -102,6 +119,14 @@ int main(int argc, char* argv[]) {
     // geom_data->index = gprtBufferGetDevicePointer(connectivity_buffers.back());
     // geom_data->id = surf;
     // geom_data->vols = {mm->get_parent_volumes(surf).first, mm->get_parent_volumes(surf).second};
+    
+    for (size_t i = 0; i < inds.size(); ++i) {
+      const auto& conn = inds[i];
+      const auto& vert = verts[i];
+
+      std::cout << "conn: " << conn.x << " " << conn.y << " " << conn.z
+                << " Vertex: " << vert.x << " " << vert.y << " " << vert.z << std::endl;
+    }
 
   }
 
