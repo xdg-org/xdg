@@ -31,6 +31,12 @@ extern GPRTProgram gprt_test_deviceCode;
 // Initial image resolution
 const int2 fbSize = {1400, 1000};
 
+// Initial camera parameters
+float3 lookFrom = {1.5f, 6.f, -10.f};
+float3 lookAt = {1.5f, 1.5f, -1.5f};
+float3 lookUp = {0.f, -1.f, 0.f};
+float cosFovy = 0.66f;
+
 // Output file name for the rendered image
 const char *outFileName = "gprt-test.png";
 
@@ -106,10 +112,10 @@ int main(int argc, char* argv[]) {
     connectivity_buffers.push_back(gprtDeviceBufferCreate<uint3>(context, ui3Indices.size(), ui3Indices.data()));
     trianglesGeom.push_back(gprtGeomCreate<TrianglesGeomData>(context, trianglesGeomType));
     TrianglesGeomData* geom_data = gprtGeomGetParameters(trianglesGeom.back());
-    // geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffers.back());
-    // geom_data->index = gprtBufferGetDevicePointer(connectivity_buffers.back());
-    // geom_data->id = surf;
-    // geom_data->vols = {mm->get_parent_volumes(surf).first, mm->get_parent_volumes(surf).second};
+    geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffers.back());
+    geom_data->index = gprtBufferGetDevicePointer(connectivity_buffers.back());
+    geom_data->id = surf;
+    geom_data->vols = {mm->get_parent_volumes(surf).first, mm->get_parent_volumes(surf).second};
   }
 
   // Create geometry instance and set vertex and index buffers for each surface
@@ -153,14 +159,173 @@ int main(int argc, char* argv[]) {
   // Build the Shader Binding Table (SBT), updating all parameters.
   gprtBuildShaderBindingTable(context, GPRT_SBT_ALL);
 
-  // Main render loop
   PushConstants pc;
+  bool firstFrame = true;
+  double xpos = 0.f, ypos = 0.f;
+  double lastxpos, lastypos;
+
+  // Retrieve the bounding box of the TLAS
+  auto worldBB = mm->world_bounding_box();
+  auto tlasMin = float3(worldBB.min_x, worldBB.min_y, worldBB.min_z);
+  auto tlasMax = float3(worldBB.max_x, worldBB.max_y, worldBB.max_z);
+
+  // Calculate the center of the bounding box
+  float3 center = (tlasMin + tlasMax) * 0.5f;
+
+  // Update camera parameters
+  lookAt = center;
+
+  // Calculate a suitable `lookFrom` position based on the bounding box size
+  float3 boxSize = tlasMax - tlasMin;
+  float distance = length(boxSize) * 1.0f; // Adjust the multiplier for desired zoom level
+  lookFrom = center + float3(0.0f, 0.0f, -distance); // Place the camera behind the center
+
+  // Set the up vector
+  lookUp = float3(0.0f, 1.0f, 0.0f); // Y-axis up
+
+  // Update push constants
+  pc.camera.pos = lookFrom;
+  pc.camera.dir_00 = normalize(lookAt - lookFrom);
+  float aspect = float(fbSize.x) / float(fbSize.y);
+  pc.camera.dir_du = cosFovy * aspect * normalize(cross(pc.camera.dir_00, lookUp));
+  pc.camera.dir_dv = cosFovy * normalize(cross(pc.camera.dir_du, pc.camera.dir_00));
+  pc.camera.dir_00 -= 0.5f * pc.camera.dir_du;
+  pc.camera.dir_00 -= 0.5f * pc.camera.dir_dv;
+
+  // Add persistent flip states
+  bool flipX = false;
+  bool flipY = false;
+  bool flipZ = false;
+
+  // Main render loop
   do {
+    float speed = .001f;
+    lastxpos = xpos;
+    lastypos = ypos;
+    gprtGetCursorPos(context, &xpos, &ypos);
+    if (firstFrame) {
+        lastxpos = xpos;
+        lastypos = ypos;
+    }
+
+    // Get mouse button states
+    int lstate = gprtGetMouseButton(context, GPRT_MOUSE_BUTTON_LEFT);   // Left mouse button
+    int rstate = gprtGetMouseButton(context, GPRT_MOUSE_BUTTON_RIGHT);  // Right mouse button
+    int mstate = gprtGetMouseButton(context, GPRT_MOUSE_BUTTON_MIDDLE); // Middle mouse button
+
+    // Get key states
+    int yKeyState = gprtGetKey(context, GPRT_KEY_Y); // Check Y key state
+    int xKeyState = gprtGetKey(context, GPRT_KEY_X); // Check X key state
+    int zKeyState = gprtGetKey(context, GPRT_KEY_Z); // Check Z key state
+
+    // Camera rotation (left mouse button)
+    if (lstate == GPRT_PRESS || firstFrame) {
+        firstFrame = false;
+        float4 position = {lookFrom.x, lookFrom.y, lookFrom.z, 1.f};
+        float4 pivot = {lookAt.x, lookAt.y, lookAt.z, 1.0};
+#ifndef M_PI
+#define M_PI 3.1415926f
+#endif
+
+        // Step 1: Calculate the amount of rotation given the mouse movement
+        float deltaAngleX = (2 * M_PI / fbSize.x);
+        float deltaAngleY = (M_PI / fbSize.y);
+        float xAngle = float(lastxpos - xpos) * deltaAngleX;
+        float yAngle = float(lastypos - ypos) * deltaAngleY;
+
+        // Step 2: Rotate the camera around the pivot point on the first axis
+        float4x4 rotationMatrixX = math::matrixFromRotation(xAngle, lookUp);
+        position = (mul(rotationMatrixX, (position - pivot))) + pivot;
+
+        // Step 3: Rotate the camera around the pivot point on the second axis
+        float3 lookRight = cross(lookUp, normalize(pivot - position).xyz());
+        float4x4 rotationMatrixY = math::matrixFromRotation(yAngle, lookRight);
+        lookFrom = ((mul(rotationMatrixY, (position - pivot))) + pivot).xyz();
+
+        // Update camera parameters
+        pc.camera.pos = lookFrom;
+        pc.camera.dir_00 = normalize(lookAt - lookFrom);
+        float aspect = float(fbSize.x) / float(fbSize.y);
+        pc.camera.dir_du = cosFovy * aspect * normalize(cross(pc.camera.dir_00, lookUp));
+        pc.camera.dir_dv = cosFovy * normalize(cross(pc.camera.dir_du, pc.camera.dir_00));
+        pc.camera.dir_00 -= 0.5f * pc.camera.dir_du;
+        pc.camera.dir_00 -= 0.5f * pc.camera.dir_dv;
+    }
+
+    // Camera panning (right mouse button)
+    if (rstate == GPRT_PRESS) {
+        float3 lookRight = cross(lookUp, normalize(lookAt - lookFrom));
+        float dx = float(lastxpos - xpos) * speed;
+        float dy = float(lastypos - ypos) * speed;
+
+        // Calculate translation vector
+        float3 translation = lookRight * dx + lookUp * -dy;
+
+        // Apply translation to camera position and target
+        lookFrom = lookFrom + translation;
+        lookAt = lookAt + translation;
+
+        // Update camera parameters
+        pc.camera.pos = lookFrom;
+        pc.camera.dir_00 = normalize(lookAt - lookFrom);
+        float aspect = float(fbSize.x) / float(fbSize.y);
+        pc.camera.dir_du = cosFovy * aspect * normalize(cross(pc.camera.dir_00, lookUp));
+        pc.camera.dir_dv = cosFovy * normalize(cross(pc.camera.dir_du, pc.camera.dir_00));
+        pc.camera.dir_00 -= 0.5f * pc.camera.dir_du;
+        pc.camera.dir_00 -= 0.5f * pc.camera.dir_dv;
+    }
+
+    // Camera zooming (middle mouse button)
+    if (mstate == GPRT_PRESS) {
+        float3 view_vec = lookFrom - lookAt;
+        float dy = float(lastypos - ypos);
+
+        // Adjust the view vector length based on mouse movement
+        if (dy > 0.0) {
+            view_vec *= 0.95f; // Zoom in
+        } else if (dy < 0.0) {
+            view_vec *= 1.05f; // Zoom out
+        }
+
+        // Update camera position
+        lookFrom = lookAt + view_vec;
+
+        // Update camera parameters
+        pc.camera.pos = lookFrom;
+        pc.camera.dir_00 = normalize(lookAt - lookFrom);
+        float aspect = float(fbSize.x) / float(fbSize.y);
+        pc.camera.dir_du = cosFovy * aspect * normalize(cross(pc.camera.dir_00, lookUp));
+        pc.camera.dir_dv = cosFovy * normalize(cross(pc.camera.dir_du, pc.camera.dir_00));
+        pc.camera.dir_00 -= 0.5f * pc.camera.dir_du;
+        pc.camera.dir_00 -= 0.5f * pc.camera.dir_dv;
+    }
+
+    // Toggle flip states when keys are pressed
+    if (yKeyState == GPRT_PRESS) {
+        flipY = !flipY; // Toggle Y-axis flip
+    }
+    if (xKeyState == GPRT_PRESS) {
+        flipX = !flipX; // Toggle X-axis flip
+    }
+    if (zKeyState == GPRT_PRESS) {
+        flipZ = !flipZ; // Toggle Z-axis flip
+    }
+
+    // Apply persistent flips
+    if (flipY) {
+        pc.camera.dir_dv = -pc.camera.dir_dv; // Flip vertical direction
+    }
+    if (flipX) {
+        pc.camera.dir_du = -pc.camera.dir_du; // Flip horizontal direction
+    }
+    if (flipZ) {
+        pc.camera.dir_00 = -pc.camera.dir_00; // Flip forward direction
+    }
+
     pc.time = float(gprtGetTime(context));
     gprtRayGenLaunch2D(context, rayGen, fbSize.x, fbSize.y, pc);
     gprtBufferPresent(context, frameBuffer);
-  }
-  while (!gprtWindowShouldClose(context));
+  } while (!gprtWindowShouldClose(context));
 
   // Save final frame to an image
   gprtBufferSaveImage(frameBuffer, fbSize.x, fbSize.y, outFileName);
