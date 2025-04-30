@@ -29,10 +29,10 @@ extern GPRTProgram gprt_test_deviceCode;
 
 
 // Initial image resolution
-const int2 fbSize = {1400, 460};
+const int2 fbSize = {1400, 1000};
 
 // Output file name for the rendered image
-const char *outFileName = "gprt-triangle.png";
+const char *outFileName = "gprt-test.png";
 
 int main(int argc, char* argv[]) {
 
@@ -77,64 +77,46 @@ int main(int argc, char* argv[]) {
   std::vector<GPRTBufferOf<uint3>> connectivity_buffers;
   std::vector<GPRTGeomOf<TrianglesGeomData>> trianglesGeom;
   std::vector<size_t> vertex_counts;
-  std::vector<size_t> connectivity_counts;
+  std::vector<size_t> index_counts;
 
-  for (int j=0; j<mm->num_surfaces(); j++) {
-    auto &surf = mm->surfaces()[j];
-    std::cout << "Surface - " << surf << std::endl;
+  for (const auto &surf : mm->surfaces()) {
+    // Get surface mesh vertcies and associated connectivities
+    auto meshParams = mm->get_surface_mesh(surf);
+    auto vertices = meshParams.first;
+    auto indices = meshParams.second;
 
-    auto vertices = mm->get_surface_vertices(surf);
-    auto flat_indices = mm->get_surface_connectivity(surf);
-
-    std::cout << "Raw Vertices:\n";
-    for (size_t i = 0; i < vertices.size(); ++i) {
-      std::cout << i << ": (" << vertices[i].x << ", " << vertices[i].y << ", " << vertices[i].z << ")\n";
+    // Convert vertices to float3 
+    std::vector<float3> fl3Vertices;
+    fl3Vertices.reserve(vertices.size());    
+    for (const auto &vertex : vertices) {
+      fl3Vertices.emplace_back(vertex.x, vertex.y, vertex.z);
     }
+    vertex_counts.push_back(fl3Vertices.size());
 
-    std::cout << "Raw Connectivity:\n";
-    for (size_t i = 0; i < flat_indices.size(); i += 3) {
-      std::cout << "Triangle: " << flat_indices[i] << ", " << flat_indices[i + 1] << ", " << flat_indices[i + 2] << "\n";
+    // Convert connectivities/indices to uint3
+    std::vector<uint3> ui3Indices;
+    ui3Indices.reserve(indices.size() / 3);
+    for (size_t i = 0; i < indices.size(); i += 3) {
+      ui3Indices.emplace_back(indices[i], indices[i + 1], indices[i + 2]);
     }
+    index_counts.push_back(ui3Indices.size());
 
-    std::vector<float3> verts(vertices.size());
-    std::vector<uint3> inds(flat_indices.size() / 3);
-    
-    for (size_t n = 0; n < vertices.size(); n++) {
-      verts[n] = float3(vertices[n].x, vertices[n].y, vertices[n].z);
-    }
-    vertex_counts.push_back(verts.size());
-    for (size_t n = 0; n < inds.size(); n++) {
-      int i = flat_indices[3 * n];
-      int j = flat_indices[3 * n + 1];
-      int k = flat_indices[3 * n + 2];
-      inds[n] = uint3(i, j, k);
-    }
-    connectivity_counts.push_back(inds.size());
-
-    vertex_buffers.push_back(gprtDeviceBufferCreate<float3>(context, verts.size(), verts.data()));
-    connectivity_buffers.push_back(gprtDeviceBufferCreate<uint3>(context, inds.size(), inds.data()));
+    // Create GPRT buffers and geometry data
+    vertex_buffers.push_back(gprtDeviceBufferCreate<float3>(context, fl3Vertices.size(), fl3Vertices.data()));
+    connectivity_buffers.push_back(gprtDeviceBufferCreate<uint3>(context, ui3Indices.size(), ui3Indices.data()));
     trianglesGeom.push_back(gprtGeomCreate<TrianglesGeomData>(context, trianglesGeomType));
     TrianglesGeomData* geom_data = gprtGeomGetParameters(trianglesGeom.back());
     // geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffers.back());
     // geom_data->index = gprtBufferGetDevicePointer(connectivity_buffers.back());
     // geom_data->id = surf;
     // geom_data->vols = {mm->get_parent_volumes(surf).first, mm->get_parent_volumes(surf).second};
-    
-    for (size_t i = 0; i < inds.size(); ++i) {
-      const auto& conn = inds[i];
-      const auto& vert = verts[i];
-
-      std::cout << "conn: " << conn.x << " " << conn.y << " " << conn.z
-                << " Vertex: " << vert.x << " " << vert.y << " " << vert.z << std::endl;
-    }
-
   }
 
+  // Create geometry instance and set vertex and index buffers for each surface
   for (int i=0; i<mm->num_surfaces(); i++) { 
     auto &surf = mm->surfaces()[i];
-    // New: Create geometry instance and set vertex and index buffers
     gprtTrianglesSetVertices(trianglesGeom[i], vertex_buffers[i], vertex_counts[i]);
-    gprtTrianglesSetIndices(trianglesGeom[i], connectivity_buffers[i], connectivity_counts[i]);
+    gprtTrianglesSetIndices(trianglesGeom[i], connectivity_buffers[i], index_counts[i]);
   }
 
   // Create a BLAS for each geometry
