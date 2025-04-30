@@ -359,9 +359,6 @@ MOABMeshManager::get_volume_surfaces(MeshID volume) const
 std::vector<int> 
 MOABMeshManager::get_surface_connectivity(MeshID surface) const
 { 
-  std::cout << "Surface ID: " << surface << std::endl;
-  this->moab_interface()->list_entity(surface);
-
   std::vector<int> connectivity;
   auto faces = get_surface_faces(surface);
   int nodes;
@@ -370,12 +367,10 @@ MOABMeshManager::get_surface_connectivity(MeshID surface) const
     std::vector<EntityHandle> conn;
     this->moab_interface()->handle_from_id(moab::MBTRI, face, element_handle);
     this->moab_interface()->get_connectivity(&element_handle, 1, conn);
-    this->moab_interface()->list_entity(element_handle);
     connectivity.push_back(conn[0]);
     connectivity.push_back(conn[1]);
     connectivity.push_back(conn[2]);
   }
-
   return connectivity;
 }
 
@@ -414,7 +409,6 @@ MOABMeshManager::get_surface_mesh(MeshID surface) const
   }
   return {_get_coords(verts), connectivity};
 }
-
 
 SurfaceElementType
 MOABMeshManager::get_surface_element_type(MeshID surface) const
