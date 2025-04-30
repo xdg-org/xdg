@@ -38,7 +38,7 @@ void write_message(const std::string& message)
     output(message, std::cout, 1);
 }
 
-void fatal_error(const std::string& message, int err)
+[[noreturn]] void fatal_error(const std::string& message, int err)
 {
 #ifdef _POSIX_VERSION
   // Make output red if user is in a terminal

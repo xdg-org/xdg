@@ -16,7 +16,7 @@ void write_message(const std::string& message, const Params&... fmt_args)
   write_message(fmt::format(message, fmt_args...));
 }
 
-void fatal_error(const std::string& message, int err=-1);
+[[noreturn]] void fatal_error(const std::string& message, int err=-1);
 
 template<typename... Params>
 void fatal_error(const std::string& message, const Params&... fmt_args)

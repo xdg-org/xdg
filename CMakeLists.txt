@@ -37,6 +37,9 @@ endif()
 #===============================================================================
 if (XDG_ENABLE_MOAB)
 find_package(MOAB REQUIRED HINTS ${MOAB_DIR})
+if (NOT MOAB_USE_HDF5)
+  message(FATAL_ERROR "MOAB must be built with HDF5 support for file specifications required by XDG.")
+endif()
 endif()
 
 if (XDG_ENABLE_EMBREE)
@@ -63,7 +66,7 @@ if (XDG_ENABLE_EMBREE)
   endif()
 
   message(STATUS "Found Embree ${EMBREE_VERSION} at ${EMBREE_ROOT_DIR}")
-endif()  
+endif()
 
 # Catch2 testing module
 if (XDG_BUILD_TESTS)
