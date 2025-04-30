@@ -36,28 +36,23 @@ void raygen(uniform RayGenData record) {
     uint2 pixelID = DispatchRaysIndex().xy;
     uint2 iResolution = DispatchRaysDimensions().xy;
 
-    // camera movement
-    float an = pc.time / 2.0; // Divide by 5 to slow down the rotation
-    float zoom = 25; // Keep the zoom level constant
-    float3 ro = float3(-zoom * sin(an), 0.0, zoom * cos(an));
-    float3 ta = float3(0.0, 0.0, 0.0);
-
-    // camera matrix
-    float3 ww = normalize(ta - ro);
-    float3 uu = normalize(cross(ww, float3(0.0, -1.0, 0.0)));
-    float3 vv = normalize(cross(uu, ww));
+    // Use camera parameters from PushConstants
+    float3 ro = pc.camera.pos; // Camera position
+    float3 ww = normalize(pc.camera.dir_00); // Forward direction
+    float3 uu = normalize(pc.camera.dir_du); // Horizontal direction
+    float3 vv = normalize(pc.camera.dir_dv); // Vertical direction
 
     float3 tot = float3(0.0);
 
     for (int m = 0; m < AA; m++)
         for (int n = 0; n < AA; n++)
         {
-            // pixel coordinates
+            // Pixel coordinates
             float2 o = float2(float(m), float(n)) / float(AA) - 0.5;
             float2 p = (2.0 * (pixelID + o) - iResolution.xy) / iResolution.y;
 
-            // create view ray
-            float3 rd = normalize(p.x * uu + p.y * vv + 3.0 * ww);
+            // Create view ray
+            float3 rd = normalize(p.x * uu + p.y * vv + ww);
 
             // Trace the ray into the scene
             RayDesc rayDesc;
