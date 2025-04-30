@@ -273,9 +273,6 @@ MOABMeshManager::get_volume_surfaces(MeshID volume) const
 std::vector<int> 
 MOABMeshManager::get_surface_connectivity(MeshID surface) const
 { 
-  std::cout << "Surface ID: " << surface << std::endl;
-  this->moab_interface()->list_entity(surface);
-
   std::vector<int> connectivity;
   auto faces = get_surface_faces(surface);
   int nodes;
@@ -284,12 +281,10 @@ MOABMeshManager::get_surface_connectivity(MeshID surface) const
     std::vector<EntityHandle> conn;
     this->moab_interface()->handle_from_id(moab::MBTRI, face, element_handle);
     this->moab_interface()->get_connectivity(&element_handle, 1, conn);
-    this->moab_interface()->list_entity(element_handle);
     connectivity.push_back(conn[0]);
     connectivity.push_back(conn[1]);
     connectivity.push_back(conn[2]);
   }
-
   return connectivity;
 }
 
@@ -313,29 +308,20 @@ MOABMeshManager::get_surface_vertices(MeshID surface) const
 }
 
 std::pair<std::vector<Vertex>, std::vector<int>> 
-MOABMeshManager::get_surface_vertices_and_connectivity(MeshID surface) const
+MOABMeshManager::get_surface_mesh(MeshID surface) const
 {
-  std::cout << "Surface ID: " << surface << std::endl;
-  this->moab_interface()->list_entity(surface);
-
   std::vector<int> connectivity;
   std::vector<moab::EntityHandle> verts;
   auto faces = get_surface_faces(surface);
 
-  // Collect connectivity and vertices
   for (auto face : faces) { 
     moab::EntityHandle element_handle;
     std::vector<EntityHandle> conn;
     this->moab_interface()->handle_from_id(moab::MBTRI, face, element_handle);
     this->moab_interface()->get_connectivity(&element_handle, 1, conn);
-    this->moab_interface()->list_entity(element_handle);
-
-    // Add connectivity indices
     connectivity.push_back(conn[0]);
     connectivity.push_back(conn[1]);
     connectivity.push_back(conn[2]);
-
-    // Add vertices to the list
     verts.insert(verts.end(), conn.begin(), conn.end());
   }
 
