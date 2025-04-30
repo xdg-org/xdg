@@ -83,8 +83,9 @@ int main(int argc, char* argv[]) {
     auto &surf = mm->surfaces()[j];
     std::cout << "Surface - " << surf << std::endl;
 
-    auto vertices = mm->get_surface_vertices(surf);
-    auto flat_indices = mm->get_surface_connectivity(surf);
+    auto meshParams = mm->get_surface_vertices_and_connectivity(surf);
+    auto vertices = meshParams.first;
+    auto flat_indices = meshParams.second;
 
     std::cout << "Raw Vertices:\n";
     for (size_t i = 0; i < vertices.size(); ++i) {

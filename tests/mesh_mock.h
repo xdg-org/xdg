@@ -90,7 +90,11 @@ public:
   std::vector<Vertex> get_surface_vertices(MeshID surface) const override
   {
     fatal_error("MockMesh does not support get_surface_vertices()");
+  }
 
+  std::pair<std::vector<Vertex>, std::vector<int>> get_surface_vertices_and_connectivity(MeshID surface) const override
+  {
+    fatal_error("MockMesh does not support get_surface_vertices()");
   }
 
   // Topology

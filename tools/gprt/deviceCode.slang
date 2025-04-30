@@ -37,7 +37,7 @@ void raygen(uniform RayGenData record) {
     uint2 iResolution = DispatchRaysDimensions().xy;
 
     // camera movement
-    float an = pc.time / 1.0; // Divide by 5 to slow down the rotation
+    float an = pc.time / 2.0; // Divide by 5 to slow down the rotation
     float zoom = 25; // Keep the zoom level constant
     float3 ro = float3(-zoom * sin(an), 0.0, zoom * cos(an));
     float3 ta = float3(0.0, 0.0, 0.0);
