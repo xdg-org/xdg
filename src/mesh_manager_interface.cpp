@@ -257,11 +257,20 @@ MeshManager::surface_bounding_box(MeshID surface) const
   return bb;
 }
 
+BoundingBox
+MeshManager::world_bounding_box() const
+{
+  BoundingBox bb;
+  for (auto volume : this->volumes()) {
+    bb.update(this->volume_bounding_box(volume));
+  }
+  return bb;
+}
+
 std::pair<MeshID, MeshID>
 MeshManager::get_parent_volumes(MeshID surface) const
 {
   return this->surface_senses(surface);
 }
-
 
 } // namespace xdg
