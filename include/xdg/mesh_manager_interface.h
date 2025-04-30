@@ -54,6 +54,8 @@ public:
 
   BoundingBox surface_bounding_box(MeshID surface) const;
 
+  BoundingBox world_bounding_box() const;
+
   Direction face_normal(MeshID element) const;
 
   // Topology
