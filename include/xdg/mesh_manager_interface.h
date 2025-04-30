@@ -105,6 +105,8 @@ public:
 
   BoundingBox global_bounding_box() const;
 
+  BoundingBox world_bounding_box() const;
+
   Direction face_normal(MeshID element) const;
 
   // Topology
