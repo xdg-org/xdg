@@ -170,14 +170,14 @@ int main(int argc, char* argv[]) {
   auto tlasMax = float3(worldBB.max_x, worldBB.max_y, worldBB.max_z);
 
   // Calculate the center of the bounding box
-  float3 center = (tlasMin + tlasMax) * 0.75f;
+  float3 center = (tlasMin + tlasMax) * 0.5f;
 
   // Update camera parameters
   lookAt = center;
 
   // Calculate a suitable `lookFrom` position based on the bounding box size
   float3 boxSize = tlasMax - tlasMin;
-  float distance = length(boxSize) * 0.5f; // Adjust the multiplier for desired zoom level
+  float distance = length(boxSize) * 1.0f; // Adjust the multiplier for desired zoom level
   lookFrom = center + float3(0.0f, 0.0f, -distance); // Place the camera behind the center
 
   // Set the up vector
