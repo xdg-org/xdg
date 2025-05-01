@@ -6,7 +6,10 @@
 
 /* variables for the triangle mesh geometry */
 struct TrianglesGeomData {
-  int tmp;   // unused for now
+  float3 *vertex; // vertex buffer
+  uint3 *index;  // index buffer
+  uint id;       // surface id
+  uint2 vols;    // parent volumes
 };
 
 struct RayGenData {

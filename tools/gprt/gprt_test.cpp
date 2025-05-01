@@ -112,10 +112,10 @@ int main(int argc, char* argv[]) {
     connectivity_buffers.push_back(gprtDeviceBufferCreate<uint3>(context, ui3Indices.size(), ui3Indices.data()));
     trianglesGeom.push_back(gprtGeomCreate<TrianglesGeomData>(context, trianglesGeomType));
     TrianglesGeomData* geom_data = gprtGeomGetParameters(trianglesGeom.back());
-    // geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffers.back());
-    // geom_data->index = gprtBufferGetDevicePointer(connectivity_buffers.back());
-    // geom_data->id = surf;
-    // geom_data->vols = {mm->get_parent_volumes(surf).first, mm->get_parent_volumes(surf).second};
+    geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffers.back());
+    geom_data->index = gprtBufferGetDevicePointer(connectivity_buffers.back());
+    geom_data->id = surf;
+    geom_data->vols = {mm->get_parent_volumes(surf).first, mm->get_parent_volumes(surf).second};
   }
 
   // Create geometry instance and set vertex and index buffers for each surface

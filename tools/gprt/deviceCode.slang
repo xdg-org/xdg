@@ -22,9 +22,12 @@ void TriangleMesh(uniform TrianglesGeomData record, inout Payload payload, in fl
     if (bc.x < edgeThreshold || bc.y < edgeThreshold || (1.0 - (bc.x + bc.y)) < edgeThreshold) {
         // Near an edge: set color to black
         payload.color = float3(0.0, 0.0, 0.0);
-    } else {
-        // Inside the triangle: set color to green
-        payload.color = float3(0.0, 1.0, 0.0);
+    } else { // Generate a unique color for each parent volume
+        uint vol = record.vols.x; // Get first parent volume ID
+        float r = float((vol * 37) % 256) / 255.0;  
+        float g = float((vol * 73) % 256) / 255.0;  
+        float b = float((vol * 151) % 256) / 255.0; 
+        payload.color = float3(r, g, b);
     }
 }
 
