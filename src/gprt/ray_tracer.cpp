@@ -38,6 +38,51 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
                                                   HitOrientation orientation,
                                                   std::vector<MeshID>* const exclude_primitives) {
   // TODO: Ray cast logic
+  /*
+  PushConstants pc;
+  pc.origin = origin;
+  pc.direction = direction;
+  pc.dist_limit = dist_limit;
+  pc.orientation = orientation;
+  
+  // Need a way of passing the number of particles to this function so that I can generate that many rays
+  nRays = <passed_parameter>;
+  gprtRayGenLaunch1D(context_, rayGen, fbSize.x, nRays, pc);
+  
+
+  void GPRTRayTracer::ray_fire(TreeID scene,
+                             const std::vector<Position>& origins,
+                             const std::vector<Direction>& directions,
+                             double dist_limit,
+                             HitOrientation orientation,
+                             const std::vector<MeshID>* exclude_primitives) {
+    // Create buffer to store ray data
+    VkBuffer rayBuffer;
+    VkDeviceMemory rayBufferMemory;
+    // Allocate and fill rayBuffer with origins and directions...
+    std::vector<GPRTBufferOf<float3>> particleOriginBuffer;
+    std::vector<GPRTBufferOf<float3>> particleDirectionBuffer;
+    for (size_t i = 0; i < origins.size(); ++i) {
+        particleOriginBuffer.push_back(gprtDeviceBufferCreate<float3>(context_, origins[i]));
+        particleDirectionBuffer.push_back(gprtDeviceBufferCreate<float3>(context_, directions[i]));
+    }
+    // Need to think about handling single vs double precision floating points
+
+    RayFirePushConstants pc;
+    pc.dist_limit = dist_limit;
+    pc.orientation = orientation;
+    pc.num_rays = origins.size();
+
+    // Launch the ray generation shader with push constants and buffer bindings
+    gprtRayGenLaunch1D(context_, rayGen, origins.size(), rayBuffer, pc);
+
+    // This will launch the rays and run our shaders in the ray tracing pipeline
+    // miss shader returns dist = 0.0 and elementID = -1
+    // closest hit shader returns dist = distance to hit and elementID = triangle ID
+}
+  */
+                                                  
+
   return {0.0, 0};
 }
 

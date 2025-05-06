@@ -17,6 +17,11 @@
 
 namespace xdg {
 
+enum class GPRTPrecision {
+  DOUBLE,
+  SINGLE
+};
+
 class GPRTRayTracer : public RayTracer {
   // constructors
 public:
@@ -24,6 +29,9 @@ public:
   ~GPRTRayTracer();
   
   void init() override;
+  void set_precision(GPRTPrecision precision) { precision_ = precision; }
+  GPRTPrecision get_precision() const { return precision_; }
+
 //   void add_module(GPRTProgam device_code, std::string name);
   TreeID register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) override;
 
@@ -60,6 +68,7 @@ public:
   { return user_data_map_.at(surface_to_geometry_map_.at(surface)); };
 
   // GPRT members
+  GPRTPrecision precision_ = GPRTPrecision::DOUBLE; //<! Precision of the ray tracer
   GPRTContext context_;
   std::vector<GPRTGeom> geometries_; //<! All geometries created by this ray tracer
   //std::map<std::string,GPRTModule> device_codes_; //<! All device code modules associated with the GPRTContext
@@ -73,7 +82,7 @@ public:
   std::unordered_map<TreeID, GPRTAccel> accel_to_scene_map_; // Map from XDG::TreeID to specific embree scene/tree
 
   // storage
-  std::unordered_map<GPRTAccel, std::vector<PrimitiveRef>> primitive_ref_storage_;
+  std::unordered_map<GPRTAccel, std::vector<PrimitiveRef>> primitive_ref_storage_; // Comes from sharedCode.h?
 };
 
 } // namespace xdg
