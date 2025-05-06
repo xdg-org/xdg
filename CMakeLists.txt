@@ -124,6 +124,11 @@ if (XDG_ENABLE_GPRT)
 list(APPEND xdg_sources
 src/gprt/ray_tracer.cpp
 )
+list(APPEND xdg_device_codes
+flt
+dbl
+)
+
 endif()
 
 if (XDG_ENABLE_LIBMESH)
@@ -228,6 +233,18 @@ endif()
 
 if (XDG_ENABLE_GPRT)
   target_link_libraries(xdg $<BUILD_INTERFACE:gprt>)
+
+  # Compile device code for single precision shaders
+  embed_devicecode(
+  OUTPUT_TARGET
+  flt_deviceCode
+  HEADERS
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/sharedCode.h
+  SOURCES
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/flt_deviceCode.slang
+  )
+
+  target_link_libraries(xdg flt_deviceCode)
 endif()
 
 # ===================
@@ -253,6 +270,12 @@ install(TARGETS xdg
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   INCLUDES DESTINATION include
+)
+
+install(TARGETS flt_deviceCode
+  EXPORT xdg-targets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 install(EXPORT xdg-targets

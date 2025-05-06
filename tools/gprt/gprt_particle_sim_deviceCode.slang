@@ -1,4 +1,4 @@
-#include "sharedCode.h"
+#include "gprt_test_sharedCode.h"
 
 [[vk::push_constant]]
 PushConstants pc;
