@@ -83,8 +83,8 @@ protected:
 } // namespace xdg
 
 // Include template specilizations after the class definition
-#include "xdg/gprt/ray_tracer_float.h"
-#include "xdg/gprt/ray_tracer_FloatPrecision.h"
+#include "flt_ray_tracer.h"
+#include "dbl_ray_tracer.h"
 
 
 #endif // include guard

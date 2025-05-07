@@ -3,6 +3,7 @@
 #include "xdg/xdg.h"
 #include "xdg/error.h"
 #include "xdg/embree/ray_tracer.h"
+#include "xdg/gprt/ray_tracer.h"
 
 // mesh manager concrete implementations
 #ifdef XDG_ENABLE_MOAB

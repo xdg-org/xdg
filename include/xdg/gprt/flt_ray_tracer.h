@@ -23,9 +23,11 @@ namespace xdg {
 
   template<>
   class GPRTRayTracer<float> : public RayTracer {
-  public:
+public:
+
   GPRTRayTracer() {
     context_ = gprtContextCreate();
+    module_ = gprtModuleCreate(context_, flt_deviceCode);
   };
 
   ~GPRTRayTracer() {
@@ -38,8 +40,7 @@ namespace xdg {
     GPRTContext context_;
     GPRTProgram deviceCode_; // device code for float precision shaders
     GPRTModule module_; // device code module for single precision shaders
-  }
-
+  };
 
 
 } // namespace xdg
