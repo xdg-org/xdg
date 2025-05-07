@@ -1,5 +1,5 @@
-#ifndef _XDG_GPRT_RAY_TRACING_INTERFACE_H
-#define _XDG_GPRT_RAY_TRACING_INTERFACE_H
+#ifndef _XDG_GPRT_BASE_RAY_TRACING_INTERFACE_H
+#define _XDG_GPRT_BASE_RAY_TRACING_INTERFACE_H
 
 #include <memory>
 #include <vector>
@@ -17,20 +17,14 @@
 
 namespace xdg {
 
-enum class GPRTPrecision {
-  DOUBLE,
-  SINGLE
-};
-
+template<typename FloatPrecision>
 class GPRTRayTracer : public RayTracer {
   // constructors
 public:
-  GPRTRayTracer();
-  ~GPRTRayTracer();
+  // GPRTRayTracer();
+  // ~GPRTRayTracer();
   
   void init() override;
-  void set_precision(GPRTPrecision precision) { precision_ = precision; }
-  GPRTPrecision get_precision() const { return precision_; }
 
 //   void add_module(GPRTProgam device_code, std::string name);
   TreeID register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) override;
@@ -42,36 +36,37 @@ public:
                       const std::vector<MeshID>* exclude_primitives = nullptr) const override;
 
 
-  std::pair<double, MeshID> ray_fire(TreeID scene,
+  std::pair<FloatPrecision, MeshID> ray_fire(TreeID scene,
                                      const Position& origin,
                                      const Direction& direction,
-                                     const double dist_limit = INFTY,
+                                     const FloatPrecision dist_limit = INFTY,
                                      HitOrientation orientation = HitOrientation::EXITING,
                                      std::vector<MeshID>* const exclude_primitives = nullptr) override;
 
   void closest(TreeID scene,
                const Position& origin,
-               double& dist,
+               FloatPrecision& dist,
                MeshID& triangle) override;
 
   void closest(TreeID scene,
                const Position& origin,
-               double& dist) override;
+               FloatPrecision& dist) override;
 
   bool occluded(TreeID scene,
                 const Position& origin,
                 const Direction& direction,
-                double& dist) const override;
+                FloatPrecision& dist) const override;
 
   // Accessors
   const std::shared_ptr<GeometryUserData>& geometry_data(MeshID surface) const override
   { return user_data_map_.at(surface_to_geometry_map_.at(surface)); };
 
   // GPRT members
-  GPRTPrecision precision_ = GPRTPrecision::DOUBLE; //<! Precision of the ray tracer
+protected:
   GPRTContext context_;
   std::vector<GPRTGeom> geometries_; //<! All geometries created by this ray tracer
-  //std::map<std::string,GPRTModule> device_codes_; //<! All device code modules associated with the GPRTContext
+  
+  int framebufferSize = 0; // Effectively the number of rays to be cast since we do 1D raygen
   
   // Mesh-to-Scene maps 
   std::map<MeshID, GPRTGeom> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
@@ -86,6 +81,10 @@ public:
 };
 
 } // namespace xdg
+
+// Include template specilizations after the class definition
+#include "xdg/gprt/ray_tracer_float.h"
+#include "xdg/gprt/ray_tracer_FloatPrecision.h"
 
 
 #endif // include guard
