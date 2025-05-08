@@ -116,6 +116,11 @@ if (XDG_ENABLE_GPRT)
 list(APPEND xdg_sources
 src/gprt/ray_tracer.cpp
 )
+list(APPEND xdg_device_codes
+flt
+dbl
+)
+
 endif()
 
 if (XDG_ENABLE_LIBMESH)
@@ -218,6 +223,17 @@ endif()
 
 if (XDG_ENABLE_GPRT)
   target_link_libraries(xdg $<BUILD_INTERFACE:gprt>)
+
+
+  embed_devicecode(
+  OUTPUT_TARGET
+  flt_deviceCode
+  HEADERS
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/sharedCode.h
+  SOURCES
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/flt_deviceCode.slang
+  )
+
 endif()
 
 # ===================
