@@ -224,7 +224,7 @@ endif()
 if (XDG_ENABLE_GPRT)
   target_link_libraries(xdg $<BUILD_INTERFACE:gprt>)
 
-
+  # Compile device code for single precision shaders
   embed_devicecode(
   OUTPUT_TARGET
   flt_deviceCode
@@ -233,6 +233,16 @@ if (XDG_ENABLE_GPRT)
   SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/flt_deviceCode.slang
   )
+
+  # Compile device code for double precision shaders
+  embed_devicecode(
+    OUTPUT_TARGET
+    dbl_deviceCode
+    HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/sharedCode.h
+    SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/dbl_deviceCode.slang
+    )
 
 endif()
 
