@@ -17,6 +17,21 @@
 
 namespace xdg {
 
+// class GPRTRayTracerSP : public RayTracer {
+// public:
+//   GPRTRayTracerSP() {
+//     context_ = gprtContextCreate();
+//     module_ = gprtModuleCreate(context_, flt_deviceCode);
+//   };
+
+//   ~GPRTRayTracerSP() {
+//     gprtContextDestroy(context_);
+//   };
+//   void init() override;
+
+// };
+
+
 template<typename FloatPrecision>
 class GPRTRayTracer : public RayTracer {
   // constructors
