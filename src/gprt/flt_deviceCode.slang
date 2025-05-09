@@ -81,35 +81,3 @@ void miss(inout Payload payload) {
 }
 
 
-// ------------------------------------------------ CUSTOM INTERSECTION SHADERS ------------------------------------------------
-/* 1D ray generation intersection with a double precision triangle using the Plucker intersection algorithm*/
-[shader("intersection")]
-void DPTrianglePluckerIntersection(DPTriangleData record)
-{
-    uint rayID = DispatchRaysIndex().x;
-    uint nRays = DispatchRaysDimensions().x;
-
-    // if ((pixelID.x == dims.x / 2) && (pixelID.y == dims.y / 2)) debug = true; // Debugging ray at center of screen
-    // if ((rayID == nRays / 2)) debug = true; // Debugging ray at the center of array
-
-    uint flags = RayFlags();
-
-    // Just skip if we for some reason cull both...
-    if ( ((flags & RAY_FLAG_CULL_BACK_FACING_TRIANGLES) != 0) &&
-         ((flags & RAY_FLAG_CULL_FRONT_FACING_TRIANGLES) != 0)) return;
-
-    // Set the ray orientation based on the flags
-    bool useOrientation = false;
-    int orientation = 0;
-    if ((flags & RAY_FLAG_CULL_BACK_FACING_TRIANGLES) != 0) {
-        orientation = -1;
-        useOrientation = true;
-    }
-    else if ((flags & RAY_FLAG_CULL_FRONT_FACING_TRIANGLES) != 0) {
-        orientation = 1;
-        useOrientation = true;
-    }
-
-    int primID = PrimitiveIndex();
-    int3 indices 
-}

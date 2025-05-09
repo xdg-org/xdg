@@ -30,24 +30,6 @@
 //   // TODO: Point containment logic
 //   return false;
 // }
-
-// std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
-//                                                   const Position& origin,
-//                                                   const Direction& direction,
-//                                                   const double dist_limit,
-//                                                   HitOrientation orientation,
-//                                                   std::vector<MeshID>* const exclude_primitives) {
-//   // TODO: Ray cast logic
-//   /*
-//   PushConstants pc;
-//   pc.origin = origin;
-//   pc.direction = direction;
-//   pc.dist_limit = dist_limit;
-//   pc.orientation = orientation;
-  
-//   // Need a way of passing the number of particles to this function so that I can generate that many rays
-//   nRays = <passed_parameter>;
-//   gprtRayGenLaunch1D(context_, rayGen, fbSize.x, nRays, pc);
   
 
 //   void GPRTRayTracer::ray_fire(TreeID scene,
