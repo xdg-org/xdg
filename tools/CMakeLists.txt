@@ -3,6 +3,7 @@
 
 set(TOOL_NAMES
 particle_sim
+walk_elements
 ray_fire
 find_volume
 point_in_volume
