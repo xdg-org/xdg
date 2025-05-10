@@ -33,8 +33,6 @@ public:
 
   virtual int num_vertices() const = 0;
 
-  virtual xdg::Vertex vertex(MeshID vertex) const = 0;
-
   virtual int num_volume_elements(MeshID volume) const = 0;
 
   virtual int num_volume_faces(MeshID volume) const = 0;

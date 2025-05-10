@@ -47,8 +47,6 @@ public:
 
   int num_vertices() const override;
 
-  xdg::Vertex vertex(MeshID vertex) const override;
-
   MeshID create_volume() override;
 
   void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override;
