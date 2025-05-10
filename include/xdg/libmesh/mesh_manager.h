@@ -111,8 +111,8 @@ public:
 
   std::pair<MeshID, double>
   next_element(MeshID current_element,
-                              const Position& r,
-                              const Position& u) const override;
+               const Position& r,
+               const Position& u) const override;
 
   std::pair<MeshID, MeshID> surface_senses(MeshID surface) const override;
 

@@ -1,4 +1,3 @@
-
 #ifndef _XDG_VEC3DA_H
 #define _XDG_VEC3DA_H
 
@@ -18,6 +17,7 @@
 #endif
 
 #include "xdg/constants.h"
+#include <fmt/format.h>
 
 namespace xdg {
 
@@ -173,7 +173,22 @@ inline Direction rand_dir() {
 
 }
 
-
 } // end namespace xdg
 
-#endif
+namespace fmt{
+template <>
+struct formatter<xdg::Vec3da> {
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(const xdg::Vec3da& v, FormatContext& ctx) const {
+        return fmt::format_to(ctx.out(), "[{}, {}, {}]", v.x, v.y, v.z);
+    }
+};
+
+} // end namespace fmt
+
+#endif // include guard

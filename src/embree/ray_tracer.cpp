@@ -38,7 +38,7 @@ RTCScene EmbreeRayTracer::create_embree_scene() {
 
 std::pair<TreeID, TreeID>
 EmbreeRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager,
-                           MeshID volume_id)
+                                 MeshID volume_id)
 {
 
   TreeID faces_tree = create_surface_tree(mesh_manager, volume_id);
@@ -181,6 +181,10 @@ void EmbreeRayTracer::create_global_surface_tree()
   }
 
   rtcCommitScene(global_surface_scene_);
+  TreeID tree = next_tree_id();
+  trees_.push_back(tree);
+  tree_to_scene_map_[tree] = global_surface_scene_;
+  global_surface_tree_ = tree;
 }
 
 void EmbreeRayTracer::create_global_element_tree()
@@ -194,6 +198,11 @@ void EmbreeRayTracer::create_global_element_tree()
     rtcAttachGeometry(global_element_scene_, vol_geom);
   }
   rtcCommitScene(global_element_scene_);
+
+  TreeID tree = next_tree_id();
+  trees_.push_back(tree);
+  tree_to_scene_map_[tree] = global_element_scene_;
+  global_element_tree_ = tree;
 }
 
 MeshID EmbreeRayTracer::find_element(const Position& point) const
@@ -207,7 +216,7 @@ MeshID EmbreeRayTracer::find_element(TreeID tree,
 {
 
   if (!tree_to_scene_map_.count(tree)) {
-    warning("Tree {} does not have a point location tree", tree);
+    warning(fmt::format("Tree {} does not have a point location tree", tree));
     return ID_NONE;
   }
 

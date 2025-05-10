@@ -110,7 +110,7 @@ MeshManager::walk_elements(MeshID starting_element,
     exit.second = std::min(exit.second, distance);
     distance -= exit.second;
     // only add to the result if the distance is greater than 0
-    if (exit.second > 0) result.push_back(exit);
+    if (exit.second > 0) result.push_back({elem, exit.second});
     r += exit.second * u;
     elem = exit.first;
 
@@ -162,6 +162,17 @@ MeshManager::volume_bounding_box(MeshID volume) const
   auto surfaces = this->get_volume_surfaces(volume);
   for (auto surface : surfaces) {
     bb.update(this->surface_bounding_box(surface));
+  }
+  return bb;
+}
+
+BoundingBox
+MeshManager::global_bounding_box() const
+{
+  BoundingBox bb;
+  auto volumes = this->volumes();
+  for (auto volume : volumes) {
+    bb.update(this->volume_bounding_box(volume));
   }
   return bb;
 }

@@ -161,18 +161,4 @@ struct RTCDPointQuery : RTCPointQuery {
 
 } // namespace xdg
 
-namespace fmt {
-
-template<>
-struct formatter<xdg::Vec3da> : formatter<std::string> {
-  template<typename FormatContext>
-  auto format(const xdg::Vec3da& v, FormatContext& ctx)
-  {
-    return formatter<std::string>::format(
-      fmt::format("({}, {}, {})", v.x, v.y, v.z), ctx);
-  }
-};
-
-} // namespace fmt
-
 #endif // include guard

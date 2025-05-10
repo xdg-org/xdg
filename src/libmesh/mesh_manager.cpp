@@ -90,6 +90,9 @@ void LibMeshManager::init() {
   // create a sideset for all faces on the boundary of the mesh
   create_boundary_sideset();
 
+  // create an implicit complement
+  create_implicit_complement();
+
   // libMesh initialization
   mesh()->prepare_for_use();
 }
@@ -142,7 +145,8 @@ LibMeshManager::next_element(MeshID current_element,
     const Position normal = (v1.cross(v2)).normalize();
 
     // perform ray-triangle intersection
-    hit_types[i] = plucker_ray_tri_intersect(coords, r, u, dists[i]);
+    int orientation = 1; // exiting hit only
+    hit_types[i] = plucker_ray_tri_intersect(coords, r, u, dists[i], INFTY, nullptr, &orientation);
   }
 
   // determine the minimum distance to exit and the face number
@@ -162,6 +166,7 @@ LibMeshManager::next_element(MeshID current_element,
   }
 
   const auto& next_elem = elem_ref.neighbor_ptr(idx_out);
+  if (!next_elem) return {-1, dists[idx_out]};
   return {next_elem->id(), dists[idx_out]};
 }
 

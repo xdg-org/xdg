@@ -60,9 +60,13 @@ std::pair<double, MeshID> ray_fire(MeshID volume,
                                    std::vector<MeshID>* const exclude_primitives = nullptr) const;
 
 std::vector<std::pair<MeshID, double>>
+segments(const Position& start,
+         const Position& end) const;
+
+std::vector<std::pair<MeshID, double>>
 segments(MeshID volume,
-        const Position& start,
-        const Position& end) const;
+         const Position& start,
+         const Position& end) const;
 
 void closest(MeshID volume,
               const Position& origin,

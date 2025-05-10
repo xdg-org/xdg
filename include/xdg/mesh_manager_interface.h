@@ -59,6 +59,8 @@ public:
 
   BoundingBox volume_bounding_box(MeshID volume) const;
 
+  BoundingBox global_bounding_box() const;
+
   BoundingBox surface_bounding_box(MeshID surface) const;
 
   Direction face_normal(MeshID element) const;

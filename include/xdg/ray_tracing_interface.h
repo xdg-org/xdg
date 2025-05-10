@@ -62,6 +62,7 @@ public:
                                      HitOrientation orientation = HitOrientation::EXITING,
                                      std::vector<MeshID>* const exclude_primitives = nullptr) = 0;
 
+
   // global find element call
   virtual MeshID find_element(const Position& point) const = 0;
 
