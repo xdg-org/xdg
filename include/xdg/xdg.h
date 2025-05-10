@@ -42,13 +42,15 @@ public:
 MeshID find_volume(const Position& point,
                    const Direction& direction) const;
 
+MeshID find_element(const Position& point) const;
+
 MeshID find_element(MeshID volume,
                     const Position& point) const;
 
 bool point_in_volume(MeshID volume,
-                          const Position point,
-                          const Direction* direction = nullptr,
-                          const std::vector<MeshID>* exclude_primitives = nullptr) const;
+                     const Position point,
+                     const Direction* direction = nullptr,
+                     const std::vector<MeshID>* exclude_primitives = nullptr) const;
 
 std::pair<double, MeshID> ray_fire(MeshID volume,
                                    const Position& origin,

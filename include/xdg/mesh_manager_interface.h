@@ -29,6 +29,12 @@ public:
   virtual int num_ents_of_dimension(int dim) const = 0;
 
   // Mesh
+  int num_volume_elements() const;
+
+  virtual int num_vertices() const = 0;
+
+  virtual xdg::Vertex vertex(MeshID vertex) const = 0;
+
   virtual int num_volume_elements(MeshID volume) const = 0;
 
   virtual int num_volume_faces(MeshID volume) const = 0;

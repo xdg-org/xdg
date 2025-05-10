@@ -94,6 +94,13 @@ int MOABMeshManager::num_surfaces() const
   return this->num_ents_of_dimension(2);
 }
 
+int MOABMeshManager::num_vertices() const
+{
+  moab::Range verts;
+  this->moab_interface()->get_entities_by_type(0, moab::MBVERTEX, verts);
+  return verts.size();
+}
+
 int MOABMeshManager::num_ents_of_dimension(int dim) const {
   return this->_ents_of_dim(dim).size();
 }

@@ -37,6 +37,10 @@ public:
     return 6;
   }
 
+  virtual int num_vertices() const override {
+    return vertices_.size();
+  }
+
   virtual int num_ents_of_dimension(int dim) const override {
    switch (dim)
    {

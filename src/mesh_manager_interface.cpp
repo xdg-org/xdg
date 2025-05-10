@@ -45,6 +45,15 @@ MeshID MeshManager::next_surface_id() const
     return *std::max_element(surfaces().begin(), surfaces().end()) + 1;
 }
 
+int MeshManager::num_volume_elements() const
+{
+  int total = 0;
+  for (auto v : volumes()) {
+    total += num_volume_elements(v);
+  }
+  return total;
+}
+
 bool
 MeshManager::volume_has_property(MeshID volume, PropertyType type) const
 {

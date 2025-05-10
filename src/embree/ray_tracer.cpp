@@ -196,6 +196,12 @@ void EmbreeRayTracer::create_global_element_tree()
   rtcCommitScene(global_element_scene_);
 }
 
+MeshID EmbreeRayTracer::find_element(const Position& point) const
+{
+  return find_element(global_element_tree_, point);
+}
+
+
 MeshID EmbreeRayTracer::find_element(TreeID tree,
                                      const Position& point) const
 {

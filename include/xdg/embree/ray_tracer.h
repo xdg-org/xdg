@@ -43,6 +43,8 @@ public:
                       const Direction* direction = nullptr,
                       const std::vector<MeshID>* exclude_primitives = nullptr) const override;
 
+  MeshID find_element(const Position& point) const override;
+
   MeshID find_element(TreeID scene,
                       const Position& point) const;
 
