@@ -101,13 +101,12 @@ namespace xdg {
       // Internal GPRT Mappings
       std::unordered_map<GPRTGeom, std::shared_ptr<GeometryUserData>> user_data_map_;
 
-      std::unordered_map<TreeID, GPRTAccel> tree_to_accel_map; // Map from XDG::TreeID to GPRTAccel structure
+      std::unordered_map<TreeID, GPRTAccel> tree_to_vol_accel_map; // Map from XDG::TreeID to GPRTAccel for volume TLAS
 
       // storage
       std::unordered_map<GPRTAccel, std::vector<PrimitiveRef>> primitive_ref_storage_; // Comes from sharedCode.h?
       std::vector<GPRTBufferOf<float3>> vertex_buffers; // <! vertex buffers for each geometry
       std::vector<GPRTBufferOf<uint3>> connectivity_buffers; // <! connectivity buffers for each geometry
-      std::vector<GPRTGeomOf<TrianglesGeomData>> trianglesGeom_; // geometry for triangle meshes
 
     };
 
