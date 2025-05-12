@@ -21,71 +21,21 @@ namespace xdg {
 
   class GPRTRayTracer : public RayTracer {
     public:
+      GPRTRayTracer();
+      ~GPRTRayTracer();
   
-      GPRTRayTracer() {
-        context_ = gprtContextCreate();
-        module_ = gprtModuleCreate(context_, flt_deviceCode);
-      };
-  
-      ~GPRTRayTracer() {
-        gprtContextDestroy(context_);
-      };
-  
-      void set_geom_data(const std::shared_ptr<MeshManager> mesh_manager)
-      {
-        // Create a "triangle" geometry type and set its closest-hit program
-        auto trianglesGeomType = gprtGeomTypeCreate<TrianglesGeomData>(context_, GPRT_TRIANGLES);
-        gprtGeomTypeSetClosestHitProg(trianglesGeomType, 0, module_, "TriangleMesh_particle");
-  
-        std::vector<GPRTBufferOf<float3>> vertex_buffers;
-        std::vector<GPRTBufferOf<uint3>> connectivity_buffers;
-        std::vector<GPRTGeomOf<TrianglesGeomData>> trianglesGeom;
-        std::vector<size_t> vertex_counts;
-        std::vector<size_t> index_counts;
-  
-        for (const auto &surf : mesh_manager->surfaces()) {
-          // Get surface mesh vertices and associated connectivities
-          auto meshParams = mesh_manager->get_surface_mesh(surf);
-          auto vertices = meshParams.first;
-          auto indices = meshParams.second;
-  
-          // Convert vertices to float3 
-          std::vector<float3> fl3Vertices;
-          fl3Vertices.reserve(vertices.size());    
-          for (const auto &vertex : vertices) {
-            fl3Vertices.emplace_back(vertex.x, vertex.y, vertex.z);
-          }
-          vertex_counts.push_back(fl3Vertices.size());
-  
-          // Convert connectivities/indices to uint3
-          std::vector<uint3> ui3Indices;
-          ui3Indices.reserve(indices.size() / 3);
-          for (size_t i = 0; i < indices.size(); i += 3) {
-            ui3Indices.emplace_back(indices[i], indices[i + 1], indices[i + 2]);
-          }
-          index_counts.push_back(ui3Indices.size());
-  
-          // Create GPRT buffers and geometry data
-          vertex_buffers.push_back(gprtDeviceBufferCreate<float3>(context_, fl3Vertices.size(), fl3Vertices.data()));
-          connectivity_buffers.push_back(gprtDeviceBufferCreate<uint3>(context_, ui3Indices.size(), ui3Indices.data()));
-          trianglesGeom.push_back(gprtGeomCreate<TrianglesGeomData>(context_, trianglesGeomType));
-          TrianglesGeomData* geom_data = gprtGeomGetParameters(trianglesGeom.back());
-          geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffers.back());
-          geom_data->index = gprtBufferGetDevicePointer(connectivity_buffers.back());
-          geom_data->id = surf;
-          geom_data->vols = {mesh_manager->get_parent_volumes(surf).first, mesh_manager->get_parent_volumes(surf).second};
-        }
-      }
+      void set_geom_data(const std::shared_ptr<MeshManager> mesh_manager);
+      void create_world_tlas();
   
       void init() override {
         // Initialize GPRT context and modules
       }
+
+      // Setup the different shader programs for use with this ray tracer
+      void setup_shaders();
   
-      TreeID register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) override {
-        // Register volume with GPRT
-        return 0;
-      }
-  
+      TreeID register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) override;
+
       bool point_in_volume(TreeID scene,
                           const Position& point,
                           const Direction* direction = nullptr,
@@ -127,14 +77,22 @@ namespace xdg {
   
       const std::shared_ptr<GeometryUserData>& geometry_data(MeshID surface) const override
       { return user_data_map_.at(surface_to_geometry_map_.at(surface)); };
+
+      // Set the framebuffer
+      void set_framebuffer(int fbSize) {
+        framebufferSize = fbSize;
+        frameBuffer_ = gprtDeviceBufferCreate<uint32_t>(context_, fbSize);
+      }
   
     private:
       GPRTContext context_;
       GPRTProgram deviceCode_; // device code for float precision shaders
       GPRTModule module_; // device code module for single precision shaders
-      std::vector<GPRTGeomOf<TrianglesGeomData>> trianglesGeom; // geometry for triangle meshes
       // std::vector<GPRTGeom> geometries_; //<! All geometries created by this ray tracer
-    
+      GPRTAccel world_; //<! Top-level acceleration structure
+      GPRTRayGenOf<RayGenData> rayGenProgram_; //<! Ray generation program
+      GPRTMissOf<void> missProgram_; //<! Miss program
+      GPRTBufferOf<uint32_t> frameBuffer_; //<! Framebuffer 
       int framebufferSize = 0; // Effectively the number of rays to be cast since we do 1D raygen
       
       // Mesh-to-Scene maps 
@@ -143,10 +101,14 @@ namespace xdg {
       // Internal GPRT Mappings
       std::unordered_map<GPRTGeom, std::shared_ptr<GeometryUserData>> user_data_map_;
 
-      std::unordered_map<TreeID, GPRTAccel> accel_to_scene_map_; // Map from XDG::TreeID to specific embree scene/tree
+      std::unordered_map<TreeID, GPRTAccel> tree_to_accel_map; // Map from XDG::TreeID to GPRTAccel structure
 
       // storage
       std::unordered_map<GPRTAccel, std::vector<PrimitiveRef>> primitive_ref_storage_; // Comes from sharedCode.h?
+      std::vector<GPRTBufferOf<float3>> vertex_buffers; // <! vertex buffers for each geometry
+      std::vector<GPRTBufferOf<uint3>> connectivity_buffers; // <! connectivity buffers for each geometry
+      std::vector<GPRTGeomOf<TrianglesGeomData>> trianglesGeom_; // geometry for triangle meshes
+
     };
 
 } // namespace xdg
