@@ -63,12 +63,27 @@ std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib
   
   switch (ray_tracing_lib)
   {
+  #ifdef XDG_ENABLE_EMBREE
   case RTLibrary::EMBREE:
     xdg->set_ray_tracing_interface(std::make_shared<EmbreeRayTracer>());
     break;
+  #endif
+  #ifdef XDG_ENABLE_GPRT
   case RTLibrary::GPRT:
     xdg->set_ray_tracing_interface(std::make_shared<GPRTRayTracer>());
     break;
+  #endif
+  default:
+    std::string rt_library = RT_LIB_TO_STR.at(ray_tracing_lib);
+    auto msg = fmt::format("Invalid ray tracing library {} specified. XDG instance could not be created. ", rt_library);
+    msg += "This build of XDG supports the following ray tracing libraries:";
+    #ifdef XDG_ENABLE_EMBREE
+    msg += " EMBREE ";
+    #endif
+    #ifdef XDG_ENABLE_GPRT
+    msg += " GPRT ";
+    #endif
+    fatal_error(msg);
   }
   
   return xdg;
