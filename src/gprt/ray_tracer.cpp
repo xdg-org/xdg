@@ -86,10 +86,9 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
 
 void GPRTRayTracer::create_world_tlas()
 {
-  // Create a BLAS for each geometry
+  // Create buffer of BLAS instances
   std::vector<gprt::Instance> blasInstances;
   for (const auto& [tree,blas] : tree_to_accel_map) {
-    gprtAccelBuild(context_, blas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
     blasInstances.push_back(gprtAccelGetInstance(blas));
   }
 
