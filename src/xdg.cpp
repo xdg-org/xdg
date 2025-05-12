@@ -67,6 +67,7 @@ std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib
     xdg->set_ray_tracing_interface(std::make_shared<EmbreeRayTracer>());
     break;
   case RTLibrary::GPRT:
+    xdg->set_ray_tracing_interface(std::make_shared<GPRTRayTracer>());
     break;
   }
   

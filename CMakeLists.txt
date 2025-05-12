@@ -234,16 +234,7 @@ if (XDG_ENABLE_GPRT)
   ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/flt_deviceCode.slang
   )
 
-  # Compile device code for double precision shaders
-  embed_devicecode(
-    OUTPUT_TARGET
-    dbl_deviceCode
-    HEADERS
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/sharedCode.h
-    SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/dbl_deviceCode.slang
-    )
-
+  target_link_libraries(xdg flt_deviceCode)
 endif()
 
 # ===================
@@ -269,6 +260,12 @@ install(TARGETS xdg
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   INCLUDES DESTINATION include
+)
+
+install(TARGETS flt_deviceCode
+  EXPORT xdg-targets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 install(EXPORT xdg-targets
