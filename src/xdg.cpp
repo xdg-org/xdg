@@ -195,6 +195,15 @@ XDG::segments(MeshID volume,
   return segments;
 }
 
+std::pair<MeshID, double>
+XDG::next_element(MeshID current_element,
+                  const Position& r,
+                  const Direction& u) const
+{
+  return mesh_manager()->next_element(current_element, r, u);
+}
+
+
 std::pair<double, MeshID>
 XDG::ray_fire(MeshID volume,
               const Position& origin,

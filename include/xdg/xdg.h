@@ -52,6 +52,11 @@ bool point_in_volume(MeshID volume,
                      const Direction* direction = nullptr,
                      const std::vector<MeshID>* exclude_primitives = nullptr) const;
 
+std::pair<MeshID, double>
+next_element(MeshID current_element,
+                  const Position& r,
+                  const Direction& u) const;
+
 std::pair<double, MeshID> ray_fire(MeshID volume,
                                    const Position& origin,
                                    const Direction& direction,
