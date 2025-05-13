@@ -35,6 +35,9 @@ args.add_argument("-n", "--num-tracks")
     .default_value(1000)
     .scan<'i', int>();
 
+args.add_argument("-c", "--check-tracks")
+    .help("Check that track lengths always match the sum of segments")
+    .flag();
 
   try {
     args.parse_args(argc, argv);
@@ -67,6 +70,8 @@ xdg->prepare_raytracer();
 BoundingBox bbox = xdg->mesh_manager()->global_bounding_box();
 std::cout << fmt::format("Mesh Bounding Box: {}", bbox) << std::endl;
 
+bool check_tracks = args.get<bool>("--check-tracks");
+
 size_t n_tracks = args.get<int>("--num-tracks");
 
 for (int i = 0; i < n_tracks; i++) {
@@ -79,6 +84,13 @@ for (int i = 0; i < n_tracks; i++) {
 
   auto segments = xdg->segments(r1, r2);
   std::cout << fmt::format("Track {}: {} segments", i, segments.size()) << std::endl;
+
+  if (check_tracks) {
+    double track_length = (r2 - r1).length();
+    double segement_sum = std::accumulate(segments.begin(), segments.end(), 0.0, [](double v, const auto& s) { return v + s.second; });
+    double diff = fabs(track_length - segement_sum);
+    if (diff > TINY_BIT) fatal_error(fmt::format("Track length check failed.\n Start: {}\n End: {}\n Diff: {}", r1, r2, diff));
+  }
 }
 
 
