@@ -132,7 +132,7 @@ XDG::segments(const Position& start,
   std::vector<std::pair<MeshID, double>> segments;
   while (distance > 0) {
     // attempt to find an element at the start location
-    MeshID current_element = ray_tracing_interface()->find_element(start);
+    MeshID current_element = ray_tracing_interface()->find_element(r);
     MeshID volume = ID_NONE;
     if (current_element == ID_NONE) {
       // fire a ray against the implicit complement
@@ -154,11 +154,14 @@ XDG::segments(const Position& start,
         return {};
       }
     }
-    auto vol_segments = mesh_manager()->walk_elements(current_element, r, end);
+    auto vol_segments = mesh_manager()->walk_elements(current_element, r, u, distance);
     // add to current set of segments
     segments.insert(segments.end(), vol_segments.begin(), vol_segments.end());
+    double segment_sum = std::accumulate(vol_segments.begin(), vol_segments.end(), 0.0, [](double m, const auto & p) { return m + p.second; });
+    // upate location of the track start
+    r += u * segment_sum;
     // decrement distance by total distance traveled in the volume
-    distance -= std::accumulate(vol_segments.begin(), vol_segments.end(), 0.0, [](double m, const auto & p) { return m + p.second; });
+    distance -= segment_sum;
   }
   return segments;
 }

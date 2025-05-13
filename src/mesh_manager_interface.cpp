@@ -94,13 +94,10 @@ MeshManager::get_surface_property(MeshID surface, PropertyType type) const
 std::vector<std::pair<MeshID, double>>
 MeshManager::walk_elements(MeshID starting_element,
                            const Position& start,
-                           const Position& end) const
+                           const Direction& u,
+                           double distance) const
 {
   Position r = start;
-  Position u = (end - start);
-  double distance = u.length();
-  u.normalize();
-
   std::vector<std::pair<MeshID, double>> result;
 
   MeshID elem = starting_element;
@@ -119,6 +116,17 @@ MeshManager::walk_elements(MeshID starting_element,
     }
   }
   return result;
+}
+
+std::vector<std::pair<MeshID, double>>
+MeshManager::walk_elements(MeshID starting_element,
+                           const Position& start,
+                           const Position& end) const
+{
+  Position u = (end - start);
+  double distance = u.length();
+  u.normalize();
+  return walk_elements(starting_element, start, u, distance);
 }
 
 MeshID MeshManager::next_volume(MeshID current_volume, MeshID surface) const
