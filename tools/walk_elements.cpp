@@ -89,7 +89,9 @@ for (int i = 0; i < n_tracks; i++) {
     double track_length = (r2 - r1).length();
     double segement_sum = std::accumulate(segments.begin(), segments.end(), 0.0, [](double v, const auto& s) { return v + s.second; });
     double diff = fabs(track_length - segement_sum);
-    if (diff > TINY_BIT) fatal_error(fmt::format("Track length check failed.\n Start: {}\n End: {}\n Diff: {}", r1, r2, diff));
+    if (diff > TINY_BIT) {
+      fatal_error(fmt::format("Track length check failed.\n Start: {}\n End: {}\n Diff: {}", r1, r2, diff));
+    }
   }
 }
 
