@@ -34,6 +34,7 @@ void initialize() {
   u_ = {1.0, 0.0, 0.0};
 
   volume_ = xdg_->find_volume(r_, u_);
+  volume_ = 1;
   log("Particle {} initialized in volume {}", id_, volume_);
 }
 
