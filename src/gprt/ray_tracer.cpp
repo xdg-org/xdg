@@ -106,33 +106,6 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
     return tree;
   }
 
-void GPRTRayTracer::create_world_tlas()
-{
-  // Create buffer of volume instances
-  std::vector<gprt::Instance> volInstances;
-  for (const auto& [tree,volAccel] : tree_to_vol_accel_map) {
-    volInstances.push_back(gprtAccelGetInstance(volAccel));
-  }
-
-  // Create a TLAS (Top-Level Acceleration Structure) for all the volumes
-  auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, volInstances.size(), volInstances.data());
-  world_ = gprtInstanceAccelCreate(context_, volInstances.size(), instanceBuffer);
-  gprtAccelBuild(context_, world_, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
-}
-
-// // Ray tracer interface stub methods to be implemented
-// void GPRTRayTracer::init() {
-//   // TODO: Init GPRT context and modules
-// }
-
-// bool GPRTRayTracer::point_in_volume(TreeID scene,
-//                                      const Position& point,
-//                                      const Direction* direction,
-//                                      const std::vector<MeshID>* exclude_primitives) const {
-//   // TODO: Point containment logic
-//   return false;
-// }
-
 // This will launch the rays and run our shaders in the ray tracing pipeline
 // miss shader returns dist = 0.0 and elementID = -1
 // closest hit shader returns dist = distance to hit and elementID = triangle ID
@@ -185,7 +158,21 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
   
   return result;
 }
-                                                  
+                
+void GPRTRayTracer::create_world_tlas()
+{
+  // Create buffer of volume instances
+  std::vector<gprt::Instance> volInstances;
+  for (const auto& [tree,volAccel] : tree_to_vol_accel_map) {
+    volInstances.push_back(gprtAccelGetInstance(volAccel));
+  }
+
+  // Create a TLAS (Top-Level Acceleration Structure) for all the volumes
+  auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, volInstances.size(), volInstances.data());
+  world_ = gprtInstanceAccelCreate(context_, volInstances.size(), instanceBuffer);
+  gprtAccelBuild(context_, world_, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+}
+
 
 //   return {0.0, 0};
 // }
