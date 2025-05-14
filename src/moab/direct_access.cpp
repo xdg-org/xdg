@@ -10,6 +10,7 @@ MBDirectAccess::MBDirectAccess(Interface* mbi)
 {
   face_data_.entity_type = MBTRI;
   element_data_.entity_type = MBTET;
+  adjacenty_data_.entity_type = MBTET;
   setup();
 }
 
@@ -17,6 +18,7 @@ void
 MBDirectAccess::setup() {
   face_data_.setup(mbi);
   element_data_.setup(mbi);
+  adjacenty_data_.setup(mbi);
   vertex_data_.setup(mbi);
 }
 
@@ -25,6 +27,7 @@ MBDirectAccess::clear()
 {
   face_data_.clear();
   element_data_.clear();
+  adjacenty_data_.clear();
   vertex_data_.clear();
 }
 
