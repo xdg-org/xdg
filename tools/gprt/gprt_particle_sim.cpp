@@ -88,7 +88,8 @@ mm->init();
 mm->parse_metadata();
 xdg->prepare_raytracer();
 
-std::exit(1);
+xdg->ray_tracing_interface()->init();
+
 
 // update the mean free path
 sim_data.mfp_ = args.get<double>("--mfp");
