@@ -102,7 +102,7 @@ private:
           std::vector<EntityHandle> verts;
           for (auto idx : o) verts.push_back(conn[idx]);
           Range adj_ents;
-          rval = mbi->get_adjacencies(verts.data(), verts.size(), 3, false, adj_ents);
+          rval = mbi->get_adjacencies(verts.data(), verts.size(), 3, true, adj_ents);
           if (adj_ents.size() != 1) {
             throw std::runtime_error("Something went wrong gathering adjacent face");
           }
