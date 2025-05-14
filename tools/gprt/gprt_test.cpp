@@ -6,7 +6,7 @@
 
 #include "xdg/xdg.h"
 #include "gprt/gprt.h"
-#include "sharedCode.h"
+#include "gprt_test_sharedCode.h"
 #include "argparse/argparse.hpp"
 
 

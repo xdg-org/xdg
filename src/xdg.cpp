@@ -3,6 +3,7 @@
 #include "xdg/xdg.h"
 #include "xdg/error.h"
 #include "xdg/embree/ray_tracer.h"
+#include "xdg/gprt/ray_tracer.h"
 
 // mesh manager concrete implementations
 #ifdef XDG_ENABLE_MOAB
@@ -34,41 +35,48 @@ std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib
 {
   std::shared_ptr<XDG> xdg = std::make_shared<XDG>();
 
-  switch (mesh_lib)
-  {
+  // Mesh factory dispatch
+  auto mesh_factory = [&]() -> std::shared_ptr<MeshManager> {
     #ifdef XDG_ENABLE_MOAB
-    case MeshLibrary::MOAB:
-      xdg->set_mesh_manager_interface(std::make_shared<MOABMeshManager>());
-      break;
+    if (mesh_lib == MeshLibrary::MOAB) return std::make_shared<MOABMeshManager>();
     #endif
     #ifdef XDG_ENABLE_LIBMESH
-    case MeshLibrary::LIBMESH:
-      xdg->set_mesh_manager_interface(std::make_shared<LibMeshManager>());
-      break;
+    if (mesh_lib == MeshLibrary::LIBMESH) return std::make_shared<LibMeshManager>();
     #endif
-    default:
-      std::string mesh_library = MESH_LIB_TO_STR.at(mesh_lib);
-      auto msg = fmt::format("Invalid mesh library {} specified. XDG instance could not be created. ", mesh_library);
-      msg += "This build of XDG supports the following mesh libraries:";
-      #ifdef XDG_ENABLE_MOAB
-      msg += " MOAB ";
-      #endif
-      #ifdef XDG_ENABLE_LIBMESH
-      msg += " LibMesh ";
-      #endif
-      fatal_error(msg);
-  }
 
-  
-  switch (ray_tracing_lib)
-  {
-  case RTLibrary::EMBREE:
-    xdg->set_ray_tracing_interface(std::make_shared<EmbreeRayTracer>());
-    break;
-  case RTLibrary::GPRT:
-    break;
-  }
-  
+    // If no supported mesh library throw an error
+    std::string msg = fmt::format("Invalid mesh library '{}'. Supported:", MESH_LIB_TO_STR.at(mesh_lib));
+    #ifdef XDG_ENABLE_MOAB
+    msg += " MOAB";
+    #endif
+    #ifdef XDG_ENABLE_LIBMESH
+    msg += " LIBMESH";
+    #endif
+    fatal_error(msg);
+  };
+
+  // Ray tracer factory dispatch
+  auto rt_factory = [&]() -> std::shared_ptr<RayTracer> {
+    #ifdef XDG_ENABLE_EMBREE
+    if (ray_tracing_lib == RTLibrary::EMBREE) return std::make_shared<EmbreeRayTracer>();
+    #endif
+    #ifdef XDG_ENABLE_GPRT
+    if (ray_tracing_lib == RTLibrary::GPRT) return std::make_shared<GPRTRayTracer>();
+    #endif
+
+    // If no supported ray tracing library throw an error
+    std::string msg = fmt::format("Invalid ray tracing library '{}'. Supported:", RT_LIB_TO_STR.at(ray_tracing_lib));
+    #ifdef XDG_ENABLE_EMBREE
+    msg += " EMBREE";
+    #endif
+    #ifdef XDG_ENABLE_GPRT
+    msg += " GPRT";
+    #endif
+    fatal_error(msg);
+  };
+
+  xdg->set_mesh_manager_interface(mesh_factory());
+  xdg->set_ray_tracing_interface(rt_factory());
   return xdg;
 }
 

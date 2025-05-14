@@ -1,5 +1,6 @@
 set(GPRT_TOOLS
   gprt_test
+  gprt_particle_sim
 )
 
 foreach(tool ${GPRT_TOOLS})
@@ -11,15 +12,15 @@ foreach(tool ${GPRT_TOOLS})
   
   embed_devicecode(
     OUTPUT_TARGET
-    ${GPRT_TOOLS}_deviceCode
+    ${tool}_deviceCode
     HEADERS
-    ${CMAKE_CURRENT_SOURCE_DIR}/sharedCode.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/${tool}_sharedCode.h
   SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/deviceCode.slang
+    ${CMAKE_CURRENT_SOURCE_DIR}/${tool}_deviceCode.slang
   )
 
-  target_link_libraries(gprt-test
-    ${GPRT_TOOLS}_deviceCode
+  target_link_libraries(${tool_exec}
+    ${tool}_deviceCode
     gprt::gprt
   )
 endforeach()
