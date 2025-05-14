@@ -27,9 +27,7 @@ namespace xdg {
       void set_geom_data(const std::shared_ptr<MeshManager> mesh_manager);
       void create_world_tlas();
   
-      void init() override {
-        // Initialize GPRT context and modules
-      }
+      void init() override;
 
       // Setup the different shader programs for use with this ray tracer
       void setup_shaders();
@@ -49,10 +47,8 @@ namespace xdg {
                                         const Direction& direction,
                                         const double dist_limit = INFTY,
                                         HitOrientation orientation = HitOrientation::EXITING,
-                                        std::vector<MeshID>* const exclude_primitives = nullptr) override {
+                                        std::vector<MeshID>* const exclude_primitives = nullptr) override;
         // Fire a ray and return the distance to the closest intersection
-        return {0.0f, 0};
-      }
   
       void closest(TreeID scene,
                   const Position& origin,
@@ -93,8 +89,11 @@ namespace xdg {
       GPRTRayGenOf<RayGenData> rayGenProgram_; //<! Ray generation program
       GPRTMissOf<void> missProgram_; //<! Miss program
       GPRTBufferOf<uint32_t> frameBuffer_; //<! Framebuffer 
-      int framebufferSize = 0; // Effectively the number of rays to be cast since we do 1D raygen
-      
+      int framebufferSize = 1; // Effectively the number of rays to be cast since we do 1D raygen
+      GPRTBufferOf<RayInput> rayInputBuffer_; //<! Ray buffer for ray generation
+      GPRTBufferOf<RayOutput> rayOutputBuffer_; //<! Ray output buffer for ray generation
+      size_t numRays = 1; //<! Number of rays to be cast
+
       // Mesh-to-Scene maps 
       std::map<MeshID, GPRTGeom> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
 
