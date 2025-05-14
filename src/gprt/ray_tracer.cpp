@@ -17,16 +17,27 @@ GPRTRayTracer::~GPRTRayTracer()
 void GPRTRayTracer::setup_shaders()
 {
   // Set up ray generation and miss programs
-  rayGenProgram_ = gprtRayGenCreate<RayGenData>(context_, module_, "raygen");
-  missProgram_ = gprtMissCreate<void>(context_, module_, "miss");
+  rayGenProgram_ = gprtRayGenCreate<RayGenData>(context_, module_, "ray_fire");
+  missProgram_ = gprtMissCreate<void>(context_, module_, "ray_fire_miss");
 
-  // New: Here, we place a reference to our TLAS in the ray generation
-  // kernel's parameters, so that we can access that tree when
-  // we go to trace our rays.
-  RayGenData *rayGenData = gprtRayGenGetParameters(rayGenProgram_);
-  rayGenData->world = gprtAccelGetDeviceAddress(world_);
+}
 
-  rayGenData->frameBuffer = gprtBufferGetDevicePointer(frameBuffer_);
+void GPRTRayTracer::init()
+{
+  //create_world_tlas();
+  numRays = 1; // Set the number of rays to be cast
+  framebufferSize = 1; // Set the framebuffer size to 1
+  rayInputBuffer_ = gprtDeviceBufferCreate<RayInput>(context_, numRays);
+  rayOutputBuffer_ = gprtDeviceBufferCreate<RayOutput>(context_, numRays); 
+
+  setup_shaders();
+
+  // Bind the buffers to the RayGenData structure
+  RayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
+  rayGenData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
+  rayGenData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
+
+  gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
 }
 
 TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume_id)
@@ -34,10 +45,9 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
   TreeID tree = next_tree_id();
   trees_.push_back(tree);
 
-
   // Create a "triangle" geometry type and set its closest-hit program
   auto trianglesGeomType = gprtGeomTypeCreate<TrianglesGeomData>(context_, GPRT_TRIANGLES);
-  gprtGeomTypeSetClosestHitProg(trianglesGeomType, 0, module_, "TriangleMesh_particle");
+  gprtGeomTypeSetClosestHitProg(trianglesGeomType, 0, module_, "ray_fire_hit");
 
   auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
   std::vector<gprt::Instance> blasInstances; // BLAS for each (surface) geometry
@@ -115,11 +125,6 @@ void GPRTRayTracer::create_world_tlas()
 //   // TODO: Init GPRT context and modules
 // }
 
-// TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) {
-//   // TODO: Register GPRT geometry
-//   return {}; // placeholder
-// }
-
 // bool GPRTRayTracer::point_in_volume(TreeID scene,
 //                                      const Position& point,
 //                                      const Direction* direction,
@@ -127,39 +132,59 @@ void GPRTRayTracer::create_world_tlas()
 //   // TODO: Point containment logic
 //   return false;
 // }
+
+// This will launch the rays and run our shaders in the ray tracing pipeline
+// miss shader returns dist = 0.0 and elementID = -1
+// closest hit shader returns dist = distance to hit and elementID = triangle ID
+std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
+                                                  const Position& origin,
+                                                  const Direction& direction,
+                                                  double dist_limit,
+                                                  HitOrientation orientation,
+                                                  std::vector<MeshID>* const exclude_primitives) {
+// Some logic for handling multiple rays
+  // Allocate and fill rayBuffer with origins and directions...
+  // std::vector<GPRTBufferOf<float3>> particleOriginBuffer;
+  // std::vector<GPRTBufferOf<float3>> particleDirectionBuffer;
+  // for (size_t i = 0; i < origins.size(); ++i) {
+  //     particleOriginBuffer.push_back(gprtDeviceBufferCreate<float3>(context_, origins[i]));
+  //     particleDirectionBuffer.push_back(gprtDeviceBufferCreate<float3>(context_, directions[i]));
+  // }
+  // Need to think about handling single vs double precision floating points
+
+  GPRTAccel volume = tree_to_vol_accel_map.at(scene);
+
+  // New: Here, we place a reference to our TLAS in the ray generation
+  // kernel's parameters, so that we can access that tree when
+  // we go to trace our rays.
+
+  RayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
+  rayGenData->world = gprtAccelGetDeviceAddress(volume);
+                                                    
+  // Update the ray input buffer
+  gprtBufferMap(rayInputBuffer_);
+
+  RayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
+  rayInput[0].origin = {origin.x, origin.y, origin.z};
+  rayInput[0].direction = {direction.x, direction.y, direction.z};
+  gprtBufferUnmap(rayInputBuffer_);
+
+  // pushconstants
+  RayFirePushConstants pc;
+  pc.dist_limit = dist_limit;
+  pc.orientation = static_cast<int>(orientation);
+                                
+  // Launch the ray generation shader with push constants and buffer bindings
+  gprtRayGenLaunch1D(context_, rayGenProgram_, 1, pc);
+                                                  
+  // Retrieve the output from the ray output buffer
+  gprtBufferMap(rayOutputBuffer_);
+  RayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
+  std::pair<double, MeshID> result = {rayOutput[0].distance, rayOutput[0].surfaceID};
+  gprtBufferUnmap(rayOutputBuffer_);
   
-
-//   void GPRTRayTracer::ray_fire(TreeID scene,
-//                              const std::vector<Position>& origins,
-//                              const std::vector<Direction>& directions,
-//                              double dist_limit,
-//                              HitOrientation orientation,
-//                              const std::vector<MeshID>* exclude_primitives) {
-//     // Create buffer to store ray data
-//     VkBuffer rayBuffer;
-//     VkDeviceMemory rayBufferMemory;
-//     // Allocate and fill rayBuffer with origins and directions...
-//     std::vector<GPRTBufferOf<float3>> particleOriginBuffer;
-//     std::vector<GPRTBufferOf<float3>> particleDirectionBuffer;
-//     for (size_t i = 0; i < origins.size(); ++i) {
-//         particleOriginBuffer.push_back(gprtDeviceBufferCreate<float3>(context_, origins[i]));
-//         particleDirectionBuffer.push_back(gprtDeviceBufferCreate<float3>(context_, directions[i]));
-//     }
-//     // Need to think about handling single vs double precision floating points
-
-//     RayFirePushConstants pc;
-//     pc.dist_limit = dist_limit;
-//     pc.orientation = orientation;
-//     pc.num_rays = origins.size();
-
-//     // Launch the ray generation shader with push constants and buffer bindings
-//     gprtRayGenLaunch1D(context_, rayGen, origins.size(), rayBuffer, pc);
-
-//     // This will launch the rays and run our shaders in the ray tracing pipeline
-//     // miss shader returns dist = 0.0 and elementID = -1
-//     // closest hit shader returns dist = distance to hit and elementID = triangle ID
-// }
-//   */
+  return result;
+}
                                                   
 
 //   return {0.0, 0};
