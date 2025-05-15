@@ -94,7 +94,19 @@ public:
 
   std::pair<std::vector<Vertex>, std::vector<int>> get_surface_mesh(MeshID surface) const override
   {
-    fatal_error("MockMesh does not support get_surface_mesh()");
+    std::vector<Vertex> vertices;
+    std::vector<int> connectivity;
+
+    for (const auto& tri : triangle_connectivity) {
+      vertices.push_back(this->vertices[tri[0]]);
+      vertices.push_back(this->vertices[tri[1]]);
+      vertices.push_back(this->vertices[tri[2]]);
+      connectivity.push_back(tri[0]);
+      connectivity.push_back(tri[1]);
+      connectivity.push_back(tri[2]);
+    }
+
+    return {vertices, connectivity};
   }
 
   // Topology
