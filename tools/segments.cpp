@@ -9,8 +9,6 @@
 
 #include "argparse/argparse.hpp"
 
-#include "particle_sim.h"
-
 using namespace xdg;
 
 
@@ -21,7 +19,7 @@ Position sample_box_location(const BoundingBox& bbox) {
 int main(int argc, char** argv) {
 
 // argument parsing
-argparse::ArgumentParser args("XDG Particle Pseudo-Simulation", "1.0", argparse::default_arguments::help);
+argparse::ArgumentParser args("XDG Mesh Tally Simulator", "1.0", argparse::default_arguments::help);
 
 args.add_argument("filename")
     .help("Path to the input file");
@@ -36,7 +34,7 @@ args.add_argument("-n", "--num-tracks")
     .scan<'i', int>();
 
 args.add_argument("-c", "--check-tracks")
-    .help("Check that track lengths always match the sum of segments")
+    .help("Verify that track lengths always match the sum of segments")
     .flag();
 
   try {

@@ -9,8 +9,6 @@
 
 #include "argparse/argparse.hpp"
 
-#include "particle_sim.h"
-
 using namespace xdg;
 
 
@@ -21,7 +19,7 @@ Position sample_box_location(const BoundingBox& bbox) {
 int main(int argc, char** argv) {
 
 // argument parsing
-argparse::ArgumentParser args("XDG Particle Pseudo-Simulation", "1.0", argparse::default_arguments::help);
+argparse::ArgumentParser args("XDG Volumetric Element Tracking Simulator", "1.0", argparse::default_arguments::help);
 
 args.add_argument("filename")
     .help("Path to the input file");
@@ -34,8 +32,8 @@ args.add_argument("-m", "--mfp")
     .default_value(1.0)
     .help("Mean free path of the particles").scan<'g', double>();
 
-args.add_argument("-n", "--num-tracks")
-    .help("Number of tracks to simulate")
+args.add_argument("-n", "--num-particles")
+    .help("Number of particles to simulate")
     .default_value(1000)
     .scan<'i', int>();
 
@@ -72,7 +70,6 @@ BoundingBox bbox = xdg->mesh_manager()->global_bounding_box();
 std::cout << fmt::format("Mesh Bounding Box: {}", bbox) << std::endl;
 
 size_t n_particles = args.get<int>("--num-tracks");
-
 
 double mfp = args.get<double>("--mfp");
 MeshID element = ID_NONE;
