@@ -96,15 +96,19 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
     
     // Store the BLAS for concatenation into the TLAS
     blasInstances.push_back(gprtAccelGetInstance(blas));
-    }
 
-    // Create a TLAS (Top-Level Acceleration Structure) for all BLAS instances in this volume
-    auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, blasInstances.size(), blasInstances.data());
-    GPRTAccel volume_tlas = gprtInstanceAccelCreate(context_, blasInstances.size(), instanceBuffer);
-    gprtAccelBuild(context_, volume_tlas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
-    tree_to_vol_accel_map[tree] = volume_tlas;
-    return tree;
+    std::cout << __func__ << " - Number of vertices: " << fl3Vertices.size() << std::endl;
+    std::cout << __func__ << " - Number of indices: " << ui3Indices.size() << std::endl;
+    std::cout << __func__ << " - Number of BLAS instances: " << blasInstances.size() << std::endl;
   }
+
+  // Create a TLAS (Top-Level Acceleration Structure) for all BLAS instances in this volume
+  auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, blasInstances.size(), blasInstances.data());
+  GPRTAccel volume_tlas = gprtInstanceAccelCreate(context_, blasInstances.size(), instanceBuffer);
+  gprtAccelBuild(context_, volume_tlas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+  tree_to_vol_accel_map[tree] = volume_tlas;
+  return tree;
+}
 
 // This will launch the rays and run our shaders in the ray tracing pipeline
 // miss shader returns dist = 0.0 and elementID = -1
@@ -141,6 +145,10 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
   rayInput[0].origin = {origin.x, origin.y, origin.z};
   rayInput[0].direction = {direction.x, direction.y, direction.z};
   gprtBufferUnmap(rayInputBuffer_);
+
+  // Log ray origin and direction
+  std::cout << __func__ << " - Ray Origin: (" << origin.x << ", " << origin.y << ", " << origin.z << ")" << std::endl;
+  std::cout << __func__ << " - Ray Direction: (" << direction.x << ", " << direction.y << ", " << direction.z << ")" << std::endl;
 
   // pushconstants
   RayFirePushConstants pc;
