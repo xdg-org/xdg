@@ -110,6 +110,7 @@ TEST_CASE("Test Ray Fire GPRT Mesh Mock")
 
   std::shared_ptr<RayTracer> rti = std::make_shared<GPRTRayTracer>();
   TreeID volume_tree = rti->register_volume(mm, mm->volumes()[0]);
+  rti->init();
 
   Position origin {0.0, 0.0, 0.0};
   Direction direction {1.0, 0.0, 0.0};
