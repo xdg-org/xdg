@@ -332,11 +332,5 @@ int main(int argc, char* argv[]) {
 
   // Clean up resources
   gprtContextDestroy(context);
-  for (auto& blas : blasList) gprtAccelDestroy(blas);
-  gprtAccelDestroy(world);
-  for (auto& vert_buff : vertex_buffers) gprtBufferDestroy(vert_buff);
-  for (auto& conn_buff : connectivity_buffers) gprtBufferDestroy(conn_buff);
-  for (auto& geom : trianglesGeom) gprtGeomDestroy(geom);
-
   return 0;
 }
