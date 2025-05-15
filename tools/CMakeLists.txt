@@ -1,6 +1,3 @@
-
-
-
 set(TOOL_NAMES
 particle_sim
 segments
@@ -8,6 +5,7 @@ ray_fire
 find_volume
 point_in_volume
 overlap_check
+walk_elements
 )
 
 foreach(tool ${TOOL_NAMES})
