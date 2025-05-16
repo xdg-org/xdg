@@ -23,6 +23,7 @@ public:
   virtual void init() = 0;
 
   virtual TreeID register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) = 0;
+  virtual void create_world_tlas() = 0;
 
   // Query Methods
   virtual bool point_in_volume(TreeID tree,

@@ -24,6 +24,10 @@ public:
   void init() override;
   RTCScene create_embree_scene();
   TreeID register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) override;
+  void create_world_tlas() override
+  {
+    fatal_error("create_world_tlas() not implemented for EmbreeRayTracer");
+  };
 
   // Query Methods
   bool point_in_volume(TreeID scene,
