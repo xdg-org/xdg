@@ -9,12 +9,9 @@
 
 #include "argparse/argparse.hpp"
 
+#include "tally_segments.h"
+
 using namespace xdg;
-
-
-Position sample_box_location(const BoundingBox& bbox) {
-  return bbox.lower_left() + bbox.width() * Vec3da(drand48(), drand48(), drand48());
-}
 
 int main(int argc, char** argv) {
 
@@ -72,27 +69,12 @@ bool check_tracks = args.get<bool>("--check-tracks");
 
 size_t n_tracks = args.get<int>("--num-tracks");
 
-for (int i = 0; i < n_tracks; i++) {
-  // sample a location within the bounding box
-  Position r1 = sample_box_location(bbox);
-  if (!bbox.contains(r1)) fatal_error(fmt::format("Point {} is not within the mesh bounding box", r1));
+TallyContext tally_context;
+tally_context.xdg_ = xdg;
+tally_context.n_tracks_ = args.get<int>("--num-tracks");
+tally_context.check_tracks_ = args.get<bool>("--check-tracks");
 
-  Position r2 = sample_box_location(bbox);
-  if (!bbox.contains(r2)) fatal_error(fmt::format("Point {} is not within the mesh bounding box", r2));
-
-  auto segments = xdg->segments(r1, r2);
-  std::cout << fmt::format("Track {}: {} segments", i, segments.size()) << std::endl;
-
-  if (check_tracks) {
-    double track_length = (r2 - r1).length();
-    double segement_sum = std::accumulate(segments.begin(), segments.end(), 0.0, [](double v, const auto& s) { return v + s.second; });
-    double diff = fabs(track_length - segement_sum);
-    if (diff > TINY_BIT) {
-      fatal_error(fmt::format("Track length check failed.\n Start: {}\n End: {}\n Diff: {}", r1, r2, diff));
-    }
-  }
-}
-
+tally_segments(tally_context);
 
 return 0;
 
