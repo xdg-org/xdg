@@ -37,6 +37,10 @@ public:
   MeshID find_element(const Position& point) const override;
 
   MeshID find_element(TreeID tree, const Position& point) const override;
+  void create_world_tlas() override
+  {
+    fatal_error("create_world_tlas() not implemented for EmbreeRayTracer");
+  };
 
   // Query Methods
   bool point_in_volume(TreeID scene,

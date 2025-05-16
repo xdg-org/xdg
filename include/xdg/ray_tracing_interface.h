@@ -72,6 +72,8 @@ public:
    * @brief Builds a global tree for all elements registered with the ray tracer.
    */
   virtual void create_global_element_tree() = 0;
+  virtual TreeID register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) = 0;
+  virtual void create_world_tlas() = 0;
 
   // Query Methods
   virtual bool point_in_volume(TreeID tree,
