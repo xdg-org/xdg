@@ -50,7 +50,7 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
   gprtGeomTypeSetClosestHitProg(trianglesGeomType, 0, module_, "ray_fire_hit");
 
   auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
-  std::vector<gprt::Instance> blasInstances; // BLAS for each (surface) geometry
+  std::vector<gprt::Instance> localBlasInstances; // BLAS for each (surface) geometry in this volume
 
   for (const auto &surf : volume_surfaces) {
     // Get surface mesh vertices and associated connectivities
@@ -95,18 +95,23 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
     gprtAccelBuild(context_, blas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
     
     // Store the BLAS for concatenation into the TLAS
-    blasInstances.push_back(gprtAccelGetInstance(blas));
+    localBlasInstances.push_back(gprtAccelGetInstance(blas));
 
     std::cout << __func__ << " - Number of vertices: " << fl3Vertices.size() << std::endl;
     std::cout << __func__ << " - Number of indices: " << ui3Indices.size() << std::endl;
-    std::cout << __func__ << " - Number of BLAS instances: " << blasInstances.size() << std::endl;
+    std::cout << __func__ << " - Number of BLAS instances: " << localBlasInstances.size() << std::endl;
   }
 
   // Create a TLAS (Top-Level Acceleration Structure) for all BLAS instances in this volume
-  auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, blasInstances.size(), blasInstances.data());
-  GPRTAccel volume_tlas = gprtInstanceAccelCreate(context_, blasInstances.size(), instanceBuffer);
+  auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, localBlasInstances.size(), localBlasInstances.data());
+  GPRTAccel volume_tlas = gprtInstanceAccelCreate(context_, localBlasInstances.size(), instanceBuffer);
   gprtAccelBuild(context_, volume_tlas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
   tree_to_vol_accel_map[tree] = volume_tlas;
+
+  // Store the local BLAS instances for this volume in global BLAS array
+  for (const auto& instance : localBlasInstances) {
+    globalBlasInstances_.push_back(instance);
+  }
   return tree;
 }
 
@@ -144,7 +149,7 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
   RayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
   rayInput[0].origin = {origin.x, origin.y, origin.z};
   rayInput[0].direction = {direction.x, direction.y, direction.z};
-  gprtBufferUnmap(rayInputBuffer_);
+  gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
 
   // Log ray origin and direction
   std::cout << __func__ << " - Ray Origin: (" << origin.x << ", " << origin.y << ", " << origin.z << ")" << std::endl;
@@ -162,22 +167,16 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
   gprtBufferMap(rayOutputBuffer_);
   RayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
   std::pair<double, MeshID> result = {rayOutput[0].distance, rayOutput[0].surfaceID};
-  gprtBufferUnmap(rayOutputBuffer_);
+  gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
   
   return result;
 }
                 
 void GPRTRayTracer::create_world_tlas()
 {
-  // Create buffer of volume instances
-  std::vector<gprt::Instance> volInstances;
-  for (const auto& [tree,volAccel] : tree_to_vol_accel_map) {
-    volInstances.push_back(gprtAccelGetInstance(volAccel));
-  }
-
   // Create a TLAS (Top-Level Acceleration Structure) for all the volumes
-  auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, volInstances.size(), volInstances.data());
-  world_ = gprtInstanceAccelCreate(context_, volInstances.size(), instanceBuffer);
+  auto worldBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, globalBlasInstances_.size(), globalBlasInstances_.data());
+  world_ = gprtInstanceAccelCreate(context_, globalBlasInstances_.size(), worldBuffer);
   gprtAccelBuild(context_, world_, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
 }
 

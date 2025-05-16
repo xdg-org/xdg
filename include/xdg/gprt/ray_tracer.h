@@ -93,6 +93,7 @@ namespace xdg {
       GPRTBufferOf<RayInput> rayInputBuffer_; //<! Ray buffer for ray generation
       GPRTBufferOf<RayOutput> rayOutputBuffer_; //<! Ray output buffer for ray generation
       size_t numRays = 1; //<! Number of rays to be cast
+      std::vector<gprt::Instance> globalBlasInstances_; //<! List of every BLAS instance stored in this ray tracer
 
       // Mesh-to-Scene maps 
       std::map<MeshID, GPRTGeom> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
