@@ -3,9 +3,7 @@
 #include <vector>
 #include <numeric>
 
-
 #include "xdg/error.h"
-#include "xdg/mesh_manager_interface.h"
 #include "xdg/vec3da.h"
 #include "xdg/xdg.h"
 
