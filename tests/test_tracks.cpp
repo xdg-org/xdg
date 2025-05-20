@@ -22,7 +22,7 @@ TEST_CASE("Test Internal Tracks")
   REQUIRE(mm->num_volume_elements(1) == 12); // should return 12 volumetric elements
 
   xdg->prepare_raytracer();
-  REQUIRE(xdg->ray_tracing_interface()->num_registered_trees() == 2);
+  REQUIRE(xdg->ray_tracing_interface()->num_registered_trees() == 4);
 
   // lay a track onto the tet mesh
   MeshID volume_id = 0;
@@ -49,7 +49,7 @@ TEST_CASE("Test Intersecting Tracks")
   REQUIRE(mm->num_volume_elements(1) == 12); // should return 12 volumetric elements
 
   xdg->prepare_raytracer();
-  REQUIRE(xdg->ray_tracing_interface()->num_registered_trees() == 4);
+  REQUIRE(xdg->ray_tracing_interface()->num_registered_trees() == 6);
 
   // lay a track onto the tet mesh
   MeshID volume_id = 0;
@@ -78,7 +78,7 @@ TEST_CASE("Test Random Internal Tracks")
   REQUIRE(mm->num_volume_elements(1) == 12); // should return 12 volumetric elements
 
   xdg->prepare_raytracer();
-  REQUIRE(xdg->ray_tracing_interface()->num_registered_trees() == 2);
+  REQUIRE(xdg->ray_tracing_interface()->num_registered_trees() == 4);
 
   // lay a track onto the tet mesh
   MeshID volume_id = 0;
