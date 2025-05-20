@@ -27,7 +27,7 @@ TEST_CASE("Test Brick")
 
   mesh_manager->init();
 
-  REQUIRE(mesh_manager->num_volumes() == 1);
+  REQUIRE(mesh_manager->num_volumes() == 2);
   REQUIRE(mesh_manager->num_surfaces() == 1);
 
   // get a random element from volume 1
@@ -44,7 +44,7 @@ TEST_CASE("Test Brick w/ Sidesets")
   mesh_manager->load_file("brick-sidesets.exo");
   mesh_manager->init();
 
-  REQUIRE(mesh_manager->num_volumes() == 1);
+  REQUIRE(mesh_manager->num_volumes() == 2);
   REQUIRE(mesh_manager->num_surfaces() == 6);
 }
 
@@ -55,15 +55,16 @@ TEST_CASE("Test BVH Build Brick")
   mesh_manager->load_file("brick.exo");
   mesh_manager->init();
 
-  REQUIRE(mesh_manager->num_volumes() == 1);
+  REQUIRE(mesh_manager->num_volumes() == 2);
   REQUIRE(mesh_manager->num_surfaces() == 1);
 
   std::unique_ptr<RayTracer> ray_tracing_interface = std::make_unique<EmbreeRayTracer>();
   for (auto volume : mesh_manager->volumes()) {
     ray_tracing_interface->register_volume(mesh_manager, volume);
   }
-  // volume elements will be detected on the libmesh mesh, so two trees will be registered
-  REQUIRE(ray_tracing_interface->num_registered_trees() == 2);
+
+  // volume elements will be detected on the libmesh mesh, so three trees will be registered
+  REQUIRE(ray_tracing_interface->num_registered_trees() == 3);
 }
 
 TEST_CASE("Test BVH Build Brick w/ Sidesets")
@@ -72,7 +73,7 @@ TEST_CASE("Test BVH Build Brick w/ Sidesets")
   mesh_manager->load_file("brick-sidesets.exo");
   mesh_manager->init();
 
-  REQUIRE(mesh_manager->num_volumes() == 1);
+  REQUIRE(mesh_manager->num_volumes() == 2);
   REQUIRE(mesh_manager->num_surfaces() == 6);
 
   std::unique_ptr<RayTracer> ray_tracing_interface = std::make_unique<EmbreeRayTracer>();
@@ -80,8 +81,8 @@ TEST_CASE("Test BVH Build Brick w/ Sidesets")
   for (auto volume : mesh_manager->volumes()) {
     ray_tracing_interface->register_volume(mesh_manager, volume);
   }
-  // volume elements will be detected on the libmesh mesh, so two trees will be registered
-  REQUIRE(ray_tracing_interface->num_registered_trees() == 2);
+  // volume elements will be detected on the libmesh mesh, so three trees will be registered
+  REQUIRE(ray_tracing_interface->num_registered_trees() == 3);
 }
 
 TEST_CASE("Test Ray Fire Brick")
@@ -116,7 +117,7 @@ TEST_CASE("Test Cylinder-Brick Initialization")
 
   mesh_manager->init();
 
-  REQUIRE(mesh_manager->num_volumes() == 2);
+  REQUIRE(mesh_manager->num_volumes() == 3);
 
   REQUIRE(mesh_manager->num_surfaces() == 12);
 
@@ -156,7 +157,6 @@ TEST_CASE("Test Cylinder-Brick Initialization")
     }
   }
 }
-
 
 TEST_CASE("Test Ray Fire Cylinder-Brick")
 {
@@ -255,6 +255,7 @@ TEST_CASE("Test Volume Element Count Jezebel")
   auto elements = mesh_manager->get_volume_elements(volume);
   REQUIRE(elements.size() == 10333);
 }
+
 TEST_CASE("Test Point Location Jezebel")
 {
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
