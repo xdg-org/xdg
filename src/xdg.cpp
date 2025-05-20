@@ -96,14 +96,19 @@ bool XDG::point_in_volume(MeshID volume,
 MeshID XDG::find_volume(const Position& point,
                         const Direction& direction) const
 {
+  MeshID ipc = mesh_manager()->implicit_complement();
   for (auto volume_scene_pair : volume_to_surface_tree_map_) {
     MeshID volume = volume_scene_pair.first;
+    if (volume == ipc) continue;
     TreeID scene = volume_scene_pair.second;
     if (ray_tracing_interface()->point_in_volume(scene, point, &direction)) {
       return volume;
     }
   }
-  return ID_NONE;
+
+  // if the point could not be located in any volume, it is by definition in the implicit
+  // complement
+  return ipc;
 }
 
 MeshID XDG::find_element(const Position& point) const
