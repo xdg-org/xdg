@@ -149,6 +149,11 @@ public:
 
       // perform ray-triangle intersection
       hit_types[i] = plucker_ray_tri_intersect(coords, r, u, dists[i]);
+
+      if (dists[i] < 0.0) {
+        hit_types[i] = false;
+        dists[i] = INFTY;
+      }
     }
 
     // determine the minimum distance to exit and the face number

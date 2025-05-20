@@ -15,6 +15,7 @@ test_normal
 test_measure
 test_xdg_interface
 test_tet_intersection
+
 )
 
 if (XDG_ENABLE_MOAB)
