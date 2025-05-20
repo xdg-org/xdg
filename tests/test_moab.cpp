@@ -79,13 +79,16 @@ TEST_CASE("Test BVH Build")
 
 TEST_CASE("Test Ray Fire MOAB")
 {
-  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB, RTLibrary::GPRT);
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
   const auto& mesh_manager = xdg->mesh_manager();
   mesh_manager->load_file("cube.h5m");
   mesh_manager->init();
   xdg->prepare_raytracer();
+  xdg->ray_tracing_interface()->init();
 
+  double dist = 0.0;
+  
 
   MeshID volume = mesh_manager->volumes()[0];
 
@@ -94,6 +97,7 @@ TEST_CASE("Test Ray Fire MOAB")
   std::pair<double, MeshID> intersection;
 
   intersection = xdg->ray_fire(volume, origin, direction);
+  xdg->closest(volume, origin, dist);
 
   // this cube is 10 cm on a side, so the ray should hit the surface at 5 cm
   REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));

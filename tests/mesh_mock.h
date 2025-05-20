@@ -1,4 +1,3 @@
-
 // Mock data for mesh interface testing
 
 #include "xdg/bbox.h"
@@ -6,6 +5,8 @@
 #include "xdg/error.h"
 #include "xdg/vec3da.h"
 #include "xdg/mesh_manager_interface.h"
+#include <set>
+#include <unordered_map>
 
 using namespace xdg;
 
@@ -92,18 +93,37 @@ public:
     fatal_error("MockMesh does not support get_surface_vertices()");
   }
 
-  std::pair<std::vector<Vertex>, std::vector<int>> get_surface_mesh(MeshID surface) const override
-  {
-    std::vector<Vertex> vertices;
+  std::pair<std::vector<Vertex>, std::vector<int>> get_surface_mesh(MeshID surface) const override {
     std::vector<int> connectivity;
+    std::set<int> unique_vertex_indices;
 
-    for (const auto& tri : triangle_connectivity) {
-      vertices.push_back(this->vertices[tri[0]]);
-      vertices.push_back(this->vertices[tri[1]]);
-      vertices.push_back(this->vertices[tri[2]]);
-      connectivity.push_back(tri[0]);
-      connectivity.push_back(tri[1]);
-      connectivity.push_back(tri[2]);
+    // Get the triangles (faces) associated with the given surface
+    auto surface_faces = get_surface_faces(surface);
+
+    // Collect connectivity and vertex indices
+    for (const auto& face : surface_faces) {
+        const auto& tri = triangle_connectivity[face];
+        connectivity.push_back(tri[0]);
+        connectivity.push_back(tri[1]);
+        connectivity.push_back(tri[2]);
+        unique_vertex_indices.insert(tri[0]);
+        unique_vertex_indices.insert(tri[1]);
+        unique_vertex_indices.insert(tri[2]);
+    }
+
+    // Map unique vertex indices to their coordinates
+    std::vector<Vertex> vertices;
+    std::unordered_map<int, int> global_to_local_index;
+    int local_index = 0;
+
+    for (int global_index : unique_vertex_indices) {
+        global_to_local_index[global_index] = local_index++;
+        vertices.push_back(this->vertices[global_index]);
+    }
+
+    // Remap connectivity indices to local vertex indices
+    for (size_t i = 0; i < connectivity.size(); i++) {
+        connectivity[i] = global_to_local_index[connectivity[i]];
     }
 
     return {vertices, connectivity};
