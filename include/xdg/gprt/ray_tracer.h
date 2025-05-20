@@ -37,8 +37,9 @@ namespace xdg {
       bool point_in_volume(TreeID scene,
                           const Position& point,
                           const Direction* direction = nullptr,
-                          const std::vector<MeshID>* exclude_primitives = nullptr) const override {
-        // Check if point is in volume
+                          const std::vector<MeshID>* exclude_primitives = nullptr) const override
+      {
+        // Check if the point is inside the volume
         return false;
       }
   
@@ -59,9 +60,7 @@ namespace xdg {
   
       void closest(TreeID scene,
                   const Position& origin,
-                  double& dist) override {
-        // Find the closest triangle to the origin
-      }
+                  double& dist) override;
   
       bool occluded(TreeID scene,
                     const Position& origin,
@@ -73,23 +72,19 @@ namespace xdg {
   
       const std::shared_ptr<GeometryUserData>& geometry_data(MeshID surface) const override
       { return user_data_map_.at(surface_to_geometry_map_.at(surface)); };
-
-      // Set the framebuffer
-      void set_framebuffer(int fbSize) {
-        framebufferSize = fbSize;
-        frameBuffer_ = gprtDeviceBufferCreate<uint32_t>(context_, fbSize);
-      }
   
+      void render_mesh();
+
     private:
       GPRTContext context_;
       GPRTProgram deviceCode_; // device code for float precision shaders
       GPRTModule module_; // device code module for single precision shaders
       // std::vector<GPRTGeom> geometries_; //<! All geometries created by this ray tracer
-      GPRTAccel world_; //<! Top-level acceleration structure
+      GPRTAccel world_; 
       GPRTRayGenOf<RayGenData> rayGenProgram_; //<! Ray generation program
       GPRTMissOf<void> missProgram_; //<! Miss program
-      GPRTBufferOf<uint32_t> frameBuffer_; //<! Framebuffer 
-      int framebufferSize = 1; // Effectively the number of rays to be cast since we do 1D raygen
+      GPRTBufferOf<uint32_t> frameBuffer_; //<! Framebuffer
+      int2 fbSize; //<! Size of the framebuffer 
       GPRTBufferOf<RayInput> rayInputBuffer_; //<! Ray buffer for ray generation
       GPRTBufferOf<RayOutput> rayOutputBuffer_; //<! Ray output buffer for ray generation
       size_t numRays = 1; //<! Number of rays to be cast

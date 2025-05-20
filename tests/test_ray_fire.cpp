@@ -115,7 +115,7 @@ TEST_CASE("Test Ray Fire GPRT Mesh Mock")
   Position origin {0.0, 0.0, 0.0};
   Direction direction {1.0, 0.0, 0.0};
   std::pair<double, MeshID> intersection;
-
+  double dist = 0.0;
   // fire from the origin toward each face, ensuring that the intersection distances are correct
   intersection = rti->ray_fire(volume_tree, origin, direction);
   REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
