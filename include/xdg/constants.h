@@ -21,6 +21,9 @@ constexpr double INFTY {std::numeric_limits<double>::max()};
 
 constexpr double TINY_BIT {1e-10};
 
+// TODO : Consider this as an option for managing missed hits?
+constexpr double PLUCKER_TOL {10 * std::numeric_limits<double>::epsilon()};
+
 // Whether information pertains to a surface or volume
 enum class GeometryType {
  SURFACE = 2,
