@@ -27,6 +27,11 @@ args.add_argument("-l", "--library")
     .help("Mesh library to use. One of (MOAB, LIBMESH)")
     .default_value("MOAB");
 
+args.add_argument("-v", "--verbose")
+    .default_value(false)
+    .implicit_value(true)
+    .help("Enable verbose output of particle events");
+
 args.add_argument("-m", "--mfp")
     .default_value(1.0)
     .help("Mean free path of the particles").scan<'g', double>();
@@ -69,6 +74,7 @@ WalkElementsContext walkelementscontext;
 walkelementscontext.xdg_ = xdg;
 walkelementscontext.n_particles_ = args.get<int>("--num-particles");
 walkelementscontext.mean_free_path_ = args.get<double>("--mfp");
+walkelementscontext.verbose_ = args.get<bool>("--verbose");
 
 walk_elements(walkelementscontext);
 

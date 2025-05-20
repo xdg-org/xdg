@@ -17,6 +17,7 @@ struct WalkElementsContext {
   std::shared_ptr<XDG> xdg_;
   double mean_free_path_;
   size_t n_particles_;
+  bool verbose_;
 };
 
 void walk_elements(const WalkElementsContext& context) {
@@ -81,9 +82,12 @@ void walk_elements(const WalkElementsContext& context) {
       n_events++;
     }
     total_distance += distance;
-    std::cout << fmt::format("Particle {} underwent {} events. Distance: {}", i, n_events, distance) << std::endl;
+    if (context.verbose_) {
+      std::cout << fmt::format("Particle {} underwent {} events. Distance: {}", i, n_events, distance) << std::endl;
+    }
   }
-
-  std::cout << fmt::format("Average distance: {}", total_distance/context.n_particles_) << std::endl;
+  if (context.verbose_) {
+    std::cout << fmt::format("Average distance: {}", total_distance/context.n_particles_) << std::endl;
+  }
 
 }
