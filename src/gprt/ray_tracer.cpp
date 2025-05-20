@@ -1,10 +1,14 @@
 #include "xdg/gprt/ray_tracer.h"
+#include "gprt/gprt.h"
+
 
 
 namespace xdg {
 
 GPRTRayTracer::GPRTRayTracer()
 {
+  // fbSize = {1000,1000};
+  // gprtRequestWindow(fbSize.x, fbSize.y, "XDG::render_mesh()");
   context_ = gprtContextCreate();
   module_ = gprtModuleCreate(context_, flt_deviceCode);
 }
@@ -19,14 +23,11 @@ void GPRTRayTracer::setup_shaders()
   // Set up ray generation and miss programs
   rayGenProgram_ = gprtRayGenCreate<RayGenData>(context_, module_, "ray_fire");
   missProgram_ = gprtMissCreate<void>(context_, module_, "ray_fire_miss");
-
 }
 
 void GPRTRayTracer::init()
 {
-  //create_world_tlas();
   numRays = 1; // Set the number of rays to be cast
-  framebufferSize = 1; // Set the framebuffer size to 1
   rayInputBuffer_ = gprtDeviceBufferCreate<RayInput>(context_, numRays);
   rayOutputBuffer_ = gprtDeviceBufferCreate<RayOutput>(context_, numRays); 
 
@@ -36,8 +37,7 @@ void GPRTRayTracer::init()
   RayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
   rayGenData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
   rayGenData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
-
-  gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
+  
 }
 
 TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume_id)
@@ -48,6 +48,7 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
   // Create a "triangle" geometry type and set its closest-hit program
   auto trianglesGeomType = gprtGeomTypeCreate<TrianglesGeomData>(context_, GPRT_TRIANGLES);
   gprtGeomTypeSetClosestHitProg(trianglesGeomType, 0, module_, "ray_fire_hit");
+  // gprtGeomTypeSetClosestHitProg(trianglesGeomType, 0, module_, "TriangleMesh");
 
   auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
   std::vector<gprt::Instance> localBlasInstances; // BLAS for each (surface) geometry in this volume
@@ -97,9 +98,6 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
     // Store the BLAS for concatenation into the TLAS
     localBlasInstances.push_back(gprtAccelGetInstance(blas));
 
-    std::cout << __func__ << " - Number of vertices: " << fl3Vertices.size() << std::endl;
-    std::cout << __func__ << " - Number of indices: " << ui3Indices.size() << std::endl;
-    std::cout << __func__ << " - Number of BLAS instances: " << localBlasInstances.size() << std::endl;
   }
 
   // Create a TLAS (Top-Level Acceleration Structure) for all BLAS instances in this volume
@@ -151,15 +149,14 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
   rayInput[0].direction = {direction.x, direction.y, direction.z};
   gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
 
-  // Log ray origin and direction
-  std::cout << __func__ << " - Ray Origin: (" << origin.x << ", " << origin.y << ", " << origin.z << ")" << std::endl;
-  std::cout << __func__ << " - Ray Direction: (" << direction.x << ", " << direction.y << ", " << direction.z << ")" << std::endl;
-
   // pushconstants
-  RayFirePushConstants pc;
+  RayFirePushConstants pc; 
+
   pc.dist_limit = dist_limit;
   pc.orientation = static_cast<int>(orientation);
-                                
+  
+  gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
+  
   // Launch the ray generation shader with push constants and buffer bindings
   gprtRayGenLaunch1D(context_, rayGenProgram_, 1, pc);
                                                   
@@ -208,5 +205,47 @@ void GPRTRayTracer::create_world_tlas()
 //   dist = -1.0;
 //   return false;
 // }
+
+
+// Methods for rendering mesh to framebuffer
+
+
+void GPRTRayTracer::render_mesh() 
+{
+    create_world_tlas();
+
+    // Set up ray generation and miss programs
+    GPRTRayGenOf<RayGenData> rayGen = gprtRayGenCreate<RayGenData>(context_, module_, "raygen");
+    GPRTMissOf<void> miss = gprtMissCreate<void>(context_, module_, "miss");
+
+    // Place a reference to the TLAS in the ray generation kernel's parameters
+    RayGenData* rayGenData = gprtRayGenGetParameters(rayGen);
+    rayGenData->world = gprtAccelGetDeviceAddress(world_);
+
+    // Create the framebuffer
+    GPRTBufferOf<uint32_t> frameBuffer = gprtDeviceBufferCreate<uint32_t>(context_, fbSize.x * fbSize.y);
+    rayGenData->frameBuffer = gprtBufferGetDevicePointer(frameBuffer);
+
+    gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
+
+    PushConstants pc;
+    do {
+        pc.time = float(gprtGetTime(context_));
+
+        // Calls the GPU raygen kernel function
+        gprtRayGenLaunch2D(context_, rayGen, fbSize.x, fbSize.y, pc);
+
+        // If a window exists, presents the frame buffer here to that window
+        gprtBufferPresent(context_, frameBuffer);
+    }
+    while (!gprtWindowShouldClose(context_));
+}
+
+void GPRTRayTracer::closest(TreeID scene,
+                            const Position& origin,
+                            double& dist) 
+{
+  render_mesh();
+}
 
 } // namespace xdg

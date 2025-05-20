@@ -85,11 +85,17 @@ sim_data.xdg_ = xdg;
 const auto& mm = xdg->mesh_manager();
 mm->load_file(args.get<std::string>("filename"));
 mm->init();
-mm->parse_metadata();
 xdg->prepare_raytracer();
 
-xdg->ray_tracing_interface()->init();
+auto rti = xdg->ray_tracing_interface();
+rti->init();
+Position origin {0.0, 0.0, 0.0};
+double dist = 100.0;
+TreeID tree = rti->trees()[0];
+rti->closest(tree, origin, dist);
 
+std::cout << "std exit statement reached" << std::endl;
+std::exit(1);
 
 // update the mean free path
 sim_data.mfp_ = args.get<double>("--mfp");
