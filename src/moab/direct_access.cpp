@@ -18,7 +18,8 @@ void
 MBDirectAccess::setup() {
   face_data_.setup(mbi);
   element_data_.setup(mbi);
-  adjacenty_data_.setup(mbi);
+  // TODO: fix adjacency setup for MOAB
+  // adjacenty_data_.setup(mbi);
   vertex_data_.setup(mbi);
 }
 
