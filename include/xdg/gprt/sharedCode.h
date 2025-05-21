@@ -11,18 +11,17 @@ struct RayInput {
 struct RayOutput 
 {
   float distance;
-  uint surfaceID;
-  uint id;
+  uint surf_id;
 };
 
 /* variables for the triangle mesh geometry */
 struct TrianglesGeomData {
   float3 *vertex; // vertex buffer
-  uint3 *index;  // index buffer
-  uint id;       // surface id
-  uint2 vols;    // parent volumes
+  uint3 *index;   // index buffer
+  uint id;        // surface id
+  int2 vols;      // parent volumes ids
+  int sense;      // surface sense
 };
-
 // /* variables for the triangle mesh geometry */
 // struct DPTriangleGeomData {
 //   double3 *vertex; // vertex buffer
@@ -69,6 +68,6 @@ struct PushConstants {
 struct RayFirePushConstants {
   RayInput ray;
   RayOutput out;
-  int dist_limit;
+  float dist_limit;
   int orientation;
 };

@@ -11,8 +11,7 @@ struct RayInput {
 struct RayOutput 
 {
   float distance;
-  uint surfaceID;
-  uint id;
+  uint surf_id;
 };
 
 /* variables for the triangle mesh geometry */
@@ -69,6 +68,6 @@ struct PushConstants {
 struct RayFirePushConstants {
   RayInput ray;
   RayOutput out;
-  int dist_limit;
+  float dist_limit;
   int orientation;
 };
