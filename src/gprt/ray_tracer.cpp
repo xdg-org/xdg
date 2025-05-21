@@ -38,6 +38,7 @@ void GPRTRayTracer::init()
   rayGenData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
   rayGenData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
   
+
 }
 
 TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume_id)
@@ -85,8 +86,9 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
     geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffer);
     geom_data->index = gprtBufferGetDevicePointer(connectivity_buffer);
     geom_data->id = surf;
-    geom_data->vols = {mesh_manager->get_parent_volumes(surf).first, mesh_manager->get_parent_volumes(surf).second};
-    
+    geom_data->vols = { mesh_manager->get_parent_volumes(surf).first, mesh_manager->get_parent_volumes(surf).second };
+    geom_data->sense = static_cast<int>(mesh_manager->surface_sense(surf, volume_id)); // 0 for forward, 1 for reverse
+
     // Set vertices and indices for the triangle geometry
     gprtTrianglesSetVertices(triangleGeom, vertex_buffer, fl3Vertices.size());
     gprtTrianglesSetIndices(triangleGeom, connectivity_buffer, ui3Indices.size());
@@ -163,7 +165,7 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
   // Retrieve the output from the ray output buffer
   gprtBufferMap(rayOutputBuffer_);
   RayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
-  std::pair<double, MeshID> result = {rayOutput[0].distance, rayOutput[0].surfaceID};
+  std::pair<double, MeshID> result = {rayOutput[0].distance, rayOutput[0].surf_id};
   gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
   
   return result;
