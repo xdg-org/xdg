@@ -30,6 +30,7 @@ void GPRTRayTracer::init()
   numRays = 1; // Set the number of rays to be cast
   rayInputBuffer_ = gprtDeviceBufferCreate<RayInput>(context_, numRays);
   rayOutputBuffer_ = gprtDeviceBufferCreate<RayOutput>(context_, numRays); 
+  excludePrimitivesBuffer_ = gprtDeviceBufferCreate<int32_t>(context_); // initialise buffer of size 1
 
   setup_shaders();
 
@@ -134,6 +135,7 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
   // }
   // Need to think about handling single vs double precision floating points
 
+  // if (exclude_primitives != nullptr) rayhit.ray.exclude_primitives = exclude_primitives;
   GPRTAccel volume = tree_to_vol_accel_map.at(scene);
 
   // New: Here, we place a reference to our TLAS in the ray generation
@@ -142,14 +144,37 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
 
   RayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
   rayGenData->world = gprtAccelGetDeviceAddress(volume);
-                                                    
+  
+
   // Update the ray input buffer
   gprtBufferMap(rayInputBuffer_);
-
   RayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
   rayInput[0].origin = {origin.x, origin.y, origin.z};
   rayInput[0].direction = {direction.x, direction.y, direction.z};
   gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
+
+  if (exclude_primitives) {
+    if (!exclude_primitives->empty()) gprtBufferResize(context_, excludePrimitivesBuffer_, exclude_primitives->size(), false);
+    gprtBufferMap(excludePrimitivesBuffer_);
+    int32_t* gpuExcludedPrimitives = gprtBufferGetHostPointer(excludePrimitivesBuffer_);
+    std::copy(exclude_primitives->begin(), exclude_primitives->end(), gpuExcludedPrimitives);
+    gprtBufferUnmap(excludePrimitivesBuffer_);
+
+    gprtBufferMap(rayInputBuffer_);
+    RayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
+    rayInput[0].exclude_primitives = gprtBufferGetDevicePointer(excludePrimitivesBuffer_);
+    rayInput[0].exclude_count = exclude_primitives->size();
+    gprtBufferUnmap(rayInputBuffer_);
+  } 
+  else {
+    // If no primitives are excluded, set the pointer to null and count to 0
+    gprtBufferMap(rayInputBuffer_);
+    RayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
+    rayInput[0].exclude_primitives = nullptr;
+    rayInput[0].exclude_count = 0;
+    gprtBufferUnmap(rayInputBuffer_);
+  }
+
 
   // pushconstants
   RayFirePushConstants pc; 
@@ -165,10 +190,15 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
   // Retrieve the output from the ray output buffer
   gprtBufferMap(rayOutputBuffer_);
   RayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
-  std::pair<double, MeshID> result = {rayOutput[0].distance, rayOutput[0].surf_id};
+  auto distance = rayOutput[0].distance;
+  auto surface = rayOutput[0].surf_id;
   gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
   
-  return result;
+  // if (surface == XDG_GPRT_INVALID_GEOMETRY_ID)
+  //   return {INFTY, ID_NONE};
+  // else
+  //   if (exclude_primitives) exclude_primitives->push_back(surface);
+  return {distance, surface};
 }
                 
 void GPRTRayTracer::create_world_tlas()

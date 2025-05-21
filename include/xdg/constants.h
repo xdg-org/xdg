@@ -67,6 +67,9 @@ constexpr MeshID ID_NONE {-1};
 // Scene/Tree ID
 using TreeID = int32_t;
 
+// GPRT miss ID 
+constexpr uint32_t XDG_GPRT_INVALID_GEOMETRY_ID {~0u};
+
 // Invalid
 constexpr TreeID TREEID_NONE {-1};
 
