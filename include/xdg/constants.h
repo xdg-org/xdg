@@ -77,6 +77,9 @@ using TreeID = int32_t;
 using SurfaceTreeID = TreeID;
 using ElementTreeID = TreeID;
 
+// GPRT miss ID 
+constexpr uint32_t XDG_GPRT_INVALID_GEOMETRY_ID {~0u};
+
 // Null tree ID
 constexpr TreeID TREE_NONE {-1};
 

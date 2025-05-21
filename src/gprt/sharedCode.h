@@ -6,6 +6,8 @@
 struct RayInput {
   float3 origin;
   float3 direction;
+  int32_t* exclude_primitives; // Optional for excluding primitives
+  uint32_t exclude_count;           // Number of excluded primitives
 };
 
 struct RayOutput 
@@ -17,11 +19,11 @@ struct RayOutput
 /* variables for the triangle mesh geometry */
 struct TrianglesGeomData {
   float3 *vertex; // vertex buffer
-  uint3 *index;  // index buffer
-  uint id;       // surface id
-  uint2 vols;    // parent volumes
+  uint3 *index;   // index buffer
+  uint id;        // surface id
+  int2 vols;      // parent volumes ids
+  int sense;      // surface sense
 };
-
 // /* variables for the triangle mesh geometry */
 // struct DPTriangleGeomData {
 //   double3 *vertex; // vertex buffer
@@ -66,8 +68,6 @@ struct PushConstants {
 };
 
 struct RayFirePushConstants {
-  RayInput ray;
-  RayOutput out;
   float dist_limit;
   int orientation;
 };
