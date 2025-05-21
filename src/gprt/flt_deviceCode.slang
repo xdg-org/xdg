@@ -16,9 +16,6 @@ struct RayFirePayload {
     int vol_id;       // ID of the volume the ray is in 
     SurfaceAccelerationStructure tlas;
     int next_vol;      // ID of the next volume
-    
-    float3 origin;     // Origin of the ray
-    float3 direction;  // Direction of the ray
 };
 
 
@@ -140,14 +137,16 @@ void ray_fire_hit(uniform TrianglesGeomData record, inout RayFirePayload payload
     //   }
     // }
 
+ 
+
     payload.distance = RayTCurrent();
     payload.surf_id = record.id;
 
     // Print the ray's origin and direction
-    printf("Closest Hit called! Distance: %f, surf_id: %u\n", payload.distance, record.id);
-    printf("Ray Origin: (%f, %f, %f)\n", payload.origin.x, payload.origin.y, payload.origin.z);
-    printf("Ray Direction: (%f, %f, %f)\n", payload.direction.x, payload.direction.y, payload.direction.z);
-    printf("Barycentrics: (%f, %f)\n", bc.x, bc.y);
+    // printf("Closest Hit called! Distance: %f, surf_id: %u\n", payload.distance, record.id);
+    // printf("Ray Origin: (%f, %f, %f)\n", payload.origin.x, payload.origin.y, payload.origin.z);
+    // printf("Ray Direction: (%f, %f, %f)\n", payload.direction.x, payload.direction.y, payload.direction.z);
+    // printf("Barycentrics: (%f, %f)\n", bc.x, bc.y);
 }
 
 [shader("miss")]
@@ -165,10 +164,10 @@ void ray_fire(uniform RayGenData record, uniform TrianglesGeomData mesh) {
     RayFirePayload payload;
     uint rayID = DispatchRaysIndex().x;
 
-    printf("Ray Generation Shader called with :");
-    printf("Ray Origin: (%f, %f, %f)\n", record.ray.origin.x, record.ray.origin.y, record.ray.origin.z);
-    printf("Ray Direction: (%f, %f, %f)\n", record.ray.direction.x, record.ray.direction.y, record.ray.direction.z);
-
+    // printf("Ray Generation Shader called with :");
+    // printf("Ray Origin: (%f, %f, %f)\n", record.ray.origin.x, record.ray.origin.y, record.ray.origin.z);
+    // printf("Ray Direction: (%f, %f, %f)\n", record.ray.direction.x, record.ray.direction.y, record.ray.direction.z);
+    // printf("Excluded Primitives.size(): %i \n", record.ray.exclude_count);
 
     // Trace the ray into the scene
     RayDesc rayDesc;
@@ -176,14 +175,14 @@ void ray_fire(uniform RayGenData record, uniform TrianglesGeomData mesh) {
     rayDesc.Direction = normalize(record.ray.direction);
     rayDesc.TMin = 1e-4f; // non-zero to avoid self-intersection
     rayDesc.TMax = rayFirePC.dist_limit; // distance limit from push constants
+    
 
     // Pass the ray's origin and direction to the payload
-    payload.origin = rayDesc.Origin;
-    payload.direction = rayDesc.Direction;
     payload.distance = -1.0f;
     payload.surf_id = ~0u;   
     payload.tlas = record.world;
-    
+
+
     uint rayFlagCull = (rayFirePC.orientation == 1) 
                    ? RAY_FLAG_CULL_FRONT_FACING_TRIANGLES 
                    : RAY_FLAG_CULL_BACK_FACING_TRIANGLES;
@@ -192,9 +191,11 @@ void ray_fire(uniform RayGenData record, uniform TrianglesGeomData mesh) {
     printf("Distance Limit: %f\n", rayFirePC.dist_limit);
     printf("Orientation: %u\n", rayFirePC.orientation);
     printf("TMax before TraceRay: %f\n PC.dist_limit: %f\n", rayDesc.TMax, rayFirePC.dist_limit);
+    printf("Exclude_primitive size: %i \n", record.ray.exclude_count);
     TraceRay(record.world, rayFlagCull, 0xff, 0, 1, 0, rayDesc, payload);
 
     // Store the distance to the hit point and the surface ID in buffers for CPU
     record.out.distance = payload.distance;
     record.out.surf_id = payload.surf_id;
 }
+

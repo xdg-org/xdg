@@ -6,6 +6,8 @@
 struct RayInput {
   float3 origin;
   float3 direction;
+  int32_t* exclude_primitives; // Optional for excluding primitives
+  uint32_t exclude_count;           // Number of excluded primitives
 };
 
 struct RayOutput 
@@ -66,8 +68,6 @@ struct PushConstants {
 };
 
 struct RayFirePushConstants {
-  RayInput ray;
-  RayOutput out;
   float dist_limit;
   int orientation;
 };
