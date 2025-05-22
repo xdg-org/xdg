@@ -27,6 +27,7 @@ void GPRTRayTracer::setup_shaders()
 
 void GPRTRayTracer::init()
 {
+  // TODO - Should we just allocate a large chunk in the buffers to start with so that we don't have to resize?
   numRays = 1; // Set the number of rays to be cast
   rayInputBuffer_ = gprtDeviceBufferCreate<RayInput>(context_, numRays);
   rayOutputBuffer_ = gprtDeviceBufferCreate<RayOutput>(context_, numRays); 
@@ -116,6 +117,9 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
   return tree;
 }
 
+
+
+
 // This will launch the rays and run our shaders in the ray tracing pipeline
 // miss shader returns dist = 0.0 and elementID = -1
 // closest hit shader returns dist = distance to hit and elementID = triangle ID
@@ -124,57 +128,34 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
                                                   const Direction& direction,
                                                   double dist_limit,
                                                   HitOrientation orientation,
-                                                  std::vector<MeshID>* const exclude_primitives) {
-// Some logic for handling multiple rays
-  // Allocate and fill rayBuffer with origins and directions...
-  // std::vector<GPRTBufferOf<float3>> particleOriginBuffer;
-  // std::vector<GPRTBufferOf<float3>> particleDirectionBuffer;
-  // for (size_t i = 0; i < origins.size(); ++i) {
-  //     particleOriginBuffer.push_back(gprtDeviceBufferCreate<float3>(context_, origins[i]));
-  //     particleDirectionBuffer.push_back(gprtDeviceBufferCreate<float3>(context_, directions[i]));
-  // }
-  // Need to think about handling single vs double precision floating points
-
-  // if (exclude_primitives != nullptr) rayhit.ray.exclude_primitives = exclude_primitives;
+                                                  std::vector<MeshID>* const exclude_primitives) 
+{
   GPRTAccel volume = tree_to_vol_accel_map.at(scene);
-
-  // New: Here, we place a reference to our TLAS in the ray generation
-  // kernel's parameters, so that we can access that tree when
-  // we go to trace our rays.
-
   RayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
   rayGenData->world = gprtAccelGetDeviceAddress(volume);
   
+  gprtBufferMap(rayInputBuffer_); // Update the ray input buffer
 
-  // Update the ray input buffer
-  gprtBufferMap(rayInputBuffer_);
   RayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
   rayInput[0].origin = {origin.x, origin.y, origin.z};
   rayInput[0].direction = {direction.x, direction.y, direction.z};
-  gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
 
   if (exclude_primitives) {
     if (!exclude_primitives->empty()) gprtBufferResize(context_, excludePrimitivesBuffer_, exclude_primitives->size(), false);
     gprtBufferMap(excludePrimitivesBuffer_);
-    int32_t* gpuExcludedPrimitives = gprtBufferGetHostPointer(excludePrimitivesBuffer_);
-    std::copy(exclude_primitives->begin(), exclude_primitives->end(), gpuExcludedPrimitives);
+    std::copy(exclude_primitives->begin(), exclude_primitives->end(), gprtBufferGetHostPointer(excludePrimitivesBuffer_));
     gprtBufferUnmap(excludePrimitivesBuffer_);
 
-    gprtBufferMap(rayInputBuffer_);
-    RayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
     rayInput[0].exclude_primitives = gprtBufferGetDevicePointer(excludePrimitivesBuffer_);
     rayInput[0].exclude_count = exclude_primitives->size();
-    gprtBufferUnmap(rayInputBuffer_);
   } 
   else {
     // If no primitives are excluded, set the pointer to null and count to 0
-    gprtBufferMap(rayInputBuffer_);
-    RayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
     rayInput[0].exclude_primitives = nullptr;
     rayInput[0].exclude_count = 0;
-    gprtBufferUnmap(rayInputBuffer_);
   }
 
+  gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
 
   // pushconstants
   RayFirePushConstants pc; 

@@ -137,7 +137,7 @@ void ray_fire_hit(uniform TrianglesGeomData record, inout RayFirePayload payload
     //   }
     // }
 
-
+ 
 
     payload.distance = RayTCurrent();
     payload.surf_id = record.id;
@@ -191,6 +191,7 @@ void ray_fire(uniform RayGenData record, uniform TrianglesGeomData mesh) {
     printf("Distance Limit: %f\n", rayFirePC.dist_limit);
     printf("Orientation: %u\n", rayFirePC.orientation);
     printf("TMax before TraceRay: %f\n PC.dist_limit: %f\n", rayDesc.TMax, rayFirePC.dist_limit);
+    printf("Exclude_primitive size: %i \n", record.ray.exclude_count);
     TraceRay(record.world, rayFlagCull, 0xff, 0, 1, 0, rayDesc, payload);
 
     // Store the distance to the hit point and the surface ID in buffers for CPU
