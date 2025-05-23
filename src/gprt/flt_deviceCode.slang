@@ -27,7 +27,7 @@ struct RayFirePayload {
 // - The third is the intersection attributes. For triangles, these are two "barycentrics", used
 //   for interpolating per-vertex values.
 [shader("closesthit")]
-void TriangleMesh(uniform TrianglesGeomData record, inout Payload payload, in float2 bc) {
+void render_hits(uniform TrianglesGeomData record, inout Payload payload, in float2 bc) {
     // Threshold to determine edge thickness
     const float edgeThreshold = 0.02;
 
@@ -48,7 +48,7 @@ void TriangleMesh(uniform TrianglesGeomData record, inout Payload payload, in fl
 // This ray generation program will kick off the ray tracing process,
 // generating rays and tracing them into the world.
 [shader("raygeneration")]
-void raygen(uniform RayGenData record) {
+void render_mesh(uniform RayGenData record) {
   Payload payload;
   uint2 pixelID = DispatchRaysIndex().xy;
   uint2 iResolution = DispatchRaysDimensions().xy;
@@ -86,8 +86,8 @@ void raygen(uniform RayGenData record) {
     TraceRay(record.world,     // the tree
               RAY_FLAG_NONE,   // ray flags
               0xff,            // instance inclusion mask
-              0,               // ray type
-              1,               // number of ray types
+              1,               // ray type (set to render ray type)
+              2,               // number of ray types
               0,               // miss index
               rayDesc,         // the ray to trace
               payload          // the payload IO
@@ -104,7 +104,7 @@ void raygen(uniform RayGenData record) {
 }
 
 [shader("miss")]
-void miss(inout Payload payload, inout RayDesc rayDesc) {
+void render_miss(inout Payload payload, inout RayDesc rayDesc) {
     // Set a gradient background based on the ray direction
     float3 dir = normalize(rayDesc.Direction);
     payload.color = float3(1.0, 1.0, 1.0);
@@ -225,7 +225,7 @@ void point_in_volume(uniform RayGenData record, uniform TrianglesGeomData mesh) 
     payload.surf_id = ~0u;   
     payload.tlas = record.world;    
 
-    TraceRay(record.world, RAY_FLAG_NONE, 0xff, 0, 1, 0, rayDesc, payload);
+    TraceRay(record.world, RAY_FLAG_NONE, 0xff, 0, 2, 0, rayDesc, payload);
 
     // Store the distance to the hit point and the surface ID in buffers for CPU
     record.out.surf_id = payload.surf_id;

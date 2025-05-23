@@ -90,6 +90,7 @@ namespace xdg {
       GPRTBufferOf<RayOutput> rayOutputBuffer_; //<! Ray output buffer for ray generation
       GPRTBufferOf<int32_t> excludePrimitivesBuffer_; //<! Buffer for excluded primitives
       size_t numRays = 1; //<! Number of rays to be cast
+      uint32_t numRayTypes_ = 2; // <! Number of ray types. Allows multiple shaders to be set to the same geometery
       std::vector<gprt::Instance> globalBlasInstances_; //<! List of every BLAS instance stored in this ray tracer
 
       // Mesh-to-Scene maps 
