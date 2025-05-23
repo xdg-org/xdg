@@ -7,8 +7,12 @@ namespace xdg {
 
 GPRTRayTracer::GPRTRayTracer()
 {
-  // fbSize = {1000,1000};
-  // gprtRequestWindow(fbSize.x, fbSize.y, "XDG::render_mesh()");
+  bool renderMesh = true;
+  if (renderMesh){
+    fbSize = {1000,1000};
+    gprtRequestRayTypeCount(numRayTypes_); // Set the number of shaders which can be set to the same geometry
+    gprtRequestWindow(fbSize.x, fbSize.y, "XDG::render_mesh()");
+  }
   context_ = gprtContextCreate();
   module_ = gprtModuleCreate(context_, flt_deviceCode);
 }
@@ -24,6 +28,7 @@ void GPRTRayTracer::setup_shaders()
   rayGenProgram_ = gprtRayGenCreate<RayGenData>(context_, module_, "ray_fire");
   rayGenPointInVolProgram_ = gprtRayGenCreate<RayGenData>(context_, module_, "point_in_volume");
   missProgram_ = gprtMissCreate<void>(context_, module_, "ray_fire_miss");
+
   // TODO - Multimap to hold each shader assocaited with each query?
 }
 
@@ -56,8 +61,9 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
 
   // Create a "triangle" geometry type and set its closest-hit program
   auto trianglesGeomType = gprtGeomTypeCreate<TrianglesGeomData>(context_, GPRT_TRIANGLES);
-  gprtGeomTypeSetClosestHitProg(trianglesGeomType, 0, module_, "ray_fire_hit");
-  // gprtGeomTypeSetClosestHitProg(trianglesGeomType, 0, module_, "TriangleMesh");
+  gprtGeomTypeSetClosestHitProg(trianglesGeomType, 0, module_, "ray_fire_hit"); // closesthit for ray queries
+
+  gprtGeomTypeSetClosestHitProg(trianglesGeomType, 1, module_, "render_hits"); // cloesthit for mesh rendering
 
   auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
   std::vector<gprt::Instance> localBlasInstances; // BLAS for each (surface) geometry in this volume
@@ -302,8 +308,8 @@ void GPRTRayTracer::render_mesh()
     create_world_tlas();
 
     // Set up ray generation and miss programs
-    GPRTRayGenOf<RayGenData> rayGen = gprtRayGenCreate<RayGenData>(context_, module_, "raygen");
-    GPRTMissOf<void> miss = gprtMissCreate<void>(context_, module_, "miss");
+    GPRTRayGenOf<RayGenData> rayGen = gprtRayGenCreate<RayGenData>(context_, module_, "render_mesh");
+    GPRTMissOf<void> miss = gprtMissCreate<void>(context_, module_, "render_miss");
 
     // Place a reference to the TLAS in the ray generation kernel's parameters
     RayGenData* rayGenData = gprtRayGenGetParameters(rayGen);
