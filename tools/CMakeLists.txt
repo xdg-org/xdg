@@ -3,7 +3,7 @@ find_package(OpenMP REQUIRED)
 
 set(TOOL_NAMES
 particle_sim
-segments
+tally_segments
 ray_fire
 find_volume
 point_in_volume
