@@ -13,7 +13,7 @@
 
 using namespace xdg;
 
-TEST_CASE("Test Ray Fire Embree Mesh Mock")
+TEST_CASE("Test Ray Fire Embree-MeshMock")
 {
   std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>(false);
   mm->init(); // this should do nothing, just good practice to call it
@@ -102,7 +102,7 @@ TEST_CASE("Test Ray Fire Embree Mesh Mock")
   REQUIRE(intersection.second == ID_NONE);
 }
 
-TEST_CASE("Test Ray Fire GPRT Mesh Mock")
+TEST_CASE("Test Ray Fire GPRT-MeshMock")
 {
   std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
   mm->init(); // this should do nothing, just good practice to call it

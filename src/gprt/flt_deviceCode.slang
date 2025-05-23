@@ -16,6 +16,7 @@ struct RayFirePayload {
     int vol_id;       // ID of the volume the ray is in 
     SurfaceAccelerationStructure tlas;
     int next_vol;      // ID of the next volume
+    float3 normal;
 };
 
 
@@ -141,8 +142,11 @@ void ray_fire_hit(uniform TrianglesGeomData record, inout RayFirePayload payload
 
     payload.distance = RayTCurrent();
     payload.surf_id = record.id;
+    payload.normal = record.normals[PrimitiveIndex()];
 
     // Print the ray's origin and direction
+    printf("Closest Hit called!");
+    printf("Normal returned: (%f, %f, %f)", payload.normal.x, payload.normal.y, payload.normal.z);
     // printf("Closest Hit called! Distance: %f, surf_id: %u\n", payload.distance, record.id);
     // printf("Ray Origin: (%f, %f, %f)\n", payload.origin.x, payload.origin.y, payload.origin.z);
     // printf("Ray Direction: (%f, %f, %f)\n", payload.direction.x, payload.direction.y, payload.direction.z);
@@ -154,6 +158,7 @@ void ray_fire_miss(inout RayFirePayload payload) {
     // Set the miss payload to default values
     payload.distance = -1.0f;
     payload.surf_id = ~0u;
+    payload.normal = {0.0, 0.0, 0.0};
     printf("Miss shader called!\n");
 }
 
@@ -199,3 +204,30 @@ void ray_fire(uniform RayGenData record, uniform TrianglesGeomData mesh) {
     record.out.surf_id = payload.surf_id;
 }
 
+[shader("raygeneration")]
+void point_in_volume(uniform RayGenData record, uniform TrianglesGeomData mesh) {
+    RayFirePayload payload;
+    uint rayID = DispatchRaysIndex().x;
+
+    printf("Ray Generation Shader called with :");
+    printf("Ray Origin: (%f, %f, %f)\n", record.ray.origin.x, record.ray.origin.y, record.ray.origin.z);
+    printf("Ray Direction: (%f, %f, %f)\n", record.ray.direction.x, record.ray.direction.y, record.ray.direction.z);
+    // printf("Excluded Primitives.size(): %i \n", record.ray.exclude_count);
+
+    // Trace the ray into the scene
+    RayDesc rayDesc;
+    rayDesc.Origin = record.ray.origin;
+    rayDesc.Direction = normalize(record.ray.direction);
+    rayDesc.TMin = 1e-4f; // non-zero to avoid self-intersection
+    rayDesc.TMax = 1e30f;
+    
+    // Pass the ray's origin and direction to the payload
+    payload.surf_id = ~0u;   
+    payload.tlas = record.world;    
+
+    TraceRay(record.world, RAY_FLAG_NONE, 0xff, 0, 1, 0, rayDesc, payload);
+
+    // Store the distance to the hit point and the surface ID in buffers for CPU
+    record.out.surf_id = payload.surf_id;
+    record.out.normal = payload.normal;
+}

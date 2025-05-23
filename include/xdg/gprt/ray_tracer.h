@@ -38,11 +38,7 @@ namespace xdg {
       bool point_in_volume(TreeID scene,
                           const Position& point,
                           const Direction* direction = nullptr,
-                          const std::vector<MeshID>* exclude_primitives = nullptr) const override
-      {
-        // Check if the point is inside the volume
-        return false;
-      }
+                          const std::vector<MeshID>* exclude_primitives = nullptr) const override;
   
       std::pair<double, MeshID> ray_fire(TreeID scene,
                                         const Position& origin,
@@ -51,7 +47,10 @@ namespace xdg {
                                         HitOrientation orientation = HitOrientation::EXITING,
                                         std::vector<MeshID>* const exclude_primitives = nullptr) override;
         // Fire a ray and return the distance to the closest intersection
-  
+
+
+
+
       void closest(TreeID scene,
                   const Position& origin,
                   double& dist,
@@ -83,6 +82,7 @@ namespace xdg {
       // std::vector<GPRTGeom> geometries_; //<! All geometries created by this ray tracer
       GPRTAccel world_; 
       GPRTRayGenOf<RayGenData> rayGenProgram_; //<! Ray generation program
+      GPRTRayGenOf<RayGenData> rayGenPointInVolProgram_;
       GPRTMissOf<void> missProgram_; //<! Miss program
       GPRTBufferOf<uint32_t> frameBuffer_; //<! Framebuffer
       int2 fbSize; //<! Size of the framebuffer 
