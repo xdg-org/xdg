@@ -94,8 +94,7 @@ double dist = 100.0;
 TreeID tree = rti->trees()[0];
 rti->closest(tree, origin, dist);
 
-std::cout << "std exit statement reached" << std::endl;
-std::exit(1);
+std::cout << "Rendering mesh with GPRT..." << std::endl;
 
 // update the mean free path
 sim_data.mfp_ = args.get<double>("--mfp");
