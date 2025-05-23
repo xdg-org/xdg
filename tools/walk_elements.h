@@ -3,6 +3,8 @@
 #include <vector>
 #include <numeric>
 
+#include <indicators/block_progress_bar.hpp>
+
 #include "xdg/error.h"
 #include "xdg/vec3da.h"
 #include "xdg/xdg.h"
@@ -33,6 +35,18 @@ void walk_elements(const WalkElementsContext& context) {
   int n_events {0};
   double distance {0.0};
   double total_distance {0.0};
+
+  using namespace indicators;
+  BlockProgressBar prog_bar{
+    option::BarWidth{50},
+    option::Start{"["},
+    option::End{"]"},
+    option::PostfixText{fmt::format("Running {} particles", context.n_particles_)},
+    option::ForegroundColor{Color::green},
+    option::ShowPercentage{true},
+    option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}
+  };
+
   for (int i = 0; i < context.n_particles_; i++) {
     n_events = 0;
     distance = 0.0;
@@ -84,8 +98,12 @@ void walk_elements(const WalkElementsContext& context) {
     total_distance += distance;
     if (context.verbose_) {
       std::cout << fmt::format("Particle {} underwent {} events. Distance: {}", i, n_events, distance) << std::endl;
+    } else {
+      prog_bar.set_progress(100.0 * (double)i / (double)context.n_particles_);
     }
   }
+  prog_bar.mark_as_completed();
+
   if (context.verbose_) {
     std::cout << fmt::format("Average distance: {}", total_distance/context.n_particles_) << std::endl;
   }

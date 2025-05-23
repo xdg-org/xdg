@@ -3,6 +3,8 @@
 #include <vector>
 #include <numeric>
 
+#include <indicators/block_progress_bar.hpp>
+
 #include "xdg/error.h"
 #include "xdg/vec3da.h"
 #include "xdg/xdg.h"
@@ -13,6 +15,7 @@ struct TallyContext {
   std::shared_ptr<XDG> xdg_;
   int n_tracks_ {0};
   bool check_tracks_ {false};
+  bool verbose_ {false};
 };
 
 Position sample_box_location(const BoundingBox& bbox) {
@@ -27,6 +30,17 @@ void tally_segments(const TallyContext& context) {
   BoundingBox bbox = xdg->mesh_manager()->global_bounding_box();
   std::cout << fmt::format("Mesh Bounding Box: {}", bbox) << std::endl;
 
+  using namespace indicators;
+  BlockProgressBar prog_bar{
+    option::BarWidth{50},
+    option::Start{"["},
+    option::End{"]"},
+    option::PostfixText{fmt::format("Running {} tally tracks", context.n_tracks_)},
+    option::ForegroundColor{Color::green},
+    option::ShowPercentage{true},
+    option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}
+  };
+
   for (int i = 0; i < context.n_tracks_; i++) {
     // sample a location within the bounding box
     Position r1 = sample_box_location(bbox);
@@ -36,7 +50,11 @@ void tally_segments(const TallyContext& context) {
     if (!bbox.contains(r2)) fatal_error(fmt::format("Point {} is not within the mesh bounding box", r2));
 
     auto segments = xdg->segments(r1, r2);
-    std::cout << fmt::format("Track {}: {} segments", i, segments.size()) << std::endl;
+    if (context.verbose_) {
+      std::cout << fmt::format("Track {}: {} segments", i, segments.size()) << std::endl;
+    } else {
+      prog_bar.set_progress(100.0 * (double)i / (double)context.n_tracks_);
+    } 
 
     if (context.check_tracks_) {
       double track_length = (r2 - r1).length();
@@ -47,4 +65,5 @@ void tally_segments(const TallyContext& context) {
       }
     }
   }
+  prog_bar.mark_as_completed();
 }
