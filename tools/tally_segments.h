@@ -6,6 +6,7 @@
 #include <indicators/block_progress_bar.hpp>
 
 #include "xdg/error.h"
+#include "xdg/util/progress_bars.h"
 #include "xdg/vec3da.h"
 #include "xdg/xdg.h"
 
@@ -31,15 +32,7 @@ void tally_segments(const TallyContext& context) {
   std::cout << fmt::format("Mesh Bounding Box: {}", bbox) << std::endl;
 
   using namespace indicators;
-  BlockProgressBar prog_bar{
-    option::BarWidth{50},
-    option::Start{"["},
-    option::End{"]"},
-    option::PostfixText{fmt::format("Running {} tally tracks", context.n_tracks_)},
-    option::ForegroundColor{Color::green},
-    option::ShowPercentage{true},
-    option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}
-  };
+  auto prog_bar = block_progress_bar(fmt::format("Running {} tally tracks", context.n_tracks_));
 
   for (int i = 0; i < context.n_tracks_; i++) {
     // sample a location within the bounding box
@@ -54,7 +47,7 @@ void tally_segments(const TallyContext& context) {
       std::cout << fmt::format("Track {}: {} segments", i, segments.size()) << std::endl;
     } else {
       prog_bar.set_progress(100.0 * (double)i / (double)context.n_tracks_);
-    } 
+    }
 
     if (context.check_tracks_) {
       double track_length = (r2 - r1).length();

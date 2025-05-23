@@ -6,6 +6,7 @@
 #include <indicators/block_progress_bar.hpp>
 
 #include "xdg/error.h"
+#include "xdg/util/progress_bars.h"
 #include "xdg/vec3da.h"
 #include "xdg/xdg.h"
 
@@ -35,17 +36,7 @@ void walk_elements(const WalkElementsContext& context) {
   int n_events {0};
   double distance {0.0};
   double total_distance {0.0};
-
-  using namespace indicators;
-  BlockProgressBar prog_bar{
-    option::BarWidth{50},
-    option::Start{"["},
-    option::End{"]"},
-    option::PostfixText{fmt::format("Running {} particles", context.n_particles_)},
-    option::ForegroundColor{Color::green},
-    option::ShowPercentage{true},
-    option::FontStyles{std::vector<FontStyle>{FontStyle::bold}}
-  };
+  auto prog_bar = block_progress_bar(fmt::format("Running {} particles", context.n_particles_));
 
   for (int i = 0; i < context.n_particles_; i++) {
     n_events = 0;
