@@ -30,10 +30,20 @@ args.add_argument("-n", "--num-tracks")
     .default_value(1000)
     .scan<'i', int>();
 
+args.add_argument("-t", "--threads")
+    .help("Number of threads to use")
+    .default_value(-1)
+    .scan<'i', int>();
+
 args.add_argument("-v", "--verbose")
     .default_value(false)
     .implicit_value(true)
     .help("Enable verbose output");
+
+args.add_argument("-q", "--quiet")
+    .default_value(false)
+    .implicit_value(true)
+    .help("Minimize all output (for performance testing)");
 
 args.add_argument("-c", "--check-tracks")
     .help("Verify that track lengths always match the sum of segments")
@@ -76,9 +86,12 @@ size_t n_tracks = args.get<int>("--num-tracks");
 
 TallyContext tally_context;
 tally_context.xdg_ = xdg;
+int n_threads = args.get<int>("--threads");
+if (n_threads >= 1) tally_context.n_threads_ = n_threads;
 tally_context.n_tracks_ = args.get<int>("--num-tracks");
 tally_context.check_tracks_ = args.get<bool>("--check-tracks");
 tally_context.verbose_ = args.get<bool>("--verbose");
+tally_context.quiet_ = args.get<bool>("--quiet");
 
 tally_segments(tally_context);
 

@@ -13,8 +13,6 @@
 
 using namespace xdg;
 
-
-
 int main(int argc, char** argv) {
 
 // argument parsing
@@ -27,20 +25,29 @@ args.add_argument("-l", "--library")
     .help("Mesh library to use. One of (MOAB, LIBMESH)")
     .default_value("MOAB");
 
-args.add_argument("-v", "--verbose")
-    .default_value(false)
-    .implicit_value(true)
-    .help("Enable verbose output of particle events");
-
-args.add_argument("-m", "--mfp")
-    .default_value(1.0)
-    .help("Mean free path of the particles").scan<'g', double>();
-
 args.add_argument("-n", "--num-particles")
     .help("Number of particles to simulate")
     .default_value(1000)
     .scan<'i', int>();
 
+args.add_argument("-t", "--threads")
+    .help("Number of threads to use")
+    .default_value(-1)
+    .scan<'i', int>();
+
+args.add_argument("-v", "--verbose")
+    .default_value(false)
+    .implicit_value(true)
+    .help("Enable verbose output of particle events");
+
+args.add_argument("-q", "--quiet")
+    .default_value(false)
+    .implicit_value(true)
+    .help("Minimize all output (for performance testing)");
+
+args.add_argument("-m", "--mfp")
+    .default_value(1.0)
+    .help("Mean free path of the particles").scan<'g', double>();
 
   try {
     args.parse_args(argc, argv);
@@ -72,9 +79,12 @@ xdg->prepare_raytracer();
 WalkElementsContext walkelementscontext;
 
 walkelementscontext.xdg_ = xdg;
+int n_threads = args.get<int>("--threads");
+if (n_threads >= 1) walkelementscontext.n_threads_ = n_threads;
 walkelementscontext.n_particles_ = args.get<int>("--num-particles");
 walkelementscontext.mean_free_path_ = args.get<double>("--mfp");
 walkelementscontext.verbose_ = args.get<bool>("--verbose");
+walkelementscontext.quiet_ = args.get<bool>("--quiet");
 
 walk_elements(walkelementscontext);
 
