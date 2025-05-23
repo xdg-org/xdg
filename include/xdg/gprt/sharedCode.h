@@ -14,12 +14,14 @@ struct RayOutput
 {
   float distance;
   uint surf_id;
+  float3 normal;
 };
 
 /* variables for the triangle mesh geometry */
 struct TrianglesGeomData {
   float3 *vertex; // vertex buffer
   uint3 *index;   // index buffer
+  float3 *normals;
   uint id;        // surface id
   int2 vols;      // parent volumes ids
   int sense;      // surface sense

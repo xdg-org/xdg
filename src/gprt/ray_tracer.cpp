@@ -22,7 +22,9 @@ void GPRTRayTracer::setup_shaders()
 {
   // Set up ray generation and miss programs
   rayGenProgram_ = gprtRayGenCreate<RayGenData>(context_, module_, "ray_fire");
+  rayGenPointInVolProgram_ = gprtRayGenCreate<RayGenData>(context_, module_, "point_in_volume");
   missProgram_ = gprtMissCreate<void>(context_, module_, "ray_fire_miss");
+  // TODO - Multimap to hold each shader assocaited with each query?
 }
 
 void GPRTRayTracer::init()
@@ -39,8 +41,12 @@ void GPRTRayTracer::init()
   RayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
   rayGenData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
   rayGenData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
-  
 
+  // Bind the buffers to the RayGenData structure
+  RayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPointInVolProgram_);
+  rayGenPIVData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
+  rayGenPIVData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
+  
 }
 
 TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume_id)
@@ -64,6 +70,7 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
 
     GPRTBufferOf<float3> vertex_buffer;
     GPRTBufferOf<uint3> connectivity_buffer;
+    GPRTBufferOf<float3> normal_buffer;
     GPRTGeomOf<TrianglesGeomData> triangleGeom;
 
     // Convert vertices to float3 
@@ -80,13 +87,26 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
       ui3Indices.emplace_back(indices[i], indices[i + 1], indices[i + 2]);
     }
 
+    // Compute face normals
+    std::vector<float3> faceNormals;
+    faceNormals.reserve(ui3Indices.size());
+    for (const auto& tri : ui3Indices) {
+      float3 v0 = fl3Vertices[tri.x];
+      float3 v1 = fl3Vertices[tri.y];
+      float3 v2 = fl3Vertices[tri.z];
+      float3 normal = normalize(cross(v1 - v0, v2 - v0));
+      faceNormals.push_back(normal);
+    }
+
     // Create GPRT buffers and geometry data
     vertex_buffer = gprtDeviceBufferCreate<float3>(context_, fl3Vertices.size(), fl3Vertices.data());
     connectivity_buffer = gprtDeviceBufferCreate<uint3>(context_, ui3Indices.size(), ui3Indices.data());
+    normal_buffer = gprtDeviceBufferCreate<float3>(context_, faceNormals.size(), faceNormals.data());
     triangleGeom = gprtGeomCreate<TrianglesGeomData>(context_, trianglesGeomType);
     TrianglesGeomData* geom_data = gprtGeomGetParameters(triangleGeom);
     geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffer);
     geom_data->index = gprtBufferGetDevicePointer(connectivity_buffer);
+    geom_data->normals = gprtBufferGetDevicePointer(normal_buffer);
     geom_data->id = surf;
     geom_data->vols = { mesh_manager->get_parent_volumes(surf).first, mesh_manager->get_parent_volumes(surf).second };
     geom_data->sense = static_cast<int>(mesh_manager->surface_sense(surf, volume_id)); // 0 for forward, 1 for reverse
@@ -117,7 +137,61 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
   return tree;
 }
 
+bool GPRTRayTracer::point_in_volume(TreeID tree, 
+                                    const Position& point,
+                                    const Direction* direction,
+                                    const std::vector<MeshID>* exclude_primitives) const
+{
+  GPRTAccel volume = tree_to_vol_accel_map.at(tree);
+  RayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPointInVolProgram_);
+  rayGenPIVData->world = gprtAccelGetDeviceAddress(volume);
 
+  // Use provided direction or if Direction == nulptr use default direction
+  Direction directionUsed = (direction != nullptr) ? Direction{direction->x, direction->y, direction->z} 
+                            : Direction{1. / std::sqrt(2.0), 1. / std::sqrt(2.0), 0.0};
+
+  gprtBufferMap(rayInputBuffer_); // Update the ray input buffer
+
+  RayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
+  rayInput[0].origin = {point.x, point.y, point.z};
+  rayInput[0].direction = {directionUsed.x, directionUsed.y, directionUsed.z};
+
+  if (exclude_primitives) {
+    if (!exclude_primitives->empty()) gprtBufferResize(context_, excludePrimitivesBuffer_, exclude_primitives->size(), false);
+    gprtBufferMap(excludePrimitivesBuffer_);
+    std::copy(exclude_primitives->begin(), exclude_primitives->end(), gprtBufferGetHostPointer(excludePrimitivesBuffer_));
+    gprtBufferUnmap(excludePrimitivesBuffer_);
+
+    rayInput[0].exclude_primitives = gprtBufferGetDevicePointer(excludePrimitivesBuffer_);
+    rayInput[0].exclude_count = exclude_primitives->size();
+  } 
+  else {
+    // If no primitives are excluded, set the pointer to null and count to 0
+    rayInput[0].exclude_primitives = nullptr;
+    rayInput[0].exclude_count = 0;
+  }
+
+  gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
+  gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
+
+  gprtRayGenLaunch1D(context_, rayGenPointInVolProgram_, 1);
+
+  // Retrieve the output from the ray output buffer
+  gprtBufferMap(rayOutputBuffer_);
+  RayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
+  auto surface = rayOutput[0].surf_id;
+  Direction normal = {rayOutput[0].normal.x, rayOutput[0].normal.y, rayOutput[0].normal.z};
+  gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
+  printf("RayDirectionUsed: (%f, %f, %f): ", directionUsed.x, directionUsed.y, directionUsed.z);
+  
+  // if ray hit nothing, the point is outside volume
+  if (surface == XDG_GPRT_INVALID_GEOMETRY_ID) return false;
+
+  // use the hit triangle normal to determine if the intersection is exiting or entering
+  // TODO - Do this on GPU and return an int 1 or 0 to represent the bool?
+
+  return directionUsed.dot(normal) > 0.0;
+}
 
 
 // This will launch the rays and run our shaders in the ray tracing pipeline
