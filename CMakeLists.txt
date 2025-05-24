@@ -102,8 +102,9 @@ src/ray_tracing_interface.cpp
 src/triangle_intersect.cpp
 src/tetrahedron_contain.cpp
 src/util/str_utils.cpp
-src/xdg.cpp
 src/overlap_check/overlap.cpp
+src/timer.cpp
+src/xdg.cpp
 )
 
 

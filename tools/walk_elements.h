@@ -9,6 +9,8 @@
 #include "xdg/error.h"
 #include "xdg/util/progress_bars.h"
 #include "xdg/vec3da.h"
+#include "xdg/timer.h"
+
 #include "xdg/xdg.h"
 
 using namespace xdg;
@@ -42,6 +44,8 @@ void walk_elements(const WalkElementsContext& context) {
   omp_set_num_threads(context.n_threads_);
   std::cout << fmt::format("Using {} threads", context.n_threads_) << "\n";
 
+  Timer timer;
+  timer.start();
   #pragma omp parallel shared(n_particles_run)
   {
     // Each thread needs its own random number state
@@ -111,7 +115,11 @@ void walk_elements(const WalkElementsContext& context) {
     #pragma omp atomic
     total_distance += thread_total_distance;
   }
+  timer.stop();
+
   if (!context.quiet_) prog_bar.mark_as_completed();
+
+  std::cout << fmt::format("Time elapsed: {} s", timer.elapsed()) << "\n";
 
   if (context.verbose_ && !context.quiet_) {
     std::cout << fmt::format("Average distance: {}", total_distance/context.n_particles_) << "\n";

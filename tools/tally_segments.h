@@ -9,7 +9,10 @@
 #include "xdg/error.h"
 #include "xdg/util/progress_bars.h"
 #include "xdg/vec3da.h"
+#include "xdg/timer.h"
+
 #include "xdg/xdg.h"
+
 
 using namespace xdg;
 
@@ -31,16 +34,18 @@ void tally_segments(const TallyContext& context) {
 
   // get the bounding box of the mesh
   BoundingBox bbox = xdg->mesh_manager()->global_bounding_box();
-  std::cout << fmt::format("Mesh Bounding Box: {}", bbox) << "/n";
+  std::cout << fmt::format("Mesh Bounding Box: {}", bbox) << "\n";
 
   using namespace indicators;
   auto prog_bar = block_progress_bar(fmt::format("Running {} tally tracks", context.n_tracks_));
 
   omp_set_num_threads(context.n_threads_);
-  std::cout << fmt::format("Using {} threads", context.n_threads_) << "/n";
+  std::cout << fmt::format("Using {} threads", context.n_threads_) << "\n";
 
   int n_tracks_run = 0;
 
+  Timer timer;
+  timer.start();
   #pragma omp parallel shared(n_tracks_run)
   {
     #pragma omp for
@@ -59,7 +64,7 @@ void tally_segments(const TallyContext& context) {
       if (context.quiet_) continue;
 
       if (context.verbose_) {
-          std::cout << fmt::format("Track {}: {} segments", i, segments.size()) << "/n";
+          std::cout << fmt::format("Track {}: {} segments", i, segments.size()) << "\n";
       } else {
           prog_bar.set_progress(100.0 * (double)n_tracks_run / (double)context.n_tracks_);
       }
@@ -74,6 +79,9 @@ void tally_segments(const TallyContext& context) {
       }
     }
   }
+  timer.stop();
 
   if (!context.quiet_) prog_bar.mark_as_completed();
+
+  std::cout << fmt::format("Time elapsed: {} s", timer.elapsed()) << "\n";
 }
