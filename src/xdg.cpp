@@ -138,6 +138,8 @@ XDG::segments(const Position& start,
   while (distance > 0) {
     // attempt to find an element at the start location
     MeshID current_element = ray_tracing_interface()->find_element(r);
+    // at this point we may be on the face of an element, if we're declared inside that element, ignore it
+    if (segments.size() > 0 && current_element == segments.back().first) current_element = ID_NONE;
     MeshID volume = ID_NONE;
     if (current_element == ID_NONE) {
       // fire a ray against the implicit complement
