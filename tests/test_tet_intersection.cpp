@@ -28,4 +28,8 @@ TEST_CASE("Tetrahedron Intersection Unit Test")
   REQUIRE(plucker_tet_containment_test(inside_point, v0, v1, v2, v3) == true);
   REQUIRE(plucker_tet_containment_test(outside_point, v0, v1, v2, v3) == false);
   REQUIRE(plucker_tet_containment_test(boundary_point, v0, v1, v2, v3) == true);
+
+  // Check point that is co-planar with one of the faces, but outside the tet
+  Position coplanar_exterior_point(-0.5, -0.5, 0.0);
+  REQUIRE(plucker_tet_containment_test(coplanar_exterior_point, v0, v1, v2, v3) == false);
 }

@@ -1,6 +1,9 @@
+#include "xdg/constants.h"
 #include "xdg/ray_tracing_interface.h"
 #include "xdg/ray.h"
 #include "xdg/vec3da.h"
+
+#include "xdg/util/linalg.h"
 
 namespace xdg
 {
@@ -23,27 +26,33 @@ bool plucker_tet_containment_test(const Position& point,
                                   const Position& v1,
                                   const Position& v2,
                                   const Position& v3) {
-  // Compute the first signed volume
-  double sv0 = face_side_test(point, v0, v2, v1);
-  if (sv0 == 0.0) return true; // If exactly on a face, consider it inside
-  bool is_positive = (sv0 > 0);
+    using namespace linalg::aliases;
+    // Create matrix T = [v1 - v0, v2 - v0, v3 - v0]
+    Vec3da e0 = v1 - v0;
+    Vec3da e1 = v2 - v0;
+    Vec3da e2 = v3 - v0;
+    double3x3 T = { {e0.x, e0.y, e0.z},
+                   {e1.x, e1.y, e1.z},
+                   {e2.x, e2.y, e2.z}};
 
-  // Compute the next signed volume and check sign consistency
-  double sv1 = face_side_test(point, v0, v1, v3);
-  if (sv1 == 0.0) return true; // If on a face
-  if ((sv1 > 0) != is_positive) return false; // Early exit if signs differ
+    // Vector from v0 to point
+    Vec3da rhs = point - v0;
 
-  // Compute the next signed volume and check sign consistency
-  double sv2 = face_side_test(point, v0, v3, v2);
-  if (sv2 == 0.0) return true; // If on a face
-  if ((sv2 > 0) != is_positive) return false; // Early exit if signs differ
+    // Solve T * [λ1, λ2, λ3] = rhs
+    double3 lambda123 = mul(inverse(T),{rhs.x, rhs.y, rhs.z});
 
-  // Compute the final signed volume and check sign consistency
-  double sv3 = face_side_test(point, v1, v2, v3);
-  if (sv3 == 0.0) return true; // If on a face
-  if ((sv3 > 0) != is_positive) return false; // Early exit if signs differ
+    // Compute λ0
+    double lambda0 = 1.0f - (lambda123.x + lambda123.y + lambda123.z);
 
-  return true; // All volumes have the same sign → point is inside
+    // Final barycentric coordinate vector
+    double4 bary = { lambda0, lambda123.x, lambda123.y, lambda123.z };
+
+    // Check all λ_i in [0, 1]
+    for (int i = 0; i < 4; ++i) {
+        if (bary[i] < -PLUCKER_TOL || bary[i] > 1.0f + PLUCKER_TOL)
+            return false;
+    }
+    return true;
 }
 
 // Embree callbacks
