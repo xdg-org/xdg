@@ -107,7 +107,7 @@ MeshManager::walk_elements(MeshID starting_element,
     exit.second = std::min(exit.second, distance);
     distance -= exit.second;
     // only add to the result if the distance is greater than 0
-    if (exit.second > 0) result.push_back({elem, exit.second});
+    result.push_back({elem, exit.second});
     r += exit.second * u;
     elem = exit.first;
 

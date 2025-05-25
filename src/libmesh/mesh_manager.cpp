@@ -40,6 +40,7 @@ void LibMeshManager::initialize_libmesh() {
   int argc = 1;
   const std::string argv{"XDG"};
   const char *argv_cstr = argv.c_str();
+  std::cout << "Setting libmesh with 10 threads" << std::endl;
   libmesh_init =
       std::move(std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, 0, 1));
 }
@@ -147,14 +148,15 @@ LibMeshManager::next_element(MeshID current_element,
     // perform ray-triangle intersection
     int orientation = 1; // exiting hit only
     hit_types[i] = plucker_ray_tri_intersect(coords, r, u, dists[i], INFTY, nullptr, &orientation);
+    dists[i] = std::max(0.0, dists[i]);
   }
 
   // determine the minimum distance to exit and the face number
   int idx_out = -1;
   double min_dist = INFTY;
   for (int i = 0; i < dists.size(); i++) {
-    if (!hit_types[i])
-      continue;
+    // if (!hit_types[i])
+    //   continue;
     if (dists[i] < min_dist) {
       min_dist = dists[i];
       idx_out = i;
