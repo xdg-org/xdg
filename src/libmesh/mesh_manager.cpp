@@ -1,3 +1,5 @@
+#include <omp.h>
+
 #include "xdg/libmesh/mesh_manager.h"
 
 #include "xdg/error.h"
@@ -40,9 +42,10 @@ void LibMeshManager::initialize_libmesh() {
   int argc = 1;
   const std::string argv{"XDG"};
   const char *argv_cstr = argv.c_str();
-  std::cout << "Setting libmesh with 10 threads" << std::endl;
+  int n_threads = omp_get_max_threads();
+  std::cout << "Setting to " << n_threads << std::endl;
   libmesh_init =
-      std::move(std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, 0, 1));
+      std::move(std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, 0, n_threads));
 }
 
 void LibMeshManager::init() {
@@ -125,19 +128,19 @@ LibMeshManager::next_element(MeshID current_element,
                              const Position& r,
                              const Position& u) const
 {
-  const auto& elem_ref = mesh()->elem_ref(current_element);
+  const auto elem_ptr = mesh()->elem_ptr(current_element);
 
-  const auto& tet = (const libMesh::Tet4&)elem_ref;
+  const auto tet = (const libMesh::Tet4*)elem_ptr;
 
   std::array<double, 4> dists = {INFTY, INFTY, INFTY, INFTY};
   std::array<bool, 4> hit_types;
   // get the faces (triangles) of this element
-  for (int i = 0; i < elem_ref.n_sides(); i++) {
+  for (int i = 0; i < elem_ptr->n_sides(); i++) {
     // triangle connectivity
     std::array<Position, 3> coords;
     for (int j = 0; j < 3; j++) {
-      const auto& node_ref = elem_ref.node_ref(tet.side_nodes_map[i][j]);
-      coords[j] = {node_ref(0), node_ref(1), node_ref(2)};
+      const auto node_ptr = elem_ptr->node_ptr(tet->side_nodes_map[i][j]);
+      coords[j] = {(*node_ptr)(0), (*node_ptr)(1), (*node_ptr)(2)};
     }
     // get the normal of the triangle
     const Position v1 = coords[1] - coords[0];
@@ -167,7 +170,7 @@ LibMeshManager::next_element(MeshID current_element,
     fatal_error(fmt::format("No exit found in element {}", current_element));
   }
 
-  const auto& next_elem = elem_ref.neighbor_ptr(idx_out);
+  const auto next_elem = elem_ptr->neighbor_ptr(idx_out);
   if (!next_elem) return {-1, dists[idx_out]};
   return {next_elem->id(), dists[idx_out]};
 }
@@ -399,8 +402,8 @@ LibMeshManager::element_vertices(MeshID element) const {
   std::vector<Vertex> vertices;
   auto elem = mesh()->elem_ptr(element);
   for (unsigned int i = 0; i < elem->n_nodes(); ++i) {
-    auto node = elem->node_ref(i);
-    vertices.push_back({node(0), node(1), node(2)});
+    auto node = elem->node_ptr(i);
+    vertices.push_back({(*node)(0), (*node)(1), (*node)(2)});
   }
   return vertices;
 }
