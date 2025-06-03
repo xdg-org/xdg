@@ -85,16 +85,19 @@ sim_data.xdg_ = xdg;
 const auto& mm = xdg->mesh_manager();
 mm->load_file(args.get<std::string>("filename"));
 mm->init();
+mm->parse_metadata();
 xdg->prepare_raytracer();
 
 auto rti = xdg->ray_tracing_interface();
 rti->init();
-Position origin {0.0, 0.0, 0.0};
-double dist = 100.0;
-TreeID tree = rti->trees()[0];
-rti->closest(tree, origin, dist);
 
-std::cout << "Rendering mesh with GPRT..." << std::endl;
+bool renderMesh = true;
+// Create a GPRTRayTracer pointer to access render methods
+if (renderMesh)
+{
+  auto gprt_rti = std::dynamic_pointer_cast<GPRTRayTracer>(rti);
+  gprt_rti->render_mesh(mm);
+}
 
 // update the mean free path
 sim_data.mfp_ = args.get<double>("--mfp");

@@ -54,13 +54,10 @@ namespace xdg {
       void closest(TreeID scene,
                   const Position& origin,
                   double& dist,
-                  MeshID& triangle) override {
-        // Find the closest triangle to the origin
-      }
-  
+                  MeshID& triangle) override {};
       void closest(TreeID scene,
                   const Position& origin,
-                  double& dist) override;
+                  double& dist) override {};
   
       bool occluded(TreeID scene,
                     const Position& origin,
@@ -73,7 +70,7 @@ namespace xdg {
       const std::shared_ptr<GeometryUserData>& geometry_data(MeshID surface) const override
       { return user_data_map_.at(surface_to_geometry_map_.at(surface)); };
   
-      void render_mesh();
+      void render_mesh(const std::shared_ptr<MeshManager> mesh_manager);
 
     private:
       GPRTContext context_;
@@ -92,6 +89,8 @@ namespace xdg {
       size_t numRays = 1; //<! Number of rays to be cast
       uint32_t numRayTypes_ = 2; // <! Number of ray types. Allows multiple shaders to be set to the same geometery
       std::vector<gprt::Instance> globalBlasInstances_; //<! List of every BLAS instance stored in this ray tracer
+
+
 
       // Mesh-to-Scene maps 
       std::map<MeshID, GPRTGeom> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
