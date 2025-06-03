@@ -71,7 +71,12 @@ MeshManager::surface_has_property(MeshID surface, PropertyType type) const
 Property
 MeshManager::get_volume_property(MeshID volume, PropertyType type) const
 {
-  return volume_metadata_.at({volume, type});
+  try { 
+    return volume_metadata_.at({volume, type});
+  }
+  catch (const std::out_of_range e) {  
+    return VOID_MATERIAL;
+  }
 }
 
 Property
