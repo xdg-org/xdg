@@ -7,12 +7,9 @@ namespace xdg {
 
 GPRTRayTracer::GPRTRayTracer()
 {
-  bool renderMesh = true;
-  if (renderMesh){
-    fbSize = {1000,1000};
-    gprtRequestRayTypeCount(numRayTypes_); // Set the number of shaders which can be set to the same geometry
-    gprtRequestWindow(fbSize.x, fbSize.y, "XDG::render_mesh()");
-  }
+  fbSize = {1000,1000};
+  gprtRequestWindow(fbSize.x, fbSize.y, "XDG::render_mesh()");
+  gprtRequestRayTypeCount(numRayTypes_); // Set the number of shaders which can be set to the same geometry
   context_ = gprtContextCreate();
   module_ = gprtModuleCreate(context_, flt_deviceCode);
 }
@@ -188,7 +185,6 @@ bool GPRTRayTracer::point_in_volume(TreeID tree,
   auto surface = rayOutput[0].surf_id;
   Direction normal = {rayOutput[0].normal.x, rayOutput[0].normal.y, rayOutput[0].normal.z};
   gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
-  printf("RayDirectionUsed: (%f, %f, %f): ", directionUsed.x, directionUsed.y, directionUsed.z);
   
   // if ray hit nothing, the point is outside volume
   if (surface == XDG_GPRT_INVALID_GEOMETRY_ID) return false;
@@ -303,42 +299,74 @@ void GPRTRayTracer::create_world_tlas()
 // Methods for rendering mesh to framebuffer
 
 
-void GPRTRayTracer::render_mesh() 
+void GPRTRayTracer::render_mesh(const std::shared_ptr<MeshManager> mesh_manager) 
 {
-    create_world_tlas();
 
-    // Set up ray generation and miss programs
-    GPRTRayGenOf<RayGenData> rayGen = gprtRayGenCreate<RayGenData>(context_, module_, "render_mesh");
-    GPRTMissOf<void> miss = gprtMissCreate<void>(context_, module_, "render_miss");
 
-    // Place a reference to the TLAS in the ray generation kernel's parameters
-    RayGenData* rayGenData = gprtRayGenGetParameters(rayGen);
-    rayGenData->world = gprtAccelGetDeviceAddress(world_);
+  create_world_tlas();
 
-    // Create the framebuffer
-    GPRTBufferOf<uint32_t> frameBuffer = gprtDeviceBufferCreate<uint32_t>(context_, fbSize.x * fbSize.y);
-    rayGenData->frameBuffer = gprtBufferGetDevicePointer(frameBuffer);
+  // Set up ray generation and miss programs
+  GPRTRayGenOf<RayGenData> rayGen = gprtRayGenCreate<RayGenData>(context_, module_, "render_mesh");
+  GPRTMissOf<void> miss = gprtMissCreate<void>(context_, module_, "render_miss");
 
-    gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
+  // Place a reference to the TLAS in the ray generation kernel's parameters
+  RayGenData* rayGenData = gprtRayGenGetParameters(rayGen);
+  rayGenData->world = gprtAccelGetDeviceAddress(world_);
 
-    PushConstants pc;
-    do {
-        pc.time = float(gprtGetTime(context_));
+  // Create the framebuffer
+  GPRTBufferOf<uint32_t> frameBuffer = gprtDeviceBufferCreate<uint32_t>(context_, fbSize.x * fbSize.y);
+  rayGenData->frameBuffer = gprtBufferGetDevicePointer(frameBuffer);
 
-        // Calls the GPU raygen kernel function
-        gprtRayGenLaunch2D(context_, rayGen, fbSize.x, fbSize.y, pc);
+  gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
 
-        // If a window exists, presents the frame buffer here to that window
-        gprtBufferPresent(context_, frameBuffer);
-    }
-    while (!gprtWindowShouldClose(context_));
-}
 
-void GPRTRayTracer::closest(TreeID scene,
-                            const Position& origin,
-                            double& dist) 
-{
-  render_mesh();
+  PushConstants pc;
+      // Retrieve the bounding box of the TLAS
+  auto worldBB = mesh_manager->world_bounding_box();
+  auto tlasMin = float3(worldBB.min_x, worldBB.min_y, worldBB.min_z);
+  auto tlasMax = float3(worldBB.max_x, worldBB.max_y, worldBB.max_z);
+
+  float3 lookFrom = {1.5f, 6.f, -10.f};
+  float3 lookAt = {1.5f, 1.5f, -1.5f};
+  float3 lookUp = {0.f, -1.f, 0.f};
+  float cosFovy = 0.66f;
+  // Calculate the center of the bounding box
+  float3 center = (tlasMin + tlasMax) * 0.5f;
+
+  // Update camera parameters
+  lookAt = center;
+
+  // Calculate a suitable `lookFrom` position based on the bounding box size
+  float3 boxSize = tlasMax - tlasMin;
+  float distance = length(boxSize) * 1.0f; // Adjust the multiplier for desired zoom level
+  lookFrom = center + float3(0.0f, 0.0f, -distance); // Place the camera behind the center
+
+  // Set the up vector
+  lookUp = float3(0.0f, 1.0f, 0.0f); // Y-axis up
+
+  // Update push constants
+  pc.scene_center = center;
+  float maxDim = std::max(boxSize.x, std::max(boxSize.y, boxSize.z));
+  pc.camera.radius = maxDim * 5.0f;
+  pc.camera.pos = lookFrom;
+  pc.camera.dir_00 = normalize(lookAt - lookFrom);
+  float aspect = float(fbSize.x) / float(fbSize.y);
+  pc.camera.dir_du = cosFovy * aspect * normalize(cross(pc.camera.dir_00, lookUp));
+  pc.camera.dir_dv = cosFovy * normalize(cross(pc.camera.dir_du, pc.camera.dir_00));
+  pc.camera.dir_00 -= 0.5f * pc.camera.dir_du;
+  pc.camera.dir_00 -= 0.5f * pc.camera.dir_dv;
+
+
+  do {
+    pc.time = float(gprtGetTime(context_));
+
+    // Calls the GPU raygen kernel function
+    gprtRayGenLaunch2D(context_, rayGen, fbSize.x, fbSize.y, pc);
+
+    // If a window exists, presents the frame buffer here to that window
+    gprtBufferPresent(context_, frameBuffer);
+  }
+  while (!gprtWindowShouldClose(context_));
 }
 
 } // namespace xdg

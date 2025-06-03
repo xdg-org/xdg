@@ -97,7 +97,6 @@ TEST_CASE("Test Ray Fire MOAB")
   std::pair<double, MeshID> intersection;
 
   intersection = xdg->ray_fire(volume, origin, direction);
-  xdg->closest(volume, origin, dist);
 
   // this cube is 10 cm on a side, so the ray should hit the surface at 5 cm
   REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));

@@ -61,7 +61,9 @@ struct MissProgData {
   shader binding table. (must be 128 bytes or less) */
 struct PushConstants {
   float time;
+  float3 scene_center;
   struct Camera {
+    float radius;
     float3 pos;
     float3 dir_00;
     float3 dir_du;
