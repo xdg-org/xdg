@@ -14,3 +14,6 @@
 [submodule "vendor/--force"]
 	path = vendor/indicators
 	url = https://github.com/p-ranav/indicators
+[submodule "vendor/linalg"]
+	path = vendor/linalg
+	url = git@github.com:sgorsten/linalg.git

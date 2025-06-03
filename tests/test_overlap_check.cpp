@@ -1,6 +1,9 @@
 // stl includes
 #include <memory>
 
+// openmp
+#include <omp.h>
+
 // testing includes
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
@@ -11,7 +14,13 @@
 
 using namespace xdg;
 
-TEST_CASE("Overlapping Volumes Test")
+struct OMP_SingleThreadFixture {
+    OMP_SingleThreadFixture() {
+        omp_set_num_threads(1);
+    }
+};
+
+TEST_CASE_METHOD(OMP_SingleThreadFixture, "Overlapping Volumes Test", "[singlethread]")
 {
   // Create a mesh manager
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
@@ -32,7 +41,7 @@ TEST_CASE("Overlapping Volumes Test")
   REQUIRE(expected_overlaps == overlap_map.begin()->first);
 }
 
-TEST_CASE("Non-Overlapping Volumes Test")
+TEST_CASE_METHOD(OMP_SingleThreadFixture, "Non-Overlapping Volumes Test", "[singlethread]")
 {
   // Create a mesh manager
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
@@ -49,7 +58,7 @@ TEST_CASE("Non-Overlapping Volumes Test")
   REQUIRE(overlap_map.size() == 0);
 }
 
-TEST_CASE("Non-Overlapping Imprinted Volumes Test")
+TEST_CASE_METHOD(OMP_SingleThreadFixture, "Non-Overlapping Imprinted Volumes Test", "[singlethread]")
 {
   // Create a mesh manager
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
@@ -66,7 +75,7 @@ TEST_CASE("Non-Overlapping Imprinted Volumes Test")
   REQUIRE(overlap_map.size() == 0);
 }
 
-TEST_CASE("Enclosed Volume Test")
+TEST_CASE_METHOD(OMP_SingleThreadFixture, "Enclosed Volume Test", "[singlethread]")
 {
   // Create a mesh manager
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
@@ -87,7 +96,7 @@ TEST_CASE("Enclosed Volume Test")
   REQUIRE(expected_overlaps == overlap_map.begin()->first);
 }
 
-TEST_CASE("Small Overlap Test")
+TEST_CASE_METHOD(OMP_SingleThreadFixture, "Small Overlap Test", "[singlethread]")
 {
   // Create a mesh manager
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
@@ -108,7 +117,7 @@ TEST_CASE("Small Overlap Test")
   REQUIRE(expected_overlaps == overlap_map.begin()->first);
 }
 
-TEST_CASE("Small Edge Overlap Test")
+TEST_CASE_METHOD(OMP_SingleThreadFixture, "Small Edge Overlap Test", "[singlethread]")
 {
   // Create a mesh manager
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
@@ -140,7 +149,7 @@ TEST_CASE("Small Edge Overlap Test")
   }
 }
 
-TEST_CASE("Beam Edge Overlap Test")
+TEST_CASE_METHOD(OMP_SingleThreadFixture, "Beam Edge Overlap Test", "[singlethread]")
 {
   // Create a mesh manager
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);

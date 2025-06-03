@@ -18,5 +18,9 @@ TEST_CASE("Test Mesh Mock")
   REQUIRE(mm->num_volumes() == 1);
   REQUIRE(mm->num_surfaces() == 6);
   REQUIRE(mm->num_volume_faces(1) == 12);
+
+  // get a random element from volume 1 (we know there are 12 elements)
+  MeshID random_element = 5; // arbitrarily choosing element 5
+  REQUIRE(mm->element_volume_id(random_element) == 1);
 }
 

@@ -45,9 +45,16 @@ public:
 
   int num_ents_of_dimension(int dim) const override;
 
+  int num_vertices() const override;
+
   MeshID create_volume() override;
 
   void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override;
+
+  virtual std::pair<MeshID, double>
+  next_element(MeshID current_element,
+               const Position& r,
+               const Position& u) const override;
 
   // Mesh
   int num_volume_elements(MeshID volume) const override;
@@ -61,6 +68,8 @@ public:
   std::vector<MeshID> get_surface_faces(MeshID surface) const override;
 
   std::vector<Vertex> element_vertices(MeshID element) const override;
+
+  MeshID element_volume_id(MeshID element) const override;
 
   std::array<Vertex, 3> face_vertices(MeshID element) const override;
 
@@ -100,6 +109,9 @@ private:
   // Maps from XDG identifiers to MOAB handles
   std::unordered_map<MeshID, moab::EntityHandle> volume_id_map_;
   std::unordered_map<MeshID, moab::EntityHandle> surface_id_map_;
+
+  // Mapping for volumetric elements to volume
+  std::unordered_map<MeshID, MeshID> element_volume_ids_;
 
   // tag handles
   moab::Tag geometry_dimension_tag_;

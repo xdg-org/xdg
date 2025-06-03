@@ -14,6 +14,7 @@
 #include "xdg/libmesh/mesh_manager.h"
 #endif
 
+#include "xdg/xdg.h"
 #include "xdg/constants.h"
 #include "xdg/geometry/measure.h"
 namespace xdg {
@@ -23,13 +24,16 @@ void XDG::prepare_raytracer()
   for (auto volume : mesh_manager()->volumes()) {
     this->prepare_volume_for_raytracing(volume);
   }
+
+  ray_tracing_interface()->create_global_element_tree();
+  ray_tracing_interface()->create_global_surface_tree();
 }
 
 void XDG::prepare_volume_for_raytracing(MeshID volume) {
-    TreeID tree = ray_tracing_interface_->register_volume(mesh_manager_, volume);
-    volume_to_scene_map_[volume] = tree;
+    auto [surface_tree, volume_tree] = ray_tracing_interface_->register_volume(mesh_manager_, volume);
+    volume_to_surface_tree_map_[volume] = surface_tree;
+    volume_to_point_location_tree_map_[volume] = volume_tree;
 }
-
 
 std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib)
 {
@@ -85,22 +89,127 @@ bool XDG::point_in_volume(MeshID volume,
                           const Direction* direction,
                           const std::vector<MeshID>* exclude_primitives) const
 {
-  TreeID scene = volume_to_scene_map_.at(volume);
+  TreeID scene = volume_to_surface_tree_map_.at(volume);
   return ray_tracing_interface()->point_in_volume(scene, point, direction, exclude_primitives);
 }
 
 MeshID XDG::find_volume(const Position& point,
-                                                   const Direction& direction) const
+                        const Direction& direction) const
 {
-  for (auto volume_scene_pair : volume_to_scene_map_) {
+  MeshID ipc = mesh_manager()->implicit_complement();
+  for (auto volume_scene_pair : volume_to_surface_tree_map_) {
     MeshID volume = volume_scene_pair.first;
+    if (volume == ipc) continue;
     TreeID scene = volume_scene_pair.second;
     if (ray_tracing_interface()->point_in_volume(scene, point, &direction)) {
       return volume;
     }
   }
-  return ID_NONE;
+
+  // if the point could not be located in any volume, it is by definition in the implicit
+  // complement
+  return ipc;
 }
+
+MeshID XDG::find_element(const Position& point) const
+{
+  return ray_tracing_interface()->find_element(point);
+}
+
+MeshID XDG::find_element(MeshID volume,
+                         const Position& point) const
+{
+  TreeID scene = volume_to_point_location_tree_map_.at(volume);
+  return ray_tracing_interface()->find_element(scene, point);
+}
+
+std::vector<std::pair<MeshID, double>>
+XDG::segments(const Position& start,
+              const Position& end) const
+{
+  MeshID ipc = mesh_manager()->implicit_complement();
+
+  Position r = start;
+  Direction u = end - start;
+  double distance = u.length();
+  u /= distance;
+
+  std::vector<std::pair<MeshID, double>> segments;
+  while (distance > 0) {
+    // attempt to find an element at the start location
+    MeshID current_element = ray_tracing_interface()->find_element(r);
+    // at this point we may be on the face of an element, if we're declared inside that element, ignore it
+    if (segments.size() > 0 && current_element == segments.back().first) current_element = ID_NONE;
+    MeshID volume = ID_NONE;
+    if (current_element == ID_NONE) {
+      // fire a ray against the implicit complement
+      auto hit = ray_fire(ipc, r, u, INFTY, HitOrientation::EXITING);
+      // if there is no entry point or the distance to the surface
+      // is past the end point, return
+      if (hit.second == ID_NONE || hit.first > distance) return segments;
+
+      // move up to the surface
+      r += u * hit.first;
+      distance -= hit.first;
+      // determine the volume we're moving into
+      mesh_manager()->next_volume(ipc, hit.second);
+
+      // determine what element is on the other side of this surface
+      current_element = find_element(r + u * TINY_BIT);
+      if (current_element == ID_NONE) {
+        warning("Ray fire hit surface {}, but could not find element on the other side of the surface.", hit.second);
+        return {};
+      }
+    }
+    auto vol_segments = mesh_manager()->walk_elements(current_element, r, u, distance);
+    // add to current set of segments
+    segments.insert(segments.end(), vol_segments.begin(), vol_segments.end());
+    double segment_sum = std::accumulate(vol_segments.begin(), vol_segments.end(), 0.0, [](double m, const auto & p) { return m + p.second; });
+    // upate location of the track start
+    r += u * segment_sum;
+    // decrement distance by total distance traveled in the volume
+    distance -= segment_sum;
+  }
+  return segments;
+}
+
+std::vector<std::pair<MeshID, double>>
+XDG::segments(MeshID volume,
+              const Position& start,
+              const Position& end) const
+{
+  Position start_copy = start;
+  Direction u = (end - start).normalize();
+  TreeID volume_tree = volume_to_point_location_tree_map_.at(volume);
+  MeshID starting_element = ray_tracing_interface()->find_element(volume_tree, start);
+
+  // if we're outside of the region of interest, determine the distance to an entering intersection
+  // with the model
+  if (starting_element == ID_NONE) {
+    auto hit = ray_fire(volume, start, u, INFTY, HitOrientation::ENTERING);
+    if (hit.second == ID_NONE) return {};
+    // TODO: use mesh adjaccies to find the element on the other side of the hit face
+    starting_element = ray_tracing_interface()->find_element(volume_tree, start + u * (hit.first + TINY_BIT));
+    if (starting_element == ID_NONE) {
+      warning("Ray fire hit surface {}, but could not find element on the other side of the surface.", hit.second);
+      return {};
+    }
+    start_copy += u * hit.first;
+  }
+
+  if (starting_element == ID_NONE) return {};
+  auto segments = mesh_manager()->walk_elements(starting_element, start_copy, end);
+  return segments;
+}
+
+std::pair<MeshID, double>
+XDG::next_element(MeshID current_element,
+                  const Position& r,
+                  const Direction& u) const
+{
+  return mesh_manager()->next_element(current_element, r, u);
+}
+
 
 std::pair<double, MeshID>
 XDG::ray_fire(MeshID volume,
@@ -110,7 +219,7 @@ XDG::ray_fire(MeshID volume,
               HitOrientation orientation,
               std::vector<MeshID>* const exclude_primitives) const
 {
-  TreeID scene = volume_to_scene_map_.at(volume);
+  TreeID scene = volume_to_surface_tree_map_.at(volume);
   return ray_tracing_interface()->ray_fire(scene, origin, direction, dist_limit, orientation, exclude_primitives);
 }
 
@@ -119,7 +228,7 @@ void XDG::closest(MeshID volume,
               double& dist,
               MeshID& triangle) const
 {
-  TreeID scene = volume_to_scene_map_.at(volume);
+  TreeID scene = volume_to_surface_tree_map_.at(volume);
   ray_tracing_interface()->closest(scene, origin, dist, triangle);
 }
 
@@ -127,7 +236,7 @@ void XDG::closest(MeshID volume,
               const Position& origin,
               double& dist) const
 {
-  TreeID scene = volume_to_scene_map_.at(volume);
+  TreeID scene = volume_to_surface_tree_map_.at(volume);
   ray_tracing_interface()->closest(scene, origin, dist);
 }
 
@@ -136,7 +245,7 @@ bool XDG::occluded(MeshID volume,
               const Direction& direction,
               double& dist) const
 {
-  TreeID scene = volume_to_scene_map_.at(volume);
+  TreeID scene = volume_to_surface_tree_map_.at(volume);
   return ray_tracing_interface()->occluded(scene, origin, direction, dist);
 }
 
@@ -150,7 +259,7 @@ Direction XDG::surface_normal(MeshID surface,
   } else {
     auto surface_vols = mesh_manager()->get_parent_volumes(surface);
     double dist;
-    TreeID scene = volume_to_scene_map_.at(surface_vols.first);
+    TreeID scene = volume_to_surface_tree_map_.at(surface_vols.first);
     ray_tracing_interface()->closest(scene, point, dist, element);
 
     // TODO: bring this back when we have a better way to handle this

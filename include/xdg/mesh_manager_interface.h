@@ -29,6 +29,10 @@ public:
   virtual int num_ents_of_dimension(int dim) const = 0;
 
   // Mesh
+  int num_volume_elements() const;
+
+  virtual int num_vertices() const = 0;
+
   virtual int num_volume_elements(MeshID volume) const = 0;
 
   virtual int num_volume_faces(MeshID volume) const = 0;
@@ -44,6 +48,9 @@ public:
   // TODO: can we accomplish this without allocating memory?
   virtual std::vector<Vertex> element_vertices(MeshID element) const = 0;
 
+  // Return the volume ID for a given element
+  virtual MeshID element_volume_id(MeshID element) const = 0;
+
   virtual std::array<Vertex, 3> face_vertices(MeshID element) const = 0;
 
   BoundingBox element_bounding_box(MeshID element) const;
@@ -51,6 +58,8 @@ public:
   BoundingBox face_bounding_box(MeshID element) const;
 
   BoundingBox volume_bounding_box(MeshID volume) const;
+
+  BoundingBox global_bounding_box() const;
 
   BoundingBox surface_bounding_box(MeshID surface) const;
 
@@ -69,6 +78,23 @@ public:
   virtual MeshID create_volume() = 0;
 
   virtual void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) = 0;
+
+  virtual std::vector<std::pair<MeshID, double>>
+  walk_elements(MeshID starting_element,
+                const Position& start,
+                const Position& end) const ;
+
+  virtual std::vector<std::pair<MeshID, double>>
+  walk_elements(MeshID starting_element,
+                const Position& start,
+                const Direction& u,
+                double distance) const ;
+
+
+  virtual std::pair<MeshID, double>
+  next_element(MeshID current_element,
+               const Position& r,
+               const Position& u) const = 0;
 
   MeshID next_volume(MeshID current_volume, MeshID surface) const;
 

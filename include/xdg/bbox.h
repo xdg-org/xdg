@@ -58,6 +58,32 @@ Position center() const {
   return Position {(min_x + max_x), (min_y + max_y), (min_z + max_z)} * 0.5;
 }
 
+Vec3da width() const {
+  return Vec3da {max_x - min_x, max_y - min_y, max_z - min_z};
+}
+
+Position lower_left() const {
+  return {min_x, min_y, min_z};
+}
+
+Position upper_right() const {
+  return {max_x, max_y, max_z};
+}
+
+
+bool contains(const Position& p) const {
+  return p.x >= min_x && p.x <= max_x &&
+         p.y >= min_y && p.y <= max_y &&
+         p.z >= min_z && p.z <= max_z;
+}
+
+
+double maximum_chord_length() const {
+  Vec3da w = width();
+  double max_chord = std::sqrt(w.dot(w));
+  return max_chord * std::pow(10, -std::numeric_limits<float>::digits10);
+}
+
 template <typename T>
 static BoundingBox from_points(const T& points) {
   BoundingBox bbox {INFTY, INFTY, INFTY, -INFTY, -INFTY, -INFTY};
@@ -75,7 +101,24 @@ inline std::ostream& operator <<(std::ostream& os, const BoundingBox& bbox) {
   return os;
 }
 
-
 } // namespace xdg
+
+namespace fmt {
+template <>
+struct formatter<xdg::BoundingBox> {
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(const xdg::BoundingBox& box, FormatContext& ctx) const {
+        return fmt::format_to(ctx.out(), "[{}, {}]",
+            fmt::format("[{}, {}, {}]", box.min_x, box.min_y, box.min_z),
+            fmt::format("[{}, {}, {}]", box.max_x, box.max_y, box.max_z));
+    }
+};
+
+}
 
 #endif // include guard

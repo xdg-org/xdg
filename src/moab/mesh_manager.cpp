@@ -68,6 +68,14 @@ void MOABMeshManager::init() {
   }
 
   MeshID ipc = create_implicit_complement();
+
+  // populate element to volume ID mapping
+  for (auto volume : volumes_) {
+    auto elements = get_volume_elements(volume);
+    for (auto element : elements) {
+      element_volume_ids_[element] = volume;
+    }
+  }
 }
 
 // Methods
@@ -84,6 +92,13 @@ int MOABMeshManager::num_volumes() const
 int MOABMeshManager::num_surfaces() const
 {
   return this->num_ents_of_dimension(2);
+}
+
+int MOABMeshManager::num_vertices() const
+{
+  moab::Range verts;
+  this->moab_interface()->get_entities_by_type(0, moab::MBVERTEX, verts);
+  return verts.size();
 }
 
 int MOABMeshManager::num_ents_of_dimension(int dim) const {
@@ -134,6 +149,46 @@ void MOABMeshManager::add_surface_to_volume(MeshID volume, MeshID surface, Sense
   sense_handles[1] = sense_data.second == ID_NONE ? 0 : volume_id_map_[sense_data.second];
   const moab::EntityHandle* surf_handle_ptr = &surf_handle; // this is lame
   this->moab_interface()->tag_set_data(surf_to_volume_sense_tag_, surf_handle_ptr, 1, sense_handles.data());
+}
+
+std::pair<MeshID, double>
+MOABMeshManager::next_element(MeshID current_element,
+                               const Position& r,
+                               const Position& u) const
+{
+  fatal_error("next_element not implemented");
+  // auto element_adjacencies = this->mb_direct()->element_adjacencies(current_element);
+  // auto element_faces = this->mb_direct()->element_faces(current_element);
+
+  // // get the distances to each face
+  // std::vector<double> dists;
+  // std::vector<bool> hit_types;
+  // for (auto face : element_faces) {
+  //   double dist;
+  //   bool hit_type;
+  //   this->mb_direct()->closest(face, r, dist, hit_type);
+  //   dists.push_back(dist);
+  //   hit_types.push_back(hit_type);
+  // }
+
+  // // find the closest face
+  // int idx_out = -1;
+  // double min_dist = INFTY;
+  // for (int i = 0; i < dists.size(); i++) {
+  //   if (!hit_types[i])
+  //     continue;
+  //   if (dists[i] < min_dist) {
+  //     min_dist = dists[i];
+  //     idx_out = i;
+  //   }
+  // }
+
+  // if (idx_out == -1) {
+  //   fatal_error(fmt::format("No exit found in element {}", current_element));
+  // }
+
+  // MeshID next_element = element_adjacencies[idx_out];
+  // return {next_element, min_dist};
 }
 
 // Mesh Methods
@@ -199,16 +254,25 @@ MOABMeshManager::get_surface_faces(MeshID surface) const
 std::vector<Vertex> MOABMeshManager::element_vertices(MeshID element) const
 {
   moab::EntityHandle element_handle;
-  this->moab_interface()->handle_from_id(moab::MBTRI, element, element_handle);
+  this->moab_interface()->handle_from_id(moab::MBTET, element, element_handle);
   // if (rval == moab::MB_ENTITY_NOT_FOUND) fatal_error("Could not find entity with ID in the mesh database {}", element);
-  auto out = this->mb_direct()->get_mb_coords(element_handle);
+  auto out = this->mb_direct()->get_element_coords(element_handle);
   return std::vector<Vertex>(out.begin(), out.end());
 }
 
+MeshID MOABMeshManager::element_volume_id(MeshID element) const
+{
+  return element_volume_ids_.at(element);
+}
+
+
 std::array<Vertex, 3> MOABMeshManager::face_vertices(MeshID element) const
 {
-  auto vertices = this->element_vertices(element);
-  return {vertices[0], vertices[1], vertices[2]};
+  moab::EntityHandle element_handle;
+  this->moab_interface()->handle_from_id(moab::MBTRI, element, element_handle);
+  // if (rval == moab::MB_ENTITY_NOT_FOUND) fatal_error("Could not find entity with ID in the mesh database {}", element);
+  auto out = this->mb_direct()->get_mb_coords(element_handle);
+  return out;
 }
 
 std::pair<MeshID, MeshID>

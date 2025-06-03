@@ -26,7 +26,7 @@ bool orientation_cull(const Direction& ray_dir, const Direction& normal, HitOrie
 bool primitive_mask_cull(RTCDRayHit* rayhit, int primID) {
   if (!rayhit->ray.exclude_primitives) return false;
 
-  RTCDRay& ray = rayhit->ray;
+  RTCSurfaceRay& ray = rayhit->ray;
   RTCDHit& hit = rayhit->hit;
 
 
@@ -36,7 +36,7 @@ bool primitive_mask_cull(RTCDRayHit* rayhit, int primID) {
 
 void TriangleBoundsFunc(RTCBoundsFunctionArguments* args)
 {
-  const GeometryUserData* user_data = (const GeometryUserData*)args->geometryUserPtr;
+  const SurfaceUserData* user_data = (const SurfaceUserData*)args->geometryUserPtr;
   const MeshManager* mesh_manager = user_data->mesh_manager;
 
   const PrimitiveRef& primitive_ref = user_data->prim_ref_buffer[args->primID];
@@ -51,7 +51,7 @@ void TriangleBoundsFunc(RTCBoundsFunctionArguments* args)
 }
 
 void TriangleIntersectionFunc(RTCIntersectFunctionNArguments* args) {
-  const GeometryUserData* user_data = (const GeometryUserData*)args->geometryUserPtr;
+  const SurfaceUserData* user_data = (const SurfaceUserData*)args->geometryUserPtr;
   const MeshManager* mesh_manager = user_data->mesh_manager;
 
   const PrimitiveRef& primitive_ref = user_data->prim_ref_buffer[args->primID];
@@ -59,7 +59,7 @@ void TriangleIntersectionFunc(RTCIntersectFunctionNArguments* args) {
   auto vertices = mesh_manager->face_vertices(primitive_ref.primitive_id);
 
   RTCDRayHit* rayhit = (RTCDRayHit*)args->rayhit;
-  RTCDRay& ray = rayhit->ray;
+  RTCSurfaceRay& ray = rayhit->ray;
   RTCDHit& hit = rayhit->hit;
 
   Position ray_origin = {ray.dorg[0], ray.dorg[1], ray.dorg[2]};
@@ -102,7 +102,7 @@ void TriangleIntersectionFunc(RTCIntersectFunctionNArguments* args) {
 bool TriangleClosestFunc(RTCPointQueryFunctionArguments* args) {
   RTCGeometry g = rtcGetGeometry(*(RTCScene*)args->userPtr, args->geomID);
   // get the array of DblTri's stored on the geometry
-  const GeometryUserData* user_data = (const GeometryUserData*) rtcGetGeometryUserData(g);
+  const SurfaceUserData* user_data = (const SurfaceUserData*) rtcGetGeometryUserData(g);
 
   const MeshManager* mesh_manager = user_data->mesh_manager;
 
@@ -128,14 +128,14 @@ bool TriangleClosestFunc(RTCPointQueryFunctionArguments* args) {
 }
 
 void TriangleOcclusionFunc(RTCOccludedFunctionNArguments* args) {
-  const GeometryUserData* user_data = (const GeometryUserData*) args->geometryUserPtr;
+  const SurfaceUserData* user_data = (const SurfaceUserData*) args->geometryUserPtr;
   const MeshManager* mesh_manager = user_data->mesh_manager;
   const PrimitiveRef& primitive_ref = user_data->prim_ref_buffer[args->primID];
 
   auto vertices = mesh_manager->face_vertices(primitive_ref.primitive_id);
 
   // get the double precision ray from the args
-  RTCDRay* ray = (RTCDRay*) args->ray;
+  RTCSurfaceRay* ray = (RTCSurfaceRay*) args->ray;
 
   double plucker_dist;
   if (plucker_ray_tri_intersect(vertices, ray->dorg, ray->ddir, plucker_dist)) {

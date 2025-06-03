@@ -1,6 +1,9 @@
+#include <omp.h>
+
 #include "xdg/libmesh/mesh_manager.h"
 
 #include "xdg/error.h"
+#include "xdg/geometry/plucker.h"
 #include "xdg/util/str_utils.h"
 
 #include "libmesh/boundary_info.h"
@@ -39,8 +42,10 @@ void LibMeshManager::initialize_libmesh() {
   int argc = 1;
   const std::string argv{"XDG"};
   const char *argv_cstr = argv.c_str();
+  int n_threads = omp_get_max_threads();
+  std::cout << "Setting to " << n_threads << std::endl;
   libmesh_init =
-      std::move(std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, 0, 1));
+      std::move(std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, 0, n_threads));
 }
 
 void LibMeshManager::init() {
@@ -89,6 +94,9 @@ void LibMeshManager::init() {
   // create a sideset for all faces on the boundary of the mesh
   create_boundary_sideset();
 
+  // create an implicit complement
+  create_implicit_complement();
+
   // libMesh initialization
   mesh()->prepare_for_use();
 }
@@ -115,6 +123,57 @@ void LibMeshManager::add_surface_to_volume(MeshID volume, MeshID surface, Sense 
     }
 }
 
+std::pair<MeshID, double>
+LibMeshManager::next_element(MeshID current_element,
+                             const Position& r,
+                             const Position& u) const
+{
+  const auto elem_ptr = mesh()->elem_ptr(current_element);
+
+  const auto tet = (const libMesh::Tet4*)elem_ptr;
+
+  std::array<double, 4> dists = {INFTY, INFTY, INFTY, INFTY};
+  std::array<bool, 4> hit_types;
+  // get the faces (triangles) of this element
+  for (int i = 0; i < elem_ptr->n_sides(); i++) {
+    // triangle connectivity
+    std::array<Position, 3> coords;
+    for (int j = 0; j < 3; j++) {
+      const auto node_ptr = elem_ptr->node_ptr(tet->side_nodes_map[i][j]);
+      coords[j] = {(*node_ptr)(0), (*node_ptr)(1), (*node_ptr)(2)};
+    }
+    // get the normal of the triangle
+    const Position v1 = coords[1] - coords[0];
+    const Position v2 = coords[2] - coords[0];
+
+    const Position normal = (v1.cross(v2)).normalize();
+
+    // perform ray-triangle intersection
+    int orientation = 1; // exiting hit only
+    hit_types[i] = plucker_ray_tri_intersect(coords, r, u, dists[i], INFTY, nullptr, &orientation);
+    dists[i] = std::max(0.0, dists[i]);
+  }
+
+  // determine the minimum distance to exit and the face number
+  int idx_out = -1;
+  double min_dist = INFTY;
+  for (int i = 0; i < dists.size(); i++) {
+    // if (!hit_types[i])
+    //   continue;
+    if (dists[i] < min_dist) {
+      min_dist = dists[i];
+      idx_out = i;
+    }
+  }
+
+  if (idx_out == -1) {
+    fatal_error(fmt::format("No exit found in element {}", current_element));
+  }
+
+  const auto next_elem = elem_ptr->neighbor_ptr(idx_out);
+  if (!next_elem) return {-1, dists[idx_out]};
+  return {next_elem->id(), dists[idx_out]};
+}
 
 void LibMeshManager::parse_metadata() {
   // surface metadata
@@ -343,11 +402,17 @@ LibMeshManager::element_vertices(MeshID element) const {
   std::vector<Vertex> vertices;
   auto elem = mesh()->elem_ptr(element);
   for (unsigned int i = 0; i < elem->n_nodes(); ++i) {
-    auto node = elem->node_ref(i);
-    vertices.push_back({node(0), node(1), node(2)});
+    auto node = elem->node_ptr(i);
+    vertices.push_back({(*node)(0), (*node)(1), (*node)(2)});
   }
   return vertices;
 }
+
+MeshID
+LibMeshManager::element_volume_id (MeshID element) const {
+  return mesh()->elem_ptr(element)->subdomain_id();
+}
+
 
 std::array<Vertex, 3>
 LibMeshManager::face_vertices(MeshID element) const {

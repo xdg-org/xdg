@@ -45,6 +45,15 @@ MeshID MeshManager::next_surface_id() const
     return *std::max_element(surfaces().begin(), surfaces().end()) + 1;
 }
 
+int MeshManager::num_volume_elements() const
+{
+  int total = 0;
+  for (auto v : volumes()) {
+    total += num_volume_elements(v);
+  }
+  return total;
+}
+
 bool
 MeshManager::volume_has_property(MeshID volume, PropertyType type) const
 {
@@ -80,6 +89,44 @@ MeshManager::get_surface_property(MeshID surface, PropertyType type) const
   if (surface_metadata_.count({surface, type}) == 0)
     return {PropertyType::BOUNDARY_CONDITION, "transmission"};
   return surface_metadata_.at({surface, type});
+}
+
+std::vector<std::pair<MeshID, double>>
+MeshManager::walk_elements(MeshID starting_element,
+                           const Position& start,
+                           const Direction& u,
+                           double distance) const
+{
+  Position r = start;
+  std::vector<std::pair<MeshID, double>> result;
+
+  MeshID elem = starting_element;
+  while (distance > 0) {
+    auto exit = next_element(elem, r, u);
+    // ensure we are not traveling beyond the end of the ray
+    exit.second = std::min(exit.second, distance);
+    distance -= exit.second;
+    // only add to the result if the distance is greater than 0
+    result.push_back({elem, exit.second});
+    r += exit.second * u;
+    elem = exit.first;
+
+    if (elem == ID_NONE) {
+      break;
+    }
+  }
+  return result;
+}
+
+std::vector<std::pair<MeshID, double>>
+MeshManager::walk_elements(MeshID starting_element,
+                           const Position& start,
+                           const Position& end) const
+{
+  Position u = (end - start);
+  double distance = u.length();
+  u.normalize();
+  return walk_elements(starting_element, start, u, distance);
 }
 
 MeshID MeshManager::next_volume(MeshID current_volume, MeshID surface) const
@@ -128,12 +175,23 @@ MeshManager::volume_bounding_box(MeshID volume) const
 }
 
 BoundingBox
+MeshManager::global_bounding_box() const
+{
+  BoundingBox bb;
+  auto volumes = this->volumes();
+  for (auto volume : volumes) {
+    bb.update(this->volume_bounding_box(volume));
+  }
+  return bb;
+}
+
+BoundingBox
 MeshManager::surface_bounding_box(MeshID surface) const
 {
   auto elements = this->get_surface_faces(surface);
   BoundingBox bb;
   for (const auto& element : elements) {
-    bb.update(this->element_bounding_box(element));
+    bb.update(this->face_bounding_box(element));
   }
   return bb;
 }

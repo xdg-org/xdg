@@ -19,6 +19,11 @@ constexpr double INFTY {std::numeric_limits<double>::max()};
   constexpr double INFTYF {std::numeric_limits<float>::max()};
 #endif
 
+constexpr double TINY_BIT {1e-10};
+
+// TODO : Consider this as an option for managing missed hits?
+constexpr double PLUCKER_TOL {10 * std::numeric_limits<double>::epsilon()};
+
 // Whether information pertains to a surface or volume
 enum class GeometryType {
  SURFACE = 2,
@@ -68,7 +73,7 @@ constexpr MeshID ID_NONE {-1};
 using TreeID = int32_t;
 
 // Invalid
-constexpr TreeID TREEID_NONE {-1};
+constexpr TreeID TREE_NONE {-1};
 
 // for abs(x) >= min_rcp_input the newton raphson rcp calculation does not fail
 constexpr float min_rcp_input = std::numeric_limits<float>::min() /* FIX ME */ *1E5 /* SHOULDNT NEED TO MULTIPLY BY THIS VALUE */;

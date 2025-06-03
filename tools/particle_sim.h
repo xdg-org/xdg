@@ -15,6 +15,7 @@ struct SimulationData {
   uint32_t n_particles_ {100};
   uint32_t max_events_ {1000};
   bool verbose_particles_ {false};
+  bool implicit_complement_is_graveyard_ {false};
   std::unordered_map<MeshID, double> cell_tracks;
 };
 
@@ -78,7 +79,7 @@ void advance(std::unordered_map<MeshID, double>& cell_tracks)
   }
 }
 
-void cross_surface()
+void cross_surface(bool ipc_graveyard = false)
 {
   n_events_++;
   log("Event {} for particle {}", n_events_, id_);
@@ -108,7 +109,7 @@ void cross_surface()
   } else {
     volume_ = xdg_->mesh_manager()->next_volume(volume_, surface_intersection_.second);
     log("Particle {} enters volume {}", id_, volume_);
-    if (volume_ == ID_NONE) {
+    if (volume_ == ID_NONE || (ipc_graveyard && volume_ == xdg_->mesh_manager()->implicit_complement()) ) {
       alive_ = false;
       return;
     }
@@ -144,7 +145,7 @@ void transport_particles(SimulationData& sim_data) {
       if (p.collision_distance_ < p.surface_intersection_.first) {
         p.collide();
       } else {
-        p.cross_surface();
+        p.cross_surface(sim_data.implicit_complement_is_graveyard_);
       }
     }
   }

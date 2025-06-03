@@ -14,7 +14,6 @@ double plucker_edge_test(const Position& vertexa, const Position& vertexb,
   const Position& ray, const Position& ray_normal)
 {
   double pip;
-  const double near_zero = 10 * std::numeric_limits<double>::epsilon();
   if (lower(vertexa, vertexb)) {
     const Position edge = vertexb - vertexa;
     const Position edge_normal = edge.cross(vertexa);
@@ -25,7 +24,7 @@ double plucker_edge_test(const Position& vertexa, const Position& vertexb,
     pip = ray.dot(edge_normal) + ray_normal.dot(edge);
     pip = -pip;
   }
-  if (near_zero > fabs(pip))
+  if (PLUCKER_TOL > fabs(pip))
     pip = 0.0;
   return pip;
 }
@@ -42,6 +41,42 @@ bool plucker_ray_tri_intersect(const std::array<Position, 3> vertices,
 
   const Position raya = direction;
   const Position rayb = direction.cross(origin);
+
+#ifdef XDG_PLUCKER_REPORT
+  std::cout << std::endl;
+  std::cout << "====================================" << std::endl;
+  std::cout << "Plucker Triangle Intersection Report" << std::endl;
+  std::cout << "------------------------------------" << std::endl;
+  std::cout << "---------------------" << std::endl;
+  std::cout << "Ray:" << std::endl;
+  std::cout << "---------------------" << std::endl;
+  std::cout << "Origin: " << origin << std::endl;
+  std::cout << "Direction: " << direction << std::endl;
+
+  std::cout << std::endl;
+  std::cout << "---------------------" << std::endl;
+  std::cout << "Triangle Coordinates:" << std::endl;
+  std::cout << "---------------------" << std::endl;
+  std::cout << "V0: " << vertices[0] << std::endl;
+  std::cout << "V1: " << vertices[1] << std::endl;
+  std::cout << "V2: " << vertices[2] << std::endl;
+  std::cout << "---------------------" << std::endl;
+
+  double p0 = plucker_edge_test(vertices[0], vertices[1], raya, rayb);
+  double p1 = plucker_edge_test(vertices[1], vertices[2], raya, rayb);
+  double p2 = plucker_edge_test(vertices[2], vertices[0], raya, rayb);
+
+  std::cout << std::endl;
+  std::cout << "---------------------" << std::endl;
+  std::cout << "Plucker Coordinates:" << std::endl;
+  std::cout << "--------------------" << std::endl;
+  std::cout << "P0: " << p0 << std::endl;
+  std::cout << "P1: " << p1 << std::endl;
+  std::cout << "P2: " << p2 << std::endl;
+  std::cout << "--------------------" << std::endl;
+  std::cout << "====================================" << std::endl;
+  std::cout << std::endl;
+#endif
 
   // Determine the value of the first Plucker coordinate from edge 0
   double plucker_coord0 =

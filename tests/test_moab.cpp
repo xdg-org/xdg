@@ -86,7 +86,6 @@ TEST_CASE("Test Ray Fire MOAB")
   mesh_manager->init();
   xdg->prepare_raytracer();
 
-
   MeshID volume = mesh_manager->volumes()[0];
 
   Position origin {0.0, 0.0, 0.0};
@@ -111,7 +110,20 @@ TEST_CASE("Test Ray Fire MOAB")
 
 }
 
-TEST_CASE("TEST XDG Factory Method")
+TEST_CASE("Test Find Element Jezebel")
 {
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("jezebel.h5m");
+  mesh_manager->init();
+  xdg->prepare_raytracer();
 
+  MeshID volume = 1;
+
+  MeshID element = xdg->find_element(volume, {0.0, 0.0, 0.0});
+  REQUIRE(element != ID_NONE); // should find an element
+
+  element = xdg->find_element(volume, {0.0, 0.0, 100.0});
+  REQUIRE(element == ID_NONE); // should not find an element since the point is outside the volume
 }

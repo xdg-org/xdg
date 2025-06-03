@@ -33,6 +33,7 @@ public:
 
         sim_data.xdg_ = xdg;
         sim_data.verbose_particles_ = false;
+        sim_data.implicit_complement_is_graveyard_ = true;
 
         transport_particles(sim_data);
         sim_data_.push_back(sim_data);

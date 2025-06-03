@@ -8,6 +8,8 @@ option(XDG_ENABLE_EMBREE  "Enable support for the Embree ray tracing library" ON
 option(XDG_BUILD_TESTS    "Enable C++ unit testing"                           ON)
 option(XDG_BUILD_TOOLS    "Enable tools and miniapps"                         ON)
 
+option(XDG_INTERSECTOR_REPORT "Enable verbose output from primitive intersectors" OFF)
+
 # Set version numbers
 set(XDG_VERSION_MAJOR 0)
 set(XDG_VERSION_MINOR 14)
@@ -23,6 +25,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Set module path
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
+
+
+list(APPEND cxxflags -g -fno-omit-frame-pointer)
 
 #===============================================================================
 # libMesh
@@ -98,9 +103,11 @@ src/error.cpp
 src/mesh_manager_interface.cpp
 src/ray_tracing_interface.cpp
 src/triangle_intersect.cpp
+src/tetrahedron_contain.cpp
 src/util/str_utils.cpp
-src/xdg.cpp
 src/overlap_check/overlap.cpp
+src/timer.cpp
+src/xdg.cpp
 )
 
 
@@ -124,6 +131,10 @@ src/moab/direct_access.cpp
 src/moab/metadata.cpp
 )
 endif()
+
+# Find OpenMP package
+find_package(OpenMP REQUIRED)
+
 
 #===============================================================================
 # RPATH information (from OpenMC)
@@ -156,7 +167,12 @@ endif()
 
 add_library(xdg SHARED ${xdg_sources})
 
-target_link_libraries(xdg indicators::indicators)
+target_link_libraries(xdg indicators::indicators OpenMP::OpenMP_CXX)
+target_compile_options(xdg PRIVATE ${cxxflags})
+
+if (XDG_INTERSECTOR_REPORT)
+  target_compile_definitions(xdg PUBLIC XDG_PLUCKER_REPORT)
+endif()
 
 if(XDG_ENABLE_EMBREE)
   # pass precompile definition depending on embree version
