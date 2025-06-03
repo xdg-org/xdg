@@ -52,13 +52,14 @@ void render_mesh(uniform RayGenData record) {
   Payload payload;
   uint2 pixelID = DispatchRaysIndex().xy;
   uint2 iResolution = DispatchRaysDimensions().xy;
-
+  
   // camera movement
   float an = pc.time;
   
-  float zoom = 100; // Increase the radius over time
-  float3 ro = float3(-zoom * sin(an), 0.0, zoom * cos(an));
-  float3 ta = float3(0.0, 0.0, 0.0);
+  float3 center = pc.scene_center;
+  float radius = pc.camera.radius; // or compute from bounding box size
+  float3 ro = center + float3(-radius * sin(an), 0.0, radius * cos(an));
+  float3 ta = center;
 
   // camera matrix
   float3 ww = normalize(ta - ro);
@@ -145,8 +146,8 @@ void ray_fire_hit(uniform TrianglesGeomData record, inout RayFirePayload payload
     payload.normal = record.normals[PrimitiveIndex()];
 
     // Print the ray's origin and direction
-    printf("Closest Hit called!");
-    printf("Normal returned: (%f, %f, %f)", payload.normal.x, payload.normal.y, payload.normal.z);
+    // printf("Closest Hit called!");
+    // printf("Normal returned: (%f, %f, %f)", payload.normal.x, payload.normal.y, payload.normal.z);
     // printf("Closest Hit called! Distance: %f, surf_id: %u\n", payload.distance, record.id);
     // printf("Ray Origin: (%f, %f, %f)\n", payload.origin.x, payload.origin.y, payload.origin.z);
     // printf("Ray Direction: (%f, %f, %f)\n", payload.direction.x, payload.direction.y, payload.direction.z);
@@ -159,7 +160,7 @@ void ray_fire_miss(inout RayFirePayload payload) {
     payload.distance = -1.0f;
     payload.surf_id = ~0u;
     payload.normal = {0.0, 0.0, 0.0};
-    printf("Miss shader called!\n");
+    // printf("Miss shader called!\n");
 }
 
 // This ray generation program will kick off the ray tracing process,
@@ -193,10 +194,10 @@ void ray_fire(uniform RayGenData record, uniform TrianglesGeomData mesh) {
                    : RAY_FLAG_CULL_BACK_FACING_TRIANGLES;
     
 
-    printf("Distance Limit: %f\n", rayFirePC.dist_limit);
-    printf("Orientation: %u\n", rayFirePC.orientation);
-    printf("TMax before TraceRay: %f\n PC.dist_limit: %f\n", rayDesc.TMax, rayFirePC.dist_limit);
-    printf("Exclude_primitive size: %i \n", record.ray.exclude_count);
+    // printf("Distance Limit: %f\n", rayFirePC.dist_limit);
+    // printf("Orientation: %u\n", rayFirePC.orientation);
+    // printf("TMax before TraceRay: %f\n PC.dist_limit: %f\n", rayDesc.TMax, rayFirePC.dist_limit);
+    // printf("Exclude_primitive size: %i \n", record.ray.exclude_count);
     TraceRay(record.world, rayFlagCull, 0xff, 0, 1, 0, rayDesc, payload);
 
     // Store the distance to the hit point and the surface ID in buffers for CPU
@@ -209,9 +210,9 @@ void point_in_volume(uniform RayGenData record, uniform TrianglesGeomData mesh) 
     RayFirePayload payload;
     uint rayID = DispatchRaysIndex().x;
 
-    printf("Ray Generation Shader called with :");
-    printf("Ray Origin: (%f, %f, %f)\n", record.ray.origin.x, record.ray.origin.y, record.ray.origin.z);
-    printf("Ray Direction: (%f, %f, %f)\n", record.ray.direction.x, record.ray.direction.y, record.ray.direction.z);
+    // printf("Ray Generation Shader called with :");
+    // printf("Ray Origin: (%f, %f, %f)\n", record.ray.origin.x, record.ray.origin.y, record.ray.origin.z);
+    // printf("Ray Direction: (%f, %f, %f)\n", record.ray.direction.x, record.ray.direction.y, record.ray.direction.z);
     // printf("Excluded Primitives.size(): %i \n", record.ray.exclude_count);
 
     // Trace the ray into the scene
