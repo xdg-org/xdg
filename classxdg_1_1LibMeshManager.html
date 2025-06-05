@@ -141,6 +141,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>initialize_libmesh</b
 <tr class="separator:a40044cb7bd5be0571a38366a478cd63a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8a1efeb6cb57443eb860889c230844bb" id="r_a8a1efeb6cb57443eb860889c230844bb"><td class="memItemLeft" align="right" valign="top">std::vector&lt; MeshID &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1LibMeshManager.html#a8a1efeb6cb57443eb860889c230844bb">get_volume_surfaces</a> (MeshID volume) const override</td></tr>
 <tr class="separator:a8a1efeb6cb57443eb860889c230844bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab509e2cd8cf8aeb43ac6d1e1ba31fdaa" id="r_ab509e2cd8cf8aeb43ac6d1e1ba31fdaa"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structxdg_1_1Vec3da.html">Vertex</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1LibMeshManager.html#ab509e2cd8cf8aeb43ac6d1e1ba31fdaa">get_surface_vertices</a> (MeshID surface) const override</td></tr>
+<tr class="separator:ab509e2cd8cf8aeb43ac6d1e1ba31fdaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4361e9c49ab6e64695b850bbc1c29b4a" id="r_a4361e9c49ab6e64695b850bbc1c29b4a"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::vector&lt; <a class="el" href="structxdg_1_1Vec3da.html">Vertex</a> &gt;, std::vector&lt; int &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1LibMeshManager.html#a4361e9c49ab6e64695b850bbc1c29b4a">get_surface_mesh</a> (MeshID surface) const override</td></tr>
+<tr class="separator:a4361e9c49ab6e64695b850bbc1c29b4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:affbba265ce10bcd668a86f649624206d" id="r_affbba265ce10bcd668a86f649624206d"><td class="memItemLeft" align="right" valign="top">SurfaceElementType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1LibMeshManager.html#affbba265ce10bcd668a86f649624206d">get_surface_element_type</a> (MeshID surface) const override</td></tr>
+<tr class="separator:affbba265ce10bcd668a86f649624206d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad6fdcc7af20341d6062de8c052c98f4f" id="r_ad6fdcc7af20341d6062de8c052c98f4f"><td class="memItemLeft" align="right" valign="top">MeshID&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1LibMeshManager.html#ad6fdcc7af20341d6062de8c052c98f4f">create_volume</a> () override</td></tr>
 <tr class="separator:ad6fdcc7af20341d6062de8c052c98f4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a08d18303a69b65eaa48d69195365e67c" id="r_a08d18303a69b65eaa48d69195365e67c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1LibMeshManager.html#a08d18303a69b65eaa48d69195365e67c">add_surface_to_volume</a> (MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override</td></tr>
@@ -467,6 +473,34 @@ MeshID&#160;</td><td class="memItemRight" valign="bottom"><b>implicit_complement
 
 </div>
 </div>
+<a id="affbba265ce10bcd668a86f649624206d" name="affbba265ce10bcd668a86f649624206d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#affbba265ce10bcd668a86f649624206d">&#9670;&#160;</a></span>get_surface_element_type()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">SurfaceElementType xdg::LibMeshManager::get_surface_element_type </td>
+          <td>(</td>
+          <td class="paramtype">MeshID&#160;</td>
+          <td class="paramname"><em>surface</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implements <a class="el" href="classxdg_1_1MeshManager.html">xdg::MeshManager</a>.</p>
+
+</div>
+</div>
 <a id="ad6264546d78141842ff3d886aa40293f" name="ad6264546d78141842ff3d886aa40293f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad6264546d78141842ff3d886aa40293f">&#9670;&#160;</a></span>get_surface_faces()</h2>
 
@@ -487,6 +521,62 @@ MeshID&#160;</td><td class="memItemRight" valign="bottom"><b>implicit_complement
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implements <a class="el" href="classxdg_1_1MeshManager.html">xdg::MeshManager</a>.</p>
+
+</div>
+</div>
+<a id="a4361e9c49ab6e64695b850bbc1c29b4a" name="a4361e9c49ab6e64695b850bbc1c29b4a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4361e9c49ab6e64695b850bbc1c29b4a">&#9670;&#160;</a></span>get_surface_mesh()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::pair&lt; std::vector&lt; <a class="el" href="structxdg_1_1Vec3da.html">Vertex</a> &gt;, std::vector&lt; int &gt; &gt; xdg::LibMeshManager::get_surface_mesh </td>
+          <td>(</td>
+          <td class="paramtype">MeshID&#160;</td>
+          <td class="paramname"><em>surface</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implements <a class="el" href="classxdg_1_1MeshManager.html">xdg::MeshManager</a>.</p>
+
+</div>
+</div>
+<a id="ab509e2cd8cf8aeb43ac6d1e1ba31fdaa" name="ab509e2cd8cf8aeb43ac6d1e1ba31fdaa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab509e2cd8cf8aeb43ac6d1e1ba31fdaa">&#9670;&#160;</a></span>get_surface_vertices()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="structxdg_1_1Vec3da.html">Vertex</a> &gt; xdg::LibMeshManager::get_surface_vertices </td>
+          <td>(</td>
+          <td class="paramtype">MeshID&#160;</td>
+          <td class="paramname"><em>surface</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
