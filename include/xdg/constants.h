@@ -77,11 +77,14 @@ constexpr int BVH_MAX_DEPTH = 64;
 // geometric property type (e.g. material assignment or boundary condition)
 // TODO: separate into VolumeProperty and SurfaceProperty
 enum class PropertyType {
+  NOT_FOUND = -2,
   BOUNDARY_CONDITION = -1,
   MATERIAL = 0,
   DENSITY = 1,
   TEMPERATURE = 2
 };
+
+static const Property PROPERTY_NOT_FOUND {PropertyType::NOT_FOUND, "NOT_FOUND"}; 
 
 static const std::map<PropertyType, std::string> PROP_TYPE_TO_STR =
 {

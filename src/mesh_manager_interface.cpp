@@ -71,25 +71,17 @@ MeshManager::surface_has_property(MeshID surface, PropertyType type) const
 Property
 MeshManager::get_volume_property(MeshID volume, PropertyType type) const
 {
-  try { 
-    return volume_metadata_.at({volume, type});
-  }
-  catch (const std::out_of_range e) {  
-    return VOID_MATERIAL;
-  }
+  if (surface_metadata_.count({volume, type}) == 0) 
+    return PROPERTY_NOT_FOUND;
+  return volume_metadata_.at({volume, type});
 }
 
 Property
 MeshManager::get_surface_property(MeshID surface, PropertyType type) const
 {
-  try {
-    if (surface_metadata_.count({surface, type}) == 0)
-      return {PropertyType::BOUNDARY_CONDITION, "transmission"};
-    return surface_metadata_.at({surface, type});
-  }
-  catch (const std::out_of_range e) {
-    return VOID_MATERIAL;
-  }
+  if (surface_metadata_.count({surface, type}) == 0) 
+    return {PropertyType::BOUNDARY_CONDITION, "transmission"};
+  return surface_metadata_.at({surface, type});
 }
 
 MeshID MeshManager::next_volume(MeshID current_volume, MeshID surface) const
