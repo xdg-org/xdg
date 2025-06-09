@@ -21,7 +21,6 @@ XDGConfig::XDGConfig(int n_threads) {
   #endif
   }
 
-
   // Initialize libMesh if enabled
   #ifdef XDG_ENABLE_LIBMESH
   initialize_libmesh();

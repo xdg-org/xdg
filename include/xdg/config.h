@@ -38,7 +38,6 @@ private:
   // Data members
   int n_threads_ {-1};
   bool initialized_ {false};
-
 };
 
 #endif // XDG_CONFIG_H
