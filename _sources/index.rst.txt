@@ -9,7 +9,12 @@ XDG: Accelerated Discrete Geometry for Particle Transport
 XDG is an open-source ray tracing toolkit providing robust ray tracing
 for particle transport operations in scientific simulations.
 
-
+XDG stands on the shoulders of the `Direct Accelerated Geometry Monte Carlo
+(DAGMC) <https://svalinn.github.io/DAGMC/index.html>`_ toolkit and it's
+development team, from which it draws significant guidance and inspiration. The
+intent of this library is to provide expanded DAGMC functionality across
+multiple mesh libraries and formats.  Various members of the DAGMC development
+team are collaborators and contributors to the XDG project.
 
 .. .. carousel::
 ..     :show_controls:
