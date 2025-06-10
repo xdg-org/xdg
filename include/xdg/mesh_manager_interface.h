@@ -53,6 +53,13 @@ public:
 
   virtual std::array<Vertex, 3> face_vertices(MeshID element) const = 0;
 
+  virtual std::vector<Vertex> get_surface_vertices(MeshID surface) const = 0;
+
+  // Return a pair of {vertices, connectivity} for a given surface in the mesh
+  virtual std::pair<std::vector<Vertex>, std::vector<int>> get_surface_mesh(MeshID surface) const = 0;
+
+  virtual SurfaceElementType get_surface_element_type(MeshID element) const = 0;
+
   BoundingBox element_bounding_box(MeshID element) const;
 
   BoundingBox face_bounding_box(MeshID element) const;

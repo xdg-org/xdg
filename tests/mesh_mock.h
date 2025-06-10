@@ -1,3 +1,4 @@
+// Mock data for mesh interface testing
 #include <algorithm>
 #include <unordered_map>
 
@@ -6,6 +7,7 @@
 #include "xdg/error.h"
 #include "xdg/vec3da.h"
 #include "xdg/mesh_manager_interface.h"
+#include "unordered_map"
 
 #include "xdg/geometry/plucker.h"
 
@@ -95,6 +97,43 @@ public:
   virtual std::array<Vertex, 3> face_vertices(MeshID element) const override {
     const auto& conn = triangle_connectivity()[element];
     return {vertices()[conn[0]], vertices()[conn[1]], vertices()[conn[2]]};
+  }
+
+  std::vector<Vertex> get_surface_vertices(MeshID surface) const override
+  {
+    fatal_error("MockMesh does not support get_surface_vertices()");
+  }
+
+  std::pair<std::vector<Vertex>, std::vector<int>> get_surface_mesh(MeshID surface) const override
+  {
+    // Get the faces for the given surface
+    auto faces = get_surface_faces(surface);
+
+    // Collect all unique vertices for the surface
+    std::unordered_map<int, int> handle_to_index;
+    std::vector<Vertex> vertices;
+    int local_index = 0;
+
+    for (const auto& face : faces) {
+        const auto& conn = triangle_connectivity()[face];
+        for (const auto& global_index : conn) {
+            if (handle_to_index.find(global_index) == handle_to_index.end()) {
+                handle_to_index[global_index] = local_index++;
+                vertices.push_back(this->vertices()[global_index]);
+            }
+        }
+    }
+
+    // Build the connectivity array using local indices
+    std::vector<int> connectivity;
+    for (const auto& face : faces) {
+        const auto& conn = triangle_connectivity()[face];
+        for (const auto& global_index : conn) {
+            connectivity.push_back(handle_to_index[global_index]);
+        }
+    }
+
+    return {vertices, connectivity};
   }
 
   // Topology
@@ -232,6 +271,10 @@ public:
 
   const std::unordered_map<MeshID, std::array<MeshID, 4>>& element_adjacencies() const {
     return element_adjacencies_;
+  }
+
+  virtual SurfaceElementType get_surface_element_type(MeshID surface) const override {
+    return SurfaceElementType::TRI; // hardcoded to Tri for this mock
   }
 
   // Other

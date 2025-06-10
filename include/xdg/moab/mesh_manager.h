@@ -73,6 +73,13 @@ public:
 
   std::array<Vertex, 3> face_vertices(MeshID element) const override;
 
+  std::pair<std::vector<Vertex>, std::vector<int>> get_surface_mesh(MeshID surface) const override;
+
+  std::vector<Vertex> get_surface_vertices(MeshID surface) const override;
+
+  SurfaceElementType get_surface_element_type(MeshID surface) const override;
+
+
   // Topology
   std::pair<MeshID, MeshID> surface_senses(MeshID surface) const override;
 
@@ -92,6 +99,7 @@ private:
   // Internal MOAB methods
   std::vector<moab::EntityHandle> _ents_of_dim(int dim) const;
   moab::Range _surface_faces(MeshID surface) const;
+  std::vector<Vertex> _get_coords(moab::Range& verts) const;
 
   std::string get_volume_property(const std::string& property, MeshID vol) const;
 

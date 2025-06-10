@@ -110,7 +110,118 @@ TEST_CASE("Test Ray Fire MOAB")
 
 }
 
-TEST_CASE("Test Find Element Jezebel")
+TEST_CASE("MOAB Element Types")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("cube.h5m");
+  mesh_manager->init();
+
+  for (const auto surface: mesh_manager->surfaces()) {
+    auto element_type = mesh_manager->get_surface_element_type(surface);
+    REQUIRE(element_type == SurfaceElementType::TRI); // Each surface should be made up of triangles
+  }
+}
+
+TEST_CASE("MOAB Get Surface Mesh")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("overlap-edge.h5m");
+  mesh_manager->init();
+
+  float fpTol = 1e-5;
+
+  // Define the expected connectivity and vertices for each surface
+  std::vector<std::vector<int>> expected_connectivity = {
+      {2, 3, 5, 3, 0, 4, 5, 4, 1, 3, 4, 5},                   /* Surface 1 */
+      {5, 4, 1, 4, 7, 3, 2, 3, 6, 4, 5, 7, 5, 0, 7, 7, 6, 3}, /* Surface 2 */
+      {5, 0, 7, 5, 4, 2, 1, 3, 6, 3, 4, 7, 4, 5, 7, 3, 7, 6}, /* Surface 3 */
+      {5, 4, 0, 3, 4, 6, 1, 3, 6, 4, 5, 7, 5, 2, 7, 4, 7, 6}, /* Surface 4 */
+      {3, 0, 4, 5, 1, 3, 5, 3, 4, 5, 4, 2},                   /* Surface 5 */
+      {4, 5, 6, 0, 5, 3, 7, 2, 4, 4, 3, 5, 7, 4, 6, 7, 6, 1}, /* Surface 6 */
+      {6, 4, 5, 3, 5, 4, 1, 5, 3, 7, 0, 4, 7, 4, 6, 7, 6, 2}, /* Surface 7 */
+      {3, 6, 4, 1, 5, 3, 7, 2, 4, 3, 5, 6, 7, 4, 6, 7, 6, 0}  /* Surface 8 */
+  };
+
+  std::vector<std::vector<Vertex>> expected_vertices = {
+      // Surface 1
+      {
+          {0.5, -0.866025, -1.5}, {-1, 0.0, -1.5}, {0.5, 0.866025, -1.5},
+          {0.5, 0, -1.5}, {-0.25, -0.433013, -1.5}, {-0.25, 0.433013, -1.5}
+      },
+      // Surface 2
+      {
+          {0.5, -0.866025, -1.5}, {-1, 0.0, -1.5}, {0, 0, 1.5},
+          {-0.333333, 0.0, 0.5}, {-0.666667, 0.0, -0.5},
+          {-0.25, -0.433013, -1.5}, {0.166667, -0.288675, 0.5}, {0.333333, -0.57735, -0.5}
+      },
+      // Surface 3
+      {
+          {-1, 0.0, -1.5}, {0, 0, 1.5}, {0.5, 0.866025, -1.5},
+          {0.166667, 0.288675, 0.5}, {0.333333, 0.57735, -0.5}, {-0.25, 0.433013, -1.5},
+          {-0.333333, 0.0, 0.5}, {-0.666667, 0.0, -0.5}
+      },
+      // Surface 4
+      {
+          {0.5, -0.866025, -1.5}, {0, 0, 1.5}, {0.5, 0.866025, -1.5},
+          {0.166667, -0.288675, 0.5}, {0.333333, -0.57735, -0.5}, {0.5, 0, -1.5},
+          {0.166667, 0.288675, 0.5}, {0.333333, 0.57735, -0.5}
+      },
+      // Surface 5
+      {
+          {0.5, 1.71603, 1.5}, {0.5, -0.0160254, 1.5}, {-1, 0.85, 1.5},
+          {0.5, 0.85, 1.5}, {-0.25, 1.28301, 1.5}, {-0.25, 0.416987, 1.5}
+      },
+      // Surface 6
+      {
+          {0, 0.85, -1.5}, {0.5, -0.0160254, 1.5}, {-1, 0.85, 1.5},
+          {-0.333333, 0.85, -0.5}, {-0.666667, 0.85, 0.5}, {0.166667, 0.561325, -0.5},
+          {0.333333, 0.27265, 0.5}, {-0.25, 0.416987, 1.5}
+      },
+      // Surface 7
+      {
+          {0.5, 1.71603, 1.5}, {0, 0.85, -1.5}, {-1, 0.85, 1.5},
+          {0.166667, 1.13868, -0.5}, {0.333333, 1.42735, 0.5}, {-0.333333, 0.85, -0.5},
+          {-0.666667, 0.85, 0.5}, {-0.25, 1.28301, 1.5}
+      },
+      // Surface 8
+      {
+          {0.5, 1.71603, 1.5}, {0, 0.85, -1.5}, {0.5, -0.0160254, 1.5},
+          {0.166667, 0.561325, -0.5}, {0.333333, 0.27265, 0.5}, {0.166667, 1.13868, -0.5},
+          {0.333333, 1.42735, 0.5}, {0.5, 0.85, 1.5}
+      }
+  };
+
+  size_t surface_index = 0;
+  for (const auto surface : mesh_manager->surfaces()) {
+    auto surfaceMesh = mesh_manager->get_surface_mesh(surface);
+    auto vertices = surfaceMesh.first;
+    auto connectivity = surfaceMesh.second;
+
+    // Test connectivity
+    REQUIRE(connectivity.size() == expected_connectivity[surface_index].size());
+    for (size_t i = 0; i < connectivity.size(); ++i) {
+      REQUIRE(connectivity[i] == expected_connectivity[surface_index][i]);
+    }
+
+    // Test vertices
+    REQUIRE(vertices.size() == expected_vertices[surface_index].size());
+    for (size_t i = 0; i < vertices.size(); ++i) {
+      REQUIRE_THAT(vertices[i].x, Catch::Matchers::WithinAbs(expected_vertices[surface_index][i].x, fpTol));
+      REQUIRE_THAT(vertices[i].y, Catch::Matchers::WithinAbs(expected_vertices[surface_index][i].y, fpTol));
+      REQUIRE_THAT(vertices[i].z, Catch::Matchers::WithinAbs(expected_vertices[surface_index][i].z, fpTol));
+    }
+
+    ++surface_index;
+  }
+}
+
+
+
+TEST_CASE("TEST XDG Factory Method")
 {
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);

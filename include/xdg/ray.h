@@ -7,8 +7,6 @@
 
 #include "xdg/vec3da.h"
 
-#include <fmt/format.h>
-
 #include "xdg/constants.h"
 #include "xdg/embree_interface.h"
 

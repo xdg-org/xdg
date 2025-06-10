@@ -1,8 +1,12 @@
 #ifndef _XDG_BOUNDING_BOX_H
 #define _XDG_BOUNDING_BOX_H
 
+#include <fmt/format.h>
+
+#include "xdg/constants.h"
 #include "xdg/vec3da.h"
 namespace xdg {
+
 union BoundingBox {
 struct {
   double min_x {0.0};
@@ -70,18 +74,29 @@ Position upper_right() const {
   return {max_x, max_y, max_z};
 }
 
-
 bool contains(const Position& p) const {
   return p.x >= min_x && p.x <= max_x &&
          p.y >= min_y && p.y <= max_y &&
          p.z >= min_z && p.z <= max_z;
 }
 
-
-double maximum_chord_length() const {
+double max_chord_length() const {
   Vec3da w = width();
-  double max_chord = std::sqrt(w.dot(w));
-  return max_chord * std::pow(10, -std::numeric_limits<float>::digits10);
+  return  std::sqrt(w.dot(w));
+}
+
+/**
+ * @brief Returns a distance by which the box should be dilated to account for mixed precision effects
+ *
+ * This method calculates a small distance that can be used to dilate the bounding box
+ * to account for potential numerical precision issues when working with mixed precision
+ * calculations. The distance is based on the maximum chord length of the box and the
+ * precision of float values.
+ *
+ * @return double The dilation distance
+ */
+double dilation() const {
+  return max_chord_length() * DILATION_FACTOR;
 }
 
 template <typename T>
@@ -96,8 +111,8 @@ static BoundingBox from_points(const T& points) {
 };
 
 inline std::ostream& operator <<(std::ostream& os, const BoundingBox& bbox) {
-  os << "Lower left: " << bbox.min_x << " " << bbox.min_y << " " << bbox.min_z << ", "
-     << "Upper right: " << bbox.max_x << " " << bbox.max_y << " " << bbox.max_z;
+  os << "Lower left: " << bbox.min_x << ", " << bbox.min_y << ", " << bbox.min_z << ", "
+     << "Upper right: " << bbox.max_x << ", " << bbox.max_y << ", " << bbox.max_z;
   return os;
 }
 
@@ -113,7 +128,7 @@ struct formatter<xdg::BoundingBox> {
 
     template <typename FormatContext>
     auto format(const xdg::BoundingBox& box, FormatContext& ctx) const {
-        return fmt::format_to(ctx.out(), "[{}, {}]",
+        return fmt::format_to(ctx.out(), "[Lower left: {}, Upper right: {}]",
             fmt::format("[{}, {}, {}]", box.min_x, box.min_y, box.min_z),
             fmt::format("[{}, {}, {}]", box.max_x, box.max_y, box.max_z));
     }

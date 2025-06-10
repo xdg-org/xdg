@@ -81,11 +81,14 @@ if (XDG_BUILD_TESTS)
   include(CTest)
 endif()
 
+
 # fmt
 find_package(fmt QUIET NO_SYSTEM_ENVIRONMENT_PATH)
 if (NOT fmt_FOUND)
   set(FMT_INSTALL ON CACHE BOOL "Generate the fmt install target")
   add_subdirectory(vendor/fmt)
+else()
+  message(STATUS "Found fmt ${fmt_VERSION} at ${fmt_DIR}")
 endif()
 
 # argparse
@@ -107,9 +110,9 @@ src/tetrahedron_contain.cpp
 src/util/str_utils.cpp
 src/overlap_check/overlap.cpp
 src/timer.cpp
+src/tetrahedron_contain.cpp
 src/xdg.cpp
 )
-
 
 if (XDG_ENABLE_EMBREE)
 list(APPEND xdg_sources

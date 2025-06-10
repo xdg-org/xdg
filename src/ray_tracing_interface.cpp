@@ -18,21 +18,10 @@ TreeID RayTracer::next_tree_id() const
   return *std::max_element(tree_ids.begin(), tree_ids.end()) + 1;
 }
 
-  const double RayTracer::bounding_box_bump(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume_id)
-  {
-    // compute the bounding box of the volume
-    auto volume_bounding_box = mesh_manager->volume_bounding_box(volume_id);
-
-    // determine the bump distance for this volume based on the maximum distance a ray will travel
-    // to an intersection
-    double dx = volume_bounding_box.max_x - volume_bounding_box.min_x;
-    double dy = volume_bounding_box.max_y - volume_bounding_box.min_y;
-    double dz = volume_bounding_box.max_z - volume_bounding_box.min_z;
-
-    double max_distance = std::sqrt(dx*dx + dy*dy + dz*dz);
-    double bump = max_distance * std::pow(10, -std::numeric_limits<float>::digits10);
-    bump = std::max(bump, numerical_precision_);
-
-    return bump;
-  }
+const double RayTracer::bounding_box_bump(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume_id)
+{
+  auto volume_bounding_box = mesh_manager->volume_bounding_box(volume_id);
+  return std::max(volume_bounding_box.dilation(), numerical_precision_);
 }
+
+} // namespace xdg

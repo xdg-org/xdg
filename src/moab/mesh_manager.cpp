@@ -201,6 +201,18 @@ MOABMeshManager::_surface_faces(MeshID surface) const
   return elements;
 }
 
+// Get the coordinates of vertices for a given set of vertex EntityHandles
+std::vector<Vertex> MOABMeshManager::_get_coords(moab::Range& verts) const
+{
+  std::vector<double> coords(verts.size() * 3);
+  this->moab_interface()->get_coords(verts, coords.data());
+  std::vector<Vertex> vertices(verts.size());
+  for (int i = 0; i < verts.size(); i++) {
+    vertices[i] = Vertex(coords[3*i], coords[3*i+1], coords[3*i+2]);
+  }
+  return vertices; 
+}
+
 int
 MOABMeshManager::num_volume_elements(MeshID volume) const
 {
@@ -331,6 +343,60 @@ MOABMeshManager::get_volume_surfaces(MeshID volume) const
   this->moab_interface()->tag_get_data(global_id_tag_, surfaces.data(), surfaces.size(), surface_ids.data());
 
   return surface_ids;
+}
+
+std::vector<Vertex> 
+MOABMeshManager::get_surface_vertices(MeshID surface) const
+{
+  moab::Range faces = _surface_faces(surface);
+  moab::Range verts;
+  this->moab_interface()->get_adjacencies(faces, 0, false, verts, moab::Interface::UNION);
+  return _get_coords(verts); 
+}
+
+std::pair<std::vector<Vertex>, std::vector<int>> 
+MOABMeshManager::get_surface_mesh(MeshID surface) const
+{
+  moab::Range faces = _surface_faces(surface);
+  moab::Range verts;
+  this->moab_interface()->get_adjacencies(faces, 0, false, verts, moab::Interface::UNION);
+
+  // Create a mapping from global vertex handles to local surface indices
+  std::unordered_map<moab::EntityHandle, int> handle_to_index;
+  int local_index = 0;
+  for (auto vert : verts) {
+    handle_to_index[vert] = local_index++;
+  }
+
+  std::vector<int> connectivity;
+  for (auto face : faces) {
+    std::vector<moab::EntityHandle> conn;
+    this->moab_interface()->get_connectivity(&face, 1, conn); // global indices
+
+    // Remap global indices to local indices on the surface
+    connectivity.push_back(handle_to_index[conn[0]]);
+    connectivity.push_back(handle_to_index[conn[1]]);
+    connectivity.push_back(handle_to_index[conn[2]]);
+  }
+  return {_get_coords(verts), connectivity};
+}
+
+SurfaceElementType 
+MOABMeshManager::get_surface_element_type(MeshID surface) const
+{
+  moab::EntityHandle surf_handle = this->surface_id_map_.at(surface);
+  
+  moab::EntityType type = moab::MBTRI; // TODO: hardcodeed to tri for now
+
+  switch (type)
+  {
+  case moab::MBTRI:
+    return SurfaceElementType::TRI;  
+  case moab::MBQUAD:
+    return SurfaceElementType::QUAD;
+  }
+
+  fatal_error("Unsupported surface element type");
 }
 
 void
