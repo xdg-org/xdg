@@ -11,6 +11,7 @@ test_ray_fire
 test_point_in_volume
 test_normal
 test_measure
+test_ray_duals
 test_xdg_interface
 test_tet_containment
 )
