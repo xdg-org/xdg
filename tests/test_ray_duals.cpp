@@ -98,7 +98,7 @@ TEST_CASE("Test RTCSurfaceDualRay properties")
   SECTION("Member variables initialization")
   {
     REQUIRE(ray.rf_type == RayFireType::VOLUME);
-    REQUIRE(ray.orientation == HitOrientation::ANY);
+    REQUIRE(ray.orientation == HitOrientation::EXITING);
     REQUIRE(ray.exclude_primitives == nullptr);
   }
 

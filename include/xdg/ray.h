@@ -9,6 +9,7 @@
 
 #include "xdg/constants.h"
 #include "xdg/embree_interface.h"
+#include "xdg/primitive_ref.h"
 
 namespace xdg {
 
@@ -84,8 +85,8 @@ struct RTCDualRay : RTCRay {
 struct RTCSurfaceDualRay : RTCDualRay {
 
   // Member variables
-  RayFireType rf_type; //!< Enum indicating the type of query this ray is used for
-  HitOrientation orientation; //!< Enum indicating what hits to accept based on orientation
+  RayFireType rf_type {RayFireType::VOLUME}; //!< Enum indicating the type of query this ray is used for
+  HitOrientation orientation {HitOrientation::EXITING}; //!< Enum indicating what hits to accept based on orientation
   const std::vector<MeshID>* exclude_primitives {nullptr}; //! < Set of primitives to exclude from the query
 };
 
