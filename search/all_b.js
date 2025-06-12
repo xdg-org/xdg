@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['orientation_0',['orientation',['../structxdg_1_1RTCDRay.html#afd1b4efceed79ebb71f04ab2d4ec5ade',1,'xdg::RTCDRay']]]
+  ['orientation_0',['orientation',['../structxdg_1_1RTCSurfaceDualRay.html#ab308cf85dd41efb8380557905b10f43b',1,'xdg::RTCSurfaceDualRay']]]
 ];

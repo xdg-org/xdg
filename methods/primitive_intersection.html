@@ -24,7 +24,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Glossary" href="../glossary.html" />
+    <link rel="next" title="Element Search" href="element_search.html" />
     <link rel="prev" title="Acceleration Data Structures" href="acceleration_data_structures.html" /> 
 </head>
 
@@ -58,6 +58,7 @@
 <li class="toctree-l2"><a class="reference internal" href="acceleration_data_structures.html">Acceleration Data Structures</a></li>
 <li class="toctree-l2"><a class="reference internal" href="acceleration_data_structures.html#mixed-precision-ray-tracing">Mixed Precision Ray Tracing</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Primitive Intersections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="element_search.html">Element Search</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
@@ -94,7 +95,6 @@
 <blockquote>
 <div><ul class="simple">
 <li><p>linear triangles</p></li>
-<li><p>linear quads</p></li>
 </ul>
 </div></blockquote>
 <p>Triangle intersection tests are performed using the Pluecker triangle
@@ -102,8 +102,6 @@ intersection test. This method uses Pluecker coordinates (formed from the
 cross-product of the ray direction and triangle edges) to determine if a ray
 intersects a triangle. It is known for its numerical stability and efficiency,
 making it suitable for scientific ray tracing applications <a class="footnote-reference brackets" href="#id3" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.</p>
-<p>Quad intersection tests are performed by splitting the quad into two triangles
-and performing the Pluecker triangle intersection test on each triangle.</p>
 <p>Assumptions about the normals of primitives are based the cannonical ordering
 established by this paper <a class="footnote-reference brackets" href="#id4" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a>.</p>
 <aside class="footnote-list brackets">
@@ -127,7 +125,7 @@ vol. 26, no. 8, pp. 1033-1049, 2010. <a class="reference external" href="https:/
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="acceleration_data_structures.html" class="btn btn-neutral float-left" title="Acceleration Data Structures" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../glossary.html" class="btn btn-neutral float-right" title="Glossary" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="element_search.html" class="btn btn-neutral float-right" title="Element Search" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

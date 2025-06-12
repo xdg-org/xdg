@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ray Tracing Introduction &mdash; XDG 0.0.1 documentation</title>
+  <title>Element Search &mdash; XDG 0.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -15,7 +15,7 @@
 
   
     <link rel="shortcut icon" href="../_static/xdg-favicon.png"/>
-    <link rel="canonical" href="localhost:8888/methods/raytracing.html" />
+    <link rel="canonical" href="localhost:8888/methods/element_search.html" />
       <script src="../_static/jquery.js?v=5d32c60e"></script>
       <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../_static/documentation_options.js?v=0d3201d4"></script>
@@ -24,8 +24,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="XDG Design Philosophy" href="design_philosophy.html" />
-    <link rel="prev" title="Methods" href="index.html" /> 
+    <link rel="next" title="Glossary" href="../glossary.html" />
+    <link rel="prev" title="Primitive Intersections" href="primitive_intersection.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -53,12 +53,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../usersguide/index.html">User's Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api/index.html">C++ API</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Methods</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Ray Tracing Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="raytracing.html">Ray Tracing Introduction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="design_philosophy.html">XDG Design Philosophy</a></li>
 <li class="toctree-l2"><a class="reference internal" href="acceleration_data_structures.html">Acceleration Data Structures</a></li>
 <li class="toctree-l2"><a class="reference internal" href="acceleration_data_structures.html#mixed-precision-ray-tracing">Mixed Precision Ray Tracing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="primitive_intersection.html">Primitive Intersections</a></li>
-<li class="toctree-l2"><a class="reference internal" href="element_search.html">Element Search</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Element Search</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
@@ -79,9 +79,9 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="index.html">Methods</a></li>
-      <li class="breadcrumb-item active">Ray Tracing Introduction</li>
+      <li class="breadcrumb-item active">Element Search</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/methods/raytracing.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/methods/element_search.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -89,23 +89,44 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="ray-tracing-introduction">
-<h1>Ray Tracing Introduction<a class="headerlink" href="#ray-tracing-introduction" title="Link to this heading"></a></h1>
-<p>Ray tracing is a rendering technique for generating an image by tracing the path
-of light as pixels in an image plane and simulating the effects of its
-encounters with virtual objects. The technique is capable of producing a high
-degree of visual realism, usually higher than that of typical scanline rendering
-methods, but at a greater computational cost. Ray tracing is used in
-applications where image quality is critical, such as in visual effects for
-movies and in architectural visualizations</p>
+  <section id="element-search">
+<h1>Element Search<a class="headerlink" href="#element-search" title="Link to this heading"></a></h1>
+<p>The underlying data structure for element search used by Embree is a Bouding
+Volume Hierarchy (BVH), which is a tree of bounding boxes that is used to
+quickly determine if a ray intersects a primitive. This data structure is
+typically used to accelerate ray queries for the nearest intersection against
+sets of 2D primitives.</p>
+<p>This data structure can also be used to accelerate queries for the containment
+of a point within a set of 3D primitives (elements in the parlance of XDG).</p>
+<p>To perform an element search, we first need to build the BVH. This is done by
+providing Embree with a a custom user geometry for the 3D elements with the
+ability to call back into the relevant <cite>MeshManager</cite> to get the bounding box of
+the each element. Because Embree operates in single precision, the bounding boxes
+of elements are dilated conservatively and provided to embree in single precision.</p>
+<p>When a point containment query is performed, a ray is constructed from the point
+and a length of zero, resulting in positive ray-box intersections only if the
+point resides within the bounding box of the element. At the botton of the
+hierarchy, the elements are identified and the primitive reference is returned.
+Thus far computation occurs in single precision.</p>
+<p>A double-precision evaluation is performed to determine if the point resides within
+the element. This is done by computing the barycentric coordinates of the point
+with respect to the element. If the point resides within the element, the primitive
+reference is returned.</p>
+<p>Because the point containment query departs from a the types of ray queries
+performed in the common surface ray tracing required by particle transport (in
+which one is interested in the nearest intersection along the particle's
+trajectory), we here use a call to Embree's <cite>rtcOccluded</cite> function as it will
+return the first positive containment result for the query. Given that a point
+should not be contained by more than one element, this call is sufficient and
+will result in fewer element containment checks in double-precision.</p>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="Methods" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="design_philosophy.html" class="btn btn-neutral float-right" title="XDG Design Philosophy" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="primitive_intersection.html" class="btn btn-neutral float-left" title="Primitive Intersections" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../glossary.html" class="btn btn-neutral float-right" title="Glossary" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

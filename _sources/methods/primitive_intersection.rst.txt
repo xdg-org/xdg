@@ -7,7 +7,6 @@ Primitive Intersections
 Currently XDG supports ray intersections with the following primitives:
 
    - linear triangles
-   - linear quads
 
 Triangle intersection tests are performed using the Pluecker triangle
 intersection test. This method uses Pluecker coordinates (formed from the
@@ -15,8 +14,6 @@ cross-product of the ray direction and triangle edges) to determine if a ray
 intersects a triangle. It is known for its numerical stability and efficiency,
 making it suitable for scientific ray tracing applications [1]_.
 
-Quad intersection tests are performed by splitting the quad into two triangles
-and performing the Pluecker triangle intersection test on each triangle.
 
 Assumptions about the normals of primitives are based the cannonical ordering
 established by this paper [2]_.
