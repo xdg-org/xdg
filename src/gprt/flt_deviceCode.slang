@@ -89,7 +89,7 @@ void render_mesh(uniform RayGenData record) {
               0xff,            // instance inclusion mask
               1,               // ray type (set to render ray type)
               2,               // number of ray types
-              0,               // miss index
+              1,               // miss index
               rayDesc,         // the ray to trace
               payload          // the payload IO
     );
