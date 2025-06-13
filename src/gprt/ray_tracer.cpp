@@ -67,9 +67,7 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
 
   for (const auto &surf : volume_surfaces) {
     // Get surface mesh vertices and associated connectivities
-    auto meshParams = mesh_manager->get_surface_mesh(surf);
-    auto vertices = meshParams.first;
-    auto indices = meshParams.second;
+    auto [vertices, indices] = mesh_manager->get_surface_mesh(surf);
 
     GPRTBufferOf<float3> vertex_buffer;
     GPRTBufferOf<uint3> connectivity_buffer;
@@ -111,7 +109,8 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
     geom_data->index = gprtBufferGetDevicePointer(connectivity_buffer);
     geom_data->normals = gprtBufferGetDevicePointer(normal_buffer);
     geom_data->id = surf;
-    geom_data->vols = { mesh_manager->get_parent_volumes(surf).first, mesh_manager->get_parent_volumes(surf).second };
+    auto [forward_parent, reverse_parent] = mesh_manager->get_parent_volumes(surf);
+    geom_data->vols = {forward_parent, reverse_parent}; // Store both parent volumes
     geom_data->sense = static_cast<int>(mesh_manager->surface_sense(surf, volume_id)); // 0 for forward, 1 for reverse
 
     // Set vertices and indices for the triangle geometry
