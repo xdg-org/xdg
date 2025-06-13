@@ -22,7 +22,7 @@ public:
 
   LibMeshManager();
 
-  ~LibMeshManager();
+  ~LibMeshManager() override = default;
 
   // Backend methods
 
@@ -295,9 +295,10 @@ public:
 
   // Attributes
   protected:
-  std::unique_ptr<libMesh::Mesh> mesh_ {nullptr};
   // TODO: make this global so it isn't owned by a single mesh manager
   std::unique_ptr<libMesh::LibMeshInit> libmesh_init {nullptr};
+  // this attribute must come after libmesh_init so that it is destroyed last
+  std::unique_ptr<libMesh::Mesh> mesh_ {nullptr};
 
   // Ugh, double mapping
   std::unordered_map<MeshID, SidePair> mesh_id_to_sidepair_;

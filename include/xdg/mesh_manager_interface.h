@@ -15,6 +15,7 @@ class MeshManager {
 public:
 
   // Abstract Methods
+  virtual ~MeshManager() = default;
 
   // Setup
   virtual void load_file(const std::string& filepath) = 0;

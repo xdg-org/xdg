@@ -29,11 +29,6 @@ void LibMeshManager::load_file(const std::string &filepath) {
   mesh_->read(filepath);
 }
 
-LibMeshManager::~LibMeshManager() {
-  if (mesh_ != nullptr) mesh_->clear();
-  libmesh_init.reset();
-}
-
 void LibMeshManager::initialize_libmesh() {
   // libmesh requires the program name, so at least one argument is needed
   int argc = 1;
