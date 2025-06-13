@@ -49,6 +49,8 @@ jobs:
         run: |
           echo "MOAB_SHA"=$(cd ~/moab && git rev-parse HEAD) >> $GITHUB_ENV
           echo "LIBMESH_SHA"=$(cd ~/libmesh && git rev-parse HEAD) >> $GITHUB_ENV
+          # Enforce that we're using the debug build of libMesh
+          echo "METHOD=dbg" >> $GITHUB_ENV
 
       - name: MOAB Cache
         id: moab-cache
