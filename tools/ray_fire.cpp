@@ -71,10 +71,10 @@ int main(int argc, char** argv) {
   std::cout << "Origin: " << origin[0] << ", " << origin[1] << ", " << origin[2] << std::endl;
   std::cout << "Direction: " << direction[0] << ", " << direction[1] << ", " << direction[2] << std::endl;
 
-  auto result = xdg->ray_fire(volume, origin, direction);
+  auto [distance, surface] = xdg->ray_fire(volume, origin, direction);
 
-  std::cout << "Distance: " << result.first << std::endl;
-  std::cout << "Surface: " << result.second << std::endl;
+  std::cout << "Distance: " << distance << std::endl;
+  std::cout << "Surface: " << surface << std::endl;
 
   return 0;
 }

@@ -14,12 +14,12 @@ MeshManager::create_implicit_complement()
   MeshID ipc_volume = this->create_volume();
 
   for (auto surface : this->surfaces()) {
-    auto parent_vols = this->get_parent_volumes(surface);
+    auto [forward_parent, reverse_parent] = this->get_parent_volumes(surface);
 
-  if (parent_vols.first == ID_NONE)
+  if (forward_parent == ID_NONE)
       this->add_surface_to_volume(ipc_volume, surface, Sense::FORWARD);
 
-    if (parent_vols.second == ID_NONE)
+    if (reverse_parent == ID_NONE)
       this->add_surface_to_volume(ipc_volume, surface, Sense::REVERSE);
   }
 
@@ -84,12 +84,12 @@ MeshManager::get_surface_property(MeshID surface, PropertyType type) const
 
 MeshID MeshManager::next_volume(MeshID current_volume, MeshID surface) const
 {
-  auto parent_vols = this->get_parent_volumes(surface);
+  auto [forward_parent, reverse_parent] = this->get_parent_volumes(surface);
 
-  if (parent_vols.first == current_volume)
-    return parent_vols.second;
-  else if (parent_vols.second == current_volume)
-    return parent_vols.first;
+  if (forward_parent == current_volume)
+    return reverse_parent;
+  else if (reverse_parent == current_volume)
+    return forward_parent;
   else
     fatal_error("Volume {} is not a parent of surface {}", current_volume, surface);
 

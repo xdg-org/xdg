@@ -96,17 +96,17 @@ MeshID LibMeshManager::create_volume() {
 }
 
 void LibMeshManager::add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite) {
-    auto senses = surface_senses(surface);
+    auto [forward_sense, reverse_sense] = surface_senses(surface);
     if (sense == Sense::FORWARD) {
-      if (!overwrite && senses.first != ID_NONE) {
+      if (!overwrite && forward_sense != ID_NONE) {
         fatal_error("Surface already has a forward sense");
       }
-      surface_senses_[surface] = {volume, senses.second};
+      surface_senses_[surface] = {volume, reverse_sense};
     } else {
-      if (!overwrite && senses.second != ID_NONE) {
+      if (!overwrite && reverse_sense != ID_NONE) {
         fatal_error("Surface already has a reverse sense");
       }
-      surface_senses_[surface] = {senses.first, volume};
+      surface_senses_[surface] = {forward_sense, volume};
     }
 }
 
@@ -373,8 +373,8 @@ LibMeshManager::surface_senses(MeshID surface) const {
 }
 
 Sense LibMeshManager::surface_sense(MeshID surface, MeshID volume) const {
-  auto senses = surface_senses(surface);
-  return volume == senses.first ? Sense::FORWARD : Sense::REVERSE;
+  auto [forward_sense, reverse_sense] = surface_senses(surface);
+  return volume == forward_sense ? Sense::FORWARD : Sense::REVERSE;
 }
 
 } // namespace xdg

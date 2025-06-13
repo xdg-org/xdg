@@ -147,12 +147,12 @@ void check_instance_for_overlaps(std::shared_ptr<XDG> xdg,
 #pragma omp for schedule(auto)
     for (const auto& surf:allSurfs)
     {
-      auto parentVols = mm->get_parent_volumes(surf);
+      auto [forward_parent, reverse_parent] = mm->get_parent_volumes(surf);
       std::vector<MeshID> volsToCheck;
-      std::copy_if(allVols.begin(), allVols.end(), std::back_inserter(volsToCheck), [&parentVols](MeshID vol)
-      {
-        return vol != parentVols.first && vol != parentVols.second;
-      });
+      std::copy_if(allVols.begin(), allVols.end(), std::back_inserter(volsToCheck),
+          [forward_parent, reverse_parent](MeshID vol) {
+              return vol != forward_parent && vol != reverse_parent;
+          });
       auto elementsOnSurf = mm->get_surface_faces(surf);
       for (const auto& element:elementsOnSurf) {
         auto tri = mm->face_vertices(element);
@@ -162,7 +162,7 @@ void check_instance_for_overlaps(std::shared_ptr<XDG> xdg,
           auto volHit = check_along_edge(xdg, mm, query, volsToCheck, edgeOverlapLocs);
           if (volHit != -1)
           {
-            overlap_map[{volHit, parentVols.first}] = edgeOverlapLocs.back();
+            overlap_map[{volHit, forward_parent}] = edgeOverlapLocs.back();
           }
           #pragma omp atomic
             edgeRaysCast++;
@@ -193,9 +193,7 @@ void check_instance_for_overlaps(std::shared_ptr<XDG> xdg,
 void report_overlaps(const OverlapMap& overlap_map) {
   std::cout << "Overlap locations found: " << overlap_map.size() << std::endl;
 
-  for (const auto& entry : overlap_map) {
-    std::set<MeshID> overlap_vols = entry.first;
-    Position loc = entry.second;
+  for (const auto& [overlap_vols, loc] : overlap_map) {
 
     std::cout << "Overlap Location: " << loc[0] << " " << loc[1] << " "
               << loc[2] << std::endl;
@@ -244,15 +242,13 @@ MeshID check_along_edge(std::shared_ptr<XDG> xdg,
   int counter=0;
   for (const auto& testVol:volsToCheck)
   {
-    auto ray = xdg->ray_fire(testVol, origin, direction, distanceMax);
-    double rayDistance = ray.first;
-    MeshID surfHit = ray.second;
-    if (surfHit != -1) // if surface hit (Valid MeshID returned)
+    auto [distance, surface] = xdg->ray_fire(testVol, origin, direction, distanceMax);
+    if (surface != -1) // if surface hit (Valid MeshID returned)
     {
       counter++;
-      volHit = mm->get_parent_volumes(surfHit);
+      volHit = mm->get_parent_volumes(surface);
 
-      Position collisionPoint = {origin.x + rayDistance*direction.x, origin.y + rayDistance*direction.y, origin.z + rayDistance*direction.z};
+      Position collisionPoint = {origin.x + distance*direction.x, origin.y + distance*direction.y, origin.z + distance*direction.z};
       // Check if overlap location already added to list from another ray
       if (std::find(edgeOverlapLocs.begin(), edgeOverlapLocs.end(), collisionPoint) == edgeOverlapLocs.end()) {
         edgeOverlapLocs.push_back(collisionPoint);

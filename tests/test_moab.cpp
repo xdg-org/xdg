@@ -135,8 +135,8 @@ TEST_CASE("MOAB Get Surface Mesh")
 
   float fpTol = 1e-5;
 
-  // Define the expected connectivity and vertices for each surface
-  std::vector<std::vector<int>> expected_connectivity = {
+  // Define the expected indices and vertices for each surface
+  std::vector<std::vector<int>> expected_indices = {
       {2, 3, 5, 3, 0, 4, 5, 4, 1, 3, 4, 5},                   /* Surface 1 */
       {5, 4, 1, 4, 7, 3, 2, 3, 6, 4, 5, 7, 5, 0, 7, 7, 6, 3}, /* Surface 2 */
       {5, 0, 7, 5, 4, 2, 1, 3, 6, 3, 4, 7, 4, 5, 7, 3, 7, 6}, /* Surface 3 */
@@ -198,14 +198,12 @@ TEST_CASE("MOAB Get Surface Mesh")
 
   size_t surface_index = 0;
   for (const auto surface : mesh_manager->surfaces()) {
-    auto surfaceMesh = mesh_manager->get_surface_mesh(surface);
-    auto vertices = surfaceMesh.first;
-    auto connectivity = surfaceMesh.second;
+    auto [vertices, indices] = mesh_manager->get_surface_mesh(surface);
 
-    // Test connectivity
-    REQUIRE(connectivity.size() == expected_connectivity[surface_index].size());
-    for (size_t i = 0; i < connectivity.size(); ++i) {
-      REQUIRE(connectivity[i] == expected_connectivity[surface_index][i]);
+    // Test indices
+    REQUIRE(indices.size() == expected_indices[surface_index].size());
+    for (size_t i = 0; i < indices.size(); ++i) {
+      REQUIRE(indices[i] == expected_indices[surface_index][i]);
     }
 
     // Test vertices

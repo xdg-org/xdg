@@ -22,9 +22,9 @@ public:
 
     // Methods
     void transport() {
-      for (const auto& test_case : test_cases_) {
-        std::shared_ptr<XDG> xdg {XDG::create(test_case.second)};
-        xdg->mesh_manager()->load_file(test_case.first);
+      for (const auto& [filename, mesh_library] : test_cases_) {
+        std::shared_ptr<XDG> xdg {XDG::create(mesh_library)};
+        xdg->mesh_manager()->load_file(filename);
         xdg->mesh_manager()->init();
         xdg->mesh_manager()->parse_metadata();
         xdg->prepare_raytracer();

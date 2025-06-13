@@ -26,8 +26,8 @@ TEST_CASE("Mesh Mock Get Surface Mesh")
   mesh_manager->init(); // This should do nothing for the mock
   float fpTol = 1e-5;
     
-  // Expected connectivity as local indices for each surface
-  std::vector<std::vector<int>> expected_connectivity = 
+  // Expected indices as local indices for each surface
+  std::vector<std::vector<int>> expected_indices = 
   {
     {0, 1, 2, 2, 1, 3}, // Surface 0
     {0, 1, 2, 1, 3, 2}, // Surface 1
@@ -53,16 +53,14 @@ TEST_CASE("Mesh Mock Get Surface Mesh")
   };
 
   size_t surface_index = 0;
-  // Loop over every surface in the MeshMock and test the connectivity and vertices
+  // Loop over every surface in the MeshMock and test the indices and vertices
   for (const auto surface : mesh_manager->surfaces()) {
-    auto surfaceMesh = mesh_manager->get_surface_mesh(surface);
-    auto vertices = surfaceMesh.first;
-    auto connectivity = surfaceMesh.second;
+    auto [vertices, indices] = mesh_manager->get_surface_mesh(surface);
 
-    // Test connectivity
-    REQUIRE(connectivity.size() == expected_connectivity[surface_index].size());
-    for (size_t i = 0; i < connectivity.size(); ++i) {
-      REQUIRE(connectivity[i] == expected_connectivity[surface_index][i]);
+    // Test indices
+    REQUIRE(indices.size() == expected_indices[surface_index].size());
+    for (size_t i = 0; i < indices.size(); ++i) {
+      REQUIRE(indices[i] == expected_indices[surface_index][i]);
     }
 
     // Test vertices

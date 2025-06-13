@@ -92,9 +92,7 @@ bool XDG::point_in_volume(MeshID volume,
 MeshID XDG::find_volume(const Position& point,
                                                    const Direction& direction) const
 {
-  for (auto volume_scene_pair : volume_to_scene_map_) {
-    MeshID volume = volume_scene_pair.first;
-    TreeID scene = volume_scene_pair.second;
+  for (auto [volume, scene] : volume_to_scene_map_) {
     if (ray_tracing_interface()->point_in_volume(scene, point, &direction)) {
       return volume;
     }
@@ -148,9 +146,9 @@ Direction XDG::surface_normal(MeshID surface,
   if (exclude_primitives != nullptr && exclude_primitives->size() > 0) {
     element = exclude_primitives->back();
   } else {
-    auto surface_vols = mesh_manager()->get_parent_volumes(surface);
+    auto [forward_parent, reverse_parent] = mesh_manager()->get_parent_volumes(surface);
     double dist;
-    TreeID scene = volume_to_scene_map_.at(surface_vols.first);
+    TreeID scene = volume_to_scene_map_.at(forward_parent);
     ray_tracing_interface()->closest(scene, point, dist, element);
 
     // TODO: bring this back when we have a better way to handle this
