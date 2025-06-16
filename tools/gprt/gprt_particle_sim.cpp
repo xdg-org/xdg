@@ -85,7 +85,7 @@ sim_data.xdg_ = xdg;
 const auto& mm = xdg->mesh_manager();
 mm->load_file(args.get<std::string>("filename"));
 mm->init();
-mm->parse_metadata();
+// mm->parse_metadata();
 xdg->prepare_raytracer();
 
 auto rti = xdg->ray_tracing_interface();
