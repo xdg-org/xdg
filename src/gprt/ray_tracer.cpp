@@ -12,26 +12,8 @@ GPRTRayTracer::GPRTRayTracer()
   gprtRequestRayTypeCount(numRayTypes_); // Set the number of shaders which can be set to the same geometry
   context_ = gprtContextCreate();
   module_ = gprtModuleCreate(context_, flt_deviceCode);
-}
 
-GPRTRayTracer::~GPRTRayTracer()
-{
-  gprtContextDestroy(context_);
-}
-
-void GPRTRayTracer::setup_shaders()
-{
-  // Set up ray generation and miss programs
-  rayGenProgram_ = gprtRayGenCreate<RayGenData>(context_, module_, "ray_fire");
-  rayGenPointInVolProgram_ = gprtRayGenCreate<RayGenData>(context_, module_, "point_in_volume");
-  missProgram_ = gprtMissCreate<void>(context_, module_, "ray_fire_miss");
-
-  // TODO - Multimap to hold each shader assocaited with each query?
-}
-
-void GPRTRayTracer::init()
-{
-  // TODO - Should we just allocate a large chunk in the buffers to start with so that we don't have to resize?
+    // TODO - Should we just allocate a large chunk in the buffers to start with so that we don't have to resize?
   numRays = 1; // Set the number of rays to be cast
   rayInputBuffer_ = gprtDeviceBufferCreate<RayInput>(context_, numRays);
   rayOutputBuffer_ = gprtDeviceBufferCreate<RayOutput>(context_, numRays); 
@@ -48,94 +30,134 @@ void GPRTRayTracer::init()
   RayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPointInVolProgram_);
   rayGenPIVData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
   rayGenPIVData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
-  
 }
+
+GPRTRayTracer::~GPRTRayTracer()
+{
+  gprtContextDestroy(context_);
+}
+
+void GPRTRayTracer::setup_shaders()
+{
+  // Set up ray generation and miss programs
+  rayGenProgram_ = gprtRayGenCreate<RayGenData>(context_, module_, "ray_fire");
+  rayGenPointInVolProgram_ = gprtRayGenCreate<RayGenData>(context_, module_, "point_in_volume");
+  missProgram_ = gprtMissCreate<void>(context_, module_, "ray_fire_miss");
+
+    // Create a "triangle" geometry type and set its closest-hit program
+  trianglesGeomType_ = gprtGeomTypeCreate<TrianglesGeomData>(context_, GPRT_TRIANGLES);
+  gprtGeomTypeSetClosestHitProg(trianglesGeomType_, 0, module_, "ray_fire_hit"); // closesthit for ray queries
+  gprtGeomTypeSetClosestHitProg(trianglesGeomType_, 1, module_, "render_hits"); // cloesthit for mesh rendering
+  // TODO - Multimap to hold each shader assocaited with each query?
+}
+
+void GPRTRayTracer::init() {}
 
 TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume_id)
 {
   TreeID tree = next_tree_id();
   trees_.push_back(tree);
-
-  // Create a "triangle" geometry type and set its closest-hit program
-  auto trianglesGeomType = gprtGeomTypeCreate<TrianglesGeomData>(context_, GPRT_TRIANGLES);
-  gprtGeomTypeSetClosestHitProg(trianglesGeomType, 0, module_, "ray_fire_hit"); // closesthit for ray queries
-
-  gprtGeomTypeSetClosestHitProg(trianglesGeomType, 1, module_, "render_hits"); // cloesthit for mesh rendering
-
   auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
-  std::vector<gprt::Instance> localBlasInstances; // BLAS for each (surface) geometry in this volume
+  std::vector<gprt::Instance> surfaceBlasInstances; // BLAS for each (surface) geometry in this volume
+
+  std::cout << "[register_volume] volume_id=" << volume_id << " surfaces=" << volume_surfaces.size() << std::endl;
 
   for (const auto &surf : volume_surfaces) {
-    // Get surface mesh vertices and associated connectivities
-    auto [vertices, indices] = mesh_manager->get_surface_mesh(surf);
-
-    GPRTBufferOf<float3> vertex_buffer;
-    GPRTBufferOf<uint3> connectivity_buffer;
-    GPRTBufferOf<float3> normal_buffer;
+    bool first_visit = !surface_to_geometry_map_.count(surf);
     GPRTGeomOf<TrianglesGeomData> triangleGeom;
+    gprt::Instance instance;
 
-    // Convert vertices to float3 
-    std::vector<float3> fl3Vertices;
-    fl3Vertices.reserve(vertices.size());    
-    for (const auto &vertex : vertices) {
-      fl3Vertices.emplace_back(vertex.x, vertex.y, vertex.z);
+    std::cout << "  Surface " << surf << (first_visit ? " (first visit)" : " (already registered)") << std::endl;
+
+    if (first_visit)
+    {
+      auto [vertices, indices] = mesh_manager->get_surface_mesh(surf);
+
+      std::vector<float3> fl3Vertices;
+      fl3Vertices.reserve(vertices.size());    
+      for (const auto &vertex : vertices) {
+        fl3Vertices.emplace_back(vertex.x, vertex.y, vertex.z);
+      }
+
+      std::vector<uint3> ui3Indices;
+      ui3Indices.reserve(indices.size() / 3);
+      for (size_t i = 0; i < indices.size(); i += 3) {
+        ui3Indices.emplace_back(indices[i], indices[i + 1], indices[i + 2]);
+      }
+
+      std::cout << "    verts=" << fl3Vertices.size() << " tris=" << ui3Indices.size() << std::endl;
+      std::cout << "    indices: ";
+      for (const auto& tri : ui3Indices) {
+        std::cout << "(" << tri.x << "," << tri.y << "," << tri.z << ") ";
+      }
+      std::cout << std::endl;
+
+      auto vertex_buffer = gprtDeviceBufferCreate<float3>(context_, fl3Vertices.size(), fl3Vertices.data());
+      auto connectivity_buffer = gprtDeviceBufferCreate<uint3>(context_, ui3Indices.size(), ui3Indices.data());
+      auto normal_buffer = gprtDeviceBufferCreate<float3>(context_, ui3Indices.size()); // dummy for now
+      triangleGeom = gprtGeomCreate<TrianglesGeomData>(context_, trianglesGeomType_);
+
+      TrianglesGeomData* geom_data = gprtGeomGetParameters(triangleGeom);
+      geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffer);
+      geom_data->index = gprtBufferGetDevicePointer(connectivity_buffer);
+      geom_data->normals = gprtBufferGetDevicePointer(normal_buffer);
+      geom_data->id = surf;
+
+      gprtTrianglesSetVertices(triangleGeom, vertex_buffer, fl3Vertices.size());
+      gprtTrianglesSetIndices(triangleGeom, connectivity_buffer, ui3Indices.size());
+
+      GPRTAccel blas = gprtTriangleAccelCreate(context_, triangleGeom, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+      gprtAccelBuild(context_, blas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+
+      instance = gprtAccelGetInstance(blas);
+      instance.mask = 0xff;
+
+      // Store for lifetime management
+      vertex_buffers.push_back(vertex_buffer);
+      connectivity_buffers.push_back(connectivity_buffer);
+      allTrianglesGeom.push_back(triangleGeom);
+
+      // Store in maps
+      surface_to_geometry_map_[surf] = triangleGeom;
+      surface_to_instance_map_[surf] = instance;
+      globalBlasInstances_.push_back(instance);
+
+      std::cout << "    globalBlasInstances_ size now: " << globalBlasInstances_.size() << std::endl;
     }
-
-    // Convert connectivities/indices to uint3
-    std::vector<uint3> ui3Indices;
-    ui3Indices.reserve(indices.size() / 3);
-    for (size_t i = 0; i < indices.size(); i += 3) {
-      ui3Indices.emplace_back(indices[i], indices[i + 1], indices[i + 2]);
+    else 
+    {
+      triangleGeom = surface_to_geometry_map_.at(surf);
+      instance = surface_to_instance_map_.at(surf);
     }
+    surfaceBlasInstances.push_back(instance);
 
-    // Compute face normals
-    std::vector<float3> faceNormals;
-    faceNormals.reserve(ui3Indices.size());
-    for (const auto& tri : ui3Indices) {
-      float3 v0 = fl3Vertices[tri.x];
-      float3 v1 = fl3Vertices[tri.y];
-      float3 v2 = fl3Vertices[tri.z];
-      float3 normal = normalize(cross(v1 - v0, v2 - v0));
-      faceNormals.push_back(normal);
-    }
-
-    // Create GPRT buffers and geometry data
-    vertex_buffer = gprtDeviceBufferCreate<float3>(context_, fl3Vertices.size(), fl3Vertices.data());
-    connectivity_buffer = gprtDeviceBufferCreate<uint3>(context_, ui3Indices.size(), ui3Indices.data());
-    normal_buffer = gprtDeviceBufferCreate<float3>(context_, faceNormals.size(), faceNormals.data());
-    triangleGeom = gprtGeomCreate<TrianglesGeomData>(context_, trianglesGeomType);
+    // Always update per-volume info
     TrianglesGeomData* geom_data = gprtGeomGetParameters(triangleGeom);
-    geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffer);
-    geom_data->index = gprtBufferGetDevicePointer(connectivity_buffer);
-    geom_data->normals = gprtBufferGetDevicePointer(normal_buffer);
-    geom_data->id = surf;
     auto [forward_parent, reverse_parent] = mesh_manager->get_parent_volumes(surf);
-    geom_data->vols = {forward_parent, reverse_parent}; // Store both parent volumes
-    geom_data->sense = static_cast<int>(mesh_manager->surface_sense(surf, volume_id)); // 0 for forward, 1 for reverse
 
-    // Set vertices and indices for the triangle geometry
-    gprtTrianglesSetVertices(triangleGeom, vertex_buffer, fl3Vertices.size());
-    gprtTrianglesSetIndices(triangleGeom, connectivity_buffer, ui3Indices.size());
-
-    // Create a BLAS for the triangle geometry
-    GPRTAccel blas = gprtTriangleAccelCreate(context_, triangleGeom, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
-    gprtAccelBuild(context_, blas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
-    
-    // Store the BLAS for concatenation into the TLAS
-    localBlasInstances.push_back(gprtAccelGetInstance(blas));
-
+    if (volume_id == forward_parent) {
+      geom_data->forward_vol = forward_parent;
+    } else if (volume_id == reverse_parent) {
+      geom_data->reverse_vol = reverse_parent;
+    } else {
+      fatal_error("Volume {} is not a parent of surface {}", volume_id, surf);
+    }
   }
 
+  std::cout << "  Created TLAS for volume_id=" << volume_id << " with " << surfaceBlasInstances.size() << " BLAS instances." << std::endl;
+  std::cout << "  globalBlasInstances_ size now: " << globalBlasInstances_.size() << std::endl;
+  std::cout << "[register_volume] END: vertex_buffers=" << vertex_buffers.size()
+            << " connectivity_buffers=" << connectivity_buffers.size()
+            << " allTrianglesGeom=" << allTrianglesGeom.size()
+            << " surface_to_geometry_map_=" << surface_to_geometry_map_.size()
+            << std::endl;
+
   // Create a TLAS (Top-Level Acceleration Structure) for all BLAS instances in this volume
-  auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, localBlasInstances.size(), localBlasInstances.data());
-  GPRTAccel volume_tlas = gprtInstanceAccelCreate(context_, localBlasInstances.size(), instanceBuffer);
+  auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, surfaceBlasInstances.size(), surfaceBlasInstances.data());
+  GPRTAccel volume_tlas = gprtInstanceAccelCreate(context_, surfaceBlasInstances.size(), instanceBuffer);
   gprtAccelBuild(context_, volume_tlas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
   tree_to_vol_accel_map[tree] = volume_tlas;
 
-  // Store the local BLAS instances for this volume in global BLAS array
-  for (const auto& instance : localBlasInstances) {
-    globalBlasInstances_.push_back(instance);
-  }
   return tree;
 }
 
@@ -260,6 +282,11 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
 void GPRTRayTracer::create_world_tlas()
 {
   // Create a TLAS (Top-Level Acceleration Structure) for all the volumes
+ 
+  std::cout << "[create_world_tlas] globalBlasInstances_ size: " << globalBlasInstances_.size() << std::endl;
+  for (size_t i = 0; i < globalBlasInstances_.size(); ++i)
+    std::cout << "  Instance " << i << " ptr: " << static_cast<const void*>(&globalBlasInstances_[i]) << std::endl;
+
   auto worldBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, globalBlasInstances_.size(), globalBlasInstances_.data());
   world_ = gprtInstanceAccelCreate(context_, globalBlasInstances_.size(), worldBuffer);
   gprtAccelBuild(context_, world_, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
@@ -302,8 +329,22 @@ void GPRTRayTracer::render_mesh(const std::shared_ptr<MeshManager> mesh_manager)
 {
 
 
-  create_world_tlas();
+  // Only render surfaces not included in the implicit complement
+  // This has the side effect of seg faulting when all surfaces are in the implicit complement
+  std::vector<gprt::Instance> explicitBlasInstances;
+  MeshID complement_id = mesh_manager->implicit_complement();
 
+  for (const auto& [surf, instance] : surface_to_instance_map_) {
+      auto [forward_parent, reverse_parent] = mesh_manager->get_parent_volumes(surf);
+      if (forward_parent == complement_id || reverse_parent == complement_id)
+          continue; // Skip complement surfaces
+      explicitBlasInstances.push_back(instance);
+  }
+
+  // Now use explicitBlasInstances for TLAS creation
+  auto worldBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, explicitBlasInstances.size(), explicitBlasInstances.data());
+  world_ = gprtInstanceAccelCreate(context_, explicitBlasInstances.size(), worldBuffer);
+  gprtAccelBuild(context_, world_, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
   // Set up ray generation and miss programs
   GPRTRayGenOf<RayGenData> rayGen = gprtRayGenCreate<RayGenData>(context_, module_, "render_mesh");
   GPRTMissOf<void> miss = gprtMissCreate<void>(context_, module_, "render_miss");
@@ -316,6 +357,7 @@ void GPRTRayTracer::render_mesh(const std::shared_ptr<MeshManager> mesh_manager)
   GPRTBufferOf<uint32_t> frameBuffer = gprtDeviceBufferCreate<uint32_t>(context_, fbSize.x * fbSize.y);
   rayGenData->frameBuffer = gprtBufferGetDevicePointer(frameBuffer);
 
+  std::cout << "[render_mesh] Building SBT with " << globalBlasInstances_.size() << " instances." << std::endl;
   gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
 
 

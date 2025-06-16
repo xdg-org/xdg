@@ -23,8 +23,8 @@ struct TrianglesGeomData {
   uint3 *index;   // index buffer
   float3 *normals;
   uint id;        // surface id
-  int2 vols;      // parent volumes ids
-  int sense;      // surface sense
+  int forward_vol; 
+  int reverse_vol;
 };
 // /* variables for the triangle mesh geometry */
 // struct DPTriangleGeomData {

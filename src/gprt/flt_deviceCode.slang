@@ -43,6 +43,8 @@ void render_hits(uniform TrianglesGeomData record, inout Payload payload, in flo
         // payload.color = float3(r, g, b);
         payload.color = float3(0.0, 1.0, 0.0);
     }
+
+    // printf("Closest Hit called! Parent Vols: (%u, %u), surf_id: %u\n", record.forward_vol, record.reverse_vol, record.id);
 }
 
 // This ray generation program will kick off the ray tracing process,
