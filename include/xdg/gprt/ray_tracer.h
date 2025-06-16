@@ -67,8 +67,11 @@ namespace xdg {
         return false;
       }
   
+      // const std::shared_ptr<GeometryUserData>& geometry_data(MeshID surface) const override
+      // { return user_data_map_.at(surface_to_geometry_map_.at(surface)); };
+
       const std::shared_ptr<GeometryUserData>& geometry_data(MeshID surface) const override
-      { return user_data_map_.at(surface_to_geometry_map_.at(surface)); };
+      { };
   
       void render_mesh(const std::shared_ptr<MeshManager> mesh_manager);
 
@@ -89,14 +92,16 @@ namespace xdg {
       size_t numRays = 1; //<! Number of rays to be cast
       uint32_t numRayTypes_ = 2; // <! Number of ray types. Allows multiple shaders to be set to the same geometery
       std::vector<gprt::Instance> globalBlasInstances_; //<! List of every BLAS instance stored in this ray tracer
+      GPRTGeomTypeOf<TrianglesGeomData> trianglesGeomType_; //<! Geometry type for triangles
 
 
 
       // Mesh-to-Scene maps 
-      std::map<MeshID, GPRTGeom> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
+      std::map<MeshID, GPRTGeomOf<TrianglesGeomData>> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
 
       // Internal GPRT Mappings
       std::unordered_map<GPRTGeom, std::shared_ptr<GeometryUserData>> user_data_map_;
+      std::unordered_map<MeshID, gprt::Instance> surface_to_instance_map_; //<! Map from mesh surface to GPRT instance
 
       std::unordered_map<TreeID, GPRTAccel> tree_to_vol_accel_map; // Map from XDG::TreeID to GPRTAccel for volume TLAS
 
@@ -104,6 +109,7 @@ namespace xdg {
       std::unordered_map<GPRTAccel, std::vector<PrimitiveRef>> primitive_ref_storage_; // Comes from sharedCode.h?
       std::vector<GPRTBufferOf<float3>> vertex_buffers; // <! vertex buffers for each geometry
       std::vector<GPRTBufferOf<uint3>> connectivity_buffers; // <! connectivity buffers for each geometry
+      std::vector<GPRTGeomOf<TrianglesGeomData>> allTrianglesGeom; //<! Triangle geometries for each surface
 
     };
 
