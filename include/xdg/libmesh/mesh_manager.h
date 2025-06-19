@@ -81,21 +81,25 @@ public:
     return mesh()->n_nodes();
   }
 
-  int num_volume_elements(MeshID volume) const override {
-    return get_volume_elements(volume).size();
-  }
+  int num_volume_elements(MeshID volume) const override;
 
   int num_volume_faces(MeshID volume) const override {
-    return mesh()->n_elem();
+    int out {0};
+    for (auto surface : get_volume_surfaces(volume)) {
+      out += num_surface_faces(surface);
+    }
+    return out;
   }
 
   int num_surface_faces(MeshID surface) const override {
-    return mesh()->n_elem();
+    return surface_map_.at(surface).size();
   }
 
   std::vector<MeshID> get_volume_elements(MeshID volume) const;
 
   std::vector<MeshID> get_surface_faces(MeshID surface) const override;
+
+  std::vector<Vertex> get_surface_vertices(MeshID surface) const override;
 
   std::vector<Vertex> element_vertices(MeshID element) const override;
 
@@ -104,11 +108,6 @@ public:
   std::array<Vertex, 3> face_vertices(MeshID triangle) const override;
 
   std::vector<MeshID> get_volume_surfaces(MeshID volume) const override;
-
-  std::vector<Vertex> get_surface_vertices(MeshID surface) const override
-  {
-    fatal_error("LibMeshManager::get_surface_vertices() not implemented yet");
-  }
 
   std::pair<std::vector<Vertex>, std::vector<int>> get_surface_mesh(MeshID surface) const override
   {
@@ -331,6 +330,9 @@ public:
   //! Mapping of surfaces to the volumes on either side. Volumes are ordered
   //! based on their sense with respect to the surface triangles
   std::unordered_map<MeshID, std::pair<MeshID, MeshID>> surface_senses_;
+
+  //! Mapping of volume IDs to the number of elements in the volume
+  std::unordered_map<MeshID, int> volume_element_counts_;
 
   int32_t next_sidepair_id_ {1}; //!< Next available sidepair ID, starts at one
 };

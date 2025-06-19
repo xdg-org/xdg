@@ -188,12 +188,8 @@ MeshManager::global_bounding_box() const
 BoundingBox
 MeshManager::surface_bounding_box(MeshID surface) const
 {
-  auto elements = this->get_surface_faces(surface);
-  BoundingBox bb;
-  for (const auto& element : elements) {
-    bb.update(this->face_bounding_box(element));
-  }
-  return bb;
+  auto vertices = this->get_surface_vertices(surface);
+  return BoundingBox::from_points(vertices);
 }
 
 std::pair<MeshID, MeshID>

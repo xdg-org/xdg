@@ -57,8 +57,7 @@ TreeID EmbreeRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& 
   auto volume_scene = this->create_embree_scene();
 
   // allocate storage for this volume
-  auto volume_faces = mesh_manager->get_volume_faces(volume);
-  this->primitive_ref_storage_[volume_scene].resize(volume_faces.size());
+  this->primitive_ref_storage_[volume_scene].resize(mesh_manager->num_volume_faces(volume));
   auto& triangle_storage = this->primitive_ref_storage_[volume_scene];
 
   auto volume_surfaces = mesh_manager->get_volume_surfaces(volume);

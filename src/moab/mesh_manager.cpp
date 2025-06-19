@@ -210,13 +210,18 @@ std::vector<Vertex> MOABMeshManager::_get_coords(moab::Range& verts) const
   for (int i = 0; i < verts.size(); i++) {
     vertices[i] = Vertex(coords[3*i], coords[3*i+1], coords[3*i+2]);
   }
-  return vertices; 
+  return vertices;
 }
 
 int
 MOABMeshManager::num_volume_elements(MeshID volume) const
 {
-  return this->get_volume_elements(volume).size();
+  moab::EntityHandle vol_handle = volume_id_map_.at(volume);
+
+  moab::Range elements;
+  this->moab_interface()->get_entities_by_dimension(vol_handle, 3, elements);
+
+  return elements.size();
 }
 
 int
@@ -228,6 +233,7 @@ MOABMeshManager::num_volume_faces(MeshID volume) const
   }
   return out;
 }
+
 
 int
 MOABMeshManager::num_surface_faces(MeshID surface) const
@@ -256,7 +262,8 @@ MOABMeshManager::get_surface_faces(MeshID surface) const
   auto elements = this->_surface_faces(surface);
 
   std::vector<MeshID> element_ids(elements.size());
-  for (int i = 0; i < elements.size(); i++) {
+  size_t n_elements = elements.size();
+  for (size_t i = 0; i < n_elements; i++) {
     element_ids[i] = this->moab_interface()->id_from_handle(elements[i]);
   }
 
@@ -345,16 +352,16 @@ MOABMeshManager::get_volume_surfaces(MeshID volume) const
   return surface_ids;
 }
 
-std::vector<Vertex> 
+std::vector<Vertex>
 MOABMeshManager::get_surface_vertices(MeshID surface) const
 {
   moab::Range faces = _surface_faces(surface);
   moab::Range verts;
   this->moab_interface()->get_adjacencies(faces, 0, false, verts, moab::Interface::UNION);
-  return _get_coords(verts); 
+  return _get_coords(verts);
 }
 
-std::pair<std::vector<Vertex>, std::vector<int>> 
+std::pair<std::vector<Vertex>, std::vector<int>>
 MOABMeshManager::get_surface_mesh(MeshID surface) const
 {
   moab::Range faces = _surface_faces(surface);
@@ -381,17 +388,17 @@ MOABMeshManager::get_surface_mesh(MeshID surface) const
   return {_get_coords(verts), connectivity};
 }
 
-SurfaceElementType 
+SurfaceElementType
 MOABMeshManager::get_surface_element_type(MeshID surface) const
 {
   moab::EntityHandle surf_handle = this->surface_id_map_.at(surface);
-  
+
   moab::EntityType type = moab::MBTRI; // TODO: hardcodeed to tri for now
 
   switch (type)
   {
   case moab::MBTRI:
-    return SurfaceElementType::TRI;  
+    return SurfaceElementType::TRI;
   case moab::MBQUAD:
     return SurfaceElementType::QUAD;
   }

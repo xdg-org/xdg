@@ -226,6 +226,7 @@ void LibMeshManager::discover_surface_elements() {
   // where the subdomain IDs are different on either side
   for (const auto *elem : mesh()->active_local_element_ptr_range()) {
     MeshID subdomain_id = elem->subdomain_id();
+    volume_element_counts_[subdomain_id]++;
     for (int i = 0; i < elem->n_sides(); i++) {
       auto neighbor = elem->neighbor_ptr(i);
       // get the subdomain ID of the neighbor, if it exists
@@ -379,6 +380,13 @@ void LibMeshManager::create_boundary_sideset() {
   boundary_info.sideset_name(next_boundary_id) = "xdg_boundary";
 }
 
+int LibMeshManager::num_volume_elements(MeshID volume) const {
+  if (volume == this->implicit_complement()) {
+    return 0;
+  }
+  return volume_element_counts_.at(volume);
+}
+
 std::vector<MeshID>
 LibMeshManager::get_volume_elements(MeshID volume) const {
   std::vector<MeshID> elements;
@@ -390,6 +398,19 @@ LibMeshManager::get_volume_elements(MeshID volume) const {
     elements.push_back((*it)->id());
   }
   return elements;
+}
+
+std::vector<Vertex>
+LibMeshManager::get_surface_vertices(MeshID surface) const
+{
+  auto elements = this->get_surface_faces(surface);
+  std::vector<Vertex> points;
+  for (const auto& element : elements) {
+    for (const auto& vertex : this->face_vertices(element)) {
+      points.push_back(vertex);
+    }
+  }
+  return points;
 }
 
 std::vector<MeshID>
