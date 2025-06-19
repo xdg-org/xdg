@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 
   args.add_argument("-r", "--rt-library")
       .help("Ray tracing library to use. One of (EMBREE, GPRT)")
-      .default_value("GPRT");
+      .default_value("EMBREE");
 
   try {
     args.parse_args(argc, argv);
