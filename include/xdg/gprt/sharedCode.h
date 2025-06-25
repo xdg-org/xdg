@@ -10,6 +10,14 @@ struct RayInput {
   uint32_t exclude_count;           // Number of excluded primitives
 };
 
+struct dblRayInput 
+{
+  double3 origin;
+  double3 direction;
+  int32_t* exclude_primitives; // Optional for excluding primitives
+  uint32_t exclude_count;           // Number of excluded primitives
+};
+
 struct RayOutput 
 {
   float distance;
@@ -17,7 +25,14 @@ struct RayOutput
   float3 normal;
 };
 
-/* variables for the triangle mesh geometry */
+struct dblRayOutput 
+{
+  double distance;
+  uint surf_id;
+  double3 normal;
+};
+
+/* variables for the single precision triangle mesh geometry */
 struct TrianglesGeomData {
   float3 *vertex; // vertex buffer
   uint3 *index;   // index buffer
@@ -26,15 +41,17 @@ struct TrianglesGeomData {
   int forward_vol; 
   int reverse_vol;
 };
-// /* variables for the triangle mesh geometry */
-// struct DPTriangleGeomData {
-//   double3 *vertex; // vertex buffer
-//   uint3 *index;  // index buffer
-//   double4 *dprays; // double precision rays
-//   uint id;       // surface id
-//   uint2 vols;    // parent volumes
-//   uint fbSize; // framebuffer size
-// };
+
+/* variables for double precision triangle mesh geometry */
+struct DPTriangleGeomData {
+  double3 *vertex; // vertex buffer
+  uint3 *index;  // index buffer
+  double3 *normals; // normals buffer
+  double4 *dprays; // double precision rays
+  uint id;       // surface id
+  int forward_vol;
+  int reverse_vol;
+};
 
 struct RayGenData {
   uint* frameBuffer;                     // Optional for debugging or visuals
@@ -50,6 +67,12 @@ struct RayFireData {
   RayOutput out;
 };
 
+struct dblRayFireData {
+  uint* frameBuffer;                     // Optional for debugging or visuals
+  SurfaceAccelerationStructure world;    // The top-level accel structure
+  dblRayInput ray;
+  dblRayOutput out;
+};
 
 /* variables for the miss program */
 struct MissProgData {
@@ -73,5 +96,10 @@ struct PushConstants {
 
 struct RayFirePushConstants {
   float dist_limit;
+  int orientation;
+};
+
+struct dblRayFirePushConstants {
+  double dist_limit;
   int orientation;
 };
