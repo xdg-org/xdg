@@ -29,37 +29,37 @@ public:
 
   //! \brief Check that a triangle is part of the managed coordinates here
   inline bool accessible(EntityHandle tri) {
-    // determine the correct index to use
-    int idx = 0;
-    auto fe = face_data_.first_elements[idx];
+    // determine the correct contiguous memory block index to use
+    int block_idx = 0;
+    auto fe = face_data_.first_elements[block_idx];
     while(true) {
       if (tri - fe.first < fe.second) { break; }
-      idx++;
-      if (idx >= face_data_.first_elements.size()) { return false; }
-      fe = face_data_.first_elements[idx];
+      block_idx++;
+      if (block_idx >= face_data_.first_elements.size()) { return false; }
+      fe = face_data_.first_elements[block_idx];
     }
     return true;
   }
 
   //! \brief Get the coordinates of a triangle as MOAB CartVect's
   inline std::array<xdg::Vertex, 3> get_mb_coords(const EntityHandle& tri) {
-    auto [idx, i0, i1, i2] = face_data_.get_connectivity_indices(tri);
+    auto [block_idx, i0, i1, i2] = face_data_.get_connectivity_indices(tri);
 
     std::array<xdg::Vertex, 3> vertices;
-    vertex_data_.set_coords(idx, i0, vertices[0]);
-    vertex_data_.set_coords(idx, i1, vertices[1]);
-    vertex_data_.set_coords(idx, i2, vertices[2]);
+    vertex_data_.set_coords(block_idx, i0, vertices[0]);
+    vertex_data_.set_coords(block_idx, i1, vertices[1]);
+    vertex_data_.set_coords(block_idx, i2, vertices[2]);
     return vertices;
   }
 
   //! \brief Get the coordinates of a triangle as MOAB CartVect's
   inline std::array<xdg::Vertex, 3> get_element_coords(const EntityHandle& element) {
-    auto [idx, i0, i1, i2] = element_data_.get_connectivity_indices(element);
+    auto [block_idx, i0, i1, i2] = element_data_.get_connectivity_indices(element);
 
     std::array<xdg::Vertex, 3> vertices;
-    vertex_data_.set_coords(idx, i0, vertices[0]);
-    vertex_data_.set_coords(idx, i1, vertices[1]);
-    vertex_data_.set_coords(idx, i2, vertices[2]);
+    vertex_data_.set_coords(block_idx, i0, vertices[0]);
+    vertex_data_.set_coords(block_idx, i1, vertices[1]);
+    vertex_data_.set_coords(block_idx, i2, vertices[2]);
     return vertices;
   }
 
@@ -107,23 +107,22 @@ private:
 
     std::array<size_t, 4>
     get_connectivity_indices(const EntityHandle& e) {
-      // determine the correct index to use
-      int idx = 0;
-      auto fe = first_elements[idx];
+      // determine the correct contiguous block index to use
+      int block_idx = 0;
+      auto fe = first_elements[block_idx];
       while(true) {
         if (e - fe.first < fe.second) { break; }
-        idx++;
-        // if (idx >= first_elements.size()) { return {-1, -1, -1, -1}; }
-        fe = first_elements[idx];
+        block_idx++;
+        fe = first_elements[block_idx];
       }
 
       std::array<size_t, 4> indices;
-      indices[0] = idx;
+      indices[0] = block_idx;
 
       size_t conn_idx = element_stride * (e - fe.first);
-      indices[1] = vconn[idx][conn_idx] - 1;
-      indices[2] = vconn[idx][conn_idx + 1] - 1;
-      indices[3] = vconn[idx][conn_idx + 2] - 1;
+      indices[1] = vconn[block_idx][conn_idx] - 1;
+      indices[2] = vconn[block_idx][conn_idx + 1] - 1;
+      indices[3] = vconn[block_idx][conn_idx + 2] - 1;
       return indices;
     }
 
@@ -178,7 +177,6 @@ private:
     void set_coords(int idx, int i, xdg::Vertex& v) {
       v = xdg::Vertex(tx[idx][i], ty[idx][i], tz[idx][i]);
     }
-
 
     int num_vertices {-1}; //!< Number of vertices in the manager
     std::vector<const double*> tx; //!< Storage array(s) for vertex x coordinates
