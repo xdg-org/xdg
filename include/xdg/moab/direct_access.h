@@ -63,68 +63,12 @@ public:
     return vertices;
   }
 
-  //! \brief Get the adjacent element
-  inline EntityHandle get_adjacent_element(const EntityHandle& element, int face_number) {
-    return adjacenty_data_.get_adjacent_element(element, face_number);
-  }
-
   // Accessors
   //! \brief return the number of vertices being managed
   inline int n_vertices() { return vertex_data_.num_vertices; }
 
 private:
   Interface* mbi {nullptr}; //!< MOAB instance for the managed data
-
-  struct AdjacencyData {
-    EntityType entity_type {MBMAXTYPE}; //!< Type of entity stored in this manager
-    int num_entities {-1}; //!< Number of elements in the manager
-    std::unordered_map<EntityHandle, std::vector<EntityHandle>> adj_info_;
-
-
-    void setup(Interface* mbi) {
-      ErrorCode rval;
-
-      // setup element adjacenty data
-      // TODO: support other element types
-      Range elements;
-      rval = mbi->get_entities_by_type(0, entity_type, elements, true);
-      MB_CHK_SET_ERR_CONT(rval, "Failed to get MOAB element adjacencies");
-
-      // loop over elements and setup adjacency data
-      for (auto element : elements) {
-        // get element connectivity
-        std::vector<EntityHandle> conn;
-        rval = mbi->get_connectivity(&element, 1, conn);
-
-        // use ordering and adjacency call with intersection to populate adjacency entry
-        for (auto o : ordering[entity_type]) {
-          // determine element for this face
-          std::vector<EntityHandle> verts;
-          for (auto idx : o) verts.push_back(conn[idx]);
-          Range adj_ents;
-          rval = mbi->get_adjacencies(verts.data(), verts.size(), 3, true, adj_ents);
-          if (adj_ents.size() != 1) {
-            throw std::runtime_error("Something went wrong gathering adjacent face");
-          }
-          adj_info_[element].push_back(adj_ents[0]);
-        }
-      }
-    }
-
-    EntityHandle get_adjacent_element(const EntityHandle& element, int face_number) {
-      return adj_info_[element][face_number];
-    }
-
-    void clear() {
-      num_entities = -1;
-      adj_info_.clear();
-    }
-
-    std::unordered_map<EntityType, std::vector<std::vector<int>>> ordering = {
-    {MBTET, {{0, 1, 3}, {1, 2, 3}, {2, 0, 3}, {0, 2, 1}}}
-    };
-};
-
   struct ConnectivityData {
     EntityType entity_type {MBMAXTYPE}; //!< Type of entity stored in this manager
     int num_entities {-1}; //!< Number of elements in the manager
@@ -244,7 +188,6 @@ private:
 
   ConnectivityData face_data_;
   ConnectivityData element_data_;
-  AdjacencyData adjacenty_data_;
   VertexData vertex_data_;
 };
 
