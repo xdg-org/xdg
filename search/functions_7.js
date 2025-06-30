@@ -6,6 +6,5 @@ var searchData=
   ['set_5fradius_3',['set_radius',['../structxdg_1_1RTCDPointQuery.html#a57fae7cdce46bd72af154708c3e041c9',1,'xdg::RTCDPointQuery']]],
   ['set_5ftfar_4',['set_tfar',['../structxdg_1_1RTCDualRay.html#a2095d72fc495ac07cd6eb9c7b656e761',1,'xdg::RTCDualRay']]],
   ['set_5ftnear_5',['set_tnear',['../structxdg_1_1RTCDualRay.html#aaa2d67d656b93c68d21cb5910ec941e7',1,'xdg::RTCDualRay']]],
-  ['setup_6',['setup',['../classMBDirectAccess.html#ac3043611ac3d84487af43b494dc28478',1,'MBDirectAccess']]],
-  ['stride_7',['stride',['../classMBDirectAccess.html#ade06f3d5429620c7b111391919eb7944',1,'MBDirectAccess']]]
+  ['setup_6',['setup',['../classMBDirectAccess.html#ac3043611ac3d84487af43b494dc28478',1,'MBDirectAccess']]]
 ];
