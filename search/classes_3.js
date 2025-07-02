@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['geometryuserdata_0',['GeometryUserData',['../structxdg_1_1GeometryUserData.html',1,'xdg']]]
+  ['libmeshmanager_0',['LibMeshManager',['../classxdg_1_1LibMeshManager.html',1,'xdg']]]
 ];

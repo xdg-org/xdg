@@ -77,8 +77,9 @@
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager24get_surface_element_typeE6MeshID"><code class="docutils literal notranslate"><span class="pre">get_surface_element_type()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager20element_bounding_boxE6MeshID"><code class="docutils literal notranslate"><span class="pre">element_bounding_box()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager17face_bounding_boxE6MeshID"><code class="docutils literal notranslate"><span class="pre">face_bounding_box()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager19volume_bounding_boxE6MeshID"><code class="docutils literal notranslate"><span class="pre">volume_bounding_box()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager20surface_bounding_boxE6MeshID"><code class="docutils literal notranslate"><span class="pre">surface_bounding_box()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager19volume_bounding_boxE6MeshID"><code class="docutils literal notranslate"><span class="pre">volume_bounding_box()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager19global_bounding_boxEv"><code class="docutils literal notranslate"><span class="pre">global_bounding_box()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager11face_normalE6MeshID"><code class="docutils literal notranslate"><span class="pre">face_normal()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager18get_parent_volumesE6MeshID"><code class="docutils literal notranslate"><span class="pre">get_parent_volumes()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager19get_volume_surfacesE6MeshID"><code class="docutils literal notranslate"><span class="pre">get_volume_surfaces()</span></code></a></li>
@@ -111,20 +112,32 @@
 <li class="toctree-l3"><a class="reference internal" href="#_CPPv4N3xdg9RayTracerE"><code class="docutils literal notranslate"><span class="pre">xdg::RayTracer</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracerD0Ev"><code class="docutils literal notranslate"><span class="pre">~RayTracer()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer4initEv"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer15register_volumeEKNSt10shared_ptrI11MeshManagerEE6MeshID"><code class="docutils literal notranslate"><span class="pre">register_volume()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer15register_volumeERKNSt10shared_ptrI11MeshManagerEE6MeshID"><code class="docutils literal notranslate"><span class="pre">register_volume()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer19create_surface_treeERKNSt10shared_ptrI11MeshManagerEE6MeshID"><code class="docutils literal notranslate"><span class="pre">create_surface_tree()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer19create_element_treeERKNSt10shared_ptrI11MeshManagerEE6MeshID"><code class="docutils literal notranslate"><span class="pre">create_element_tree()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer26create_global_surface_treeEv"><code class="docutils literal notranslate"><span class="pre">create_global_surface_tree()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer26create_global_element_treeEv"><code class="docutils literal notranslate"><span class="pre">create_global_element_tree()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer15point_in_volumeE6TreeIDRK8PositionPK9DirectionPKNSt6vectorI6MeshIDEE"><code class="docutils literal notranslate"><span class="pre">point_in_volume()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer8ray_fireE6TreeIDRK8PositionRK9DirectionKd14HitOrientationPCNSt6vectorI6MeshIDEE"><code class="docutils literal notranslate"><span class="pre">ray_fire()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer12find_elementERK8Position"><code class="docutils literal notranslate"><span class="pre">find_element()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer12find_elementE6TreeIDRK8Position"><code class="docutils literal notranslate"><span class="pre">find_element()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer7closestE6TreeIDRK8PositionRdR6MeshID"><code class="docutils literal notranslate"><span class="pre">closest()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer7closestE6TreeIDRK8PositionRd"><code class="docutils literal notranslate"><span class="pre">closest()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer8occludedE6TreeIDRK8PositionRK9DirectionRd"><code class="docutils literal notranslate"><span class="pre">occluded()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer20num_registered_treesEv"><code class="docutils literal notranslate"><span class="pre">num_registered_trees()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer5treesEv"><code class="docutils literal notranslate"><span class="pre">trees()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer13geometry_dataE6MeshID"><code class="docutils literal notranslate"><span class="pre">geometry_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer28num_registered_surface_treesEv"><code class="docutils literal notranslate"><span class="pre">num_registered_surface_trees()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer28num_registered_element_treesEv"><code class="docutils literal notranslate"><span class="pre">num_registered_element_trees()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer17bounding_box_bumpEKNSt10shared_ptrI11MeshManagerEE6MeshID"><code class="docutils literal notranslate"><span class="pre">bounding_box_bump()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer12next_tree_idEv"><code class="docutils literal notranslate"><span class="pre">next_tree_id()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer12global_tree_E"><code class="docutils literal notranslate"><span class="pre">global_tree_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer20next_surface_tree_idEv"><code class="docutils literal notranslate"><span class="pre">next_surface_tree_id()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer20next_element_tree_idEv"><code class="docutils literal notranslate"><span class="pre">next_element_tree_id()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer20global_surface_tree_E"><code class="docutils literal notranslate"><span class="pre">global_surface_tree_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer20global_element_tree_E"><code class="docutils literal notranslate"><span class="pre">global_element_tree_</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer20surface_to_tree_map_E"><code class="docutils literal notranslate"><span class="pre">surface_to_tree_map_</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer6trees_E"><code class="docutils literal notranslate"><span class="pre">trees_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer24point_location_tree_map_E"><code class="docutils literal notranslate"><span class="pre">point_location_tree_map_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer14surface_trees_E"><code class="docutils literal notranslate"><span class="pre">surface_trees_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer14element_trees_E"><code class="docutils literal notranslate"><span class="pre">element_trees_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer21next_surface_tree_id_E"><code class="docutils literal notranslate"><span class="pre">next_surface_tree_id_</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer21next_element_tree_id_E"><code class="docutils literal notranslate"><span class="pre">next_element_tree_id_</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer20numerical_precision_E"><code class="docutils literal notranslate"><span class="pre">numerical_precision_</span></code></a></li>
 </ul>
 </li>
@@ -255,6 +268,16 @@
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG11find_volumeERK8PositionRK9Direction">
 <span id="_CPPv3NK3xdg3XDG11find_volumeERK8PositionRK9Direction"></span><span id="_CPPv2NK3xdg3XDG11find_volumeERK8PositionRK9Direction"></span><span id="xdg::XDG::find_volume__PositionCR.DirectionCRC"></span><span class="target" id="classxdg_1_1XDG_1a243248270e63edb8b7ef27bd6923f3c0"></span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">find_volume</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">point</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Direction</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">direction</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG11find_volumeERK8PositionRK9Direction" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG12find_elementERK8Position">
+<span id="_CPPv3NK3xdg3XDG12find_elementERK8Position"></span><span id="_CPPv2NK3xdg3XDG12find_elementERK8Position"></span><span id="xdg::XDG::find_element__PositionCRC"></span><span class="target" id="classxdg_1_1XDG_1a10eb45d471feaedc62b1fc32611ed236"></span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">find_element</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">point</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG12find_elementERK8Position" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG12find_elementE6MeshIDRK8Position">
+<span id="_CPPv3NK3xdg3XDG12find_elementE6MeshIDRK8Position"></span><span id="_CPPv2NK3xdg3XDG12find_elementE6MeshIDRK8Position"></span><span id="xdg::XDG::find_element__MeshID.PositionCRC"></span><span class="target" id="classxdg_1_1XDG_1af9006930904a7c669d3521edf87e013e"></span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">find_element</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">point</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG12find_elementE6MeshIDRK8Position" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
 
 <dl class="cpp function">
@@ -422,13 +445,18 @@
 <dd></dd></dl>
 
 <dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG20volume_to_scene_map_E">
-<span id="_CPPv3N3xdg3XDG20volume_to_scene_map_E"></span><span id="_CPPv2N3xdg3XDG20volume_to_scene_map_E"></span><span id="xdg::XDG::volume_to_scene_map___std::unordered_map:MeshID.TreeID:"></span><span class="target" id="classxdg_1_1XDG_1af5b0a686617adcdf30e7190b5b7bea13"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unordered_map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">TreeID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">volume_to_scene_map_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg3XDG20volume_to_scene_map_E" title="Link to this definition"></a><br /></dt>
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG27volume_to_surface_tree_map_E">
+<span id="_CPPv3N3xdg3XDG27volume_to_surface_tree_map_E"></span><span id="_CPPv2N3xdg3XDG27volume_to_surface_tree_map_E"></span><span id="xdg::XDG::volume_to_surface_tree_map___std::unordered_map:MeshID.TreeID:"></span><span class="target" id="classxdg_1_1XDG_1a90350535f4ede850980942bff2f947cc"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unordered_map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">TreeID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">volume_to_surface_tree_map_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg3XDG27volume_to_surface_tree_map_E" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
 
 <dl class="cpp var">
 <dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG20surface_to_tree_map_E">
 <span id="_CPPv3N3xdg3XDG20surface_to_tree_map_E"></span><span id="_CPPv2N3xdg3XDG20surface_to_tree_map_E"></span><span id="xdg::XDG::surface_to_tree_map___std::unordered_map:MeshID.TreeID:"></span><span class="target" id="classxdg_1_1XDG_1acdcd9d9e19ecc9985a94ab3bb560b397"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unordered_map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">TreeID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_to_tree_map_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg3XDG20surface_to_tree_map_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG34volume_to_point_location_tree_map_E">
+<span id="_CPPv3N3xdg3XDG34volume_to_point_location_tree_map_E"></span><span id="_CPPv2N3xdg3XDG34volume_to_point_location_tree_map_E"></span><span id="xdg::XDG::volume_to_point_location_tree_map___std::unordered_map:MeshID.TreeID:"></span><span class="target" id="classxdg_1_1XDG_1acbaee56d6877dfe7fb239b565bddc724"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unordered_map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">TreeID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">volume_to_point_location_tree_map_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg3XDG34volume_to_point_location_tree_map_E" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
 
 <dl class="cpp var">
@@ -557,13 +585,18 @@
 <dd></dd></dl>
 
 <dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager20surface_bounding_boxE6MeshID">
+<span id="_CPPv3NK3xdg11MeshManager20surface_bounding_boxE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager20surface_bounding_boxE6MeshID"></span><span id="xdg::MeshManager::surface_bounding_box__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1a8142eda118459a533baa5c1cb62d9d12"></span><span class="n"><span class="pre">BoundingBox</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_bounding_box</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager20surface_bounding_boxE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager19volume_bounding_boxE6MeshID">
 <span id="_CPPv3NK3xdg11MeshManager19volume_bounding_boxE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager19volume_bounding_boxE6MeshID"></span><span id="xdg::MeshManager::volume_bounding_box__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1a93481d30af31f483081e51ebe07285cd"></span><span class="n"><span class="pre">BoundingBox</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">volume_bounding_box</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager19volume_bounding_boxE6MeshID" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
 
 <dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager20surface_bounding_boxE6MeshID">
-<span id="_CPPv3NK3xdg11MeshManager20surface_bounding_boxE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager20surface_bounding_boxE6MeshID"></span><span id="xdg::MeshManager::surface_bounding_box__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1a8142eda118459a533baa5c1cb62d9d12"></span><span class="n"><span class="pre">BoundingBox</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_bounding_box</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager20surface_bounding_boxE6MeshID" title="Link to this definition"></a><br /></dt>
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager19global_bounding_boxEv">
+<span id="_CPPv3NK3xdg11MeshManager19global_bounding_boxEv"></span><span id="_CPPv2NK3xdg11MeshManager19global_bounding_boxEv"></span><span id="xdg::MeshManager::global_bounding_boxC"></span><span class="target" id="classxdg_1_1MeshManager_1a2e49ef3834ce4c3c085784c58d2033ce"></span><span class="n"><span class="pre">BoundingBox</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">global_bounding_box</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager19global_bounding_boxEv" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
 
 <dl class="cpp function">
@@ -738,16 +771,91 @@
 <dd></dd></dl>
 
 <dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer15register_volumeEKNSt10shared_ptrI11MeshManagerEE6MeshID">
-<span id="_CPPv3N3xdg9RayTracer15register_volumeEKNSt10shared_ptrI11MeshManagerEE6MeshID"></span><span id="_CPPv2N3xdg9RayTracer15register_volumeEKNSt10shared_ptrI11MeshManagerEE6MeshID"></span><span id="xdg::RayTracer::register_volume__std::shared_ptr:MeshManager:C.MeshID"></span><span class="target" id="classxdg_1_1RayTracer_1a6cf747f577134bc9cb3db303a7895c6d"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">TreeID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">register_volume</span></span></span><span class="sig-paren">(</span>
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer15register_volumeERKNSt10shared_ptrI11MeshManagerEE6MeshID">
+<span id="_CPPv3N3xdg9RayTracer15register_volumeERKNSt10shared_ptrI11MeshManagerEE6MeshID"></span><span id="_CPPv2N3xdg9RayTracer15register_volumeERKNSt10shared_ptrI11MeshManagerEE6MeshID"></span><span id="xdg::RayTracer::register_volume__std::shared_ptr:MeshManager:CR.MeshID"></span><span class="target" id="classxdg_1_1RayTracer_1aa9f1e8a9d65468e172c231cd67d30c97"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">TreeID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">TreeID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">register_volume</span></span></span><span class="sig-paren">(</span>
 
 <dl>
-<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N3xdg11MeshManagerE" title="xdg::MeshManager"><span class="n"><span class="pre">MeshManager</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">mesh_manager</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N3xdg11MeshManagerE" title="xdg::MeshManager"><span class="n"><span class="pre">MeshManager</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">mesh_manager</span></span>,</dd>
 <dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span>,</dd>
 </dl>
 
-<span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer15register_volumeEKNSt10shared_ptrI11MeshManagerEE6MeshID" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
+<span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer15register_volumeERKNSt10shared_ptrI11MeshManagerEE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd><p>Registers a volume with the ray tracer. </p>
+<p>This method associates a volume, represented by a MeshID, with the ray tracer using the provided <a class="reference internal" href="#classxdg_1_1MeshManager"><span class="std std-ref">MeshManager</span></a>. It returns a pair of TreeIDs that can be used for further operations involving the registered volume.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh_manager</strong> -- A shared pointer to the <a class="reference internal" href="#classxdg_1_1MeshManager"><span class="std std-ref">MeshManager</span></a> responsible for managing the volume's mesh data. </p></li>
+<li><p><strong>volume</strong> -- The MeshID representing the volume to be registered. </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A pair of TreeIDs, where the first TreeID corresponds to the surface ray tracing tree and the second TreeID corresponds to the volume element point location tree (if applicable). </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer19create_surface_treeERKNSt10shared_ptrI11MeshManagerEE6MeshID">
+<span id="_CPPv3N3xdg9RayTracer19create_surface_treeERKNSt10shared_ptrI11MeshManagerEE6MeshID"></span><span id="_CPPv2N3xdg9RayTracer19create_surface_treeERKNSt10shared_ptrI11MeshManagerEE6MeshID"></span><span id="xdg::RayTracer::create_surface_tree__std::shared_ptr:MeshManager:CR.MeshID"></span><span class="target" id="classxdg_1_1RayTracer_1ab68ebf857e0d5a3db02d268e8ebc9693"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">TreeID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">create_surface_tree</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N3xdg11MeshManagerE" title="xdg::MeshManager"><span class="n"><span class="pre">MeshManager</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">mesh_manager</span></span>,</dd>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer19create_surface_treeERKNSt10shared_ptrI11MeshManagerEE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd><p>Creates a surface tree for a given volume. </p>
+<p>This method creates a ray tracing tree specifically for the surfaces of a given volume. The tree can be used for ray-surface intersection queries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh_manager</strong> -- A shared pointer to the <a class="reference internal" href="#classxdg_1_1MeshManager"><span class="std std-ref">MeshManager</span></a> responsible for managing the volume's mesh data. </p></li>
+<li><p><strong>volume</strong> -- The MeshID representing the volume whose surfaces will be used to create the tree. </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A TreeID that can be used to reference this surface tree in subsequent ray tracing operations. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer19create_element_treeERKNSt10shared_ptrI11MeshManagerEE6MeshID">
+<span id="_CPPv3N3xdg9RayTracer19create_element_treeERKNSt10shared_ptrI11MeshManagerEE6MeshID"></span><span id="_CPPv2N3xdg9RayTracer19create_element_treeERKNSt10shared_ptrI11MeshManagerEE6MeshID"></span><span id="xdg::RayTracer::create_element_tree__std::shared_ptr:MeshManager:CR.MeshID"></span><span class="target" id="classxdg_1_1RayTracer_1aacf9e02b328e1daec6877180b4c34849"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">TreeID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">create_element_tree</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N3xdg11MeshManagerE" title="xdg::MeshManager"><span class="n"><span class="pre">MeshManager</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">mesh_manager</span></span>,</dd>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer19create_element_treeERKNSt10shared_ptrI11MeshManagerEE6MeshID" title="Link to this definition"></a><br /></dt>
+<dd><p>Creates an element tree for a given volume. </p>
+<p>This method creates a ray tracing tree specifically for the volumetric elements of a given volume. The tree can be used for point-in-element queries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh_manager</strong> -- A shared pointer to the <a class="reference internal" href="#classxdg_1_1MeshManager"><span class="std std-ref">MeshManager</span></a> responsible for managing the volume's mesh data. </p></li>
+<li><p><strong>volume</strong> -- The MeshID representing the volume whose elements will be used to create the tree. </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A TreeID that can be used to reference this element tree in subsequent point containment operations. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer26create_global_surface_treeEv">
+<span id="_CPPv3N3xdg9RayTracer26create_global_surface_treeEv"></span><span id="_CPPv2N3xdg9RayTracer26create_global_surface_treeEv"></span><span id="xdg::RayTracer::create_global_surface_tree"></span><span class="target" id="classxdg_1_1RayTracer_1a4373bbc45199c952e3700f07ea84ea4f"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">create_global_surface_tree</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer26create_global_surface_treeEv" title="Link to this definition"></a><br /></dt>
+<dd><p>Builds a global tree for all surfaces registered with the ray tracer. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer26create_global_element_treeEv">
+<span id="_CPPv3N3xdg9RayTracer26create_global_element_treeEv"></span><span id="_CPPv2N3xdg9RayTracer26create_global_element_treeEv"></span><span id="xdg::RayTracer::create_global_element_tree"></span><span class="target" id="classxdg_1_1RayTracer_1aba1db69f2ce84a44f2d528a27a6e31d4"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">create_global_element_tree</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer26create_global_element_treeEv" title="Link to this definition"></a><br /></dt>
+<dd><p>Builds a global tree for all elements registered with the ray tracer. </p>
+</dd></dl>
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4NK3xdg9RayTracer15point_in_volumeE6TreeIDRK8PositionPK9DirectionPKNSt6vectorI6MeshIDEE">
@@ -778,6 +886,28 @@
 
 <span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer8ray_fireE6TreeIDRK8PositionRK9DirectionKd14HitOrientationPCNSt6vectorI6MeshIDEE" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg9RayTracer12find_elementERK8Position">
+<span id="_CPPv3NK3xdg9RayTracer12find_elementERK8Position"></span><span id="_CPPv2NK3xdg9RayTracer12find_elementERK8Position"></span><span id="xdg::RayTracer::find_element__PositionCRC"></span><span class="target" id="classxdg_1_1RayTracer_1afa5c5d6eac9e41b6dfc444b2c14c767a"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">find_element</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">point</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg9RayTracer12find_elementERK8Position" title="Link to this definition"></a><br /></dt>
+<dd><p>Finds the element containing a given point using the global element tree. </p>
+<p>This method searches for the element that contains the specified point using the global element tree. It is a convenience wrapper around the tree-specific find_element method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>point</strong> -- The Position to search for </p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The MeshID of the containing element, or ID_NONE if no element contains the point </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg9RayTracer12find_elementE6TreeIDRK8Position">
+<span id="_CPPv3NK3xdg9RayTracer12find_elementE6TreeIDRK8Position"></span><span id="_CPPv2NK3xdg9RayTracer12find_elementE6TreeIDRK8Position"></span><span id="xdg::RayTracer::find_element__TreeID.PositionCRC"></span><span class="target" id="classxdg_1_1RayTracer_1a48793655fde87a275f8e9dd2193f2572"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">find_element</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">TreeID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">tree</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">point</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg9RayTracer12find_elementE6TreeIDRK8Position" title="Link to this definition"></a><br /></dt>
+<dd><p>Finds the element containing a given point using a specific tree. </p>
+<p>This method searches for the element that contains the specified point using the provided tree. It is a more specific version of the global find_element method. </p>
+</dd></dl>
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer7closestE6TreeIDRK8PositionRdR6MeshID">
@@ -818,19 +948,13 @@
 <dd></dd></dl>
 
 <dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NK3xdg9RayTracer5treesEv">
-<span id="_CPPv3NK3xdg9RayTracer5treesEv"></span><span id="_CPPv2NK3xdg9RayTracer5treesEv"></span><span id="xdg::RayTracer::treesC"></span><span class="target" id="classxdg_1_1RayTracer_1aafe9eb3853452ae3ee05dc7e76803f3f"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">trees</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg9RayTracer5treesEv" title="Link to this definition"></a><br /></dt>
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg9RayTracer28num_registered_surface_treesEv">
+<span id="_CPPv3NK3xdg9RayTracer28num_registered_surface_treesEv"></span><span id="_CPPv2NK3xdg9RayTracer28num_registered_surface_treesEv"></span><span id="xdg::RayTracer::num_registered_surface_treesC"></span><span class="target" id="classxdg_1_1RayTracer_1aee3cdb574f57a423035308559be099d0"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">num_registered_surface_trees</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg9RayTracer28num_registered_surface_treesEv" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
 
 <dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NK3xdg9RayTracer13geometry_dataE6MeshID">
-<span id="_CPPv3NK3xdg9RayTracer13geometry_dataE6MeshID"></span><span id="_CPPv2NK3xdg9RayTracer13geometry_dataE6MeshID"></span><span id="xdg::RayTracer::geometry_data__MeshIDC"></span><span class="target" id="classxdg_1_1RayTracer_1aeedad626fc299180d67d413ce390e6b9"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">GeometryUserData</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">geometry_data</span></span></span><span class="sig-paren">(</span>
-
-<dl>
-<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">surface</span></span>,</dd>
-</dl>
-
-<span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg9RayTracer13geometry_dataE6MeshID" title="Link to this definition"></a><br /></dt>
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg9RayTracer28num_registered_element_treesEv">
+<span id="_CPPv3NK3xdg9RayTracer28num_registered_element_treesEv"></span><span id="_CPPv2NK3xdg9RayTracer28num_registered_element_treesEv"></span><span id="xdg::RayTracer::num_registered_element_treesC"></span><span class="target" id="classxdg_1_1RayTracer_1a96422ec87360b0ddc4a13644bdadefc5"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">num_registered_element_trees</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg9RayTracer28num_registered_element_treesEv" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
 
 </div>
@@ -849,26 +973,56 @@
 <dd></dd></dl>
 
 <dl class="cpp function">
-<dt class="sig sig-object cpp" id="_CPPv4NK3xdg9RayTracer12next_tree_idEv">
-<span id="_CPPv3NK3xdg9RayTracer12next_tree_idEv"></span><span id="_CPPv2NK3xdg9RayTracer12next_tree_idEv"></span><span id="xdg::RayTracer::next_tree_idC"></span><span class="target" id="classxdg_1_1RayTracer_1aad091eda9a068914dce96f08b22afbab"></span><span class="n"><span class="pre">TreeID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">next_tree_id</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg9RayTracer12next_tree_idEv" title="Link to this definition"></a><br /></dt>
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer20next_surface_tree_idEv">
+<span id="_CPPv3N3xdg9RayTracer20next_surface_tree_idEv"></span><span id="_CPPv2N3xdg9RayTracer20next_surface_tree_idEv"></span><span id="xdg::RayTracer::next_surface_tree_id"></span><span class="target" id="classxdg_1_1RayTracer_1aba121a4915b081af27966c791485c60f"></span><span class="n"><span class="pre">SurfaceTreeID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">next_surface_tree_id</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer20next_surface_tree_idEv" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer20next_element_tree_idEv">
+<span id="_CPPv3N3xdg9RayTracer20next_element_tree_idEv"></span><span id="_CPPv2N3xdg9RayTracer20next_element_tree_idEv"></span><span id="xdg::RayTracer::next_element_tree_id"></span><span class="target" id="classxdg_1_1RayTracer_1a8e98ba1d22bdfac7b1c3b9132f0237d2"></span><span class="n"><span class="pre">ElementTreeID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">next_element_tree_id</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer20next_element_tree_idEv" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
 
 </div>
 <div class="breathe-sectiondef docutils container">
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-protected-attributes">Protected Attributes</p>
 <dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer12global_tree_E">
-<span id="_CPPv3N3xdg9RayTracer12global_tree_E"></span><span id="_CPPv2N3xdg9RayTracer12global_tree_E"></span><span id="xdg::RayTracer::global_tree___TreeID"></span><span class="target" id="classxdg_1_1RayTracer_1a034e0229569ec183a4b4a39059356c1d"></span><span class="n"><span class="pre">TreeID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">global_tree_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer12global_tree_E" title="Link to this definition"></a><br /></dt>
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer20global_surface_tree_E">
+<span id="_CPPv3N3xdg9RayTracer20global_surface_tree_E"></span><span id="_CPPv2N3xdg9RayTracer20global_surface_tree_E"></span><span id="xdg::RayTracer::global_surface_tree___SurfaceTreeID"></span><span class="target" id="classxdg_1_1RayTracer_1a4aff01b5d9d91189ed693b1167abd729"></span><span class="n"><span class="pre">SurfaceTreeID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">global_surface_tree_</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="n"><span class="pre">TREE_NONE</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer20global_surface_tree_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer20global_element_tree_E">
+<span id="_CPPv3N3xdg9RayTracer20global_element_tree_E"></span><span id="_CPPv2N3xdg9RayTracer20global_element_tree_E"></span><span id="xdg::RayTracer::global_element_tree___ElementTreeID"></span><span class="target" id="classxdg_1_1RayTracer_1a907428011ef0c0c63c2f9deb2df846c7"></span><span class="n"><span class="pre">ElementTreeID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">global_element_tree_</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="n"><span class="pre">TREE_NONE</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer20global_element_tree_E" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
 
 <dl class="cpp var">
 <dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer20surface_to_tree_map_E">
-<span id="_CPPv3N3xdg9RayTracer20surface_to_tree_map_E"></span><span id="_CPPv2N3xdg9RayTracer20surface_to_tree_map_E"></span><span id="xdg::RayTracer::surface_to_tree_map___std::map:MeshID.TreeID:"></span><span class="target" id="classxdg_1_1RayTracer_1af41381126244fd69131c9696d93f352c"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">TreeID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_to_tree_map_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer20surface_to_tree_map_E" title="Link to this definition"></a><br /></dt>
+<span id="_CPPv3N3xdg9RayTracer20surface_to_tree_map_E"></span><span id="_CPPv2N3xdg9RayTracer20surface_to_tree_map_E"></span><span id="xdg::RayTracer::surface_to_tree_map___std::map:MeshID.SurfaceTreeID:"></span><span class="target" id="classxdg_1_1RayTracer_1a36b91b85fd2ec4ae0b02c3933593f689"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">SurfaceTreeID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_to_tree_map_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer20surface_to_tree_map_E" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
 
 <dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer6trees_E">
-<span id="_CPPv3N3xdg9RayTracer6trees_E"></span><span id="_CPPv2N3xdg9RayTracer6trees_E"></span><span id="xdg::RayTracer::trees___std::vector:TreeID:"></span><span class="target" id="classxdg_1_1RayTracer_1acbe4565dfbb7bd90632515866a26f1b0"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">TreeID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">trees_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer6trees_E" title="Link to this definition"></a><br /></dt>
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer24point_location_tree_map_E">
+<span id="_CPPv3N3xdg9RayTracer24point_location_tree_map_E"></span><span id="_CPPv2N3xdg9RayTracer24point_location_tree_map_E"></span><span id="xdg::RayTracer::point_location_tree_map___std::map:MeshID.ElementTreeID:"></span><span class="target" id="classxdg_1_1RayTracer_1ad1e0870f0f18f13b5146c714dad3041f"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">ElementTreeID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">point_location_tree_map_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer24point_location_tree_map_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer14surface_trees_E">
+<span id="_CPPv3N3xdg9RayTracer14surface_trees_E"></span><span id="_CPPv2N3xdg9RayTracer14surface_trees_E"></span><span id="xdg::RayTracer::surface_trees___std::vector:SurfaceTreeID:"></span><span class="target" id="classxdg_1_1RayTracer_1ad11ccd3b6a7043a96010ca6bd381f141"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">SurfaceTreeID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_trees_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer14surface_trees_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer14element_trees_E">
+<span id="_CPPv3N3xdg9RayTracer14element_trees_E"></span><span id="_CPPv2N3xdg9RayTracer14element_trees_E"></span><span id="xdg::RayTracer::element_trees___std::vector:ElementTreeID:"></span><span class="target" id="classxdg_1_1RayTracer_1a5316a9ffa4072418b351beb4b415e6c6"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">ElementTreeID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">element_trees_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer14element_trees_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer21next_surface_tree_id_E">
+<span id="_CPPv3N3xdg9RayTracer21next_surface_tree_id_E"></span><span id="_CPPv2N3xdg9RayTracer21next_surface_tree_id_E"></span><span id="xdg::RayTracer::next_surface_tree_id___SurfaceTreeID"></span><span class="target" id="classxdg_1_1RayTracer_1afc42352b0363b6bd22f7ed6172f5f963"></span><span class="n"><span class="pre">SurfaceTreeID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">next_surface_tree_id_</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer21next_surface_tree_id_E" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracer21next_element_tree_id_E">
+<span id="_CPPv3N3xdg9RayTracer21next_element_tree_id_E"></span><span id="_CPPv2N3xdg9RayTracer21next_element_tree_id_E"></span><span id="xdg::RayTracer::next_element_tree_id___ElementTreeID"></span><span class="target" id="classxdg_1_1RayTracer_1acff832a0fdef4fe9d316e39327b68d42"></span><span class="n"><span class="pre">ElementTreeID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">next_element_tree_id_</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracer21next_element_tree_id_E" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
 
 <dl class="cpp var">

@@ -92,15 +92,33 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a37de8e4646e09d4278cd79cb063cf106" id="r_a37de8e4646e09d4278cd79cb063cf106"><td class="memItemLeft" align="right" valign="top"><a id="a37de8e4646e09d4278cd79cb063cf106" name="a37de8e4646e09d4278cd79cb063cf106"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>init</b> ()=0</td></tr>
 <tr class="separator:a37de8e4646e09d4278cd79cb063cf106"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6cf747f577134bc9cb3db303a7895c6d" id="r_a6cf747f577134bc9cb3db303a7895c6d"><td class="memItemLeft" align="right" valign="top"><a id="a6cf747f577134bc9cb3db303a7895c6d" name="a6cf747f577134bc9cb3db303a7895c6d"></a>
-virtual TreeID&#160;</td><td class="memItemRight" valign="bottom"><b>register_volume</b> (const std::shared_ptr&lt; <a class="el" href="classxdg_1_1MeshManager.html">MeshManager</a> &gt; mesh_manager, MeshID volume)=0</td></tr>
-<tr class="separator:a6cf747f577134bc9cb3db303a7895c6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9f1e8a9d65468e172c231cd67d30c97" id="r_aa9f1e8a9d65468e172c231cd67d30c97"><td class="memItemLeft" align="right" valign="top">virtual std::pair&lt; TreeID, TreeID &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1RayTracer.html#aa9f1e8a9d65468e172c231cd67d30c97">register_volume</a> (const std::shared_ptr&lt; <a class="el" href="classxdg_1_1MeshManager.html">MeshManager</a> &gt; &amp;mesh_manager, MeshID volume)=0</td></tr>
+<tr class="memdesc:aa9f1e8a9d65468e172c231cd67d30c97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Registers a volume with the ray tracer.  <br /></td></tr>
+<tr class="separator:aa9f1e8a9d65468e172c231cd67d30c97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab68ebf857e0d5a3db02d268e8ebc9693" id="r_ab68ebf857e0d5a3db02d268e8ebc9693"><td class="memItemLeft" align="right" valign="top">virtual TreeID&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1RayTracer.html#ab68ebf857e0d5a3db02d268e8ebc9693">create_surface_tree</a> (const std::shared_ptr&lt; <a class="el" href="classxdg_1_1MeshManager.html">MeshManager</a> &gt; &amp;mesh_manager, MeshID volume)=0</td></tr>
+<tr class="memdesc:ab68ebf857e0d5a3db02d268e8ebc9693"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a surface tree for a given volume.  <br /></td></tr>
+<tr class="separator:ab68ebf857e0d5a3db02d268e8ebc9693"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aacf9e02b328e1daec6877180b4c34849" id="r_aacf9e02b328e1daec6877180b4c34849"><td class="memItemLeft" align="right" valign="top">virtual TreeID&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1RayTracer.html#aacf9e02b328e1daec6877180b4c34849">create_element_tree</a> (const std::shared_ptr&lt; <a class="el" href="classxdg_1_1MeshManager.html">MeshManager</a> &gt; &amp;mesh_manager, MeshID volume)=0</td></tr>
+<tr class="memdesc:aacf9e02b328e1daec6877180b4c34849"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates an element tree for a given volume.  <br /></td></tr>
+<tr class="separator:aacf9e02b328e1daec6877180b4c34849"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4373bbc45199c952e3700f07ea84ea4f" id="r_a4373bbc45199c952e3700f07ea84ea4f"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1RayTracer.html#a4373bbc45199c952e3700f07ea84ea4f">create_global_surface_tree</a> ()=0</td></tr>
+<tr class="memdesc:a4373bbc45199c952e3700f07ea84ea4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Builds a global tree for all surfaces registered with the ray tracer.  <br /></td></tr>
+<tr class="separator:a4373bbc45199c952e3700f07ea84ea4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba1db69f2ce84a44f2d528a27a6e31d4" id="r_aba1db69f2ce84a44f2d528a27a6e31d4"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1RayTracer.html#aba1db69f2ce84a44f2d528a27a6e31d4">create_global_element_tree</a> ()=0</td></tr>
+<tr class="memdesc:aba1db69f2ce84a44f2d528a27a6e31d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Builds a global tree for all elements registered with the ray tracer.  <br /></td></tr>
+<tr class="separator:aba1db69f2ce84a44f2d528a27a6e31d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1dd6c536860e61f0a66942ddd170dbc1" id="r_a1dd6c536860e61f0a66942ddd170dbc1"><td class="memItemLeft" align="right" valign="top"><a id="a1dd6c536860e61f0a66942ddd170dbc1" name="a1dd6c536860e61f0a66942ddd170dbc1"></a>
 virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>point_in_volume</b> (TreeID tree, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;point, const <a class="el" href="structxdg_1_1Vec3da.html">Direction</a> *direction=nullptr, const std::vector&lt; MeshID &gt; *exclude_primitives=nullptr) const =0</td></tr>
 <tr class="separator:a1dd6c536860e61f0a66942ddd170dbc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a55fde95582da18d294f1c4a39fda71a8" id="r_a55fde95582da18d294f1c4a39fda71a8"><td class="memItemLeft" align="right" valign="top"><a id="a55fde95582da18d294f1c4a39fda71a8" name="a55fde95582da18d294f1c4a39fda71a8"></a>
 virtual std::pair&lt; double, MeshID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>ray_fire</b> (TreeID tree, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;origin, const <a class="el" href="structxdg_1_1Vec3da.html">Direction</a> &amp;direction, const double dist_limit=INFTY, HitOrientation orientation=HitOrientation::EXITING, std::vector&lt; MeshID &gt; *const exclude_primitives=nullptr)=0</td></tr>
 <tr class="separator:a55fde95582da18d294f1c4a39fda71a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa5c5d6eac9e41b6dfc444b2c14c767a" id="r_afa5c5d6eac9e41b6dfc444b2c14c767a"><td class="memItemLeft" align="right" valign="top">virtual MeshID&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1RayTracer.html#afa5c5d6eac9e41b6dfc444b2c14c767a">find_element</a> (const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;point) const =0</td></tr>
+<tr class="memdesc:afa5c5d6eac9e41b6dfc444b2c14c767a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finds the element containing a given point using the global element tree.  <br /></td></tr>
+<tr class="separator:afa5c5d6eac9e41b6dfc444b2c14c767a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48793655fde87a275f8e9dd2193f2572" id="r_a48793655fde87a275f8e9dd2193f2572"><td class="memItemLeft" align="right" valign="top">virtual MeshID&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1RayTracer.html#a48793655fde87a275f8e9dd2193f2572">find_element</a> (TreeID tree, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;point) const =0</td></tr>
+<tr class="memdesc:a48793655fde87a275f8e9dd2193f2572"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finds the element containing a given point using a specific tree.  <br /></td></tr>
+<tr class="separator:a48793655fde87a275f8e9dd2193f2572"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a19c072a24900adc8bace4295c6ad37ba" id="r_a19c072a24900adc8bace4295c6ad37ba"><td class="memItemLeft" align="right" valign="top"><a id="a19c072a24900adc8bace4295c6ad37ba" name="a19c072a24900adc8bace4295c6ad37ba"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>closest</b> (TreeID tree, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;origin, double &amp;dist, MeshID &amp;triangle)=0</td></tr>
 <tr class="separator:a19c072a24900adc8bace4295c6ad37ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -113,37 +131,340 @@ virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>occluded</b> 
 <tr class="memitem:afc804185b7d12c376e990a8c90264fa4" id="r_afc804185b7d12c376e990a8c90264fa4"><td class="memItemLeft" align="right" valign="top"><a id="afc804185b7d12c376e990a8c90264fa4" name="afc804185b7d12c376e990a8c90264fa4"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>num_registered_trees</b> () const</td></tr>
 <tr class="separator:afc804185b7d12c376e990a8c90264fa4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aafe9eb3853452ae3ee05dc7e76803f3f" id="r_aafe9eb3853452ae3ee05dc7e76803f3f"><td class="memItemLeft" align="right" valign="top"><a id="aafe9eb3853452ae3ee05dc7e76803f3f" name="aafe9eb3853452ae3ee05dc7e76803f3f"></a>
-const std::vector&lt; MeshID &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>trees</b> () const</td></tr>
-<tr class="separator:aafe9eb3853452ae3ee05dc7e76803f3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeedad626fc299180d67d413ce390e6b9" id="r_aeedad626fc299180d67d413ce390e6b9"><td class="memItemLeft" align="right" valign="top"><a id="aeedad626fc299180d67d413ce390e6b9" name="aeedad626fc299180d67d413ce390e6b9"></a>
-virtual const std::shared_ptr&lt; <a class="el" href="structxdg_1_1GeometryUserData.html">GeometryUserData</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>geometry_data</b> (MeshID surface) const =0</td></tr>
-<tr class="separator:aeedad626fc299180d67d413ce390e6b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee3cdb574f57a423035308559be099d0" id="r_aee3cdb574f57a423035308559be099d0"><td class="memItemLeft" align="right" valign="top"><a id="aee3cdb574f57a423035308559be099d0" name="aee3cdb574f57a423035308559be099d0"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>num_registered_surface_trees</b> () const</td></tr>
+<tr class="separator:aee3cdb574f57a423035308559be099d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96422ec87360b0ddc4a13644bdadefc5" id="r_a96422ec87360b0ddc4a13644bdadefc5"><td class="memItemLeft" align="right" valign="top"><a id="a96422ec87360b0ddc4a13644bdadefc5" name="a96422ec87360b0ddc4a13644bdadefc5"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>num_registered_element_trees</b> () const</td></tr>
+<tr class="separator:a96422ec87360b0ddc4a13644bdadefc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:a834855c400250a3633c4ef711214afe5" id="r_a834855c400250a3633c4ef711214afe5"><td class="memItemLeft" align="right" valign="top"><a id="a834855c400250a3633c4ef711214afe5" name="a834855c400250a3633c4ef711214afe5"></a>
 const double&#160;</td><td class="memItemRight" valign="bottom"><b>bounding_box_bump</b> (const std::shared_ptr&lt; <a class="el" href="classxdg_1_1MeshManager.html">MeshManager</a> &gt; mesh_manager, MeshID volume_id)</td></tr>
 <tr class="separator:a834855c400250a3633c4ef711214afe5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad091eda9a068914dce96f08b22afbab" id="r_aad091eda9a068914dce96f08b22afbab"><td class="memItemLeft" align="right" valign="top"><a id="aad091eda9a068914dce96f08b22afbab" name="aad091eda9a068914dce96f08b22afbab"></a>
-TreeID&#160;</td><td class="memItemRight" valign="bottom"><b>next_tree_id</b> () const</td></tr>
-<tr class="separator:aad091eda9a068914dce96f08b22afbab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba121a4915b081af27966c791485c60f" id="r_aba121a4915b081af27966c791485c60f"><td class="memItemLeft" align="right" valign="top"><a id="aba121a4915b081af27966c791485c60f" name="aba121a4915b081af27966c791485c60f"></a>
+SurfaceTreeID&#160;</td><td class="memItemRight" valign="bottom"><b>next_surface_tree_id</b> ()</td></tr>
+<tr class="separator:aba121a4915b081af27966c791485c60f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e98ba1d22bdfac7b1c3b9132f0237d2" id="r_a8e98ba1d22bdfac7b1c3b9132f0237d2"><td class="memItemLeft" align="right" valign="top"><a id="a8e98ba1d22bdfac7b1c3b9132f0237d2" name="a8e98ba1d22bdfac7b1c3b9132f0237d2"></a>
+ElementTreeID&#160;</td><td class="memItemRight" valign="bottom"><b>next_element_tree_id</b> ()</td></tr>
+<tr class="separator:a8e98ba1d22bdfac7b1c3b9132f0237d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-attribs" name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
-<tr class="memitem:a034e0229569ec183a4b4a39059356c1d" id="r_a034e0229569ec183a4b4a39059356c1d"><td class="memItemLeft" align="right" valign="top"><a id="a034e0229569ec183a4b4a39059356c1d" name="a034e0229569ec183a4b4a39059356c1d"></a>
-TreeID&#160;</td><td class="memItemRight" valign="bottom"><b>global_tree_</b></td></tr>
-<tr class="separator:a034e0229569ec183a4b4a39059356c1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af41381126244fd69131c9696d93f352c" id="r_af41381126244fd69131c9696d93f352c"><td class="memItemLeft" align="right" valign="top"><a id="af41381126244fd69131c9696d93f352c" name="af41381126244fd69131c9696d93f352c"></a>
-std::map&lt; MeshID, TreeID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>surface_to_tree_map_</b></td></tr>
-<tr class="separator:af41381126244fd69131c9696d93f352c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acbe4565dfbb7bd90632515866a26f1b0" id="r_acbe4565dfbb7bd90632515866a26f1b0"><td class="memItemLeft" align="right" valign="top"><a id="acbe4565dfbb7bd90632515866a26f1b0" name="acbe4565dfbb7bd90632515866a26f1b0"></a>
-std::vector&lt; TreeID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>trees_</b></td></tr>
-<tr class="separator:acbe4565dfbb7bd90632515866a26f1b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4aff01b5d9d91189ed693b1167abd729" id="r_a4aff01b5d9d91189ed693b1167abd729"><td class="memItemLeft" align="right" valign="top"><a id="a4aff01b5d9d91189ed693b1167abd729" name="a4aff01b5d9d91189ed693b1167abd729"></a>
+SurfaceTreeID&#160;</td><td class="memItemRight" valign="bottom"><b>global_surface_tree_</b> {TREE_NONE}</td></tr>
+<tr class="separator:a4aff01b5d9d91189ed693b1167abd729"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a907428011ef0c0c63c2f9deb2df846c7" id="r_a907428011ef0c0c63c2f9deb2df846c7"><td class="memItemLeft" align="right" valign="top"><a id="a907428011ef0c0c63c2f9deb2df846c7" name="a907428011ef0c0c63c2f9deb2df846c7"></a>
+ElementTreeID&#160;</td><td class="memItemRight" valign="bottom"><b>global_element_tree_</b> {TREE_NONE}</td></tr>
+<tr class="separator:a907428011ef0c0c63c2f9deb2df846c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a36b91b85fd2ec4ae0b02c3933593f689" id="r_a36b91b85fd2ec4ae0b02c3933593f689"><td class="memItemLeft" align="right" valign="top"><a id="a36b91b85fd2ec4ae0b02c3933593f689" name="a36b91b85fd2ec4ae0b02c3933593f689"></a>
+std::map&lt; MeshID, SurfaceTreeID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>surface_to_tree_map_</b></td></tr>
+<tr class="separator:a36b91b85fd2ec4ae0b02c3933593f689"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1e0870f0f18f13b5146c714dad3041f" id="r_ad1e0870f0f18f13b5146c714dad3041f"><td class="memItemLeft" align="right" valign="top"><a id="ad1e0870f0f18f13b5146c714dad3041f" name="ad1e0870f0f18f13b5146c714dad3041f"></a>
+std::map&lt; MeshID, ElementTreeID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>point_location_tree_map_</b></td></tr>
+<tr class="separator:ad1e0870f0f18f13b5146c714dad3041f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad11ccd3b6a7043a96010ca6bd381f141" id="r_ad11ccd3b6a7043a96010ca6bd381f141"><td class="memItemLeft" align="right" valign="top"><a id="ad11ccd3b6a7043a96010ca6bd381f141" name="ad11ccd3b6a7043a96010ca6bd381f141"></a>
+std::vector&lt; SurfaceTreeID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>surface_trees_</b></td></tr>
+<tr class="separator:ad11ccd3b6a7043a96010ca6bd381f141"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5316a9ffa4072418b351beb4b415e6c6" id="r_a5316a9ffa4072418b351beb4b415e6c6"><td class="memItemLeft" align="right" valign="top"><a id="a5316a9ffa4072418b351beb4b415e6c6" name="a5316a9ffa4072418b351beb4b415e6c6"></a>
+std::vector&lt; ElementTreeID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>element_trees_</b></td></tr>
+<tr class="separator:a5316a9ffa4072418b351beb4b415e6c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc42352b0363b6bd22f7ed6172f5f963" id="r_afc42352b0363b6bd22f7ed6172f5f963"><td class="memItemLeft" align="right" valign="top"><a id="afc42352b0363b6bd22f7ed6172f5f963" name="afc42352b0363b6bd22f7ed6172f5f963"></a>
+SurfaceTreeID&#160;</td><td class="memItemRight" valign="bottom"><b>next_surface_tree_id_</b> {0}</td></tr>
+<tr class="separator:afc42352b0363b6bd22f7ed6172f5f963"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acff832a0fdef4fe9d316e39327b68d42" id="r_acff832a0fdef4fe9d316e39327b68d42"><td class="memItemLeft" align="right" valign="top"><a id="acff832a0fdef4fe9d316e39327b68d42" name="acff832a0fdef4fe9d316e39327b68d42"></a>
+ElementTreeID&#160;</td><td class="memItemRight" valign="bottom"><b>next_element_tree_id_</b> {0}</td></tr>
+<tr class="separator:acff832a0fdef4fe9d316e39327b68d42"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a17412d7082e57936c46847aae1f55e84" id="r_a17412d7082e57936c46847aae1f55e84"><td class="memItemLeft" align="right" valign="top"><a id="a17412d7082e57936c46847aae1f55e84" name="a17412d7082e57936c46847aae1f55e84"></a>
 double&#160;</td><td class="memItemRight" valign="bottom"><b>numerical_precision_</b> {1e-3}</td></tr>
 <tr class="separator:a17412d7082e57936c46847aae1f55e84"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="aacf9e02b328e1daec6877180b4c34849" name="aacf9e02b328e1daec6877180b4c34849"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aacf9e02b328e1daec6877180b4c34849">&#9670;&#160;</a></span>create_element_tree()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual TreeID xdg::RayTracer::create_element_tree </td>
+          <td>(</td>
+          <td class="paramtype">const std::shared_ptr&lt; <a class="el" href="classxdg_1_1MeshManager.html">MeshManager</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>mesh_manager</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">MeshID&#160;</td>
+          <td class="paramname"><em>volume</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates an element tree for a given volume. </p>
+<p>This method creates a ray tracing tree specifically for the volumetric elements of a given volume. The tree can be used for point-in-element queries.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mesh_manager</td><td>A shared pointer to the <a class="el" href="classxdg_1_1MeshManager.html">MeshManager</a> responsible for managing the volume's mesh data. </td></tr>
+    <tr><td class="paramname">volume</td><td>The MeshID representing the volume whose elements will be used to create the tree. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A TreeID that can be used to reference this element tree in subsequent point containment operations. </dd></dl>
+
+<p>Implemented in <a class="el" href="classxdg_1_1EmbreeRayTracer.html#a3d1a1c77d9474faf23417e4ada2bcc66">xdg::EmbreeRayTracer</a>.</p>
+
+</div>
+</div>
+<a id="aba1db69f2ce84a44f2d528a27a6e31d4" name="aba1db69f2ce84a44f2d528a27a6e31d4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aba1db69f2ce84a44f2d528a27a6e31d4">&#9670;&#160;</a></span>create_global_element_tree()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void xdg::RayTracer::create_global_element_tree </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Builds a global tree for all elements registered with the ray tracer. </p>
+
+<p>Implemented in <a class="el" href="classxdg_1_1EmbreeRayTracer.html#ac135a6369607257515166661df42ac20">xdg::EmbreeRayTracer</a>.</p>
+
+</div>
+</div>
+<a id="a4373bbc45199c952e3700f07ea84ea4f" name="a4373bbc45199c952e3700f07ea84ea4f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4373bbc45199c952e3700f07ea84ea4f">&#9670;&#160;</a></span>create_global_surface_tree()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void xdg::RayTracer::create_global_surface_tree </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Builds a global tree for all surfaces registered with the ray tracer. </p>
+
+<p>Implemented in <a class="el" href="classxdg_1_1EmbreeRayTracer.html#a73ea8dc8cb5eb6a8896514ab0cf2f490">xdg::EmbreeRayTracer</a>.</p>
+
+</div>
+</div>
+<a id="ab68ebf857e0d5a3db02d268e8ebc9693" name="ab68ebf857e0d5a3db02d268e8ebc9693"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab68ebf857e0d5a3db02d268e8ebc9693">&#9670;&#160;</a></span>create_surface_tree()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual TreeID xdg::RayTracer::create_surface_tree </td>
+          <td>(</td>
+          <td class="paramtype">const std::shared_ptr&lt; <a class="el" href="classxdg_1_1MeshManager.html">MeshManager</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>mesh_manager</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">MeshID&#160;</td>
+          <td class="paramname"><em>volume</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates a surface tree for a given volume. </p>
+<p>This method creates a ray tracing tree specifically for the surfaces of a given volume. The tree can be used for ray-surface intersection queries.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mesh_manager</td><td>A shared pointer to the <a class="el" href="classxdg_1_1MeshManager.html">MeshManager</a> responsible for managing the volume's mesh data. </td></tr>
+    <tr><td class="paramname">volume</td><td>The MeshID representing the volume whose surfaces will be used to create the tree. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A TreeID that can be used to reference this surface tree in subsequent ray tracing operations. </dd></dl>
+
+<p>Implemented in <a class="el" href="classxdg_1_1EmbreeRayTracer.html#ae82c2350c53847819e52032726c6fb5e">xdg::EmbreeRayTracer</a>.</p>
+
+</div>
+</div>
+<a id="afa5c5d6eac9e41b6dfc444b2c14c767a" name="afa5c5d6eac9e41b6dfc444b2c14c767a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afa5c5d6eac9e41b6dfc444b2c14c767a">&#9670;&#160;</a></span>find_element() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual MeshID xdg::RayTracer::find_element </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;&#160;</td>
+          <td class="paramname"><em>point</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Finds the element containing a given point using the global element tree. </p>
+<p>This method searches for the element that contains the specified point using the global element tree. It is a convenience wrapper around the tree-specific find_element method.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">point</td><td>The Position to search for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The MeshID of the containing element, or ID_NONE if no element contains the point </dd></dl>
+
+<p>Implemented in <a class="el" href="classxdg_1_1EmbreeRayTracer.html#a687874e2ce99ec63f00ee1e8fdc37aac">xdg::EmbreeRayTracer</a>.</p>
+
+</div>
+</div>
+<a id="a48793655fde87a275f8e9dd2193f2572" name="a48793655fde87a275f8e9dd2193f2572"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a48793655fde87a275f8e9dd2193f2572">&#9670;&#160;</a></span>find_element() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual MeshID xdg::RayTracer::find_element </td>
+          <td>(</td>
+          <td class="paramtype">TreeID&#160;</td>
+          <td class="paramname"><em>tree</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;&#160;</td>
+          <td class="paramname"><em>point</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Finds the element containing a given point using a specific tree. </p>
+<p>This method searches for the element that contains the specified point using the provided tree. It is a more specific version of the global find_element method. </p>
+
+<p>Implemented in <a class="el" href="classxdg_1_1EmbreeRayTracer.html#a43950cfdf3d12b1e81b357fef8c007a7">xdg::EmbreeRayTracer</a>.</p>
+
+</div>
+</div>
+<a id="aa9f1e8a9d65468e172c231cd67d30c97" name="aa9f1e8a9d65468e172c231cd67d30c97"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9f1e8a9d65468e172c231cd67d30c97">&#9670;&#160;</a></span>register_volume()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual std::pair&lt; TreeID, TreeID &gt; xdg::RayTracer::register_volume </td>
+          <td>(</td>
+          <td class="paramtype">const std::shared_ptr&lt; <a class="el" href="classxdg_1_1MeshManager.html">MeshManager</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>mesh_manager</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">MeshID&#160;</td>
+          <td class="paramname"><em>volume</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Registers a volume with the ray tracer. </p>
+<p>This method associates a volume, represented by a MeshID, with the ray tracer using the provided <a class="el" href="classxdg_1_1MeshManager.html">MeshManager</a>. It returns a pair of TreeIDs that can be used for further operations involving the registered volume.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mesh_manager</td><td>A shared pointer to the <a class="el" href="classxdg_1_1MeshManager.html">MeshManager</a> responsible for managing the volume's mesh data. </td></tr>
+    <tr><td class="paramname">volume</td><td>The MeshID representing the volume to be registered. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pair of TreeIDs, where the first TreeID corresponds to the surface ray tracing tree and the second TreeID corresponds to the volume element point location tree (if applicable). </dd></dl>
+
+<p>Implemented in <a class="el" href="classxdg_1_1EmbreeRayTracer.html#a20aceb700e4444de518385bd90f402b2">xdg::EmbreeRayTracer</a>.</p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>/home/runner/work/xdg/xdg/include/xdg/<b>ray_tracing_interface.h</b></li>
 </ul>
