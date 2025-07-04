@@ -29,6 +29,23 @@ public:
 
   virtual int num_ents_of_dimension(int dim) const = 0;
 
+  virtual std::vector<std::pair<MeshID, double>>
+  walk_elements(MeshID starting_element,
+                const Position& start,
+                const Position& end) const ;
+
+  virtual std::vector<std::pair<MeshID, double>>
+  walk_elements(MeshID starting_element,
+                const Position& start,
+                const Direction& u,
+                double distance) const ;
+
+
+  virtual std::pair<MeshID, double>
+  next_element(MeshID current_element,
+               const Position& r,
+               const Position& u) const = 0;
+
   // Mesh
   virtual int num_volume_elements(MeshID volume) const = 0;
 

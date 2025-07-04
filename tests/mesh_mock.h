@@ -147,6 +147,68 @@ public:
     }};
   }
 
+std::pair<MeshID, double>
+next_element(MeshID current_element,
+             const Position& r,
+             const Position& u) const override
+{
+  // get the tetrahedron element
+  const auto& elem_ref = tetrahedron_connectivity()[current_element];
+
+  std::array<double, 4> dists = {INFTY, INFTY, INFTY, INFTY};
+  std::array<bool, 4> hit_types = {false, false, false, false};
+
+  auto tet_face_conn = tet_faces(elem_ref);
+
+  // get the faces (triangles) of this element
+  for (int i = 0; i < 4; i++) {
+    // triangle connectivity
+    std::array<Position, 3> coords;
+    for (int j = 0; j < 3; j++) {
+      coords[j] = vertices()[tet_face_conn[i][j]];
+    }
+
+    // get the normal of the triangle
+    const Position v1 = coords[1] - coords[0];
+    const Position v2 = coords[2] - coords[0];
+
+    const Position normal = (v1.cross(v2)).normalize();
+
+    if (normal.dot(u) < 0.0) {
+      // the ray is not exiting this face
+      continue;
+    }
+
+    // perform ray-triangle intersection
+    hit_types[i] = plucker_ray_tri_intersect(coords, r, u, dists[i]);
+
+    if (dists[i] < 0.0) {
+      hit_types[i] = false;
+      dists[i] = INFTY;
+    }
+  }
+
+  // determine the minimum distance to exit and the face number
+  int idx_out = -1;
+  double min_dist = INFTY;
+  for (int i = 0; i < dists.size(); i++) {
+    if (!hit_types[i])
+      continue;
+    if (dists[i] < min_dist) {
+      min_dist = dists[i];
+      idx_out = i;
+    }
+  }
+
+  if (idx_out == -1) {
+
+    fatal_error(fmt::format("No exit found in element {}", current_element));
+  }
+
+  MeshID next_element = element_adjacencies().at(current_element)[idx_out];
+  return {next_element, min_dist};
+}
+
   Sense surface_sense(MeshID surface, MeshID volume) const override {
     auto it = surface_sense_map_.find(surface);
     if (it == surface_sense_map_.end()) {
@@ -198,6 +260,10 @@ public:
 
   const std::vector<std::array<int, 4>>& tetrahedron_connectivity() const {
     return tetrahedron_connectivity_;
+  }
+
+  const std::unordered_map<MeshID, std::array<MeshID, 4>>& element_adjacencies() const {
+    return element_adjacencies_;
   }
 
   virtual SurfaceElementType get_surface_element_type(MeshID surface) const override {
@@ -268,6 +334,22 @@ private:
     // Surface 5: lower y plane
     {0, 7, 4},
     {0, 3, 7}
+  };
+
+  // face-adjacency list for the tetrahedron elements
+  std::unordered_map<MeshID, std::array<MeshID, 4>> element_adjacencies_ {
+    {0, {-1, 1, 4, 11}},
+    {1, {-1, 9, 0, 7}},
+    {2, {-1, 5, 3, 10}},
+    {3, {-1, 2, 8, 6}},
+    {4, {-1, 0, 5, 10}},
+    {5, {-1, 4, 8, 2}},
+    {6, {-1, 7, 11, 3}},
+    {7, {-1, 1, 6, 9}},
+    {8, {-1, 5, 9, 3}},
+    {9, {-1, 8, 1, 7}},
+    {10, {-1, 11, 4, 2}},
+    {11, {-1, 0, 10, 6}}
   };
 
 };
