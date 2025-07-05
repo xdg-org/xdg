@@ -86,6 +86,9 @@ public:
     return {vertices()[conn[0]], vertices()[conn[1]], vertices()[conn[2]], vertices()[conn[3]]};
   }
 
+  virtual MeshID element_volume_id(MeshID element) const override {
+    return 1;
+  }
 
   virtual std::array<Vertex, 3> face_vertices(MeshID element) const override {
     const auto& conn = triangle_connectivity()[element];
