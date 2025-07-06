@@ -6,6 +6,7 @@
 #include "xdg/moab/mesh_manager.h"
 
 #include "xdg/error.h"
+#include "xdg/geometry/plucker.h"
 #include "xdg/moab/tag_conventions.h"
 #include "xdg/util/str_utils.h"
 #include "xdg/vec3da.h"
@@ -141,39 +142,57 @@ MOABMeshManager::next_element(MeshID current_element,
                                const Position& r,
                                const Position& u) const
 {
-  fatal_error("next_element not implemented");
-  // auto element_adjacencies = this->mb_direct()->element_adjacencies(current_element);
-  // auto element_faces = this->mb_direct()->element_faces(current_element);
+  auto element_adjacencies = this->mb_direct()->get_element_adjacencies(current_element);
 
-  // // get the distances to each face
-  // std::vector<double> dists;
-  // std::vector<bool> hit_types;
-  // for (auto face : element_faces) {
-  //   double dist;
-  //   bool hit_type;
-  //   this->mb_direct()->closest(face, r, dist, hit_type);
-  //   dists.push_back(dist);
-  //   hit_types.push_back(hit_type);
-  // }
+  auto element_coords = this->element_vertices(current_element);
+  const auto& element_ordering = this->mb_direct()->get_face_ordering(moab::MBTET);
 
-  // // find the closest face
-  // int idx_out = -1;
-  // double min_dist = INFTY;
-  // for (int i = 0; i < dists.size(); i++) {
-  //   if (!hit_types[i])
-  //     continue;
-  //   if (dists[i] < min_dist) {
-  //     min_dist = dists[i];
-  //     idx_out = i;
-  //   }
-  // }
+  std::array<double, 4> dists = {INFTY, INFTY, INFTY, INFTY};
+  std::array<bool, 4> hit_types;
 
-  // if (idx_out == -1) {
-  //   fatal_error(fmt::format("No exit found in element {}", current_element));
-  // }
+  for (int i = 0; i < 4; i++) {
+    auto ordering = element_ordering[i];
+    std::array<Vertex, 3> verts;
+    for (int j = 0; j < verts.size(); j++) {
+      verts[j] = element_coords[ordering[j]];
+    }
 
-  // MeshID next_element = element_adjacencies[idx_out];
-  // return {next_element, min_dist};
+    // get the normal of the triangle
+    const Position v1 = verts[1] - verts[0];
+    const Position v2 = verts[2] - verts[0];
+
+    const Position normal = (v1.cross(v2)).normalize();
+
+    // perform ray-triangle intersection
+    int orientation = 1; // exiting hit only
+    hit_types[i] = plucker_ray_tri_intersect(verts, r, u, dists[i], INFTY, nullptr, &orientation);
+    dists[i] = std::max(0.0, dists[i]);
+  }
+
+  // determine the minimum distance to exit and the face number
+  int idx_out = -1;
+  double min_dist = INFTY;
+  for (int i = 0; i < dists.size(); i++) {
+    if (dists[i] < min_dist) {
+      min_dist = dists[i];
+      idx_out = i;
+    }
+  }
+
+
+  if (idx_out == -1) {
+    fatal_error(fmt::format("No exit found in element {}", current_element));
+  }
+
+  moab::EntityHandle element_handle;
+  this->moab_interface()->handle_from_id(moab::MBTET, current_element, element_handle);
+
+  moab::EntityHandle next_element = this->mb_direct()->get_adjacent_element(element_handle, idx_out);
+  if (next_element != ID_NONE) {
+    return {next_element, min_dist};
+  }
+
+  return {this->moab_interface()->id_from_handle(next_element), min_dist};
 }
 
 // Mesh Methods

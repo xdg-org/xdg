@@ -77,7 +77,6 @@ public:
 
   SurfaceElementType get_surface_element_type(MeshID surface) const override;
 
-
   // Topology
   std::pair<MeshID, MeshID> surface_senses(MeshID surface) const override;
 

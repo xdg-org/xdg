@@ -7,6 +7,7 @@
 // MOAB
 #include "moab/Core.hpp"
 #include "moab/CartVect.hpp"
+#include "xdg/constants.h"
 #include "xdg/vec3da.h"
 
 using namespace moab;
@@ -43,24 +44,39 @@ public:
 
   //! \brief Get the coordinates of a triangle as MOAB CartVect's
   inline std::array<xdg::Vertex, 3> get_mb_coords(const EntityHandle& tri) {
-    auto [block_idx, i0, i1, i2] = face_data_.get_connectivity_indices(tri);
+    auto [block_idx, i0, i1, i2, i3] = face_data_.get_connectivity_indices(tri);
 
     std::array<xdg::Vertex, 3> vertices;
     vertex_data_.set_coords(block_idx, i0, vertices[0]);
     vertex_data_.set_coords(block_idx, i1, vertices[1]);
     vertex_data_.set_coords(block_idx, i2, vertices[2]);
+    // ignore i3 in this case
     return vertices;
   }
 
   //! \brief Get the coordinates of a triangle as MOAB CartVect's
-  inline std::array<xdg::Vertex, 3> get_element_coords(const EntityHandle& element) {
-    auto [block_idx, i0, i1, i2] = element_data_.get_connectivity_indices(element);
+  inline std::array<xdg::Vertex, 4> get_element_coords(const EntityHandle& element) {
+    auto [block_idx, i0, i1, i2, i3] = element_data_.get_connectivity_indices(element);
 
-    std::array<xdg::Vertex, 3> vertices;
+    std::array<xdg::Vertex, 4> vertices;
     vertex_data_.set_coords(block_idx, i0, vertices[0]);
     vertex_data_.set_coords(block_idx, i1, vertices[1]);
     vertex_data_.set_coords(block_idx, i2, vertices[2]);
+    vertex_data_.set_coords(block_idx, i3, vertices[3]);
     return vertices;
+  }
+
+  //! \brief Get the adjacent element
+  inline EntityHandle get_adjacent_element(const EntityHandle& element, int face_number) {
+    return element_adjacency_data_.get_adjacent_element(element, face_number);
+  }
+
+  inline std::vector<EntityHandle> get_element_adjacencies(const EntityHandle& element) {
+    return element_adjacency_data_.get_element_adjacencies(element);
+  }
+
+  std::vector<std::vector<int>> get_face_ordering(EntityType entity_type) const {
+    return element_adjacency_data_.ordering.at(entity_type);
   }
 
   // Accessors
@@ -69,6 +85,76 @@ public:
 
 private:
   Interface* mbi {nullptr}; //!< MOAB instance for the managed data
+
+
+  struct AdjacencyData {
+    EntityType entity_type {MBTET}; //!< Type of entity stored in this manager
+    int num_entities {-1}; //!< Number of elements in the manager
+    std::unordered_map<EntityHandle, std::vector<EntityHandle>> adj_info_;
+
+
+    void setup(Interface* mbi) {
+      ErrorCode rval;
+
+      // setup element adjacenty data
+      // TODO: support other element types
+      Range elements;
+      rval = mbi->get_entities_by_type(0, entity_type, elements, true);
+      MB_CHK_SET_ERR_CONT(rval, "Failed to get MOAB element adjacencies");
+
+      const auto& ord = ordering[entity_type];
+      // loop over elements and setup adjacency data
+      for (auto element : elements) {
+        adj_info_[element] = std::vector<EntityHandle>(ord.size(), xdg::ID_NONE);
+        // get element connectivity
+        std::vector<EntityHandle> conn;
+        rval = mbi->get_connectivity(&element, 1, conn);
+
+        // use ordering and adjacency call with intersection to populate adjacency entry
+        for (int i = 0; i < ord.size(); i++) {
+          auto o = ord[i];
+          // determine element for this face
+          std::vector<EntityHandle> verts;
+          for (auto idx : o) verts.push_back(conn[idx]);
+          Range adj_ents;
+          rval = mbi->get_adjacencies(verts.data(), verts.size(), 3, true, adj_ents);
+          if (adj_ents.size() > 2) {
+            throw std::runtime_error("Something went wrong gathering adjacent face");
+          }
+          if (adj_ents.size() == 1 && adj_ents[0] != element) {
+            throw std::runtime_error("Something went wrong gathering adjacent face");
+          }
+
+          // if there is only one adjacent element, it is the element itself
+          // no adjacency to add
+          if (adj_ents.size() == 1) continue;
+
+          if (adj_ents.size() == 2 && adj_ents[0] == element) {
+            adj_info_[element][i] = adj_ents[1];
+          } else {
+            adj_info_[element][i] = adj_ents[0];
+          }
+        }
+      }
+    }
+
+    EntityHandle get_adjacent_element(const EntityHandle& element, int face_number) {
+      return adj_info_[element][face_number];
+    }
+
+    std::vector<EntityHandle> get_element_adjacencies(const EntityHandle& element) {
+      return adj_info_[element];
+    }
+
+    void clear() {
+      num_entities = -1;
+      adj_info_.clear();
+    }
+
+    std::unordered_map<EntityType, std::vector<std::vector<int>>> ordering = {
+    {MBTET, {{0, 1, 3}, {1, 2, 3}, {2, 0, 3}, {0, 2, 1}}}
+    };
+  };
   struct ConnectivityData {
     EntityType entity_type {MBMAXTYPE}; //!< Type of entity stored in this manager
     int num_entities {-1}; //!< Number of elements in the manager
@@ -105,7 +191,7 @@ private:
       }
     }
 
-    std::array<size_t, 4>
+    std::array<size_t, 5>
     get_connectivity_indices(const EntityHandle& e) {
       // determine the correct contiguous block index to use
       int block_idx = 0;
@@ -116,13 +202,14 @@ private:
         fe = first_elements[block_idx];
       }
 
-      std::array<size_t, 4> indices;
+      std::array<size_t, 5> indices;
       indices[0] = block_idx;
 
       size_t conn_idx = element_stride * (e - fe.first);
       indices[1] = vconn[block_idx][conn_idx] - 1;
       indices[2] = vconn[block_idx][conn_idx + 1] - 1;
       indices[3] = vconn[block_idx][conn_idx + 2] - 1;
+      indices[4] = vconn[block_idx][conn_idx + 3] - 1;
       return indices;
     }
 
@@ -186,6 +273,7 @@ private:
 
   ConnectivityData face_data_;
   ConnectivityData element_data_;
+  AdjacencyData element_adjacency_data_;
   VertexData vertex_data_;
 };
 
