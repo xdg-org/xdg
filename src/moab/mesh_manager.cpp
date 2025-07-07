@@ -7,6 +7,7 @@
 
 #include "xdg/error.h"
 #include "xdg/geometry/plucker.h"
+#include "xdg/geometry/face_common.h"
 #include "xdg/moab/tag_conventions.h"
 #include "xdg/util/str_utils.h"
 #include "xdg/vec3da.h"
@@ -137,6 +138,7 @@ void MOABMeshManager::add_surface_to_volume(MeshID volume, MeshID surface, Sense
   this->moab_interface()->tag_set_data(surf_to_volume_sense_tag_, surf_handle_ptr, 1, sense_handles.data());
 }
 
+
 std::pair<MeshID, double>
 MOABMeshManager::next_element(MeshID current_element,
                                const Position& r,
@@ -158,10 +160,7 @@ MOABMeshManager::next_element(MeshID current_element,
     }
 
     // get the normal of the triangle
-    const Position v1 = verts[1] - verts[0];
-    const Position v2 = verts[2] - verts[0];
-
-    const Position normal = (v1.cross(v2)).normalize();
+    const Direction normal = triangle_normal(verts);
 
     // perform ray-triangle intersection
     int orientation = 1; // exiting hit only

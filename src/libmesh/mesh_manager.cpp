@@ -2,6 +2,7 @@
 
 #include "xdg/error.h"
 #include "xdg/geometry/plucker.h"
+#include "xdg/geometry/face_common.h"
 #include "xdg/util/str_utils.h"
 
 #include "libmesh/boundary_info.h"
@@ -134,9 +135,7 @@ LibMeshManager::next_element(MeshID current_element,
       coords[j] = {(*node_ptr)(0), (*node_ptr)(1), (*node_ptr)(2)};
     }
     // get the normal of the triangle face
-    const Position v1 = coords[1] - coords[0];
-    const Position v2 = coords[2] - coords[0];
-    const Position normal = (v1.cross(v2)).normalize();
+    const Position normal = triangle_normal(coords);
 
     // exiting hit only, assumes triangle normals point outward
     // with respect to the element
