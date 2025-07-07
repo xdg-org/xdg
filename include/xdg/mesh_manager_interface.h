@@ -29,18 +29,36 @@ public:
 
   virtual int num_ents_of_dimension(int dim) const = 0;
 
-  virtual std::vector<std::pair<MeshID, double>>
+  //! \brief Walk through elements along a ray from start to end position.
+  //! \note It is assumed that the provided position is within the starting element.
+  //! \param starting_element The initial element to start the walk from
+  //! \param start The starting position of the ray
+  //! \param end The ending position of the ray
+  //! \return Vector of pairs containing element IDs and distances traveled through each element
+  std::vector<std::pair<MeshID, double>>
   walk_elements(MeshID starting_element,
                 const Position& start,
-                const Position& end) const ;
+                const Position& end) const;
 
-  virtual std::vector<std::pair<MeshID, double>>
+  //! \brief Walk through elements along a ray with specified direction and distance
+  //! \note It is assumed that the provided position is within the starting element.
+  //! \param starting_element The initial element to start the walk from
+  //! \param start The starting position of the ray
+  //! \param u The normalized direction vector of the ray
+  //! \param distance The total distance to travel along the ray
+  //! \return Vector of pairs containing element IDs and distances traveled through each element
+  std::vector<std::pair<MeshID, double>>
   walk_elements(MeshID starting_element,
                 const Position& start,
                 const Direction& u,
-                double distance) const ;
+                double distance) const;
 
-
+  //! \brief Find the next element along a ray from the current position.
+  //! \note It is assumed that the provided position is within the element.
+  //! \param current_element The current element being traversed
+  //! \param r The current position within the element
+  //! \param u The normalized direction vector of the ray
+  //! \return Pair containing the next element ID and distance to the exit point
   virtual std::pair<MeshID, double>
   next_element(MeshID current_element,
                const Position& r,
