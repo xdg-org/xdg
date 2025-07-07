@@ -133,36 +133,48 @@ LibMeshManager::next_element(MeshID current_element,
       const auto node_ptr = elem_ptr->node_ptr(tet->side_nodes_map[i][j]);
       coords[j] = {(*node_ptr)(0), (*node_ptr)(1), (*node_ptr)(2)};
     }
-    // get the normal of the triangle
+    // get the normal of the triangle face
     const Position v1 = coords[1] - coords[0];
     const Position v2 = coords[2] - coords[0];
-
     const Position normal = (v1.cross(v2)).normalize();
 
+    // exiting hit only, assumes triangle normals point outward
+    // with respect to the element
+    int orientation = 1;
     // perform ray-triangle intersection
-    int orientation = 1; // exiting hit only
-    hit_types[i] = plucker_ray_tri_intersect(coords, r, u, dists[i], INFTY, nullptr, &orientation);
+    hit_types[i] = plucker_ray_tri_intersect(coords,
+                                             r,
+                                             u,
+                                             dists[i],
+                                             INFTY,
+                                             nullptr,
+                                             &orientation);
+    // set distance and ensure it is non-negative
     dists[i] = std::max(0.0, dists[i]);
   }
 
   // determine the minimum distance to exit and the face number
-  int idx_out = -1;
+  int idx_out = ID_NONE;
   double min_dist = INFTY;
+  // choose the exiting face based on the minimum distance,
+  // if all distances are INFTY (no hit), then the index will
+  // not be updated
   for (int i = 0; i < dists.size(); i++) {
-    // if (!hit_types[i])
-    //   continue;
     if (dists[i] < min_dist) {
       min_dist = dists[i];
       idx_out = i;
     }
   }
 
-  if (idx_out == -1) {
+  if (idx_out == ID_NONE)
     fatal_error(fmt::format("No exit found in element {}", current_element));
-  }
 
+  // determine the next element to enter
   const auto next_elem = elem_ptr->neighbor_ptr(idx_out);
-  if (!next_elem) return {-1, dists[idx_out]};
+  // if the neighbor is null, we're exiting the mesh
+  // set the return element accordingly
+  if (!next_elem) return {ID_NONE, dists[idx_out]};
+
   return {next_elem->id(), dists[idx_out]};
 }
 
