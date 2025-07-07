@@ -151,6 +151,8 @@ private:
       adj_info_.clear();
     }
 
+    // ordering of element faces based on the cannonical ordering descibed here:
+    // Canonical numbering systems for finite‐element codes (http://dx.doi.org/10.1002/cnm.1237)
     std::unordered_map<EntityType, std::vector<std::vector<int>>> ordering = {
     {MBTET, {{0, 1, 3}, {1, 2, 3}, {2, 0, 3}, {0, 2, 1}}}
     };
