@@ -117,8 +117,8 @@ list(APPEND xdg_sources
 src/gprt/ray_tracer.cpp
 )
 list(APPEND xdg_device_codes
-flt
-dbl
+flt_deviceCode
+dbl_deviceCode
 )
 
 endif()
@@ -221,21 +221,22 @@ if (XDG_ENABLE_EMBREE)
   target_link_libraries(xdg embree fmt::fmt)
 endif()
 
-if (XDG_ENABLE_GPRT)
-  target_link_libraries(xdg $<BUILD_INTERFACE:gprt>)
-
-  # Compile device code for single precision shaders
-  embed_devicecode(
-  OUTPUT_TARGET
-  flt_deviceCode
-  HEADERS
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/sharedCode.h
-  SOURCES
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/flt_deviceCode.slang
+# compile both single and double precision shaders for GPRT
+foreach(device_code ${xdg_device_codes})
+  if (XDG_ENABLE_GPRT)
+    target_link_libraries(xdg $<BUILD_INTERFACE:gprt>)
+    # Compile device code for single precision shaders
+    embed_devicecode(
+    OUTPUT_TARGET
+    ${device_code}
+    HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/sharedCode.h
+    SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/${device_code}.slang
   )
-
-  target_link_libraries(xdg flt_deviceCode)
-endif()
+  target_link_libraries(xdg ${device_code})
+  endif()
+endforeach()
 
 # ===================
 # Link mesh libraries
@@ -262,11 +263,16 @@ install(TARGETS xdg
   INCLUDES DESTINATION include
 )
 
-install(TARGETS flt_deviceCode
-  EXPORT xdg-targets
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+# Install both single and double precision device code for GPRT
+foreach(device_code ${xdg_device_codes})
+  install(TARGETS ${device_code}
+    EXPORT xdg-targets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  )
+endforeach()
+
+
 
 install(EXPORT xdg-targets
   FILE XDGTargets.cmake
