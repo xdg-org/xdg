@@ -77,11 +77,6 @@ public:
     }
   }
 
-  std::pair<MeshID, double>
-  next_element(MeshID current_element,
-               const Position& r,
-               const Position& u) const override;
-
   int num_volume_elements(MeshID volume) const override {
     return get_volume_elements(volume).size();
   }
@@ -120,6 +115,8 @@ public:
   {
     fatal_error("LibMeshManager::get_surface_element_type() not implemented yet");
   }
+
+  MeshID adjacent_element(MeshID element, int face) const override;
 
   MeshID create_volume() override;
 

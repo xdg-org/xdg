@@ -40,7 +40,7 @@ enum class Sense {
 
 // Mesh library identifier
 enum class MeshLibrary {
-  INTERNAL = 0,
+  MOCK = 0, // mock testing interface
   MOAB,
   LIBMESH
 };
@@ -53,7 +53,7 @@ enum class RTLibrary {
 
 static const std::map<MeshLibrary, std::string> MESH_LIB_TO_STR =
 {
-  {MeshLibrary::INTERNAL, "INTERNAL"},
+  {MeshLibrary::MOCK, "MOCK"},
   {MeshLibrary::MOAB, "MOAB"},
   {MeshLibrary::LIBMESH, "LIBMESH"}
 };

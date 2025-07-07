@@ -59,10 +59,10 @@ public:
   //! \param r The current position within the element
   //! \param u The normalized direction vector of the ray
   //! \return Pair containing the next element ID and distance to the exit point
-  virtual std::pair<MeshID, double>
+  std::pair<MeshID, double>
   next_element(MeshID current_element,
                const Position& r,
-               const Position& u) const = 0;
+               const Position& u) const;
 
   // Mesh
   virtual int num_volume_elements(MeshID volume) const = 0;
@@ -91,6 +91,8 @@ public:
   virtual std::pair<std::vector<Vertex>, std::vector<int>> get_surface_mesh(MeshID surface) const = 0;
 
   virtual SurfaceElementType get_surface_element_type(MeshID element) const = 0;
+
+  virtual MeshID adjacent_element(MeshID element, int face) const = 0;
 
   BoundingBox element_bounding_box(MeshID element) const;
 

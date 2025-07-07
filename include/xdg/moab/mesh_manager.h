@@ -49,11 +49,6 @@ public:
 
   void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override;
 
-  std::pair<MeshID, double>
-  next_element(MeshID current_element,
-               const Position& r,
-               const Position& u) const override;
-
   // Mesh
   int num_volume_elements(MeshID volume) const override;
 
@@ -76,6 +71,8 @@ public:
   std::vector<Vertex> get_surface_vertices(MeshID surface) const override;
 
   SurfaceElementType get_surface_element_type(MeshID surface) const override;
+
+  MeshID adjacent_element(MeshID element, int face) const override;
 
   // Topology
   std::pair<MeshID, MeshID> surface_senses(MeshID surface) const override;
@@ -103,7 +100,7 @@ private:
 public:
   // Accessors
   moab::Interface* moab_interface() const { return moab_raw_ptr_; };
-  const auto& mb_direct() const { return mdam_; }
+  const std::shared_ptr<MBDirectAccess>& mb_direct() const { return mdam_; }
   moab::EntityHandle root_set() const { return 0; }
 
 private:

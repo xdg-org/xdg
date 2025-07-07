@@ -7,7 +7,8 @@
 #include "xdg/error.h"
 #include "xdg/vec3da.h"
 #include "xdg/mesh_manager_interface.h"
-#include "unordered_map"
+#include "xdg/element_face_accessor.h"
+
 
 #include "xdg/geometry/plucker.h"
 
@@ -150,68 +151,6 @@ public:
     }};
   }
 
-std::pair<MeshID, double>
-next_element(MeshID current_element,
-             const Position& r,
-             const Position& u) const override
-{
-  // get the tetrahedron element
-  const auto& elem_ref = tetrahedron_connectivity()[current_element];
-
-  std::array<double, 4> dists = {INFTY, INFTY, INFTY, INFTY};
-  std::array<bool, 4> hit_types = {false, false, false, false};
-
-  auto tet_face_conn = tet_faces(elem_ref);
-
-  // get the faces (triangles) of this element
-  for (int i = 0; i < 4; i++) {
-    // triangle connectivity
-    std::array<Position, 3> coords;
-    for (int j = 0; j < 3; j++) {
-      coords[j] = vertices()[tet_face_conn[i][j]];
-    }
-
-    // get the normal of the triangle
-    const Position v1 = coords[1] - coords[0];
-    const Position v2 = coords[2] - coords[0];
-
-    const Position normal = (v1.cross(v2)).normalize();
-
-    if (normal.dot(u) < 0.0) {
-      // the ray is not exiting this face
-      continue;
-    }
-
-    // perform ray-triangle intersection
-    hit_types[i] = plucker_ray_tri_intersect(coords, r, u, dists[i]);
-
-    if (dists[i] < 0.0) {
-      hit_types[i] = false;
-      dists[i] = INFTY;
-    }
-  }
-
-  // determine the minimum distance to exit and the face number
-  int idx_out = -1;
-  double min_dist = INFTY;
-  for (int i = 0; i < dists.size(); i++) {
-    if (!hit_types[i])
-      continue;
-    if (dists[i] < min_dist) {
-      min_dist = dists[i];
-      idx_out = i;
-    }
-  }
-
-  if (idx_out == -1) {
-
-    fatal_error(fmt::format("No exit found in element {}", current_element));
-  }
-
-  MeshID next_element = element_adjacencies().at(current_element)[idx_out];
-  return {next_element, min_dist};
-}
-
   Sense surface_sense(MeshID surface, MeshID volume) const override {
     auto it = surface_sense_map_.find(surface);
     if (it == surface_sense_map_.end()) {
@@ -273,8 +212,12 @@ next_element(MeshID current_element,
     return SurfaceElementType::TRI; // hardcoded to Tri for this mock
   }
 
+  virtual MeshID adjacent_element(MeshID element, int face) const override {
+    return element_adjacencies_.at(element)[face];
+  }
+
   // Other
-  virtual MeshLibrary mesh_library() const override { return MeshLibrary::INTERNAL; }
+  virtual MeshLibrary mesh_library() const override { return MeshLibrary::MOCK; }
 
 // Data members
 private:
@@ -355,4 +298,23 @@ private:
     {11, {-1, 0, 10, 6}}
   };
 
+};
+
+struct MockElementFaceAccessor : public ElementFaceAccessor {
+  MockElementFaceAccessor(const MeshMock* mesh_manager, MeshID element) :
+  ElementFaceAccessor(element) {
+    mesh_manager_ = mesh_manager;
+    const auto& conn = mesh_manager->tetrahedron_connectivity()[element];
+    tet_connectivity_ = mesh_manager->tet_faces(conn);
+  }
+
+  std::array<Vertex, 3> face_vertices(int i) const override {
+    return {mesh_manager_->vertices()[tet_connectivity_[i][0]],
+            mesh_manager_->vertices()[tet_connectivity_[i][1]],
+            mesh_manager_->vertices()[tet_connectivity_[i][2]]};
+  }
+
+  // data members
+  const MeshMock* mesh_manager_;
+  std::array<std::array<int, 3>, 4> tet_connectivity_;
 };

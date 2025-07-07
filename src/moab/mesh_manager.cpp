@@ -4,6 +4,8 @@
 #include <string>
 
 #include "xdg/moab/mesh_manager.h"
+#include "xdg/moab/element_face_accessor.h"
+
 
 #include "xdg/error.h"
 #include "xdg/geometry/plucker.h"
@@ -136,62 +138,6 @@ void MOABMeshManager::add_surface_to_volume(MeshID volume, MeshID surface, Sense
   sense_handles[1] = sense_data.second == ID_NONE ? 0 : volume_id_map_[sense_data.second];
   const moab::EntityHandle* surf_handle_ptr = &surf_handle; // this is lame
   this->moab_interface()->tag_set_data(surf_to_volume_sense_tag_, surf_handle_ptr, 1, sense_handles.data());
-}
-
-
-std::pair<MeshID, double>
-MOABMeshManager::next_element(MeshID current_element,
-                               const Position& r,
-                               const Position& u) const
-{
-  auto element_adjacencies = this->mb_direct()->get_element_adjacencies(current_element);
-
-  auto element_coords = this->element_vertices(current_element);
-  const auto& element_ordering = this->mb_direct()->get_face_ordering(moab::MBTET);
-
-  std::array<double, 4> dists = {INFTY, INFTY, INFTY, INFTY};
-  std::array<bool, 4> hit_types;
-
-  for (int i = 0; i < 4; i++) {
-    auto ordering = element_ordering[i];
-    std::array<Vertex, 3> verts;
-    for (int j = 0; j < verts.size(); j++) {
-      verts[j] = element_coords[ordering[j]];
-    }
-
-    // get the normal of the triangle
-    const Direction normal = triangle_normal(verts);
-
-    // perform ray-triangle intersection
-    int orientation = 1; // exiting hit only
-    hit_types[i] = plucker_ray_tri_intersect(verts, r, u, dists[i], INFTY, nullptr, &orientation);
-    dists[i] = std::max(0.0, dists[i]);
-  }
-
-  // determine the minimum distance to exit and the face number
-  int idx_out = -1;
-  double min_dist = INFTY;
-  for (int i = 0; i < dists.size(); i++) {
-    if (dists[i] < min_dist) {
-      min_dist = dists[i];
-      idx_out = i;
-    }
-  }
-
-
-  if (idx_out == -1) {
-    fatal_error(fmt::format("No exit found in element {}", current_element));
-  }
-
-  moab::EntityHandle element_handle;
-  this->moab_interface()->handle_from_id(moab::MBTET, current_element, element_handle);
-
-  moab::EntityHandle next_element = this->mb_direct()->get_adjacent_element(element_handle, idx_out);
-  if (next_element != ID_NONE) {
-    return {next_element, min_dist};
-  }
-
-  return {this->moab_interface()->id_from_handle(next_element), min_dist};
 }
 
 // Mesh Methods
@@ -398,6 +344,16 @@ MOABMeshManager::get_surface_element_type(MeshID surface) const
   }
 
   fatal_error("Unsupported surface element type");
+}
+
+MeshID
+MOABMeshManager::adjacent_element(MeshID element, int face) const
+{
+  moab::EntityHandle element_handle;
+  this->moab_interface()->handle_from_id(moab::MBTET, element, element_handle);
+  moab::EntityHandle next_element = this->mb_direct()->get_adjacent_element(element_handle, face);
+  if (next_element == ID_NONE) return ID_NONE;
+  return this->moab_interface()->id_from_handle(next_element);
 }
 
 void

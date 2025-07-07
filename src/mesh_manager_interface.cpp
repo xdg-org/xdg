@@ -4,6 +4,9 @@
 #include <set>
 
 #include "xdg/error.h"
+#include "xdg/geometry/plucker.h"
+#include "xdg/geometry/face_common.h"
+#include "xdg/element_face_accessor.h"
 
 namespace xdg {
 
@@ -123,6 +126,56 @@ MeshManager::walk_elements(MeshID starting_element,
   double distance = u.length();
   u.normalize();
   return walk_elements(starting_element, start, u, distance);
+}
+
+std::pair<MeshID, double>
+MeshManager::next_element(MeshID current_element,
+                           const Position& r,
+                           const Position& u) const
+{
+   std::array<double, 4> dists = {INFTY, INFTY, INFTY, INFTY};
+  std::array<bool, 4> hit_types;
+
+  auto element_face_accessor = ElementFaceAccessor::create(this, current_element);
+
+  // get the faces (triangles) of this element
+  for (int i = 0; i < 4; i++) {
+    // triangle connectivity
+    auto coords = element_face_accessor->face_vertices(i);
+
+    // get the normal of the triangle face
+    const Position normal = triangle_normal(coords);
+
+    // exiting hit only, assumes triangle normals point outward
+    // with respect to the element
+    int orientation = 1;
+    // perform ray-triangle intersection
+    hit_types[i] = plucker_ray_tri_intersect(coords,
+                                             r,
+                                             u,
+                                             dists[i],
+                                             INFTY,
+                                             nullptr,
+                                             &orientation);
+    // set distance and ensure it is non-negative
+    dists[i] = std::max(0.0, dists[i]);
+  }
+
+  // determine the minimum distance to exit and the face number
+  int idx_out = ID_NONE;
+  double min_dist = INFTY;
+  // choose the exiting face based on the minimum distance,
+  // if all distances are INFTY (no hit), then the index will
+  // not be updated
+  for (int i = 0; i < dists.size(); i++) {
+    if (dists[i] < min_dist) {
+      min_dist = dists[i];
+      idx_out = i;
+    }
+  }
+
+  MeshID next_element = this->adjacent_element(current_element, idx_out);
+  return {next_element, min_dist};
 }
 
 MeshID MeshManager::next_volume(MeshID current_volume, MeshID surface) const

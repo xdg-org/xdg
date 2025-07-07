@@ -75,7 +75,7 @@ public:
     return element_adjacency_data_.get_element_adjacencies(element);
   }
 
-  std::vector<std::vector<int>> get_face_ordering(EntityType entity_type) const {
+  const std::vector<std::vector<int>>& get_face_ordering(EntityType entity_type) const {
     return element_adjacency_data_.ordering.at(entity_type);
   }
 
