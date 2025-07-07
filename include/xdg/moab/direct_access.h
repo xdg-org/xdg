@@ -44,7 +44,7 @@ public:
 
   //! \brief Get the coordinates of a triangle as MOAB CartVect's
   inline std::array<xdg::Vertex, 3> get_mb_coords(const EntityHandle& tri) {
-    auto [block_idx, i0, i1, i2, i3] = face_data_.get_connectivity_indices(tri);
+    auto [block_idx, i0, i1, i2] = face_data_.get_connectivity_indices<3>(tri);
 
     std::array<xdg::Vertex, 3> vertices;
     vertex_data_.set_coords(block_idx, i0, vertices[0]);
@@ -56,7 +56,7 @@ public:
 
   //! \brief Get the coordinates of a triangle as MOAB CartVect's
   inline std::array<xdg::Vertex, 4> get_element_coords(const EntityHandle& element) {
-    auto [block_idx, i0, i1, i2, i3] = element_data_.get_connectivity_indices(element);
+    auto [block_idx, i0, i1, i2, i3] = element_data_.get_connectivity_indices<4>(element);
 
     std::array<xdg::Vertex, 4> vertices;
     vertex_data_.set_coords(block_idx, i0, vertices[0]);
@@ -191,7 +191,8 @@ private:
       }
     }
 
-    std::array<size_t, 5>
+    template <int N>
+    std::array<size_t, N+1>
     get_connectivity_indices(const EntityHandle& e) {
       // determine the correct contiguous block index to use
       int block_idx = 0;
@@ -202,14 +203,13 @@ private:
         fe = first_elements[block_idx];
       }
 
-      std::array<size_t, 5> indices;
+      std::array<size_t, N+1> indices;
       indices[0] = block_idx;
 
       size_t conn_idx = element_stride * (e - fe.first);
-      indices[1] = vconn[block_idx][conn_idx] - 1;
-      indices[2] = vconn[block_idx][conn_idx + 1] - 1;
-      indices[3] = vconn[block_idx][conn_idx + 2] - 1;
-      indices[4] = vconn[block_idx][conn_idx + 3] - 1;
+      for (int i = 0; i < N; i++) {
+        indices[i+1] = vconn[block_idx][conn_idx + i] - 1;
+      }
       return indices;
     }
 
