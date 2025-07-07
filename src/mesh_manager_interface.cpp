@@ -88,11 +88,14 @@ MeshManager::walk_elements(MeshID starting_element,
                            const Direction& u,
                            double distance) const
 {
+  // a copy of the start position that will be updated as elements are traversed
   Position r = start;
   std::vector<std::pair<MeshID, double>> result;
 
   MeshID elem = starting_element;
   while (distance > 0) {
+    // find the exit point from the current element and determine the next element
+    // if one exists
     auto exit = next_element(elem, r, u);
     // ensure we are not traveling beyond the end of the ray
     exit.second = std::min(exit.second, distance);
@@ -102,10 +105,12 @@ MeshManager::walk_elements(MeshID starting_element,
     r += exit.second * u;
     elem = exit.first;
 
+    // if there is no next element, we're exiting the mesh
     if (elem == ID_NONE) {
       break;
     }
   }
+
   return result;
 }
 
