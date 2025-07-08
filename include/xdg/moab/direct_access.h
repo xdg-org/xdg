@@ -50,7 +50,6 @@ public:
     vertex_data_.set_coords(block_idx, i0, vertices[0]);
     vertex_data_.set_coords(block_idx, i1, vertices[1]);
     vertex_data_.set_coords(block_idx, i2, vertices[2]);
-    // ignore i3 in this case
     return vertices;
   }
 
@@ -118,21 +117,28 @@ private:
           for (auto idx : o) verts.push_back(conn[idx]);
           Range adj_ents;
           rval = mbi->get_adjacencies(verts.data(), verts.size(), 3, true, adj_ents);
+
+          // there be at most two adjacent elements for a given face
           if (adj_ents.size() > 2) {
             throw std::runtime_error("Something went wrong gathering adjacent face");
           }
-          if (adj_ents.size() == 1 && adj_ents[0] != element) {
-            throw std::runtime_error("Something went wrong gathering adjacent face");
+
+          // if only one adjacent element, the face is on a boundary
+          if (adj_ents.size() == 1) {
+            // in this case, the returned element must be the current element itself
+            if (adj_ents[0] != element) {
+              throw std::runtime_error("The face is on a boundary, but the returned adjacent element is not the current element");
+            }
+            // if this face is on the boundary, there is no adjacency to add. Move on to the next face
+            continue;
           }
 
-          // if there is only one adjacent element, it is the element itself
-          // no adjacency to add
-          if (adj_ents.size() == 1) continue;
-
-          if (adj_ents.size() == 2 && adj_ents[0] == element) {
+          if (adj_ents.size() == 2) {
+            if (adj_ents[0] == element) {
             adj_info_[element][i] = adj_ents[1];
           } else {
             adj_info_[element][i] = adj_ents[0];
+          }
           }
         }
       }
