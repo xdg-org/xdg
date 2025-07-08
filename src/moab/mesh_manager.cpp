@@ -220,12 +220,6 @@ std::vector<Vertex> MOABMeshManager::element_vertices(MeshID element) const
   return std::vector<Vertex>(out.begin(), out.end());
 }
 
-MeshID
-MOABMeshManager::element_volume_id(MeshID element) const
-{
-  return {};
-}
-
 std::array<Vertex, 3> MOABMeshManager::face_vertices(MeshID element) const
 {
   moab::EntityHandle element_handle;

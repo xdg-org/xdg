@@ -80,9 +80,6 @@ public:
   // TODO: can we accomplish this without allocating memory?
   virtual std::vector<Vertex> element_vertices(MeshID element) const = 0;
 
-  // Return the volume ID for a given element
-  virtual MeshID element_volume_id(MeshID element) const = 0;
-
   virtual std::array<Vertex, 3> face_vertices(MeshID element) const = 0;
 
   virtual std::vector<Vertex> get_surface_vertices(MeshID surface) const = 0;
