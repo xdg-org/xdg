@@ -33,6 +33,8 @@ TEST_CASE("Test Walk Elements") {
   Position upper_right_corner = mm->bounding_box().upper_right();
   double distance = (upper_right_corner - r).length();
 
+  std::cout << "Total distance: " << distance << std::endl;
+
   MeshID element = xdg->find_element(r);
   REQUIRE(element != ID_NONE);
 
@@ -42,6 +44,9 @@ TEST_CASE("Test Walk Elements") {
   MeshID next_element = ID_NONE;
   double exit_distance = INFTY;
   while (element != ID_NONE && iteration < max_iterations) {
+
+    std::cout << "Remaining distance: " << distance << std::endl;
+    // if(distance <= TINY_BIT) break;
 
     std::cout << "---" << std::endl;
     std::cout << "Current element: " << element << std::endl;
@@ -55,6 +60,7 @@ TEST_CASE("Test Walk Elements") {
     std::cout << "Distance: " << exit_distance << std::endl;
     std::cout << "---" << std::endl;
     element = next_element;
+    distance -= exit_distance;
   }
 
   REQUIRE(iteration < max_iterations);

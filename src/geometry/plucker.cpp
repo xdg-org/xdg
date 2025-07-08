@@ -14,7 +14,6 @@ double plucker_edge_test(const Position& vertexa, const Position& vertexb,
   const Position& ray, const Position& ray_normal)
 {
   double pip;
-  const double near_zero = 10 * std::numeric_limits<double>::epsilon();
   if (lower(vertexa, vertexb)) {
     const Position edge = vertexb - vertexa;
     const Position edge_normal = edge.cross(vertexa);
@@ -25,7 +24,7 @@ double plucker_edge_test(const Position& vertexa, const Position& vertexb,
     pip = ray.dot(edge_normal) + ray_normal.dot(edge);
     pip = -pip;
   }
-  if (near_zero > fabs(pip))
+  if (PLUCKER_TOL > fabs(pip))
     pip = 0.0;
   return pip;
 }
