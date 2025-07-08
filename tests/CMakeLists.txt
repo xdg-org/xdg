@@ -15,6 +15,8 @@ test_measure
 test_ray_duals
 test_xdg_interface
 test_tet_containment
+test_tracks
+test_tet_intersection
 )
 
 if (XDG_ENABLE_MOAB)

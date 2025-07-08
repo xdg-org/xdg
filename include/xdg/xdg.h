@@ -47,10 +47,38 @@ MeshID find_element(const Position& point) const;
 MeshID find_element(MeshID volume,
                     const Position& point) const;
 
+//! Returns a vector of segments between the start and end points on the mesh
+//! @param start The starting point of the query
+//! @param end The ending point of the query
+//! @return A vector of pairs containing the element ID and length inside each element
+std::vector<std::pair<MeshID, double>>
+segments(const Position& start,
+         const Position& end) const;
+
+//! Returns a vector of segments between the start and end points on the mesh for a specified volume (subdomain)
+//! @param volume The ID of the volume to intersect with
+//! @param start The starting point of the query
+//! @param end The ending point of the query
+//! @return A vector of pairs containing the element ID and length inside each element within the volume
+std::vector<std::pair<MeshID, double>>
+segments(MeshID volume,
+         const Position& start,
+         const Position& end) const;
+
+//! Returns the next element along a line
+//! @param current_element The current element
+//! @param r The starting point of the line
+//! @param u The direction of the line
+//! @return A pair containing the element ID and length inside the element
+std::pair<MeshID, double>
+next_element(MeshID current_element,
+                  const Position& r,
+                  const Direction& u) const;
+
 bool point_in_volume(MeshID volume,
-                          const Position point,
-                          const Direction* direction = nullptr,
-                          const std::vector<MeshID>* exclude_primitives = nullptr) const;
+      const Position point,
+      const Direction* direction = nullptr,
+      const std::vector<MeshID>* exclude_primitives = nullptr) const;
 
 std::pair<double, MeshID> ray_fire(MeshID volume,
                                    const Position& origin,
