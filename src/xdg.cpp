@@ -1,4 +1,5 @@
 #include <vector>
+#include <numeric>
 
 #include "xdg/xdg.h"
 #include "xdg/error.h"
@@ -162,7 +163,8 @@ XDG::segments(const Position& start,
     auto vol_segments = mesh_manager()->walk_elements(current_element, r, u, distance);
     // add to current set of segments
     segments.insert(segments.end(), vol_segments.begin(), vol_segments.end());
-    double segment_sum = std::accumulate(vol_segments.begin(), vol_segments.end(), 0.0, [](double m, const auto & p) { return m + p.second; });
+    double segment_sum = std::accumulate(vol_segments.begin(), vol_segments.end(), 0.0,
+                                         [](double total, const auto& segment) { return total + segment.second; });
     // upate location of the track start
     r += u * segment_sum;
     // decrement distance by total distance traveled in the volume
