@@ -1,5 +1,6 @@
 // stl includes
 #include <memory>
+#include <numeric>
 
 // testing includes
 #include <catch2/catch_test_macros.hpp>
@@ -242,8 +243,15 @@ TEST_CASE("TEST MOAB Find Element Method")
   REQUIRE(next_element.first != ID_NONE);
   REQUIRE(next_element.second != INFTY);
 
-  // // test the walk_elements method
-  // auto walk_elements = xdg->walk_elements(element, {0.0, 0.0, 0.0}, {0.0, 0.0, 1.0}, 100.0);
-  // REQUIRE(walk_elements.size() == 100);
-  // REQUIRE(walk_elements[0].first != ID_NONE);
+  // test the walk_elements method
+  auto walk_elements = xdg->mesh_manager()->walk_elements(element, {0.0, 0.0, 0.0}, {0.0, 0.0, 1.0}, 100.0);
+  // get the sum of the distances
+  double distance = std::accumulate(walk_elements.begin(), walk_elements.end(), 0.0,
+                                    [](double total, const auto& segment) { return total + segment.second; });
+  REQUIRE(distance > 0.0);
+  REQUIRE(distance <= 100.0);
+  for (const auto& segment : walk_elements) {
+    REQUIRE(segment.first != ID_NONE);
+    REQUIRE(segment.second >= 0.0);
+  }
 }
