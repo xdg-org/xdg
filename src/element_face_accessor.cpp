@@ -2,11 +2,11 @@
 #include "xdg/error.h"
 
 #ifdef XDG_ENABLE_MOAB
-#include "xdg/moab/element_face_accessor.h"
+#include "xdg/moab/mesh_manager.h"
 #endif
 
 #ifdef XDG_ENABLE_LIBMESH
-#include "xdg/libmesh/element_face_accessor.h"
+#include "xdg/libmesh/mesh_manager.h"
 #endif
 
 #include "xdg/testing/mesh_mock.h"

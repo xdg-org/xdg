@@ -1,14 +1,12 @@
 #include "xdg/libmesh/mesh_manager.h"
 
 #include "xdg/error.h"
-#include "xdg/libmesh/element_face_accessor.h"
 #include "xdg/geometry/plucker.h"
 #include "xdg/geometry/face_common.h"
 #include "xdg/util/str_utils.h"
 
 #include "libmesh/boundary_info.h"
 #include "libmesh/elem.h"
-#include "libmesh/cell_tet4.h"
 #include "libmesh/mesh_base.h"
 #include "libmesh/mesh_tools.h"
 
