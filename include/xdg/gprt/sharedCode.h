@@ -2,6 +2,9 @@
 
 #define AA 3 // used for antialiasing
 
+using double3 = std::array<double, 3>;
+using double4 = std::array<double, 4>;
+
 /* Inputs for each ray */
 struct RayInput {
   float3 origin;
