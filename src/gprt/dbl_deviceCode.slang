@@ -20,7 +20,7 @@ struct RayFirePayload {
 };
 
 [shader("closesthit")]
-void dbl_ray_fire_hit(uniform TrianglesGeomData record, inout RayFirePayload payload, in float2 bc) {
+void ray_fire_hit(uniform TrianglesGeomData record, inout RayFirePayload payload, in float2 bc) {
     // Distance from the ray origin to the hit point
     uint hit_kind = HitKind();
 
@@ -59,21 +59,20 @@ void dbl_ray_fire_hit(uniform TrianglesGeomData record, inout RayFirePayload pay
 }
 
 [shader("miss")]
-void dbl_ray_fire_miss(inout RayFirePayload payload) {
+void ray_fire_miss(inout RayFirePayload payload) {
     // Set the miss payload to default values
     payload.distance = -1.0f;
     payload.surf_id = ~0u;
     payload.normal = {0.0, 0.0, 0.0};
-    // printf("Miss shader called!\n");
 }
 
 // This ray generation program will kick off the ray tracing process,
 // generating rays and tracing them into the world.
 [shader("raygeneration")]
-void dbl_ray_fire(uniform RayGenData record, uniform TrianglesGeomData mesh) {
+void ray_fire(uniform RayGenData record, uniform TrianglesGeomData mesh) {
     RayFirePayload payload;
     uint rayID = DispatchRaysIndex().x;
-
+    
     // printf("Ray Generation Shader called with :");
     // printf("Ray Origin: (%f, %f, %f)\n", record.ray.origin.x, record.ray.origin.y, record.ray.origin.z);
     // printf("Ray Direction: (%f, %f, %f)\n", record.ray.direction.x, record.ray.direction.y, record.ray.direction.z);
@@ -110,7 +109,7 @@ void dbl_ray_fire(uniform RayGenData record, uniform TrianglesGeomData mesh) {
 }
 
 [shader("raygeneration")]
-void dbl_point_in_volume(uniform RayGenData record, uniform TrianglesGeomData mesh) {
+void point_in_volume(uniform RayGenData record, uniform TrianglesGeomData mesh) {
     RayFirePayload payload;
     uint rayID = DispatchRaysIndex().x;
 
@@ -137,11 +136,32 @@ void dbl_point_in_volume(uniform RayGenData record, uniform TrianglesGeomData me
     record.out.normal = payload.normal;
 }
 
+// ------------------------------------------------- Compute Shaders -------------------------------------------------
+/* A shader to compute and store AABB min/maxes in single precision using double precision coords*/
+[shader("compute")]
+[numthreads(1, 1, 1)]
+void
+ComputeBounds(uint3 DispatchThreadID: SV_DispatchThreadID, uniform DPTriangleGeomData record) {
+    int primID = DispatchThreadID.x;
+    int3 indices = record.index[primID];
+    double3 A = record.vertex[indices.x];
+    double3 B = record.vertex[indices.y];
+    double3 C = record.vertex[indices.z];
+    double3 dpaabbmin = min(min(A, B), C);
+    double3 dpaabbmax = max(max(A, B), C);
+    float3 fpaabbmin = float3(dpaabbmin - float3(FLT_EPSILON, FLT_EPSILON, FLT_EPSILON));
+    float3 fpaabbmax = float3(dpaabbmax + float3(FLT_EPSILON, FLT_EPSILON, FLT_EPSILON));
+    record.aabbs[2 * primID] = fpaabbmin;
+    record.aabbs[2 * primID + 1] = fpaabbmax;
+}
+
 // ------------------------------------------------ CUSTOM INTERSECTION SHADERS ------------------------------------------------
 /* 1D ray generation intersection with a double precision triangle using the Plucker intersection algorithm*/
 [shader("intersection")]
 void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
 {
+
+    printf("DPTrianglePluckerIntersection called!\n");
     uint rayID = DispatchRaysIndex().x;
     uint nRays = DispatchRaysDimensions().x;
 
@@ -226,7 +246,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
 
     // To minimise numerical error, get index of largest magnitude direction component
     int idx = 0;
-    
+    printf("We are here in the double precision intersection shader!\n");
 
 }
 
@@ -272,3 +292,25 @@ inline bool first(in double3 a, in double3 b)
 
     return false;
 }
+
+[shader("closesthit")]
+void render_hits(uniform TrianglesGeomData record, inout Payload payload, in float2 bc) {
+    // Threshold to determine edge thickness
+    const float edgeThreshold = 0.02;
+
+    // Check if the ray is near an edge using barycentric coordinates
+    if (bc.x < edgeThreshold || bc.y < edgeThreshold || (1.0 - (bc.x + bc.y)) < edgeThreshold) {
+        // Near an edge: set color to black
+        payload.color = float3(0.0, 0.0, 0.0);
+    } else { // Generate a unique color for each parent volume
+        // uint vol = record.vols.x; // Get first parent volume ID
+        // float r = float((vol * 37) % 256) / 255.0;  
+        // float g = float((vol * 73) % 256) / 255.0;  
+        // float b = float((vol * 151) % 256) / 255.0; 
+        // payload.color = float3(r, g, b);
+        payload.color = float3(0.0, 1.0, 0.0);
+    }
+
+    // printf("Closest Hit called! Parent Vols: (%u, %u), surf_id: %u\n", record.forward_vol, record.reverse_vol, record.id);
+}
+
