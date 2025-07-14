@@ -8,10 +8,12 @@ namespace xdg {
 GPRTRayTracer::GPRTRayTracer()
 {
   fbSize = {1000,1000};
-  gprtRequestWindow(fbSize.x, fbSize.y, "XDG::render_mesh()");
+  // gprtRequestWindow(fbSize.x, fbSize.y, "XDG::render_mesh()");
   gprtRequestRayTypeCount(numRayTypes_); // Set the number of shaders which can be set to the same geometry
   context_ = gprtContextCreate();
-  module_ = gprtModuleCreate(context_, flt_deviceCode);
+  // module_ = gprtModuleCreate(context_, flt_deviceCode);
+  module_ = gprtModuleCreate(context_, dbl_deviceCode);
+  
 
     // TODO - Should we just allocate a large chunk in the buffers to start with so that we don't have to resize?
   numRays = 1; // Set the number of rays to be cast
@@ -43,16 +45,113 @@ void GPRTRayTracer::setup_shaders()
   rayGenProgram_ = gprtRayGenCreate<RayGenData>(context_, module_, "ray_fire");
   rayGenPointInVolProgram_ = gprtRayGenCreate<RayGenData>(context_, module_, "point_in_volume");
   missProgram_ = gprtMissCreate<void>(context_, module_, "ray_fire_miss");
+  aabbPopulationProgram_ = gprtComputeCreate<DPTriangleGeomData>(context_, module_, "populate_aabbs");
 
-    // Create a "triangle" geometry type and set its closest-hit program
-  trianglesGeomType_ = gprtGeomTypeCreate<TrianglesGeomData>(context_, GPRT_TRIANGLES);
+  // Create a "triangle" geometry type and set its closest-hit program
+  // trianglesGeomType_ = gprtGeomTypeCreate<TrianglesGeomData>(context_, GPRT_TRIANGLES);
+  trianglesGeomType_ = gprtGeomTypeCreate<DPTriangleGeomData>(context_, GPRT_AABBS);
   gprtGeomTypeSetClosestHitProg(trianglesGeomType_, 0, module_, "ray_fire_hit"); // closesthit for ray queries
-  gprtGeomTypeSetClosestHitProg(trianglesGeomType_, 1, module_, "render_hits"); // cloesthit for mesh rendering
-  // TODO - Multimap to hold each shader assocaited with each query?
+  gprtGeomTypeSetIntersectionProg(trianglesGeomType_, 0, module_, "DPTrianglePluckerIntersection"); // set intersection program for double precision rays
+
+  // gprtGeomTypeSetClosestHitProg(trianglesGeomType_, 1, module_, "render_hits"); // cloesthit for mesh rendering
 }
 
 void GPRTRayTracer::init() {}
 
+TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume_id)
+{
+  TreeID tree = next_tree_id();
+  trees_.push_back(tree);
+  auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
+  std::vector<gprt::Instance> surfaceBlasInstances; // BLAS for each (surface) geometry in this volume
+
+  std::cout << "[register_volume] volume_id=" << volume_id << " surfaces=" << volume_surfaces.size() << std::endl;
+
+  for (const auto &surf : volume_surfaces) {
+    bool first_visit = !surface_to_geometry_map_.count(surf);
+    auto triangleGeom = gprtGeomCreate<DPTriangleGeomData>(context_, trianglesGeomType_);
+    gprt::Instance instance;
+
+    std::cout << "  Surface " << surf << (first_visit ? " (first visit)" : " (already registered)") << std::endl;
+
+    if (first_visit)
+    {
+      auto [vertices, indices] = mesh_manager->get_surface_mesh(surf);
+
+      std::vector<double3> dbl3Vertices;
+      dbl3Vertices.reserve(vertices.size());    
+      for (const auto &vertex : vertices) {
+        dbl3Vertices.push_back({vertex.x, vertex.y, vertex.z});
+      }
+
+      std::vector<uint3> ui3Indices;
+      ui3Indices.reserve(indices.size() / 3);
+      for (size_t i = 0; i < indices.size(); i += 3) {
+        ui3Indices.emplace_back(indices[i], indices[i + 1], indices[i + 2]);
+      }
+
+      auto vertex_buffer = gprtDeviceBufferCreate<double3>(context_, dbl3Vertices.size(), dbl3Vertices.data());
+      auto aabb_buffer = gprtDeviceBufferCreate<float3>(context_, 2*mesh_manager->num_surface_faces(surf), 0); // AABBs for each triangle
+      gprtAABBsSetPositions(triangleGeom, aabb_buffer, mesh_manager->num_surface_faces(surf), 2*sizeof(float3), 0);
+      auto connectivity_buffer = gprtDeviceBufferCreate<uint3>(context_, ui3Indices.size(), ui3Indices.data());
+      
+      DPTriangleGeomData* geom_data = gprtGeomGetParameters(triangleGeom);
+      geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffer);
+      geom_data->index = gprtBufferGetDevicePointer(connectivity_buffer);
+      geom_data->aabbs = gprtBufferGetDevicePointer(aabb_buffer);
+      geom_data->id = surf;
+
+      gprtComputeLaunch(aabbPopulationProgram_, {1, 1, 1}, {1, 1, 1}, *geom_data);
+
+      GPRTAccel blas = gprtAABBAccelCreate(context_, triangleGeom, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+      gprtAccelBuild(context_, blas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+
+      instance = gprtAccelGetInstance(blas);
+      instance.mask = 0xff;
+
+      // Store for lifetime management
+      // vertex_buffers.push_back(vertex_buffer);
+      // connectivity_buffers.push_back(connectivity_buffer);
+      // allTrianglesGeom.push_back(triangleGeom);
+
+      // Store in maps
+      surface_to_geometry_map_[surf] = triangleGeom;
+      surface_to_instance_map_[surf] = instance;
+      globalBlasInstances_.push_back(instance);
+
+      std::cout << "    globalBlasInstances_ size now: " << globalBlasInstances_.size() << std::endl;
+    }
+    else 
+    {
+      triangleGeom = surface_to_geometry_map_.at(surf);
+      instance = surface_to_instance_map_.at(surf);
+    }
+    surfaceBlasInstances.push_back(instance);
+
+    // Always update per-volume info
+    DPTriangleGeomData* geom_data = gprtGeomGetParameters(triangleGeom);
+    auto [forward_parent, reverse_parent] = mesh_manager->get_parent_volumes(surf);
+
+    if (volume_id == forward_parent) {
+      geom_data->forward_vol = forward_parent;
+    } else if (volume_id == reverse_parent) {
+      geom_data->reverse_vol = reverse_parent;
+    } else {
+      fatal_error("Volume {} is not a parent of surface {}", volume_id, surf);
+    }
+  }
+
+
+  // Create a TLAS (Top-Level Acceleration Structure) for all BLAS instances in this volume
+  auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, surfaceBlasInstances.size(), surfaceBlasInstances.data());
+  GPRTAccel volume_tlas = gprtInstanceAccelCreate(context_, surfaceBlasInstances.size(), instanceBuffer);
+  gprtAccelBuild(context_, volume_tlas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+  tree_to_vol_accel_map[tree] = volume_tlas;
+
+  return tree;
+}
+
+/* single precision version of register_volume
 TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume_id)
 {
   TreeID tree = next_tree_id();
@@ -144,13 +243,6 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
     }
   }
 
-  std::cout << "  Created TLAS for volume_id=" << volume_id << " with " << surfaceBlasInstances.size() << " BLAS instances." << std::endl;
-  std::cout << "  globalBlasInstances_ size now: " << globalBlasInstances_.size() << std::endl;
-  std::cout << "[register_volume] END: vertex_buffers=" << vertex_buffers.size()
-            << " connectivity_buffers=" << connectivity_buffers.size()
-            << " allTrianglesGeom=" << allTrianglesGeom.size()
-            << " surface_to_geometry_map_=" << surface_to_geometry_map_.size()
-            << std::endl;
 
   // Create a TLAS (Top-Level Acceleration Structure) for all BLAS instances in this volume
   auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, surfaceBlasInstances.size(), surfaceBlasInstances.data());
@@ -160,6 +252,8 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
 
   return tree;
 }
+*/
+
 
 bool GPRTRayTracer::point_in_volume(TreeID tree, 
                                     const Position& point,
@@ -328,7 +422,6 @@ void GPRTRayTracer::create_world_tlas()
 void GPRTRayTracer::render_mesh(const std::shared_ptr<MeshManager> mesh_manager) 
 {
 
-
   // Only render surfaces not included in the implicit complement
   // This has the side effect of seg faulting when all surfaces are in the implicit complement
   std::vector<gprt::Instance> explicitBlasInstances;
@@ -361,6 +454,7 @@ void GPRTRayTracer::render_mesh(const std::shared_ptr<MeshManager> mesh_manager)
   gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
 
 
+  
   PushConstants pc;
       // Retrieve the bounding box of the TLAS
   auto worldBB = mesh_manager->world_bounding_box();
