@@ -5,6 +5,23 @@
 #include <limits>
 #include <string>
 
+#include "math/VectorTypes.h"
+
+// extending the math namespace from GPRT/VectorTypes.h
+namespace math
+{
+  using double1 = vector<double, 1>;
+  using double2 = vector<double, 2>;
+  using double3 = vector<double, 3>;
+  using double4 = vector<double, 4>;
+}
+
+// Type aliases for convenience
+using double1 = math::double1;
+using double2 = math::double2;
+using double3 = math::double3; 
+using double4 = math::double4;
+
 namespace xdg {
 
 constexpr double INFTY {std::numeric_limits<double>::max()};
@@ -116,6 +133,11 @@ enum class SurfaceElementType {
 enum class VolumeElementType {
   TET = 0,
   HEX = 1,
+};
+
+enum class FloatingPointPrecision {
+  SINGLE = 0, // Single precision (float)
+  DOUBLE = 1  // Double precision (double)
 };
 
 } // namespace xdg
