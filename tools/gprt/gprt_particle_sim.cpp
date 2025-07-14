@@ -91,7 +91,7 @@ xdg->prepare_raytracer();
 auto rti = xdg->ray_tracing_interface();
 rti->init();
 
-bool renderMesh = true;
+bool renderMesh = false;
 // Create a GPRTRayTracer pointer to access render methods
 if (renderMesh)
 {
