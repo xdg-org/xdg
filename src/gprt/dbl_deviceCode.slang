@@ -64,6 +64,7 @@ void ray_fire_miss(inout RayFirePayload payload) {
     payload.distance = -1.0f;
     payload.surf_id = ~0u;
     payload.normal = {0.0, 0.0, 0.0};
+    printf("Miss shader called!\n");
 }
 
 // This ray generation program will kick off the ray tracing process,
@@ -141,7 +142,7 @@ void point_in_volume(uniform RayGenData record, uniform TrianglesGeomData mesh) 
 [shader("compute")]
 [numthreads(1, 1, 1)]
 void
-ComputeBounds(uint3 DispatchThreadID: SV_DispatchThreadID, uniform DPTriangleGeomData record) {
+populate_aabbs(uint3 DispatchThreadID: SV_DispatchThreadID, uniform DPTriangleGeomData record) {
     int primID = DispatchThreadID.x;
     int3 indices = record.index[primID];
     double3 A = record.vertex[indices.x];
@@ -292,25 +293,3 @@ inline bool first(in double3 a, in double3 b)
 
     return false;
 }
-
-[shader("closesthit")]
-void render_hits(uniform TrianglesGeomData record, inout Payload payload, in float2 bc) {
-    // Threshold to determine edge thickness
-    const float edgeThreshold = 0.02;
-
-    // Check if the ray is near an edge using barycentric coordinates
-    if (bc.x < edgeThreshold || bc.y < edgeThreshold || (1.0 - (bc.x + bc.y)) < edgeThreshold) {
-        // Near an edge: set color to black
-        payload.color = float3(0.0, 0.0, 0.0);
-    } else { // Generate a unique color for each parent volume
-        // uint vol = record.vols.x; // Get first parent volume ID
-        // float r = float((vol * 37) % 256) / 255.0;  
-        // float g = float((vol * 73) % 256) / 255.0;  
-        // float b = float((vol * 151) % 256) / 255.0; 
-        // payload.color = float3(r, g, b);
-        payload.color = float3(0.0, 1.0, 0.0);
-    }
-
-    // printf("Closest Hit called! Parent Vols: (%u, %u), surf_id: %u\n", record.forward_vol, record.reverse_vol, record.id);
-}
-

@@ -2,6 +2,8 @@
 
 #define AA 3 // used for antialiasing
 
+
+
 /* Inputs for each ray */
 struct RayInput {
   float3 origin;
@@ -45,6 +47,7 @@ struct TrianglesGeomData {
 /* variables for double precision triangle mesh geometry */
 struct DPTriangleGeomData {
   double3 *vertex; // vertex buffer
+  float3 *aabbs; // AABB buffer 
   uint3 *index;  // index buffer
   double3 *normals; // normals buffer
   double4 *dprays; // double precision rays

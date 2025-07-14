@@ -140,7 +140,6 @@ void ray_fire_hit(uniform TrianglesGeomData record, inout RayFirePayload payload
     //     "Index of next volume BLAS %i\n", record.id, record.vols[1], record.vols[0], record.ff_vol);
     //   }
     // }
-
  
 
     payload.distance = RayTCurrent();
