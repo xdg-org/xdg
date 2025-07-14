@@ -1,9 +1,9 @@
 #include "gprt.h"
 
 #define AA 3 // used for antialiasing
-
-using double3 = std::array<double, 3>;
-using double4 = std::array<double, 4>;
+#define EPSILON 2.2204460492503130808472633361816E-16
+// #define FLT_EPSILON	1.19209290e-7F
+// #define DBL_EPSILON	2.2204460492503131e-16
 
 /* Inputs for each ray */
 struct RayInput {
@@ -48,6 +48,7 @@ struct TrianglesGeomData {
 /* variables for double precision triangle mesh geometry */
 struct DPTriangleGeomData {
   double3 *vertex; // vertex buffer
+  float3 *aabbs; // AABB buffer 
   uint3 *index;  // index buffer
   double3 *normals; // normals buffer
   double4 *dprays; // double precision rays
