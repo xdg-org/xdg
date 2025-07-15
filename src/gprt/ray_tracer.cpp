@@ -13,23 +13,22 @@ GPRTRayTracer::GPRTRayTracer()
   context_ = gprtContextCreate();
   // module_ = gprtModuleCreate(context_, flt_deviceCode);
   module_ = gprtModuleCreate(context_, dbl_deviceCode);
-  
 
-    // TODO - Should we just allocate a large chunk in the buffers to start with so that we don't have to resize?
+  // TODO - Should we just allocate a large chunk in the buffers to start with so that we don't have to resize?
   numRays = 1; // Set the number of rays to be cast
-  rayInputBuffer_ = gprtDeviceBufferCreate<RayInput>(context_, numRays);
-  rayOutputBuffer_ = gprtDeviceBufferCreate<RayOutput>(context_, numRays); 
+  rayInputBuffer_ = gprtDeviceBufferCreate<dblRayInput>(context_, numRays);
+  rayOutputBuffer_ = gprtDeviceBufferCreate<dblRayOutput>(context_, numRays); 
   excludePrimitivesBuffer_ = gprtDeviceBufferCreate<int32_t>(context_); // initialise buffer of size 1
 
   setup_shaders();
 
   // Bind the buffers to the RayGenData structure
-  RayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
+  dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
   rayGenData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
   rayGenData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
 
   // Bind the buffers to the RayGenData structure
-  RayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPointInVolProgram_);
+  dblRayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPointInVolProgram_);
   rayGenPIVData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
   rayGenPIVData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
 }
@@ -42,8 +41,8 @@ GPRTRayTracer::~GPRTRayTracer()
 void GPRTRayTracer::setup_shaders()
 {
   // Set up ray generation and miss programs
-  rayGenProgram_ = gprtRayGenCreate<RayGenData>(context_, module_, "ray_fire");
-  rayGenPointInVolProgram_ = gprtRayGenCreate<RayGenData>(context_, module_, "point_in_volume");
+  rayGenProgram_ = gprtRayGenCreate<dblRayGenData>(context_, module_, "ray_fire");
+  rayGenPointInVolProgram_ = gprtRayGenCreate<dblRayGenData>(context_, module_, "point_in_volume");
   missProgram_ = gprtMissCreate<void>(context_, module_, "ray_fire_miss");
   aabbPopulationProgram_ = gprtComputeCreate<DPTriangleGeomData>(context_, module_, "populate_aabbs");
 
@@ -71,13 +70,13 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
     bool first_visit = !surface_to_geometry_map_.count(surf);
     auto triangleGeom = gprtGeomCreate<DPTriangleGeomData>(context_, trianglesGeomType_);
     gprt::Instance instance;
+    auto num_faces = mesh_manager->num_surface_faces(surf);
 
     std::cout << "  Surface " << surf << (first_visit ? " (first visit)" : " (already registered)") << std::endl;
 
-    if (first_visit)
-    {
+    // if (first_visit)
+    // {
       auto [vertices, indices] = mesh_manager->get_surface_mesh(surf);
-
       std::vector<double3> dbl3Vertices;
       dbl3Vertices.reserve(vertices.size());    
       for (const auto &vertex : vertices) {
@@ -91,17 +90,28 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
       }
 
       auto vertex_buffer = gprtDeviceBufferCreate<double3>(context_, dbl3Vertices.size(), dbl3Vertices.data());
-      auto aabb_buffer = gprtDeviceBufferCreate<float3>(context_, 2*mesh_manager->num_surface_faces(surf), 0); // AABBs for each triangle
-      gprtAABBsSetPositions(triangleGeom, aabb_buffer, mesh_manager->num_surface_faces(surf), 2*sizeof(float3), 0);
+      auto aabb_buffer = gprtDeviceBufferCreate<float3>(context_, 2*num_faces, 0); // AABBs for each triangle
+      gprtAABBsSetPositions(triangleGeom, aabb_buffer, num_faces, 2*sizeof(float3), 0);
       auto connectivity_buffer = gprtDeviceBufferCreate<uint3>(context_, ui3Indices.size(), ui3Indices.data());
       
       DPTriangleGeomData* geom_data = gprtGeomGetParameters(triangleGeom);
       geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffer);
       geom_data->index = gprtBufferGetDevicePointer(connectivity_buffer);
       geom_data->aabbs = gprtBufferGetDevicePointer(aabb_buffer);
-      geom_data->id = surf;
+      geom_data->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
+      geom_data->surf_id = surf;
 
-      gprtComputeLaunch(aabbPopulationProgram_, {1, 1, 1}, {1, 1, 1}, *geom_data);
+      gprtComputeLaunch(aabbPopulationProgram_, {num_faces, 1, 1}, {1, 1, 1}, *geom_data);
+
+      // gprtBufferMap(aabb_buffer);
+      // float3* aabbs_host = gprtBufferGetHostPointer(aabb_buffer);
+      // for (size_t i = 0; i < 2*mesh_manager->num_surface_faces(surf); i += 2) {
+      //   float3 aabb_min = aabbs_host[i];
+      //   float3 aabb_max = aabbs_host[i + 1];
+      //   std::cout << "AABB " << i/2 << ": min(" << aabb_min.x << ", " << aabb_min.y << ", " << aabb_min.z
+      //             << "), max(" << aabb_max.x << ", " << aabb_max.y << ", " << aabb_max.z << ")" << std::endl;
+      // }
+      // gprtBufferUnmap(aabb_buffer);
 
       GPRTAccel blas = gprtAABBAccelCreate(context_, triangleGeom, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
       gprtAccelBuild(context_, blas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
@@ -120,16 +130,16 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
       globalBlasInstances_.push_back(instance);
 
       std::cout << "    globalBlasInstances_ size now: " << globalBlasInstances_.size() << std::endl;
-    }
-    else 
-    {
-      triangleGeom = surface_to_geometry_map_.at(surf);
-      instance = surface_to_instance_map_.at(surf);
-    }
+    // }
+    // else 
+    // {
+    //   triangleGeom = surface_to_geometry_map_.at(surf);
+    //   instance = surface_to_instance_map_.at(surf);
+    // }
     surfaceBlasInstances.push_back(instance);
-
+    
     // Always update per-volume info
-    DPTriangleGeomData* geom_data = gprtGeomGetParameters(triangleGeom);
+    // DPTriangleGeomData* geom_data = gprtGeomGetParameters(triangleGeom);
     auto [forward_parent, reverse_parent] = mesh_manager->get_parent_volumes(surf);
 
     if (volume_id == forward_parent) {
@@ -140,6 +150,7 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
       fatal_error("Volume {} is not a parent of surface {}", volume_id, surf);
     }
   }
+
 
 
   // Create a TLAS (Top-Level Acceleration Structure) for all BLAS instances in this volume
@@ -261,7 +272,7 @@ bool GPRTRayTracer::point_in_volume(TreeID tree,
                                     const std::vector<MeshID>* exclude_primitives) const
 {
   GPRTAccel volume = tree_to_vol_accel_map.at(tree);
-  RayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPointInVolProgram_);
+  dblRayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPointInVolProgram_);
   rayGenPIVData->world = gprtAccelGetDeviceAddress(volume);
 
   // Use provided direction or if Direction == nulptr use default direction
@@ -270,7 +281,7 @@ bool GPRTRayTracer::point_in_volume(TreeID tree,
 
   gprtBufferMap(rayInputBuffer_); // Update the ray input buffer
 
-  RayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
+  dblRayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
   rayInput[0].origin = {point.x, point.y, point.z};
   rayInput[0].direction = {directionUsed.x, directionUsed.y, directionUsed.z};
 
@@ -296,7 +307,7 @@ bool GPRTRayTracer::point_in_volume(TreeID tree,
 
   // Retrieve the output from the ray output buffer
   gprtBufferMap(rayOutputBuffer_);
-  RayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
+  dblRayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
   auto surface = rayOutput[0].surf_id;
   Direction normal = {rayOutput[0].normal.x, rayOutput[0].normal.y, rayOutput[0].normal.z};
   gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
@@ -322,12 +333,12 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
                                                   std::vector<MeshID>* const exclude_primitives) 
 {
   GPRTAccel volume = tree_to_vol_accel_map.at(scene);
-  RayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
+  dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
   rayGenData->world = gprtAccelGetDeviceAddress(volume);
   
   gprtBufferMap(rayInputBuffer_); // Update the ray input buffer
 
-  RayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
+  dblRayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
   rayInput[0].origin = {origin.x, origin.y, origin.z};
   rayInput[0].direction = {direction.x, direction.y, direction.z};
 
@@ -361,7 +372,7 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
                                                   
   // Retrieve the output from the ray output buffer
   gprtBufferMap(rayOutputBuffer_);
-  RayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
+  dblRayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
   auto distance = rayOutput[0].distance;
   auto surface = rayOutput[0].surf_id;
   gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
