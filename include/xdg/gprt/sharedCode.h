@@ -17,6 +17,8 @@ struct dblRayInput
 {
   double3 origin;
   double3 direction;
+  double tMin; // Minimum distance for ray intersection
+  double tMax; // Maximum distance for ray intersection
   int32_t* exclude_primitives; // Optional for excluding primitives
   uint32_t exclude_count;           // Number of excluded primitives
 };
@@ -51,8 +53,10 @@ struct DPTriangleGeomData {
   float3 *aabbs; // AABB buffer 
   uint3 *index;  // index buffer
   double3 *normals; // normals buffer
-  double4 *dprays; // double precision rays
-  uint id;       // surface id
+  dblRayInput *ray; // double precision rays
+  double hitDistance; // distance to the hit point
+  uint surf_id;
+  int2 vols;
   int forward_vol;
   int reverse_vol;
 };
@@ -62,6 +66,13 @@ struct RayGenData {
   SurfaceAccelerationStructure world;    // The top-level accel structure
   RayInput *ray;
   RayOutput *out;
+};
+
+struct dblRayGenData {
+  uint* frameBuffer;                     // Optional for debugging or visuals
+  SurfaceAccelerationStructure world;    // The top-level accel structure
+  dblRayInput *ray;
+  dblRayOutput *out;
 };
 
 struct RayFireData {

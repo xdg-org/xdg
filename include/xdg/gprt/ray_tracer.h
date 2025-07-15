@@ -87,14 +87,15 @@ namespace xdg {
       GPRTModule module_; // device code module for single precision shaders
       // std::vector<GPRTGeom> geometries_; //<! All geometries created by this ray tracer
       GPRTAccel world_; 
-      GPRTRayGenOf<RayGenData> rayGenProgram_; //<! Ray generation program
-      GPRTRayGenOf<RayGenData> rayGenPointInVolProgram_;
+      GPRTRayGenOf<dblRayGenData> rayGenProgram_; //<! Ray generation program
+      GPRTRayGenOf<dblRayGenData> rayGenPointInVolProgram_;
       GPRTMissOf<void> missProgram_; //<! Miss program
       GPRTComputeOf<DPTriangleGeomData> aabbPopulationProgram_; //<! AABB population program for double precision rays
       GPRTBufferOf<uint32_t> frameBuffer_; //<! Framebuffer
       int2 fbSize; //<! Size of the framebuffer 
-      GPRTBufferOf<RayInput> rayInputBuffer_; //<! Ray buffer for ray generation
-      GPRTBufferOf<RayOutput> rayOutputBuffer_; //<! Ray output buffer for ray generation
+      GPRTBufferOf<dblRayInput> rayInputBuffer_; //<! Ray buffer for ray generation
+      GPRTBufferOf<dblRayOutput> rayOutputBuffer_; //<! Ray output buffer for ray generation
+      GPRTBufferOf<double4> dpRaysBuffer_; //<! Double precision ray buffer for ray generation
       GPRTBufferOf<int32_t> excludePrimitivesBuffer_; //<! Buffer for excluded primitives
       size_t numRays = 1; //<! Number of rays to be cast
       uint32_t numRayTypes_ = 2; // <! Number of ray types. Allows multiple shaders to be set to the same geometery
