@@ -42,7 +42,7 @@ void ray_fire_hit(uniform DPTriangleGeomData record, inout RayFirePayload payloa
         payload.vol_ids.y = record.vols[0];
         payload.next_vol = record.forward_vol;
     }
-    // payload.distance = record.out[rayID].distance;
+    payload.distance = record.hitDistance;
     payload.surf_id = record.surf_id;
     // payload.normal = record.normals[PrimitiveIndex()];
 }
@@ -208,7 +208,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record, uniform db
     // hard coded for now. Need to be passed from host->raygen->intersection shader
     float tMin = 0.0;
     float tMax = 10000;
-    
+
     printf("tmin: %f, tCurrent: %f\n", tMin, tMax);
 
 
