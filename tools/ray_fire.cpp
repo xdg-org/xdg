@@ -2,6 +2,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <iomanip>
 
 #include "xdg/error.h"
 #include "xdg/mesh_manager_interface.h"
@@ -103,7 +104,7 @@ int main(int argc, char** argv) {
 
   auto result = xdg->ray_fire(volume, origin, direction);
 
-  std::cout << "Distance: " << result.first << std::endl;
+  std::cout << std::setprecision(17) << "Distance: " << result.first << std::endl;
   std::cout << "Surface: " << result.second << std::endl;
 
   return 0;
