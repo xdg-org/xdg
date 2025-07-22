@@ -59,6 +59,8 @@ struct DPTriangleGeomData {
   int2 vols;
   int forward_vol;
   int reverse_vol;
+  int32_t *prim_ids;
+  int sense; // sense of the triangle (0 for forward, 1 for reverse)
 };
 
 struct RayGenData {
@@ -73,6 +75,7 @@ struct dblRayGenData {
   SurfaceAccelerationStructure world;    // The top-level accel structure
   dblRayInput *ray;
   dblRayOutput *out;
+  int orientation; // Orientation of the ray (0 for exiting, 1 for entering)
 };
 
 struct RayFireData {

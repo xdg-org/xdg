@@ -132,7 +132,11 @@ static Property VOID_MATERIAL {PropertyType::MATERIAL, "void"};
 enum class RayFireType { VOLUME, POINT_CONTAINMENT, ACCUMULATE_HITS, FIND_VOLUME };
 
 //
-enum class HitOrientation { ANY, EXITING, ENTERING };
+enum class HitOrientation { 
+  ANY = -1, 
+  EXITING = 0, 
+  ENTERING = 1, 
+};
 
 // Enumerator for different element types (maybe we want more here?)
 enum class SurfaceElementType {

@@ -69,13 +69,15 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
   for (const auto &surf : volume_surfaces) {
     bool first_visit = !surface_to_geometry_map_.count(surf);
     auto triangleGeom = gprtGeomCreate<DPTriangleGeomData>(context_, trianglesGeomType_);
+    DPTriangleGeomData* geom_data = gprtGeomGetParameters(triangleGeom); // pointer to assign data to
     gprt::Instance instance;
     auto num_faces = mesh_manager->num_surface_faces(surf);
 
     std::cout << "  Surface " << surf << (first_visit ? " (first visit)" : " (already registered)") << std::endl;
 
-    // if (first_visit)
-    // {
+    if (first_visit)
+    {
+      // Get storage for vertices
       auto [vertices, indices] = mesh_manager->get_surface_mesh(surf);
       std::vector<double3> dbl3Vertices;
       dbl3Vertices.reserve(vertices.size());    
@@ -83,23 +85,47 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
         dbl3Vertices.push_back({vertex.x, vertex.y, vertex.z});
       }
 
+      // Get storage for indices
       std::vector<uint3> ui3Indices;
       ui3Indices.reserve(indices.size() / 3);
       for (size_t i = 0; i < indices.size(); i += 3) {
         ui3Indices.emplace_back(indices[i], indices[i + 1], indices[i + 2]);
       }
 
+      // Get storage for normals
+      std::vector<double3> normals;
+      std::vector<MeshID> primIds;
+      primIds.reserve(num_faces);
+      normals.reserve(num_faces);
+      for (const auto &face : mesh_manager->get_surface_faces(surf)) {
+        auto norm = mesh_manager->face_normal(face);
+        normals.push_back({norm.x, norm.y, norm.z});
+        primIds.push_back(face);
+      }
+
       auto vertex_buffer = gprtDeviceBufferCreate<double3>(context_, dbl3Vertices.size(), dbl3Vertices.data());
       auto aabb_buffer = gprtDeviceBufferCreate<float3>(context_, 2*num_faces, 0); // AABBs for each triangle
       gprtAABBsSetPositions(triangleGeom, aabb_buffer, num_faces, 2*sizeof(float3), 0);
       auto connectivity_buffer = gprtDeviceBufferCreate<uint3>(context_, ui3Indices.size(), ui3Indices.data());
-      
-      DPTriangleGeomData* geom_data = gprtGeomGetParameters(triangleGeom);
+      auto normal_buffer = gprtDeviceBufferCreate<double3>(context_, num_faces, normals.data()); 
+      auto primID_buffer = gprtDeviceBufferCreate<MeshID>(context_, num_faces, primIds.data()); // Buffer for primitive IDs
+
       geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffer);
       geom_data->index = gprtBufferGetDevicePointer(connectivity_buffer);
       geom_data->aabbs = gprtBufferGetDevicePointer(aabb_buffer);
       geom_data->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
       geom_data->surf_id = surf;
+      geom_data->normals = gprtBufferGetDevicePointer(normal_buffer);
+      geom_data->prim_ids = gprtBufferGetDevicePointer(primID_buffer);
+
+      auto surf_to_vol_senses = mesh_manager->get_parent_volumes(surf);
+      if (volume_id == surf_to_vol_senses.first) 
+      {
+        geom_data->sense = 0;
+      } else if (volume_id == surf_to_vol_senses.second) 
+      {
+        geom_data->sense = 1;
+      }
 
       gprtComputeLaunch(aabbPopulationProgram_, {num_faces, 1, 1}, {1, 1, 1}, *geom_data);
 
@@ -130,12 +156,12 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
       globalBlasInstances_.push_back(instance);
 
       std::cout << "    globalBlasInstances_ size now: " << globalBlasInstances_.size() << std::endl;
-    // }
-    // else 
-    // {
-    //   triangleGeom = surface_to_geometry_map_.at(surf);
-    //   instance = surface_to_instance_map_.at(surf);
-    // }
+    }
+    else 
+    {
+      triangleGeom = surface_to_geometry_map_.at(surf);
+      instance = surface_to_instance_map_.at(surf);
+    }
     surfaceBlasInstances.push_back(instance);
     
     // Always update per-volume info
@@ -318,6 +344,10 @@ bool GPRTRayTracer::point_in_volume(TreeID tree,
   // use the hit triangle normal to determine if the intersection is exiting or entering
   // TODO - Do this on GPU and return an int 1 or 0 to represent the bool?
 
+  printf("Point in Volume Check: surface=%d, normal=(%f, %f, %f)\n", surface, normal.x, normal.y, normal.z);
+  printf("Point in Volume Check: directionUsed=(%f, %f, %f)\n", directionUsed.x, directionUsed.y, directionUsed.z);
+  printf("Point in Volume Check: dot=%f\n", directionUsed.dot(normal));
+
   return directionUsed.dot(normal) > 0.0;
 }
 
@@ -335,6 +365,7 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
   GPRTAccel volume = tree_to_vol_accel_map.at(scene);
   dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
   rayGenData->world = gprtAccelGetDeviceAddress(volume);
+  rayGenData->orientation = static_cast<int>(orientation); // Set orientation for the ray
   
   gprtBufferMap(rayInputBuffer_); // Update the ray input buffer
 
@@ -377,10 +408,10 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
   auto surface = rayOutput[0].surf_id;
   gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
   
-  // if (surface == XDG_GPRT_INVALID_GEOMETRY_ID)
-  //   return {INFTY, ID_NONE};
-  // else
-  //   if (exclude_primitives) exclude_primitives->push_back(surface);
+  if (surface == XDG_GPRT_INVALID_GEOMETRY_ID)
+    return {INFTY, ID_NONE};
+  else
+    if (exclude_primitives) exclude_primitives->push_back(surface);
   return {distance, surface};
 }
                 
