@@ -21,12 +21,12 @@ struct RayFirePayload {
 
 struct DPAttribute
 {
-  float2 bc; // barycentrics
+  double hitDistance; // barycentrics
 };
 
 
 [shader("closesthit")]
-void ray_fire_hit(uniform DPTriangleGeomData record, inout RayFirePayload payload, in float2 bc) {
+void ray_fire_hit(uniform DPTriangleGeomData record, inout RayFirePayload payload, in DPAttribute attr) {
     // Distance from the ray origin to the hit point
     uint hit_kind = HitKind();
     uint rayID = DispatchRaysIndex().x;
@@ -42,8 +42,10 @@ void ray_fire_hit(uniform DPTriangleGeomData record, inout RayFirePayload payloa
         payload.vol_ids.y = record.vols[0];
         payload.next_vol = record.forward_vol;
     }
-    payload.distance = record.hitDistance;
+    payload.distance = attr.hitDistance;
     payload.surf_id = record.surf_id;
+    printf("record.hitDistance: %f \n", payload.distance);
+
     // payload.normal = record.normals[PrimitiveIndex()];
 }
 
@@ -158,7 +160,6 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record, uniform db
 
     uint rayID = DispatchRaysIndex().x;
     uint nRays = DispatchRaysDimensions().x;
-    printf("DPTrianglePluckerIntersection called with rayID: %u, nRays: %u\n", rayID, nRays);
 
     if (rayID >= nRays) {
         printf("Early return at line %d: rayID (%u) >= nRays (%u)\n", __LINE__, rayID, nRays);
@@ -208,9 +209,6 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record, uniform db
     // hard coded for now. Need to be passed from host->raygen->intersection shader
     float tMin = 0.0;
     float tMax = 10000;
-
-    printf("tmin: %f, tCurrent: %f\n", tMin, tMax);
-
 
     const double3 raya = direction;
     const double3 rayb = dp_cross(v1 - v0, v2 - v0);
@@ -287,12 +285,9 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record, uniform db
     // printf("Distance: %f", t);
 
     // update current double precision thit
-    record.hitDistance = t;
-    // rayGenData.out[rayID].distance = t;
 
     DPAttribute attr;
-    attr.bc = float2(float(u), float(v));
-    // attr.hitDistance = t;
+    attr.hitDistance = t;
     // printf("t: %f", (float)t);
     // printf("atrr.hitDistance: %f, attr.bc: (%f, %f)\n", attr.hitDistance, attr.bc.x, attr.bc.y);
     float f32t = float(t);
