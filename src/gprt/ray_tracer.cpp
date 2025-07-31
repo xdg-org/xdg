@@ -7,14 +7,10 @@ namespace xdg {
 
 GPRTRayTracer::GPRTRayTracer()
 {
-  fbSize = {1000,1000};
-  // gprtRequestWindow(fbSize.x, fbSize.y, "XDG::render_mesh()");
   gprtRequestRayTypeCount(numRayTypes_); // Set the number of shaders which can be set to the same geometry
   context_ = gprtContextCreate();
-  // module_ = gprtModuleCreate(context_, flt_deviceCode);
   module_ = gprtModuleCreate(context_, dbl_deviceCode);
 
-  // TODO - Should we just allocate a large chunk in the buffers to start with so that we don't have to resize?
   numRays = 1; // Set the number of rays to be cast
   rayInputBuffer_ = gprtDeviceBufferCreate<dblRayInput>(context_, numRays);
   rayOutputBuffer_ = gprtDeviceBufferCreate<dblRayOutput>(context_, numRays); 
@@ -47,12 +43,10 @@ void GPRTRayTracer::setup_shaders()
   aabbPopulationProgram_ = gprtComputeCreate<DPTriangleGeomData>(context_, module_, "populate_aabbs");
 
   // Create a "triangle" geometry type and set its closest-hit program
-  // trianglesGeomType_ = gprtGeomTypeCreate<TrianglesGeomData>(context_, GPRT_TRIANGLES);
   trianglesGeomType_ = gprtGeomTypeCreate<DPTriangleGeomData>(context_, GPRT_AABBS);
   gprtGeomTypeSetClosestHitProg(trianglesGeomType_, 0, module_, "ray_fire_hit"); // closesthit for ray queries
   gprtGeomTypeSetIntersectionProg(trianglesGeomType_, 0, module_, "DPTrianglePluckerIntersection"); // set intersection program for double precision rays
 
-  // gprtGeomTypeSetClosestHitProg(trianglesGeomType_, 1, module_, "render_hits"); // cloesthit for mesh rendering
 }
 
 void GPRTRayTracer::init() {}
@@ -64,16 +58,12 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
   auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
   std::vector<gprt::Instance> surfaceBlasInstances; // BLAS for each (surface) geometry in this volume
 
-  std::cout << "[register_volume] volume_id=" << volume_id << " surfaces=" << volume_surfaces.size() << std::endl;
-
   for (const auto &surf : volume_surfaces) {
     bool first_visit = !surface_to_geometry_map_.count(surf);
     auto triangleGeom = gprtGeomCreate<DPTriangleGeomData>(context_, trianglesGeomType_);
     DPTriangleGeomData* geom_data = gprtGeomGetParameters(triangleGeom); // pointer to assign data to
     gprt::Instance instance;
     auto num_faces = mesh_manager->num_surface_faces(surf);
-
-    std::cout << "  Surface " << surf << (first_visit ? " (first visit)" : " (already registered)") << std::endl;
 
     if (first_visit)
     {
@@ -129,33 +119,16 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
 
       gprtComputeLaunch(aabbPopulationProgram_, {num_faces, 1, 1}, {1, 1, 1}, *geom_data);
 
-      // gprtBufferMap(aabb_buffer);
-      // float3* aabbs_host = gprtBufferGetHostPointer(aabb_buffer);
-      // for (size_t i = 0; i < 2*mesh_manager->num_surface_faces(surf); i += 2) {
-      //   float3 aabb_min = aabbs_host[i];
-      //   float3 aabb_max = aabbs_host[i + 1];
-      //   std::cout << "AABB " << i/2 << ": min(" << aabb_min.x << ", " << aabb_min.y << ", " << aabb_min.z
-      //             << "), max(" << aabb_max.x << ", " << aabb_max.y << ", " << aabb_max.z << ")" << std::endl;
-      // }
-      // gprtBufferUnmap(aabb_buffer);
-
       GPRTAccel blas = gprtAABBAccelCreate(context_, triangleGeom, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
       gprtAccelBuild(context_, blas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
 
       instance = gprtAccelGetInstance(blas);
       instance.mask = 0xff;
 
-      // Store for lifetime management
-      // vertex_buffers.push_back(vertex_buffer);
-      // connectivity_buffers.push_back(connectivity_buffer);
-      // allTrianglesGeom.push_back(triangleGeom);
-
       // Store in maps
       surface_to_geometry_map_[surf] = triangleGeom;
       surface_to_instance_map_[surf] = instance;
       globalBlasInstances_.push_back(instance);
-
-      std::cout << "    globalBlasInstances_ size now: " << globalBlasInstances_.size() << std::endl;
     }
     else 
     {
@@ -165,7 +138,6 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
     surfaceBlasInstances.push_back(instance);
     
     // Always update per-volume info
-    // DPTriangleGeomData* geom_data = gprtGeomGetParameters(triangleGeom);
     auto [forward_parent, reverse_parent] = mesh_manager->get_parent_volumes(surf);
 
     if (volume_id == forward_parent) {
@@ -341,13 +313,6 @@ bool GPRTRayTracer::point_in_volume(TreeID tree,
   // if ray hit nothing, the point is outside volume
   if (surface == XDG_GPRT_INVALID_GEOMETRY_ID) return false;
 
-  // use the hit triangle normal to determine if the intersection is exiting or entering
-  // TODO - Do this on GPU and return an int 1 or 0 to represent the bool?
-
-  printf("Point in Volume Check: surface=%d, normal=(%f, %f, %f)\n", surface, normal.x, normal.y, normal.z);
-  printf("Point in Volume Check: directionUsed=(%f, %f, %f)\n", directionUsed.x, directionUsed.y, directionUsed.z);
-  printf("Point in Volume Check: dot=%f\n", directionUsed.dot(normal));
-
   return directionUsed.dot(normal) > 0.0;
 }
 
@@ -426,124 +391,6 @@ void GPRTRayTracer::create_world_tlas()
   auto worldBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, globalBlasInstances_.size(), globalBlasInstances_.data());
   world_ = gprtInstanceAccelCreate(context_, globalBlasInstances_.size(), worldBuffer);
   gprtAccelBuild(context_, world_, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
-}
-
-
-//   return {0.0, 0};
-// }
-
-// void GPRTRayTracer::closest(TreeID scene,
-//                             const Position& origin,
-//                             double& dist,
-//                             MeshID& triangle) {
-//   // TODO: Closest hit logic with triangle
-//   dist = -1.0;
-//   triangle = -1;
-// }
-
-// void GPRTRayTracer::closest(TreeID scene,
-//                             const Position& origin,
-//                             double& dist) {
-//   // TODO: Closest hit logic
-//   dist = -1.0;
-// }
-
-// bool GPRTRayTracer::occluded(TreeID scene,
-//                              const Position& origin,
-//                              const Direction& direction,
-//                              double& dist) const {
-//   // TODO: Occlusion logic
-//   dist = -1.0;
-//   return false;
-// }
-
-
-// Methods for rendering mesh to framebuffer
-
-
-void GPRTRayTracer::render_mesh(const std::shared_ptr<MeshManager> mesh_manager) 
-{
-
-  // Only render surfaces not included in the implicit complement
-  // This has the side effect of seg faulting when all surfaces are in the implicit complement
-  std::vector<gprt::Instance> explicitBlasInstances;
-  MeshID complement_id = mesh_manager->implicit_complement();
-
-  for (const auto& [surf, instance] : surface_to_instance_map_) {
-      auto [forward_parent, reverse_parent] = mesh_manager->get_parent_volumes(surf);
-      if (forward_parent == complement_id || reverse_parent == complement_id)
-          continue; // Skip complement surfaces
-      explicitBlasInstances.push_back(instance);
-  }
-
-  // Now use explicitBlasInstances for TLAS creation
-  auto worldBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, explicitBlasInstances.size(), explicitBlasInstances.data());
-  world_ = gprtInstanceAccelCreate(context_, explicitBlasInstances.size(), worldBuffer);
-  gprtAccelBuild(context_, world_, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
-  // Set up ray generation and miss programs
-  GPRTRayGenOf<RayGenData> rayGen = gprtRayGenCreate<RayGenData>(context_, module_, "render_mesh");
-  GPRTMissOf<void> miss = gprtMissCreate<void>(context_, module_, "render_miss");
-
-  // Place a reference to the TLAS in the ray generation kernel's parameters
-  RayGenData* rayGenData = gprtRayGenGetParameters(rayGen);
-  rayGenData->world = gprtAccelGetDeviceAddress(world_);
-
-  // Create the framebuffer
-  GPRTBufferOf<uint32_t> frameBuffer = gprtDeviceBufferCreate<uint32_t>(context_, fbSize.x * fbSize.y);
-  rayGenData->frameBuffer = gprtBufferGetDevicePointer(frameBuffer);
-
-  std::cout << "[render_mesh] Building SBT with " << globalBlasInstances_.size() << " instances." << std::endl;
-  gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
-
-
-  
-  PushConstants pc;
-      // Retrieve the bounding box of the TLAS
-  auto worldBB = mesh_manager->world_bounding_box();
-  auto tlasMin = float3(worldBB.min_x, worldBB.min_y, worldBB.min_z);
-  auto tlasMax = float3(worldBB.max_x, worldBB.max_y, worldBB.max_z);
-
-  float3 lookFrom = {1.5f, 6.f, -10.f};
-  float3 lookAt = {1.5f, 1.5f, -1.5f};
-  float3 lookUp = {0.f, -1.f, 0.f};
-  float cosFovy = 0.66f;
-  // Calculate the center of the bounding box
-  float3 center = (tlasMin + tlasMax) * 0.5f;
-
-  // Update camera parameters
-  lookAt = center;
-
-  // Calculate a suitable `lookFrom` position based on the bounding box size
-  float3 boxSize = tlasMax - tlasMin;
-  float distance = length(boxSize) * 1.0f; // Adjust the multiplier for desired zoom level
-  lookFrom = center + float3(0.0f, 0.0f, -distance); // Place the camera behind the center
-
-  // Set the up vector
-  lookUp = float3(0.0f, 1.0f, 0.0f); // Y-axis up
-
-  // Update push constants
-  pc.scene_center = center;
-  float maxDim = std::max(boxSize.x, std::max(boxSize.y, boxSize.z));
-  pc.camera.radius = maxDim * 5.0f;
-  pc.camera.pos = lookFrom;
-  pc.camera.dir_00 = normalize(lookAt - lookFrom);
-  float aspect = float(fbSize.x) / float(fbSize.y);
-  pc.camera.dir_du = cosFovy * aspect * normalize(cross(pc.camera.dir_00, lookUp));
-  pc.camera.dir_dv = cosFovy * normalize(cross(pc.camera.dir_du, pc.camera.dir_00));
-  pc.camera.dir_00 -= 0.5f * pc.camera.dir_du;
-  pc.camera.dir_00 -= 0.5f * pc.camera.dir_dv;
-
-
-  do {
-    pc.time = float(gprtGetTime(context_));
-
-    // Calls the GPU raygen kernel function
-    gprtRayGenLaunch2D(context_, rayGen, fbSize.x, fbSize.y, pc);
-
-    // If a window exists, presents the frame buffer here to that window
-    gprtBufferPresent(context_, frameBuffer);
-  }
-  while (!gprtWindowShouldClose(context_));
 }
 
 } // namespace xdg
