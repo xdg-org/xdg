@@ -154,15 +154,15 @@ TEST_CASE("Test Ray Fire GPRT-MeshMock")
 
   // fire from the outside of the cube toward each face, ensuring that the intersection distances are correct
   // in this case rays are fired with a HitOrientation::ENTERING. Rays should hit the first surface intersected
-  // origin = {-10.0, 0.0, 0.0};
-  // direction = {1.0, 0.0, 0.0};
-  // intersection = rti->ray_fire(volume_tree, origin, direction, INFTY, HitOrientation::ENTERING);
-  // REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(8.0, 1e-6));
+  origin = {-10.0, 0.0, 0.0};
+  direction = {1.0, 0.0, 0.0};
+  intersection = rti->ray_fire(volume_tree, origin, direction, INFTY, HitOrientation::ENTERING);
+  REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(8.0, 1e-6));
 
-  // origin = {10.0, 0.0, 0.0};
-  // direction = {-1.0, 0.0, 0.0};
-  // intersection = rti->ray_fire(volume_tree, origin, direction, INFTY, HitOrientation::ENTERING);
-  // REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
+  origin = {10.0, 0.0, 0.0};
+  direction = {-1.0, 0.0, 0.0};
+  intersection = rti->ray_fire(volume_tree, origin, direction, INFTY, HitOrientation::ENTERING);
+  REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
 
   // limit distance of the ray, shouldn't get a hit
   origin = {0.0, 0.0, 0.0};

@@ -1,6 +1,5 @@
 set(GPRT_TOOLS
   gprt_test
-  gprt_particle_sim
 )
 
 foreach(tool ${GPRT_TOOLS})
