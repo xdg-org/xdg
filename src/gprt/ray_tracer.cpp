@@ -103,7 +103,7 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
       geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffer);
       geom_data->index = gprtBufferGetDevicePointer(connectivity_buffer);
       geom_data->aabbs = gprtBufferGetDevicePointer(aabb_buffer);
-      geom_data->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
+      geom_data->rayIn = gprtBufferGetDevicePointer(rayInputBuffer_);
       geom_data->surf_id = surf;
       geom_data->normals = gprtBufferGetDevicePointer(normal_buffer);
       geom_data->prim_ids = gprtBufferGetDevicePointer(primID_buffer);
@@ -330,13 +330,15 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
   GPRTAccel volume = tree_to_vol_accel_map.at(scene);
   dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
   rayGenData->world = gprtAccelGetDeviceAddress(volume);
-  rayGenData->orientation = static_cast<int>(orientation); // Set orientation for the ray
   
   gprtBufferMap(rayInputBuffer_); // Update the ray input buffer
 
   dblRayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
   rayInput[0].origin = {origin.x, origin.y, origin.z};
   rayInput[0].direction = {direction.x, direction.y, direction.z};
+  rayInput[0].tMax = dist_limit;
+  rayInput[0].tMin = 0.0;
+  rayInput[0].hitOrientation = static_cast<int>(orientation); // Set orientation for the ray
 
   if (exclude_primitives) {
     if (!exclude_primitives->empty()) gprtBufferResize(context_, excludePrimitivesBuffer_, exclude_primitives->size(), false);
@@ -355,16 +357,11 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
 
   gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
 
-  // pushconstants
-  RayFirePushConstants pc; 
-
-  pc.dist_limit = dist_limit;
-  pc.orientation = static_cast<int>(orientation);
   
   gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
   
   // Launch the ray generation shader with push constants and buffer bindings
-  gprtRayGenLaunch1D(context_, rayGenProgram_, 1, pc);
+  gprtRayGenLaunch1D(context_, rayGenProgram_, 1);
                                                   
   // Retrieve the output from the ray output buffer
   gprtBufferMap(rayOutputBuffer_);
