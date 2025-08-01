@@ -21,6 +21,7 @@ struct dblRayInput
   double tMax; // Maximum distance for ray intersection
   int32_t* exclude_primitives; // Optional for excluding primitives
   uint32_t exclude_count;           // Number of excluded primitives
+  uint8_t hitOrientation;
 };
 
 struct RayOutput 
@@ -53,14 +54,14 @@ struct DPTriangleGeomData {
   float3 *aabbs; // AABB buffer 
   uint3 *index;  // index buffer
   double3 *normals; // normals buffer
-  dblRayInput *ray; // double precision rays
-  double hitDistance; // distance to the hit point
   uint surf_id;
   int2 vols;
   int forward_vol;
   int reverse_vol;
   int32_t *prim_ids;
-  int sense; // sense of the triangle (0 for forward, 1 for reverse)
+  uint8_t sense; // sense of the triangle (0 for forward, 1 for reverse)
+  dblRayInput *rayIn; // double precision rays
+  uint8_t hitOrientation;
 };
 
 struct RayGenData {
@@ -118,6 +119,8 @@ struct RayFirePushConstants {
 };
 
 struct dblRayFirePushConstants {
-  double dist_limit;
-  int orientation;
+  double tMax;
+  double tMin;
+  uint8_t hitOrientation;
 };
+

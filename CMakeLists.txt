@@ -240,7 +240,7 @@ foreach(device_code ${xdg_device_codes})
     OUTPUT_TARGET
     ${device_code}
     HEADERS
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/sharedCode.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/xdg/gprt/sharedCode.h
     SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/${device_code}.slang
   )

@@ -1,5 +1,5 @@
 set(GPRT_TOOLS
-  gprt_test
+  xdg_gprt_renderer
 )
 
 foreach(tool ${GPRT_TOOLS})

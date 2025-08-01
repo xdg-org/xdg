@@ -6,7 +6,7 @@
 
 #include "xdg/xdg.h"
 #include "gprt/gprt.h"
-#include "gprt_test_sharedCode.h"
+#include "xdg_gprt_renderer_sharedCode.h"
 #include "argparse/argparse.hpp"
 
 
@@ -25,7 +25,7 @@
   std::cout << GPRT_TERMINAL_DEFAULT;
 
 using namespace xdg;
-extern GPRTProgram gprt_test_deviceCode;
+extern GPRTProgram xdg_gprt_renderer_deviceCode;
 
 
 // Initial image resolution
@@ -43,7 +43,7 @@ const char *outFileName = "gprt-test.png";
 int main(int argc, char* argv[]) {
 
   // Argparse
-  argparse::ArgumentParser args("XDG-GPRT Integration Testing Tool", "1.0", argparse::default_arguments::help);
+  argparse::ArgumentParser args("XDG-GPRT rendering Tool", "1.0", argparse::default_arguments::help);
 
   args.add_argument("filename")
   .help("Path to the input file");
@@ -66,18 +66,16 @@ int main(int argc, char* argv[]) {
   mm->init();
   xdg->prepare_raytracer();
 
-
   // Create a rendering window
   gprtRequestWindow(fbSize.x, fbSize.y, hdf_file.c_str());
 
   // Initialize GPRT context and modules
   GPRTContext context = gprtContextCreate();
-  GPRTModule module = gprtModuleCreate(context, gprt_test_deviceCode);  
+  GPRTModule module = gprtModuleCreate(context, xdg_gprt_renderer_deviceCode);  
 
   // New: Create a "triangle" geometry type and set it's closest-hit program
   auto trianglesGeomType = gprtGeomTypeCreate<TrianglesGeomData>(context, GPRT_TRIANGLES);
   gprtGeomTypeSetClosestHitProg(trianglesGeomType, 0, module, "TriangleMesh");
-
 
   std::vector<GPRTBufferOf<float3>> vertex_buffers;
   std::vector<GPRTBufferOf<uint3>> connectivity_buffers;
