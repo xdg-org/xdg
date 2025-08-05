@@ -368,12 +368,13 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
   dblRayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
   auto distance = rayOutput[0].distance;
   auto surface = rayOutput[0].surf_id;
+  auto primitive_id = rayOutput[0].primitive_id;
   gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
   
   if (surface == XDG_GPRT_INVALID_GEOMETRY_ID)
     return {INFTY, ID_NONE};
   else
-    if (exclude_primitives) exclude_primitives->push_back(surface);
+    if (exclude_primitives) exclude_primitives->push_back(primitive_id);
   return {distance, surface};
 }
                 
