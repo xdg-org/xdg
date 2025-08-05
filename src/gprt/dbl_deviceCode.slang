@@ -15,11 +15,13 @@ struct RayFirePayload {
     int next_vol;      // ID of the next volume
     double3 normal;
     uint hit_kind; // Kind of hit (front or back face)
+    uint primitive_id; // ID of the primitive hit
 };
 
 struct DPAttribute
 {
   double f64t; // double precision hit distance
+  uint global_prim_id;
 };
 
 
@@ -44,8 +46,8 @@ void ray_fire_hit(uniform DPTriangleGeomData record, inout RayFirePayload payloa
 
     payload.distance = attr.f64t;
     payload.surf_id = record.surf_id;
+    payload.primitive_id = attr.global_prim_id;
     payload.normal = record.normals[PrimitiveIndex()];
-    payload.hit_kind = hit_kind;
 }
 
 [shader("miss")]
@@ -54,6 +56,7 @@ void ray_fire_miss(inout RayFirePayload payload) {
     payload.distance = -1.0f;
     payload.surf_id = ~0u;
     payload.normal = {0.0, 0.0, 0.0};
+    payload.primitive_id = ~0u;
 }
 
 // This ray generation program will kick off the ray tracing process,
@@ -86,6 +89,7 @@ void ray_fire(uniform dblRayGenData record, uniform DPTriangleGeomData mesh) {
     // Store the distance to the hit point and the surface ID in buffers for CPU
     record.out[rayID].distance = payload.distance;
     record.out[rayID].surf_id = payload.surf_id;
+    record.out[rayID].primitive_id = payload.primitive_id;
 }
 
 [shader("raygeneration")]
@@ -141,10 +145,23 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
 {
     uint rayID = DispatchRaysIndex().x;
     uint nRays = DispatchRaysDimensions().x;
+    uint flags = RayFlags();
+
 
     if (rayID >= nRays) {
         printf("Rejected Intersection at line %u due to:  rayID %u >= nRays %u\n", __LINE__, rayID, nRays);
         return;
+    }
+
+        bool useOrientation = false;
+    int orientation = 0;
+    if ((flags & RAY_FLAG_CULL_BACK_FACING_TRIANGLES) != 0) {
+        orientation = -1;
+        useOrientation = true;
+    }
+    else if ((flags & RAY_FLAG_CULL_FRONT_FACING_TRIANGLES) != 0) {
+        orientation = 1;
+        useOrientation = true;
     }
 
     int primID = PrimitiveIndex();
@@ -152,6 +169,8 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     double3 v0 = record.vertex[indices.x];
     double3 v1 = record.vertex[indices.y];
     double3 v2 = record.vertex[indices.z];
+
+    printf("vertices: v0 = (%f, %f, %f), v1 = (%f, %f, %f), v2 = (%f, %f, %f)\n", v0.x, v0.y, v0.z, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z);
 
     double3 origin = record.rayIn[rayID].origin;
     double3 direction = record.rayIn[rayID].direction;
@@ -162,17 +181,32 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     const double3 raya = direction;
     const double3 rayb = dp_cross(v1 - v0, v2 - v0);
 
-    double plucker_coord0 = plucker_edge_test(v0, v1, raya, rayb);
+ double plucker_coord0 = plucker_edge_test(v0, v1, raya, rayb);
+ printf("plucker_coord0 = %f\n", plucker_coord0);
+    if (useOrientation && orientation * plucker_coord0 > 0) {
+        printf("Rejected Intersection at line %u due to:  orientation check failed at edge 0 (plucker_coord0 = %f)\n", __LINE__, plucker_coord0);
+        return;
+    }
 
     double plucker_coord1 = plucker_edge_test(v1, v2, raya, rayb);
-    if ((0.0 < plucker_coord0 && 0.0 > plucker_coord1) || (0.0 > plucker_coord0 && 0.0 < plucker_coord1)) {
+    printf("plucker_coord1 = %f\n", plucker_coord1);
+    if (useOrientation && orientation * plucker_coord1 > 0) {
+        printf("Rejected Intersection at line %u due to:  orientation check failed at edge 1 (plucker_coord1 = %f)\n", __LINE__, plucker_coord1);
+        return;
+    }
+    else if ((0.0 < plucker_coord0 && 0.0 > plucker_coord1) || (0.0 > plucker_coord0 && 0.0 < plucker_coord1)) {
         printf("Rejected Intersection at line %u due to:  winding check failed between edge 0 and edge 1\n", __LINE__);
         return;
     }
 
     double plucker_coord2 = plucker_edge_test(v2, v0, raya, rayb);
-    if ((0.0 < plucker_coord1 && 0.0 > plucker_coord2) || (0.0 > plucker_coord1 && 0.0 < plucker_coord2) ||
-         (0.0 < plucker_coord0 && 0.0 > plucker_coord2) || (0.0 > plucker_coord0 && 0.0 < plucker_coord2)) {
+    printf("plucker_coord2 = %f\n", plucker_coord2);
+    if (useOrientation && orientation * plucker_coord2 > 0) {
+        printf("Rejected Intersection at line %u due to:  orientation check failed at edge 2 (plucker_coord2 = %f)\n", __LINE__, plucker_coord2);
+        return;
+    }
+    else if ((0.0 < plucker_coord1 && 0.0 > plucker_coord2) || (0.0 > plucker_coord1 && 0.0 < plucker_coord2) ||
+             (0.0 < plucker_coord0 && 0.0 > plucker_coord2) || (0.0 > plucker_coord0 && 0.0 < plucker_coord2)) {
         printf("Rejected Intersection at line %u due to:  winding check failed across multiple edges\n", __LINE__);
         return;
     }
@@ -227,7 +261,6 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     }
 
     int hitOrientation = record.rayIn[rayID].hitOrientation;
-    printf("Hit Orientation: %d \n", hitOrientation);
 
     if (orientation_cull(direction, norm, hitOrientation))
     {
@@ -235,17 +268,21 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
         return;
     }
 
+    printf("Checking exclude list for primID %d, exclude_count %d\n", primID, record.rayIn[rayID].exclude_count);
+    int global_prim_id = record.prim_ids[primID];
     for (int i = 0; i < record.rayIn[rayID].exclude_count; ++i)
     {
-        if (record.rayIn[rayID].exclude_primitives[i] == primID) {
-            printf("Rejected Intersection at line %u due to:  primitive %d is in the exclude list\n", __LINE__, primID);
+        if (record.rayIn[rayID].exclude_primitives[i] == global_prim_id) {
+            printf("Rejected Intersection at line %u due to:  primitive %d is in the exclude list\n", __LINE__, global_prim_id);
             return;
         }
     }
+    attr.global_prim_id = global_prim_id;  
 
     uint hit_kind = dot(norm, direction) < 0 ? HIT_KIND_TRIANGLE_FRONT_FACE
                                              : HIT_KIND_TRIANGLE_BACK_FACE;
 
+    printf("Accepted Intersection at line %u for primID %d, t = %f, u = %f, v = %f, hit_kind = %u\n", __LINE__, primID, t, u, v, hit_kind);                                         
     ReportHit(f32t, hit_kind, attr);
 }
 

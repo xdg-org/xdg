@@ -36,6 +36,7 @@ struct dblRayOutput
   double distance;
   uint surf_id;
   double3 normal;
+  uint primitive_id;
 };
 
 /* variables for the single precision triangle mesh geometry */
