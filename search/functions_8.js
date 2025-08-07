@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['register_5fvolume_0',['register_volume',['../classxdg_1_1EmbreeRayTracer.html#a20aceb700e4444de518385bd90f402b2',1,'xdg::EmbreeRayTracer::register_volume()'],['../classxdg_1_1RayTracer.html#aa9f1e8a9d65468e172c231cd67d30c97',1,'xdg::RayTracer::register_volume()']]]
+  ['n_5fvertices_0',['n_vertices',['../classMBDirectAccess.html#a4fc6aba35ed536d120552d963bae2e4b',1,'MBDirectAccess']]],
+  ['next_5felement_1',['next_element',['../classxdg_1_1MeshManager.html#a68781c1a89e5694c659df152bc27353b',1,'xdg::MeshManager::next_element()'],['../classxdg_1_1XDG.html#a038e3fe23bc3503ce5e70e1ac8c05157',1,'xdg::XDG::next_element()']]]
 ];

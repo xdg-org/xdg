@@ -103,6 +103,15 @@ virtual int&#160;</td><td class="memItemRight" valign="bottom"><b>num_surfaces</
 <tr class="memitem:a7febc152fbd4dc5d1319fb96f4e29f8d" id="r_a7febc152fbd4dc5d1319fb96f4e29f8d"><td class="memItemLeft" align="right" valign="top"><a id="a7febc152fbd4dc5d1319fb96f4e29f8d" name="a7febc152fbd4dc5d1319fb96f4e29f8d"></a>
 virtual int&#160;</td><td class="memItemRight" valign="bottom"><b>num_ents_of_dimension</b> (int dim) const =0</td></tr>
 <tr class="separator:a7febc152fbd4dc5d1319fb96f4e29f8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11ae3c074719fa3ceed836c848609bb2" id="r_a11ae3c074719fa3ceed836c848609bb2"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; MeshID, double &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1MeshManager.html#a11ae3c074719fa3ceed836c848609bb2">walk_elements</a> (MeshID starting_element, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;start, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;end) const</td></tr>
+<tr class="memdesc:a11ae3c074719fa3ceed836c848609bb2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Walk through elements along a ray from start to end position.  <br /></td></tr>
+<tr class="separator:a11ae3c074719fa3ceed836c848609bb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a73405b62d3adb12f72741f40c340fb81" id="r_a73405b62d3adb12f72741f40c340fb81"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; MeshID, double &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1MeshManager.html#a73405b62d3adb12f72741f40c340fb81">walk_elements</a> (MeshID starting_element, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;start, const <a class="el" href="structxdg_1_1Vec3da.html">Direction</a> &amp;u, double distance) const</td></tr>
+<tr class="memdesc:a73405b62d3adb12f72741f40c340fb81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Walk through elements along a ray with specified direction and distance.  <br /></td></tr>
+<tr class="separator:a73405b62d3adb12f72741f40c340fb81"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a68781c1a89e5694c659df152bc27353b" id="r_a68781c1a89e5694c659df152bc27353b"><td class="memItemLeft" align="right" valign="top">std::pair&lt; MeshID, double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1MeshManager.html#a68781c1a89e5694c659df152bc27353b">next_element</a> (MeshID current_element, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;r, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;u) const</td></tr>
+<tr class="memdesc:a68781c1a89e5694c659df152bc27353b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the next element along a ray from the current position.  <br /></td></tr>
+<tr class="separator:a68781c1a89e5694c659df152bc27353b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afd23cba84d6774f85781c8fcb0283c1e" id="r_afd23cba84d6774f85781c8fcb0283c1e"><td class="memItemLeft" align="right" valign="top"><a id="afd23cba84d6774f85781c8fcb0283c1e" name="afd23cba84d6774f85781c8fcb0283c1e"></a>
 virtual int&#160;</td><td class="memItemRight" valign="bottom"><b>num_volume_elements</b> (MeshID volume) const =0</td></tr>
 <tr class="separator:afd23cba84d6774f85781c8fcb0283c1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -136,6 +145,9 @@ virtual std::pair&lt; std::vector&lt; <a class="el" href="structxdg_1_1Vec3da.ht
 <tr class="memitem:a8a311aedeca112eb3769709da4b59103" id="r_a8a311aedeca112eb3769709da4b59103"><td class="memItemLeft" align="right" valign="top"><a id="a8a311aedeca112eb3769709da4b59103" name="a8a311aedeca112eb3769709da4b59103"></a>
 virtual SurfaceElementType&#160;</td><td class="memItemRight" valign="bottom"><b>get_surface_element_type</b> (MeshID element) const =0</td></tr>
 <tr class="separator:a8a311aedeca112eb3769709da4b59103"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeb30bc7770c7110a445f3adb1746e72a" id="r_aeb30bc7770c7110a445f3adb1746e72a"><td class="memItemLeft" align="right" valign="top">virtual MeshID&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1MeshManager.html#aeb30bc7770c7110a445f3adb1746e72a">adjacent_element</a> (MeshID element, int face) const =0</td></tr>
+<tr class="memdesc:aeb30bc7770c7110a445f3adb1746e72a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the adjacent element across a given face.  <br /></td></tr>
+<tr class="separator:aeb30bc7770c7110a445f3adb1746e72a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a95e393a2ad364c06b2dddd1924334e5d" id="r_a95e393a2ad364c06b2dddd1924334e5d"><td class="memItemLeft" align="right" valign="top"><a id="a95e393a2ad364c06b2dddd1924334e5d" name="a95e393a2ad364c06b2dddd1924334e5d"></a>
 <a class="el" href="unionxdg_1_1BoundingBox.html">BoundingBox</a>&#160;</td><td class="memItemRight" valign="bottom"><b>element_bounding_box</b> (MeshID element) const</td></tr>
 <tr class="separator:a95e393a2ad364c06b2dddd1924334e5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -236,6 +248,200 @@ std::vector&lt; MeshID &gt;&#160;</td><td class="memItemRight" valign="bottom"><
 MeshID&#160;</td><td class="memItemRight" valign="bottom"><b>implicit_complement_</b> {ID_NONE}</td></tr>
 <tr class="separator:a4fd7d756dcd7c59444e4588f09340239"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="aeb30bc7770c7110a445f3adb1746e72a" name="aeb30bc7770c7110a445f3adb1746e72a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeb30bc7770c7110a445f3adb1746e72a">&#9670;&#160;</a></span>adjacent_element()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual MeshID xdg::MeshManager::adjacent_element </td>
+          <td>(</td>
+          <td class="paramtype">MeshID&#160;</td>
+          <td class="paramname"><em>element</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>face</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the adjacent element across a given face. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">element</td><td>The current element ID </td></tr>
+    <tr><td class="paramname">face</td><td>The local face index (0-3 for tetrahedra) </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The ID of the adjacent element, or ID_NONE if the face is on a boundary </dd></dl>
+
+<p>Implemented in <a class="el" href="classxdg_1_1LibMeshManager.html#aa84b8fc1d2dcb162e23bf54cebe396da">xdg::LibMeshManager</a>, <a class="el" href="classxdg_1_1MOABMeshManager.html#a4d3c169d222a9fc67d2b0ceefd88b472">xdg::MOABMeshManager</a>, and <a class="el" href="classMeshMock.html#a4f0ac69a1fed944cefdaf9b97ff9019a">MeshMock</a>.</p>
+
+</div>
+</div>
+<a id="a68781c1a89e5694c659df152bc27353b" name="a68781c1a89e5694c659df152bc27353b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a68781c1a89e5694c659df152bc27353b">&#9670;&#160;</a></span>next_element()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::pair&lt; MeshID, double &gt; xdg::MeshManager::next_element </td>
+          <td>(</td>
+          <td class="paramtype">MeshID&#160;</td>
+          <td class="paramname"><em>current_element</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;&#160;</td>
+          <td class="paramname"><em>r</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;&#160;</td>
+          <td class="paramname"><em>u</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Find the next element along a ray from the current position. </p>
+<dl class="section note"><dt>Note</dt><dd>It is assumed that the provided position is within the element. </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">current_element</td><td>The current element being traversed </td></tr>
+    <tr><td class="paramname">r</td><td>The current position within the element </td></tr>
+    <tr><td class="paramname">u</td><td>The normalized direction vector of the ray </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Pair containing the next element ID and distance to the exit point </dd></dl>
+
+</div>
+</div>
+<a id="a73405b62d3adb12f72741f40c340fb81" name="a73405b62d3adb12f72741f40c340fb81"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a73405b62d3adb12f72741f40c340fb81">&#9670;&#160;</a></span>walk_elements() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; std::pair&lt; MeshID, double &gt; &gt; xdg::MeshManager::walk_elements </td>
+          <td>(</td>
+          <td class="paramtype">MeshID&#160;</td>
+          <td class="paramname"><em>starting_element</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;&#160;</td>
+          <td class="paramname"><em>start</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structxdg_1_1Vec3da.html">Direction</a> &amp;&#160;</td>
+          <td class="paramname"><em>u</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>distance</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Walk through elements along a ray with specified direction and distance. </p>
+<dl class="section note"><dt>Note</dt><dd>It is assumed that the provided position is within the starting element. </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">starting_element</td><td>The initial element to start the walk from </td></tr>
+    <tr><td class="paramname">start</td><td>The starting position of the ray </td></tr>
+    <tr><td class="paramname">u</td><td>The normalized direction vector of the ray </td></tr>
+    <tr><td class="paramname">distance</td><td>The total distance to travel along the ray </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Vector of pairs containing element IDs and distances traveled through each element </dd></dl>
+
+</div>
+</div>
+<a id="a11ae3c074719fa3ceed836c848609bb2" name="a11ae3c074719fa3ceed836c848609bb2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a11ae3c074719fa3ceed836c848609bb2">&#9670;&#160;</a></span>walk_elements() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; std::pair&lt; MeshID, double &gt; &gt; xdg::MeshManager::walk_elements </td>
+          <td>(</td>
+          <td class="paramtype">MeshID&#160;</td>
+          <td class="paramname"><em>starting_element</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;&#160;</td>
+          <td class="paramname"><em>start</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;&#160;</td>
+          <td class="paramname"><em>end</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Walk through elements along a ray from start to end position. </p>
+<dl class="section note"><dt>Note</dt><dd>It is assumed that the provided position is within the starting element. </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">starting_element</td><td>The initial element to start the walk from </td></tr>
+    <tr><td class="paramname">start</td><td>The starting position of the ray </td></tr>
+    <tr><td class="paramname">end</td><td>The ending position of the ray </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Vector of pairs containing element IDs and distances traveled through each element </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>/home/runner/work/xdg/xdg/include/xdg/<b>mesh_manager_interface.h</b></li>
 </ul>

@@ -147,6 +147,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>initialize_libmesh</b
 <tr class="separator:a4361e9c49ab6e64695b850bbc1c29b4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:affbba265ce10bcd668a86f649624206d" id="r_affbba265ce10bcd668a86f649624206d"><td class="memItemLeft" align="right" valign="top">SurfaceElementType&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1LibMeshManager.html#affbba265ce10bcd668a86f649624206d">get_surface_element_type</a> (MeshID surface) const override</td></tr>
 <tr class="separator:affbba265ce10bcd668a86f649624206d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa84b8fc1d2dcb162e23bf54cebe396da" id="r_aa84b8fc1d2dcb162e23bf54cebe396da"><td class="memItemLeft" align="right" valign="top">MeshID&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1LibMeshManager.html#aa84b8fc1d2dcb162e23bf54cebe396da">adjacent_element</a> (MeshID element, int face) const override</td></tr>
+<tr class="memdesc:aa84b8fc1d2dcb162e23bf54cebe396da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the adjacent element across a given face.  <br /></td></tr>
+<tr class="separator:aa84b8fc1d2dcb162e23bf54cebe396da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad6fdcc7af20341d6062de8c052c98f4f" id="r_ad6fdcc7af20341d6062de8c052c98f4f"><td class="memItemLeft" align="right" valign="top">MeshID&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1LibMeshManager.html#ad6fdcc7af20341d6062de8c052c98f4f">create_volume</a> () override</td></tr>
 <tr class="separator:ad6fdcc7af20341d6062de8c052c98f4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a08d18303a69b65eaa48d69195365e67c" id="r_a08d18303a69b65eaa48d69195365e67c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1LibMeshManager.html#a08d18303a69b65eaa48d69195365e67c">add_surface_to_volume</a> (MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override</td></tr>
@@ -162,6 +165,15 @@ const libMesh::Mesh *&#160;</td><td class="memItemRight" valign="bottom"><b>mesh
 libMesh::Mesh *&#160;</td><td class="memItemRight" valign="bottom"><b>mesh</b> ()</td></tr>
 <tr class="separator:a8a63a9ff12a6b89b6b66d9eedf8d6357"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classxdg_1_1MeshManager"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classxdg_1_1MeshManager')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classxdg_1_1MeshManager.html">xdg::MeshManager</a></td></tr>
+<tr class="memitem:a11ae3c074719fa3ceed836c848609bb2 inherit pub_methods_classxdg_1_1MeshManager" id="r_a11ae3c074719fa3ceed836c848609bb2"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; MeshID, double &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1MeshManager.html#a11ae3c074719fa3ceed836c848609bb2">walk_elements</a> (MeshID starting_element, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;start, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;end) const</td></tr>
+<tr class="memdesc:a11ae3c074719fa3ceed836c848609bb2 inherit pub_methods_classxdg_1_1MeshManager"><td class="mdescLeft">&#160;</td><td class="mdescRight">Walk through elements along a ray from start to end position.  <br /></td></tr>
+<tr class="separator:a11ae3c074719fa3ceed836c848609bb2 inherit pub_methods_classxdg_1_1MeshManager"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a73405b62d3adb12f72741f40c340fb81 inherit pub_methods_classxdg_1_1MeshManager" id="r_a73405b62d3adb12f72741f40c340fb81"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; MeshID, double &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1MeshManager.html#a73405b62d3adb12f72741f40c340fb81">walk_elements</a> (MeshID starting_element, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;start, const <a class="el" href="structxdg_1_1Vec3da.html">Direction</a> &amp;u, double distance) const</td></tr>
+<tr class="memdesc:a73405b62d3adb12f72741f40c340fb81 inherit pub_methods_classxdg_1_1MeshManager"><td class="mdescLeft">&#160;</td><td class="mdescRight">Walk through elements along a ray with specified direction and distance.  <br /></td></tr>
+<tr class="separator:a73405b62d3adb12f72741f40c340fb81 inherit pub_methods_classxdg_1_1MeshManager"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a68781c1a89e5694c659df152bc27353b inherit pub_methods_classxdg_1_1MeshManager" id="r_a68781c1a89e5694c659df152bc27353b"><td class="memItemLeft" align="right" valign="top">std::pair&lt; MeshID, double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1MeshManager.html#a68781c1a89e5694c659df152bc27353b">next_element</a> (MeshID current_element, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;r, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;u) const</td></tr>
+<tr class="memdesc:a68781c1a89e5694c659df152bc27353b inherit pub_methods_classxdg_1_1MeshManager"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the next element along a ray from the current position.  <br /></td></tr>
+<tr class="separator:a68781c1a89e5694c659df152bc27353b inherit pub_methods_classxdg_1_1MeshManager"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ababf951a2e65392755bcef7bca178879 inherit pub_methods_classxdg_1_1MeshManager" id="r_ababf951a2e65392755bcef7bca178879"><td class="memItemLeft" align="right" valign="top">
 std::vector&lt; MeshID &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>get_volume_faces</b> (MeshID volume) const</td></tr>
 <tr class="separator:ababf951a2e65392755bcef7bca178879 inherit pub_methods_classxdg_1_1MeshManager"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -318,6 +330,54 @@ MeshID&#160;</td><td class="memItemRight" valign="bottom"><b>implicit_complement
 </div><div class="memdoc">
 
 <p>Implements <a class="el" href="classxdg_1_1MeshManager.html">xdg::MeshManager</a>.</p>
+
+</div>
+</div>
+<a id="aa84b8fc1d2dcb162e23bf54cebe396da" name="aa84b8fc1d2dcb162e23bf54cebe396da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa84b8fc1d2dcb162e23bf54cebe396da">&#9670;&#160;</a></span>adjacent_element()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">MeshID xdg::LibMeshManager::adjacent_element </td>
+          <td>(</td>
+          <td class="paramtype">MeshID&#160;</td>
+          <td class="paramname"><em>element</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>face</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the adjacent element across a given face. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">element</td><td>The current element ID </td></tr>
+    <tr><td class="paramname">face</td><td>The local face index (0-3 for tetrahedra) </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The ID of the adjacent element, or ID_NONE if the face is on a boundary </dd></dl>
+
+<p>Implements <a class="el" href="classxdg_1_1MeshManager.html#aeb30bc7770c7110a445f3adb1746e72a">xdg::MeshManager</a>.</p>
 
 </div>
 </div>

@@ -104,10 +104,20 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>accessible</b> (Entit
 std::array&lt; <a class="el" href="structxdg_1_1Vec3da.html">xdg::Vertex</a>, 3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>get_mb_coords</b> (const EntityHandle &amp;tri)</td></tr>
 <tr class="memdesc:af6f3e85d6ef6faf5696f9ed8b00ed0f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the coordinates of a triangle as MOAB CartVect's. <br /></td></tr>
 <tr class="separator:af6f3e85d6ef6faf5696f9ed8b00ed0f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afa4076dadc46cb85791c8d9f8ddd1f78" id="r_afa4076dadc46cb85791c8d9f8ddd1f78"><td class="memItemLeft" align="right" valign="top"><a id="afa4076dadc46cb85791c8d9f8ddd1f78" name="afa4076dadc46cb85791c8d9f8ddd1f78"></a>
-std::array&lt; <a class="el" href="structxdg_1_1Vec3da.html">xdg::Vertex</a>, 3 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>get_element_coords</b> (const EntityHandle &amp;element)</td></tr>
-<tr class="memdesc:afa4076dadc46cb85791c8d9f8ddd1f78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the coordinates of a triangle as MOAB CartVect's. <br /></td></tr>
-<tr class="separator:afa4076dadc46cb85791c8d9f8ddd1f78"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afcd5bc194ca89a39c87c41bc711604b6" id="r_afcd5bc194ca89a39c87c41bc711604b6"><td class="memItemLeft" align="right" valign="top"><a id="afcd5bc194ca89a39c87c41bc711604b6" name="afcd5bc194ca89a39c87c41bc711604b6"></a>
+std::array&lt; <a class="el" href="structxdg_1_1Vec3da.html">xdg::Vertex</a>, 4 &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>get_element_coords</b> (const EntityHandle &amp;element)</td></tr>
+<tr class="memdesc:afcd5bc194ca89a39c87c41bc711604b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the coordinates of a triangle as MOAB CartVect's. <br /></td></tr>
+<tr class="separator:afcd5bc194ca89a39c87c41bc711604b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7a9a9add880625e88168f4f5433b57f9" id="r_a7a9a9add880625e88168f4f5433b57f9"><td class="memItemLeft" align="right" valign="top"><a id="a7a9a9add880625e88168f4f5433b57f9" name="a7a9a9add880625e88168f4f5433b57f9"></a>
+EntityHandle&#160;</td><td class="memItemRight" valign="bottom"><b>get_adjacent_element</b> (const EntityHandle &amp;element, int face_number)</td></tr>
+<tr class="memdesc:a7a9a9add880625e88168f4f5433b57f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the adjacent element. <br /></td></tr>
+<tr class="separator:a7a9a9add880625e88168f4f5433b57f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4466e73955633294495314ea7eecca85" id="r_a4466e73955633294495314ea7eecca85"><td class="memItemLeft" align="right" valign="top"><a id="a4466e73955633294495314ea7eecca85" name="a4466e73955633294495314ea7eecca85"></a>
+std::vector&lt; EntityHandle &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>get_element_adjacencies</b> (const EntityHandle &amp;element)</td></tr>
+<tr class="separator:a4466e73955633294495314ea7eecca85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af016be48f64e624a0b1f1595d60d4f95" id="r_af016be48f64e624a0b1f1595d60d4f95"><td class="memItemLeft" align="right" valign="top"><a id="af016be48f64e624a0b1f1595d60d4f95" name="af016be48f64e624a0b1f1595d60d4f95"></a>
+const std::vector&lt; std::vector&lt; int &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>get_face_ordering</b> (EntityType entity_type) const</td></tr>
+<tr class="separator:af016be48f64e624a0b1f1595d60d4f95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4fc6aba35ed536d120552d963bae2e4b" id="r_a4fc6aba35ed536d120552d963bae2e4b"><td class="memItemLeft" align="right" valign="top"><a id="a4fc6aba35ed536d120552d963bae2e4b" name="a4fc6aba35ed536d120552d963bae2e4b"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>n_vertices</b> ()</td></tr>
 <tr class="memdesc:a4fc6aba35ed536d120552d963bae2e4b"><td class="mdescLeft">&#160;</td><td class="mdescRight">return the number of vertices being managed <br /></td></tr>

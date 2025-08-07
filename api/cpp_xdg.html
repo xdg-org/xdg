@@ -64,6 +64,9 @@
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager11num_volumesEv"><code class="docutils literal notranslate"><span class="pre">num_volumes()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager12num_surfacesEv"><code class="docutils literal notranslate"><span class="pre">num_surfaces()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager21num_ents_of_dimensionEi"><code class="docutils literal notranslate"><span class="pre">num_ents_of_dimension()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager13walk_elementsE6MeshIDRK8PositionRK8Position"><code class="docutils literal notranslate"><span class="pre">walk_elements()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager13walk_elementsE6MeshIDRK8PositionRK9Directiond"><code class="docutils literal notranslate"><span class="pre">walk_elements()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager12next_elementE6MeshIDRK8PositionRK8Position"><code class="docutils literal notranslate"><span class="pre">next_element()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager19num_volume_elementsE6MeshID"><code class="docutils literal notranslate"><span class="pre">num_volume_elements()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager16num_volume_facesE6MeshID"><code class="docutils literal notranslate"><span class="pre">num_volume_faces()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager17num_surface_facesE6MeshID"><code class="docutils literal notranslate"><span class="pre">num_surface_faces()</span></code></a></li>
@@ -75,6 +78,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager20get_surface_verticesE6MeshID"><code class="docutils literal notranslate"><span class="pre">get_surface_vertices()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager16get_surface_meshE6MeshID"><code class="docutils literal notranslate"><span class="pre">get_surface_mesh()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager24get_surface_element_typeE6MeshID"><code class="docutils literal notranslate"><span class="pre">get_surface_element_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager16adjacent_elementE6MeshIDi"><code class="docutils literal notranslate"><span class="pre">adjacent_element()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager20element_bounding_boxE6MeshID"><code class="docutils literal notranslate"><span class="pre">element_bounding_box()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager17face_bounding_boxE6MeshID"><code class="docutils literal notranslate"><span class="pre">face_bounding_box()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg11MeshManager20surface_bounding_boxE6MeshID"><code class="docutils literal notranslate"><span class="pre">surface_bounding_box()</span></code></a></li>
@@ -281,6 +285,82 @@
 <dd></dd></dl>
 
 <dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG8segmentsERK8PositionRK8Position">
+<span id="_CPPv3NK3xdg3XDG8segmentsERK8PositionRK8Position"></span><span id="_CPPv2NK3xdg3XDG8segmentsERK8PositionRK8Position"></span><span id="xdg::XDG::segments__PositionCR.PositionCRC"></span><span class="target" id="classxdg_1_1XDG_1a98e2ef661c60ab3059b1a1cce28b7117"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">segments</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">start</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">end</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG8segmentsERK8PositionRK8Position" title="Link to this definition"></a><br /></dt>
+<dd><p>Returns a vector of segments between the start and end points on the mesh </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>start</strong> -- The starting point of the query </p></li>
+<li><p><strong>end</strong> -- The ending point of the query </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A vector of pairs containing the element ID and length inside each element </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG8segmentsE6MeshIDRK8PositionRK8Position">
+<span id="_CPPv3NK3xdg3XDG8segmentsE6MeshIDRK8PositionRK8Position"></span><span id="_CPPv2NK3xdg3XDG8segmentsE6MeshIDRK8PositionRK8Position"></span><span id="xdg::XDG::segments__MeshID.PositionCR.PositionCRC"></span><span class="target" id="classxdg_1_1XDG_1ac52e02eaa3c06eca0b05ac4536a41e6d"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">segments</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">volume</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">start</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">end</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG8segmentsE6MeshIDRK8PositionRK8Position" title="Link to this definition"></a><br /></dt>
+<dd><p>Returns a vector of segments between the start and end points on the mesh for a specified volume (subdomain) </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>volume</strong> -- The ID of the volume to intersect with </p></li>
+<li><p><strong>start</strong> -- The starting point of the query </p></li>
+<li><p><strong>end</strong> -- The ending point of the query </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A vector of pairs containing the element ID and length inside each element within the volume </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG12next_elementE6MeshIDRK8PositionRK9Direction">
+<span id="_CPPv3NK3xdg3XDG12next_elementE6MeshIDRK8PositionRK9Direction"></span><span id="_CPPv2NK3xdg3XDG12next_elementE6MeshIDRK8PositionRK9Direction"></span><span id="xdg::XDG::next_element__MeshID.PositionCR.DirectionCRC"></span><span class="target" id="classxdg_1_1XDG_1a038e3fe23bc3503ce5e70e1ac8c05157"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">next_element</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">current_element</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">r</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Direction</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">u</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg3XDG12next_elementE6MeshIDRK8PositionRK9Direction" title="Link to this definition"></a><br /></dt>
+<dd><p>Returns the next element along a line </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>current_element</strong> -- The current element </p></li>
+<li><p><strong>r</strong> -- The starting point of the line </p></li>
+<li><p><strong>u</strong> -- The direction of the line </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A pair containing the element ID and length inside the element </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4NK3xdg3XDG15point_in_volumeE6MeshIDK8PositionPK9DirectionPKNSt6vectorI6MeshIDEE">
 <span id="_CPPv3NK3xdg3XDG15point_in_volumeE6MeshIDK8PositionPK9DirectionPKNSt6vectorI6MeshIDEE"></span><span id="_CPPv2NK3xdg3XDG15point_in_volumeE6MeshIDK8PositionPK9DirectionPKNSt6vectorI6MeshIDEE"></span><span id="xdg::XDG::point_in_volume__MeshID.PositionC.DirectionCP.std::vector:MeshID:CPC"></span><span class="target" id="classxdg_1_1XDG_1a2cb253d0ea80e9167377987936fa0d40"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">point_in_volume</span></span></span><span class="sig-paren">(</span>
 
@@ -480,7 +560,7 @@
 <dd><dl class="cpp class">
 <dt class="sig sig-object cpp" id="_CPPv4N3xdg11MeshManagerE">
 <span id="_CPPv3N3xdg11MeshManagerE"></span><span id="_CPPv2N3xdg11MeshManagerE"></span><span id="xdg::MeshManager"></span><span class="target" id="classxdg_1_1MeshManager"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MeshManager</span></span></span><a class="headerlink" href="#_CPPv4N3xdg11MeshManagerE" title="Link to this definition"></a><br /></dt>
-<dd><p>Subclassed by xdg::LibMeshManager, xdg::MOABMeshManager</p>
+<dd><p>Subclassed by MeshMock, xdg::LibMeshManager, xdg::MOABMeshManager</p>
 <div class="breathe-sectiondef docutils container">
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
 <dl class="cpp function">
@@ -512,6 +592,98 @@
 <dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager21num_ents_of_dimensionEi">
 <span id="_CPPv3NK3xdg11MeshManager21num_ents_of_dimensionEi"></span><span id="_CPPv2NK3xdg11MeshManager21num_ents_of_dimensionEi"></span><span id="xdg::MeshManager::num_ents_of_dimension__iC"></span><span class="target" id="classxdg_1_1MeshManager_1a7febc152fbd4dc5d1319fb96f4e29f8d"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">num_ents_of_dimension</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">dim</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager21num_ents_of_dimensionEi" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager13walk_elementsE6MeshIDRK8PositionRK8Position">
+<span id="_CPPv3NK3xdg11MeshManager13walk_elementsE6MeshIDRK8PositionRK8Position"></span><span id="_CPPv2NK3xdg11MeshManager13walk_elementsE6MeshIDRK8PositionRK8Position"></span><span id="xdg::MeshManager::walk_elements__MeshID.PositionCR.PositionCRC"></span><span class="target" id="classxdg_1_1MeshManager_1a11ae3c074719fa3ceed836c848609bb2"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">walk_elements</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">starting_element</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">start</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">end</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager13walk_elementsE6MeshIDRK8PositionRK8Position" title="Link to this definition"></a><br /></dt>
+<dd><p>Walk through elements along a ray from start to end position. </p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It is assumed that the provided position is within the starting element. </p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>starting_element</strong> -- The initial element to start the walk from </p></li>
+<li><p><strong>start</strong> -- The starting position of the ray </p></li>
+<li><p><strong>end</strong> -- The ending position of the ray </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Vector of pairs containing element IDs and distances traveled through each element </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager13walk_elementsE6MeshIDRK8PositionRK9Directiond">
+<span id="_CPPv3NK3xdg11MeshManager13walk_elementsE6MeshIDRK8PositionRK9Directiond"></span><span id="_CPPv2NK3xdg11MeshManager13walk_elementsE6MeshIDRK8PositionRK9Directiond"></span><span id="xdg::MeshManager::walk_elements__MeshID.PositionCR.DirectionCR.doubleC"></span><span class="target" id="classxdg_1_1MeshManager_1a73405b62d3adb12f72741f40c340fb81"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">walk_elements</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">starting_element</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">start</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Direction</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">u</span></span>,</dd>
+<dd><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">distance</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager13walk_elementsE6MeshIDRK8PositionRK9Directiond" title="Link to this definition"></a><br /></dt>
+<dd><p>Walk through elements along a ray with specified direction and distance. </p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It is assumed that the provided position is within the starting element. </p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>starting_element</strong> -- The initial element to start the walk from </p></li>
+<li><p><strong>start</strong> -- The starting position of the ray </p></li>
+<li><p><strong>u</strong> -- The normalized direction vector of the ray </p></li>
+<li><p><strong>distance</strong> -- The total distance to travel along the ray </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Vector of pairs containing element IDs and distances traveled through each element </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager12next_elementE6MeshIDRK8PositionRK8Position">
+<span id="_CPPv3NK3xdg11MeshManager12next_elementE6MeshIDRK8PositionRK8Position"></span><span id="_CPPv2NK3xdg11MeshManager12next_elementE6MeshIDRK8PositionRK8Position"></span><span id="xdg::MeshManager::next_element__MeshID.PositionCR.PositionCRC"></span><span class="target" id="classxdg_1_1MeshManager_1a68781c1a89e5694c659df152bc27353b"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">next_element</span></span></span><span class="sig-paren">(</span>
+
+<dl>
+<dd><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">current_element</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">r</span></span>,</dd>
+<dd><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Position</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">u</span></span>,</dd>
+</dl>
+
+<span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager12next_elementE6MeshIDRK8PositionRK8Position" title="Link to this definition"></a><br /></dt>
+<dd><p>Find the next element along a ray from the current position. </p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It is assumed that the provided position is within the element. </p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>current_element</strong> -- The current element being traversed </p></li>
+<li><p><strong>r</strong> -- The current position within the element </p></li>
+<li><p><strong>u</strong> -- The normalized direction vector of the ray </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Pair containing the next element ID and distance to the exit point </p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager19num_volume_elementsE6MeshID">
@@ -573,6 +745,23 @@
 <dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager24get_surface_element_typeE6MeshID">
 <span id="_CPPv3NK3xdg11MeshManager24get_surface_element_typeE6MeshID"></span><span id="_CPPv2NK3xdg11MeshManager24get_surface_element_typeE6MeshID"></span><span id="xdg::MeshManager::get_surface_element_type__MeshIDC"></span><span class="target" id="classxdg_1_1MeshManager_1a8a311aedeca112eb3769709da4b59103"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">SurfaceElementType</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">get_surface_element_type</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">element</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager24get_surface_element_typeE6MeshID" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager16adjacent_elementE6MeshIDi">
+<span id="_CPPv3NK3xdg11MeshManager16adjacent_elementE6MeshIDi"></span><span id="_CPPv2NK3xdg11MeshManager16adjacent_elementE6MeshIDi"></span><span id="xdg::MeshManager::adjacent_element__MeshID.iC"></span><span class="target" id="classxdg_1_1MeshManager_1aeb30bc7770c7110a445f3adb1746e72a"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">adjacent_element</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">MeshID</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">element</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">face</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg11MeshManager16adjacent_elementE6MeshIDi" title="Link to this definition"></a><br /></dt>
+<dd><p>Get the adjacent element across a given face. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>element</strong> -- The current element ID </p></li>
+<li><p><strong>face</strong> -- The local face index (0-3 for tetrahedra) </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The ID of the adjacent element, or ID_NONE if the face is on a boundary </p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4NK3xdg11MeshManager20element_bounding_boxE6MeshID">

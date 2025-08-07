@@ -101,6 +101,12 @@ MeshID&#160;</td><td class="memItemRight" valign="bottom"><b>find_element</b> (c
 <tr class="memitem:af9006930904a7c669d3521edf87e013e" id="r_af9006930904a7c669d3521edf87e013e"><td class="memItemLeft" align="right" valign="top"><a id="af9006930904a7c669d3521edf87e013e" name="af9006930904a7c669d3521edf87e013e"></a>
 MeshID&#160;</td><td class="memItemRight" valign="bottom"><b>find_element</b> (MeshID volume, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;point) const</td></tr>
 <tr class="separator:af9006930904a7c669d3521edf87e013e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98e2ef661c60ab3059b1a1cce28b7117" id="r_a98e2ef661c60ab3059b1a1cce28b7117"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; MeshID, double &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1XDG.html#a98e2ef661c60ab3059b1a1cce28b7117">segments</a> (const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;start, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;end) const</td></tr>
+<tr class="separator:a98e2ef661c60ab3059b1a1cce28b7117"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac52e02eaa3c06eca0b05ac4536a41e6d" id="r_ac52e02eaa3c06eca0b05ac4536a41e6d"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; MeshID, double &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1XDG.html#ac52e02eaa3c06eca0b05ac4536a41e6d">segments</a> (MeshID volume, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;start, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;end) const</td></tr>
+<tr class="separator:ac52e02eaa3c06eca0b05ac4536a41e6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a038e3fe23bc3503ce5e70e1ac8c05157" id="r_a038e3fe23bc3503ce5e70e1ac8c05157"><td class="memItemLeft" align="right" valign="top">std::pair&lt; MeshID, double &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1XDG.html#a038e3fe23bc3503ce5e70e1ac8c05157">next_element</a> (MeshID current_element, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;r, const <a class="el" href="structxdg_1_1Vec3da.html">Direction</a> &amp;u) const</td></tr>
+<tr class="separator:a038e3fe23bc3503ce5e70e1ac8c05157"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2cb253d0ea80e9167377987936fa0d40" id="r_a2cb253d0ea80e9167377987936fa0d40"><td class="memItemLeft" align="right" valign="top"><a id="a2cb253d0ea80e9167377987936fa0d40" name="a2cb253d0ea80e9167377987936fa0d40"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>point_in_volume</b> (MeshID volume, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> point, const <a class="el" href="structxdg_1_1Vec3da.html">Direction</a> *direction=nullptr, const std::vector&lt; MeshID &gt; *exclude_primitives=nullptr) const</td></tr>
 <tr class="separator:a2cb253d0ea80e9167377987936fa0d40"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -147,6 +153,129 @@ Static Public Member Functions</h2></td></tr>
 static std::shared_ptr&lt; <a class="el" href="classxdg_1_1XDG.html">XDG</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>create</b> (MeshLibrary mesh_lib=MeshLibrary::MOAB, RTLibrary ray_tracing_lib=RTLibrary::EMBREE)</td></tr>
 <tr class="separator:a9ec262d8abb5d940d8d9155932f4bf44"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="a038e3fe23bc3503ce5e70e1ac8c05157" name="a038e3fe23bc3503ce5e70e1ac8c05157"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a038e3fe23bc3503ce5e70e1ac8c05157">&#9670;&#160;</a></span>next_element()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::pair&lt; MeshID, double &gt; xdg::XDG::next_element </td>
+          <td>(</td>
+          <td class="paramtype">MeshID&#160;</td>
+          <td class="paramname"><em>current_element</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;&#160;</td>
+          <td class="paramname"><em>r</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structxdg_1_1Vec3da.html">Direction</a> &amp;&#160;</td>
+          <td class="paramname"><em>u</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Returns the next element along a line </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">current_element</td><td>The current element </td></tr>
+    <tr><td class="paramname">r</td><td>The starting point of the line </td></tr>
+    <tr><td class="paramname">u</td><td>The direction of the line </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A pair containing the element ID and length inside the element </dd></dl>
+
+</div>
+</div>
+<a id="a98e2ef661c60ab3059b1a1cce28b7117" name="a98e2ef661c60ab3059b1a1cce28b7117"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a98e2ef661c60ab3059b1a1cce28b7117">&#9670;&#160;</a></span>segments() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; std::pair&lt; MeshID, double &gt; &gt; xdg::XDG::segments </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;&#160;</td>
+          <td class="paramname"><em>start</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;&#160;</td>
+          <td class="paramname"><em>end</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Returns a vector of segments between the start and end points on the mesh </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">start</td><td>The starting point of the query </td></tr>
+    <tr><td class="paramname">end</td><td>The ending point of the query </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A vector of pairs containing the element ID and length inside each element </dd></dl>
+
+</div>
+</div>
+<a id="ac52e02eaa3c06eca0b05ac4536a41e6d" name="ac52e02eaa3c06eca0b05ac4536a41e6d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac52e02eaa3c06eca0b05ac4536a41e6d">&#9670;&#160;</a></span>segments() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; std::pair&lt; MeshID, double &gt; &gt; xdg::XDG::segments </td>
+          <td>(</td>
+          <td class="paramtype">MeshID&#160;</td>
+          <td class="paramname"><em>volume</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;&#160;</td>
+          <td class="paramname"><em>start</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;&#160;</td>
+          <td class="paramname"><em>end</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Returns a vector of segments between the start and end points on the mesh for a specified volume (subdomain) </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">volume</td><td>The ID of the volume to intersect with </td></tr>
+    <tr><td class="paramname">start</td><td>The starting point of the query </td></tr>
+    <tr><td class="paramname">end</td><td>The ending point of the query </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A vector of pairs containing the element ID and length inside each element within the volume </dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>/home/runner/work/xdg/xdg/include/xdg/<b>xdg.h</b></li>
 </ul>
