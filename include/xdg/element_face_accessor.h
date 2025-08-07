@@ -6,7 +6,7 @@
 namespace xdg {
 
   //! \brief Class to provide access to face vertices of mesh elements
-  //! \details This class provides an abstraction layer for accessing the vertices
+  //! \details This object provides an abstraction layer for accessing the vertices
   //! of element faces across different mesh libraries. It allows consistent access
   //! to face geometry while hiding the underlying mesh representation details, allowing
   //! higher level operations like element traversal to rely on the same implementation.

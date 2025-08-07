@@ -36,7 +36,7 @@ bool plucker_tet_containment_test(const Position& point,
 
     // Check all λ_i in [0, 1]
     for (int i = 0; i < 4; ++i) {
-        if (bary[i] < -PLUCKER_TOL || bary[i] > 1.0f + PLUCKER_TOL)
+        if (bary[i] < -PLUCKER_ZERO_TOL || bary[i] > 1.0f + PLUCKER_ZERO_TOL)
             return false;
     }
     return true;

@@ -24,7 +24,7 @@ double plucker_edge_test(const Position& vertexa, const Position& vertexb,
     pip = ray.dot(edge_normal) + ray_normal.dot(edge);
     pip = -pip;
   }
-  if (PLUCKER_TOL > fabs(pip))
+  if (PLUCKER_ZERO_TOL > fabs(pip))
     pip = 0.0;
   return pip;
 }

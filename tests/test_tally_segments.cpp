@@ -69,5 +69,4 @@ TEST_CASE("Test Walk Elements") {
   REQUIRE(r.x == Catch::Approx(upper_right_corner.x).epsilon(1e-04));
   REQUIRE(r.y == Catch::Approx(upper_right_corner.y).epsilon(1e-04));
   REQUIRE(r.z == Catch::Approx(upper_right_corner.z).epsilon(1e-04));
-
 }
