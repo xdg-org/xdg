@@ -56,10 +56,10 @@ void TriangleIntersectionFunc(RTCIntersectFunctionNArguments* args) {
   const PrimitiveRef& primitive_ref = user_data->prim_ref_buffer[args->primID];
 
   auto vertices = mesh_manager->face_vertices(primitive_ref.primitive_id);
-  printf("vertices: v0 = (%f, %f, %f), v1 = (%f, %f, %f), v2 = (%f, %f, %f)\n",
-         vertices[0].x, vertices[0].y, vertices[0].z,
-         vertices[1].x, vertices[1].y, vertices[1].z,
-         vertices[2].x, vertices[2].y, vertices[2].z);
+  // printf("vertices: v0 = (%f, %f, %f), v1 = (%f, %f, %f), v2 = (%f, %f, %f)\n",
+  //        vertices[0].x, vertices[0].y, vertices[0].z,
+  //        vertices[1].x, vertices[1].y, vertices[1].z,
+  //        vertices[2].x, vertices[2].y, vertices[2].z);
 
   RTCDualRayHit* rayhit = (RTCDualRayHit*)args->rayhit;
   RTCSurfaceDualRay& ray = rayhit->ray;

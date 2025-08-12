@@ -149,7 +149,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
 
 
     if (rayID >= nRays) {
-        printf("Rejected Intersection at line %u due to:  rayID %u >= nRays %u\n", __LINE__, rayID, nRays);
+        // printf("Rejected Intersection at line %u due to:  rayID %u >= nRays %u\n", __LINE__, rayID, nRays);
         return;
     }
 
@@ -170,49 +170,50 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     double3 v1 = record.vertex[indices.y];
     double3 v2 = record.vertex[indices.z];
 
-    printf("vertices: v0 = (%f, %f, %f), v1 = (%f, %f, %f), v2 = (%f, %f, %f)\n", v0.x, v0.y, v0.z, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z);
+    // printf("vertices: v0 = (%f, %f, %f), v1 = (%f, %f, %f), v2 = (%f, %f, %f)\n", v0.x, v0.y, v0.z, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z);
 
     double3 origin = record.rayIn[rayID].origin;
     double3 direction = record.rayIn[rayID].direction;
 
-    double tMin = record.rayIn[rayID].tMin;
+    // double tMin = record.rayIn[rayID].tMin;
+    double tMin = 1e-6f;
     double tMax = record.rayIn[rayID].tMax;
 
     const double3 raya = direction;
-    const double3 rayb = dp_cross(v1 - v0, v2 - v0);
+    const double3 rayb = dp_cross(direction, origin);
 
  double plucker_coord0 = plucker_edge_test(v0, v1, raya, rayb);
- printf("plucker_coord0 = %f\n", plucker_coord0);
+ // printf("plucker_coord0 = %f\n", plucker_coord0);
     if (useOrientation && orientation * plucker_coord0 > 0) {
-        printf("Rejected Intersection at line %u due to:  orientation check failed at edge 0 (plucker_coord0 = %f)\n", __LINE__, plucker_coord0);
+        // printf("Rejected Intersection at line %u due to:  orientation check failed at edge 0 (plucker_coord0 = %f)\n", __LINE__, plucker_coord0);
         return;
     }
 
     double plucker_coord1 = plucker_edge_test(v1, v2, raya, rayb);
-    printf("plucker_coord1 = %f\n", plucker_coord1);
+    // printf("plucker_coord1 = %f\n", plucker_coord1);
     if (useOrientation && orientation * plucker_coord1 > 0) {
-        printf("Rejected Intersection at line %u due to:  orientation check failed at edge 1 (plucker_coord1 = %f)\n", __LINE__, plucker_coord1);
+        // printf("Rejected Intersection at line %u due to:  orientation check failed at edge 1 (plucker_coord1 = %f)\n", __LINE__, plucker_coord1);
         return;
     }
     else if ((0.0 < plucker_coord0 && 0.0 > plucker_coord1) || (0.0 > plucker_coord0 && 0.0 < plucker_coord1)) {
-        printf("Rejected Intersection at line %u due to:  winding check failed between edge 0 and edge 1\n", __LINE__);
+        // printf("Rejected Intersection at line %u due to:  winding check failed between edge 0 and edge 1\n", __LINE__);
         return;
     }
 
     double plucker_coord2 = plucker_edge_test(v2, v0, raya, rayb);
-    printf("plucker_coord2 = %f\n", plucker_coord2);
+    // printf("plucker_coord2 = %f\n", plucker_coord2);
     if (useOrientation && orientation * plucker_coord2 > 0) {
-        printf("Rejected Intersection at line %u due to:  orientation check failed at edge 2 (plucker_coord2 = %f)\n", __LINE__, plucker_coord2);
+        // printf("Rejected Intersection at line %u due to:  orientation check failed at edge 2 (plucker_coord2 = %f)\n", __LINE__, plucker_coord2);
         return;
     }
     else if ((0.0 < plucker_coord1 && 0.0 > plucker_coord2) || (0.0 > plucker_coord1 && 0.0 < plucker_coord2) ||
              (0.0 < plucker_coord0 && 0.0 > plucker_coord2) || (0.0 > plucker_coord0 && 0.0 < plucker_coord2)) {
-        printf("Rejected Intersection at line %u due to:  winding check failed across multiple edges\n", __LINE__);
+        // printf("Rejected Intersection at line %u due to:  winding check failed across multiple edges\n", __LINE__);
         return;
     }
 
     if (0.0 == plucker_coord0 && 0.0 == plucker_coord1 && 0.0 == plucker_coord2) {
-        printf("Rejected Intersection at line %u due to:  coplanar triangle (all Plücker coords are zero)\n", __LINE__);
+        // printf("Rejected Intersection at line %u due to:  coplanar triangle (all Plücker coords are zero)\n", __LINE__);
         return;
     }
 
@@ -236,15 +237,15 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     double v = plucker_coord0 * inverse_sum;
 
     if(u < 0.0 || v < 0.0 || (u + v) > 1.0) {
-        printf("Rejected Intersection at line %u due to:  barycentric coordinates out of bounds (u = %f, v = %f)\n", __LINE__, u, v);
+        // printf("Rejected Intersection at line %u due to:  barycentric coordinates out of bounds (u = %f, v = %f)\n", __LINE__, u, v);
         t = -1.0;
     }
     if (t > tMax) {
-        printf("Rejected Intersection at line %u due to:  t = %f exceeds tMax = %f\n", __LINE__, t, tMax);
+        // printf("Rejected Intersection at line %u due to:  t = %f exceeds tMax = %f\n", __LINE__, t, tMax);
         return;
     }
     if (t < tMin) {
-        printf("Rejected Intersection at line %u due to:  t = %f below tMin = %f\n", __LINE__, t, tMin);
+        // printf("Rejected Intersection at line %u due to:  t = %f below tMin = %f\n", __LINE__, t, tMin);
         return;
     }
 
@@ -257,23 +258,23 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     double3 norm = dcross(double3(v1 - v0), double3(v2 - v0));
     if (record.sense == 1) {
         norm = -norm; // reverse the normal if the triangle is reverse sense
-        printf("Reverse the normal \n");
+        // printf("Reverse the normal \n");
     }
 
     int hitOrientation = record.rayIn[rayID].hitOrientation;
 
     if (orientation_cull(direction, norm, hitOrientation))
     {
-        printf("Rejected Intersection at line %u due to:  Orientation does not match sense \n", __LINE__);
+        // printf("Rejected Intersection at line %u due to:  Orientation does not match sense \n", __LINE__);
         return;
     }
 
-    printf("Checking exclude list for primID %d, exclude_count %d\n", primID, record.rayIn[rayID].exclude_count);
+    // printf("Checking exclude list for primID %d, exclude_count %d\n", primID, record.rayIn[rayID].exclude_count);
     int global_prim_id = record.prim_ids[primID];
     for (int i = 0; i < record.rayIn[rayID].exclude_count; ++i)
     {
         if (record.rayIn[rayID].exclude_primitives[i] == global_prim_id) {
-            printf("Rejected Intersection at line %u due to:  primitive %d is in the exclude list\n", __LINE__, global_prim_id);
+            // printf("Rejected Intersection at line %u due to:  primitive %d is in the exclude list\n", __LINE__, global_prim_id);
             return;
         }
     }
@@ -282,7 +283,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     uint hit_kind = dot(norm, direction) < 0 ? HIT_KIND_TRIANGLE_FRONT_FACE
                                              : HIT_KIND_TRIANGLE_BACK_FACE;
 
-    printf("Accepted Intersection at line %u for primID %d, t = %f, u = %f, v = %f, hit_kind = %u\n", __LINE__, primID, t, u, v, hit_kind);                                         
+    // printf("Accepted Intersection at line %u for primID %d, t = %f, u = %f, v = %f, hit_kind = %u\n", __LINE__, primID, t, u, v, hit_kind);                                         
     ReportHit(f32t, hit_kind, attr);
 }
 
@@ -321,6 +322,13 @@ double plucker_edge_test(in double3 vertexa, in double3 vertexb, in double3 ray,
     }
 
     if (near_zero > abs(pip)) pip = 0.0;
+
+    // printf("plucker_edge_test: vertexa = (%f, %f, %f), vertexb = (%f, %f, %f), ray = (%f, %f, %f), ray_normal = (%f, %f, %f), pip = %f\n",
+        //    vertexa.x, vertexa.y, vertexa.z,
+        //    vertexb.x, vertexb.y, vertexb.z,
+        //    ray.x, ray.y, ray.z,
+        //    ray_normal.x, ray_normal.y, ray_normal.z,
+        //    pip);
 
     return pip;
 }
