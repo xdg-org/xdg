@@ -56,10 +56,7 @@ void TriangleIntersectionFunc(RTCIntersectFunctionNArguments* args) {
   const PrimitiveRef& primitive_ref = user_data->prim_ref_buffer[args->primID];
 
   auto vertices = mesh_manager->face_vertices(primitive_ref.primitive_id);
-  // printf("vertices: v0 = (%f, %f, %f), v1 = (%f, %f, %f), v2 = (%f, %f, %f)\n",
-  //        vertices[0].x, vertices[0].y, vertices[0].z,
-  //        vertices[1].x, vertices[1].y, vertices[1].z,
-  //        vertices[2].x, vertices[2].y, vertices[2].z);
+
 
   RTCDualRayHit* rayhit = (RTCDualRayHit*)args->rayhit;
   RTCSurfaceDualRay& ray = rayhit->ray;
@@ -105,6 +102,10 @@ void TriangleIntersectionFunc(RTCIntersectFunctionNArguments* args) {
   rayhit->hit.primitive_ref = &primitive_ref;
   rayhit->hit.surface = user_data->surface_id;
   rayhit->hit.dNg = normal;
+
+  printf("Hit triangle %d at distance %f with normal (%f, %f, %f) and sense %d\n",
+         primitive_ref.primitive_id, plucker_dist, normal.x, normal.y, normal.z, primitive_ref.sense);
+
 }
 
 bool TriangleClosestFunc(RTCPointQueryFunctionArguments* args) {

@@ -104,13 +104,11 @@ bool plucker_ray_tri_intersect(const std::array<Position, 3> vertices,
   // get the distance to intersection
   const double inverse_sum =
     1.0 / (plucker_coord0 + plucker_coord1 + plucker_coord2);
-  // printf("inverse_sum = %g\n", inverse_sum);
   assert(0.0 != inverse_sum);
 
   const Position intersection(plucker_coord0 * inverse_sum * vertices[2] +
                               plucker_coord1 * inverse_sum * vertices[0] +
                               plucker_coord2 * inverse_sum * vertices[1]);
-  // printf("intersection = (%g, %g, %g)\n", intersection[0], intersection[1], intersection[2]);
 
   // To minimize numerical error, get index of largest magnitude direction.
   int idx = 0;
@@ -121,10 +119,8 @@ bool plucker_ray_tri_intersect(const std::array<Position, 3> vertices,
       max_abs_dir = fabs(direction[i]);
     }
   }
-  // printf("max_abs_dir = %g, idx = %d\n", max_abs_dir, idx);
 
   dist_out = (intersection[idx] - origin[idx]) / direction[idx];
-  // printf("dist_out = %g\n", dist_out);
 
   // is the intersection within distance limits?
   if ((nonneg_ray_len && nonneg_ray_len < dist_out) ||  // intersection is beyond positive limit

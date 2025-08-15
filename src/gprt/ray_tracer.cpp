@@ -46,7 +46,6 @@ void GPRTRayTracer::setup_shaders()
   trianglesGeomType_ = gprtGeomTypeCreate<DPTriangleGeomData>(context_, GPRT_AABBS);
   gprtGeomTypeSetClosestHitProg(trianglesGeomType_, 0, module_, "ray_fire_hit"); // closesthit for ray queries
   gprtGeomTypeSetIntersectionProg(trianglesGeomType_, 0, module_, "DPTrianglePluckerIntersection"); // set intersection program for double precision rays
-
 }
 
 void GPRTRayTracer::init() {}
@@ -54,6 +53,7 @@ void GPRTRayTracer::init() {}
 TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume_id)
 {
   TreeID tree = next_tree_id();
+  printf("Registering volume %d with tree ID %d\n", volume_id, tree);
   trees_.push_back(tree);
   auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
   std::vector<gprt::Instance> surfaceBlasInstances; // BLAS for each (surface) geometry in this volume
@@ -64,6 +64,13 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
     DPTriangleGeomData* geom_data = gprtGeomGetParameters(triangleGeom); // pointer to assign data to
     gprt::Instance instance;
     auto num_faces = mesh_manager->num_surface_faces(surf);
+
+    // get the sense of this surface with respect to the volume
+    Sense triangle_sense {Sense::UNSET};
+    auto surf_to_vol_senses = mesh_manager->get_parent_volumes(surf);
+    if (volume_id == surf_to_vol_senses.first) triangle_sense = Sense::FORWARD;
+    else if (volume_id == surf_to_vol_senses.second) triangle_sense = Sense::REVERSE;
+
 
     if (first_visit)
     {
@@ -84,13 +91,16 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
 
       // Get storage for normals
       std::vector<double3> normals;
-      std::vector<MeshID> primIds;
-      primIds.reserve(num_faces);
+      std::vector<GPRTPrimitiveRef> primitive_refs;
+      primitive_refs.reserve(num_faces);
       normals.reserve(num_faces);
       for (const auto &face : mesh_manager->get_surface_faces(surf)) {
         auto norm = mesh_manager->face_normal(face);
         normals.push_back({norm.x, norm.y, norm.z});
-        primIds.push_back(face);
+        GPRTPrimitiveRef prim_ref;
+        prim_ref.id = face;
+        prim_ref.sense = static_cast<int>(triangle_sense);
+        primitive_refs.push_back(prim_ref);
       }
 
       auto vertex_buffer = gprtDeviceBufferCreate<double3>(context_, dbl3Vertices.size(), dbl3Vertices.data());
@@ -98,7 +108,7 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
       gprtAABBsSetPositions(triangleGeom, aabb_buffer, num_faces, 2*sizeof(float3), 0);
       auto connectivity_buffer = gprtDeviceBufferCreate<uint3>(context_, ui3Indices.size(), ui3Indices.data());
       auto normal_buffer = gprtDeviceBufferCreate<double3>(context_, num_faces, normals.data()); 
-      auto primID_buffer = gprtDeviceBufferCreate<MeshID>(context_, num_faces, primIds.data()); // Buffer for primitive IDs
+      auto primitive_refs_buffer = gprtDeviceBufferCreate<GPRTPrimitiveRef>(context_, num_faces, primitive_refs.data()); // Buffer for primitive sense
 
       geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffer);
       geom_data->index = gprtBufferGetDevicePointer(connectivity_buffer);
@@ -106,17 +116,18 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
       geom_data->rayIn = gprtBufferGetDevicePointer(rayInputBuffer_);
       geom_data->surf_id = surf;
       geom_data->normals = gprtBufferGetDevicePointer(normal_buffer);
-      geom_data->prim_ids = gprtBufferGetDevicePointer(primID_buffer);
+      geom_data->primitive_refs = gprtBufferGetDevicePointer(primitive_refs_buffer);
+      geom_data->num_faces = num_faces;
 
-      auto surf_to_vol_senses = mesh_manager->get_parent_volumes(surf);
-      if (volume_id == surf_to_vol_senses.first) 
-      {
-        geom_data->sense = 0;
-      } else if (volume_id == surf_to_vol_senses.second) 
-      {
-        geom_data->sense = 1;
-      }
+      /*
+        TODO: Figure out how to store the TreeID in geom_data per surface rather than per primitive
+        store the TreeID in the geom_data instead of MeshID
+        for forward and reverse volumes for use in ray tracing queries 
+      */
+      geom_data->forward_tree = tree; 
+      // geom_data->reverse_tree = TREEID_NONE; 
 
+      
       gprtComputeLaunch(aabbPopulationProgram_, {num_faces, 1, 1}, {1, 1, 1}, *geom_data);
 
       GPRTAccel blas = gprtAABBAccelCreate(context_, triangleGeom, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
@@ -134,6 +145,8 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
     {
       triangleGeom = surface_to_geometry_map_.at(surf);
       instance = surface_to_instance_map_.at(surf);
+      printf("Second visit to surface, setting reverse_tree\n");
+      geom_data->reverse_tree = tree;
     }
     surfaceBlasInstances.push_back(instance);
     
@@ -148,8 +161,6 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
       fatal_error("Volume {} is not a parent of surface {}", volume_id, surf);
     }
   }
-
-
 
   // Create a TLAS (Top-Level Acceleration Structure) for all BLAS instances in this volume
   auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, surfaceBlasInstances.size(), surfaceBlasInstances.data());
@@ -282,6 +293,11 @@ bool GPRTRayTracer::point_in_volume(TreeID tree,
   dblRayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
   rayInput[0].origin = {point.x, point.y, point.z};
   rayInput[0].direction = {directionUsed.x, directionUsed.y, directionUsed.z};
+  rayInput[0].tMax = INFTY; // Set a large distance limit
+  rayInput[0].tMin = 0.0;
+  rayInput[0].volume_tree = tree; // Set the TreeID of the volume being queried
+  rayInput[0].hitOrientation = -1; // No orientation culling for point-in-volume check
+
 
   if (exclude_primitives) {
     if (!exclude_primitives->empty()) gprtBufferResize(context_, excludePrimitivesBuffer_, exclude_primitives->size(), false);
@@ -307,27 +323,27 @@ bool GPRTRayTracer::point_in_volume(TreeID tree,
   gprtBufferMap(rayOutputBuffer_);
   dblRayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
   auto surface = rayOutput[0].surf_id;
-  Direction normal = {rayOutput[0].normal.x, rayOutput[0].normal.y, rayOutput[0].normal.z};
+  auto piv = rayOutput[0].piv; // Point in volume check result
   gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
   
   // if ray hit nothing, the point is outside volume
   if (surface == XDG_GPRT_INVALID_GEOMETRY_ID) return false;
 
-  return directionUsed.dot(normal) > 0.0;
+  return piv;
 }
 
 
 // This will launch the rays and run our shaders in the ray tracing pipeline
 // miss shader returns dist = 0.0 and elementID = -1
 // closest hit shader returns dist = distance to hit and elementID = triangle ID
-std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
+std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID tree,
                                                   const Position& origin,
                                                   const Direction& direction,
                                                   double dist_limit,
                                                   HitOrientation orientation,
                                                   std::vector<MeshID>* const exclude_primitives) 
 {
-  GPRTAccel volume = tree_to_vol_accel_map.at(scene);
+  GPRTAccel volume = tree_to_vol_accel_map.at(tree);
   dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
   rayGenData->world = gprtAccelGetDeviceAddress(volume);
   
@@ -339,6 +355,8 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID scene,
   rayInput[0].tMax = dist_limit;
   rayInput[0].tMin = 0.0;
   rayInput[0].hitOrientation = static_cast<int>(orientation); // Set orientation for the ray
+  rayInput[0].volume_tree = tree; // Set the TreeID of the volume being queried
+
 
   if (exclude_primitives) {
     if (!exclude_primitives->empty()) gprtBufferResize(context_, excludePrimitivesBuffer_, exclude_primitives->size(), false);
