@@ -3,19 +3,14 @@
 [[vk::push_constant]]
 dblRayFirePushConstants PC;
 
-struct Payload {
-    float3 color;
-};
-
 struct RayFirePayload {
     double distance;    // Distance to intersection
     int surf_id;     // ID of the surface hit
     int2 vol_ids;       // ID of the volume the ray is in
     SurfaceAccelerationStructure tlas;
     int next_vol;      // ID of the next volume
-    double3 normal;
-    uint hit_kind; // Kind of hit (front or back face)
     uint primitive_id; // ID of the primitive hit
+    uint piv; // Point in volume check (0 for outside, 1 for inside) 
 };
 
 struct DPAttribute
@@ -31,23 +26,26 @@ void ray_fire_hit(uniform DPTriangleGeomData record, inout RayFirePayload payloa
     uint hit_kind = HitKind();
     uint rayID = DispatchRaysIndex().x;
 
+    // The logic for next_volume isn't actually used just yet but I have copied it over from the original h5m reader code
+    // TODO : Should the rayOutput struct return the next volume ID for the ray back to the host
 
     if (hit_kind == HIT_KIND_TRIANGLE_FRONT_FACE){
         payload.vol_ids.x = record.vols[0];
         payload.vol_ids.y = record.vols[1];
         payload.next_vol = record.reverse_vol;
+        payload.piv = 0; // front face hit implies point outside the volume
     }
     else {
         payload.vol_ids.x = record.vols[1];
         payload.vol_ids.y = record.vols[0];
         payload.next_vol = record.forward_vol;
+        payload.piv = 1; // back face hit implies point inside the volume
     }
     int instanceID = InstanceID();
 
     payload.distance = attr.f64t;
     payload.surf_id = record.surf_id;
     payload.primitive_id = attr.global_prim_id;
-    payload.normal = record.normals[PrimitiveIndex()];
 }
 
 [shader("miss")]
@@ -55,8 +53,9 @@ void ray_fire_miss(inout RayFirePayload payload) {
     // Set the miss payload to default values
     payload.distance = -1.0f;
     payload.surf_id = ~0u;
-    payload.normal = {0.0, 0.0, 0.0};
     payload.primitive_id = ~0u;
+
+    // printf("Miss shader called, setting default payload values\n");
 }
 
 // This ray generation program will kick off the ray tracing process,
@@ -70,19 +69,13 @@ void ray_fire(uniform dblRayGenData record, uniform DPTriangleGeomData mesh) {
     RayDesc rayDesc;
     rayDesc.Origin = float3(record.ray[rayID].origin);
     rayDesc.Direction = normalize(float3(record.ray[rayID].direction));
-    rayDesc.TMin = float(record.ray[rayID].tMin); // non-zero to avoid self-intersection
-    rayDesc.TMax = float(record.ray[rayID].tMax); // distance limit from push constants
+    rayDesc.TMin = float(record.ray[rayID].tMin); 
+    rayDesc.TMax = float(record.ray[rayID].tMax); 
 
     // Pass the ray's origin and direction to the payload
     payload.distance = -1.0f;
     payload.surf_id = ~0u;
     payload.tlas = record.world;
-
-    // uint rayFlagCull = (PC.orientation == 1)
-    //                ? RAY_FLAG_CULL_FRONT_FACING_TRIANGLES
-    //                : RAY_FLAG_CULL_BACK_FACING_TRIANGLES;
-
-
 
     TraceRay(record.world, RAY_FLAG_NONE, 0xff, 0, 1, 0, rayDesc, payload);
 
@@ -101,19 +94,18 @@ void point_in_volume(uniform dblRayGenData record, uniform DPTriangleGeomData me
     RayDesc rayDesc;
     rayDesc.Origin = float3(record.ray[rayID].origin);
     rayDesc.Direction = float3(normalize(record.ray[rayID].direction));
-    rayDesc.TMin = 1e-4f; // non-zero to avoid self-intersection
-    rayDesc.TMax = 1e30f;
+    rayDesc.TMin = float(record.ray[rayID].tMin); 
+    rayDesc.TMax = float(record.ray[rayID].tMax); 
 
     // Pass the ray's origin and direction to the payload
     payload.surf_id = ~0u;
     payload.tlas = record.world;
+    payload.piv = 0; // Initialize point in volume check result to outside (0)
 
-    TraceRay(record.world, RAY_FLAG_NONE, 0xff, 0, 2, 0, rayDesc, payload);
+    TraceRay(record.world, RAY_FLAG_NONE, 0xff, 0, 1, 0, rayDesc, payload);
 
-    // Store the result of the point in volume check and the surface ID of the primitive hit
-    // 0 = outside, 1 = inside
-    record.out[rayID].normal = payload.normal;
     record.out.surf_id = payload.surf_id;
+    record.out[rayID].piv = payload.piv; // Point in volume check result
 }
 
 // ------------------------------------------------- Compute Shaders -------------------------------------------------
@@ -143,13 +135,13 @@ populate_aabbs(uint3 DispatchThreadID: SV_DispatchThreadID, uniform DPTriangleGe
 [shader("intersection")]
 void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
 {
+    // // printf("\nNew Intersection found\n--------------------------------------------------------");
     uint rayID = DispatchRaysIndex().x;
     uint nRays = DispatchRaysDimensions().x;
     uint flags = RayFlags();
 
-
     if (rayID >= nRays) {
-        // printf("Rejected Intersection at line %u due to:  rayID %u >= nRays %u\n", __LINE__, rayID, nRays);
+        // // printf("Rejected Intersection at line %u due to:  rayID %u >= nRays %u\n", __LINE__, rayID, nRays);
         return;
     }
 
@@ -170,27 +162,23 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     double3 v1 = record.vertex[indices.y];
     double3 v2 = record.vertex[indices.z];
 
-    // printf("vertices: v0 = (%f, %f, %f), v1 = (%f, %f, %f), v2 = (%f, %f, %f)\n", v0.x, v0.y, v0.z, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z);
-
     double3 origin = record.rayIn[rayID].origin;
     double3 direction = record.rayIn[rayID].direction;
 
     // double tMin = record.rayIn[rayID].tMin;
-    double tMin = 1e-6f;
+    double tMin = record.rayIn[rayID].tMin;
     double tMax = record.rayIn[rayID].tMax;
 
     const double3 raya = direction;
     const double3 rayb = dp_cross(direction, origin);
 
- double plucker_coord0 = plucker_edge_test(v0, v1, raya, rayb);
- // printf("plucker_coord0 = %f\n", plucker_coord0);
+    double plucker_coord0 = plucker_edge_test(v0, v1, raya, rayb);
     if (useOrientation && orientation * plucker_coord0 > 0) {
         // printf("Rejected Intersection at line %u due to:  orientation check failed at edge 0 (plucker_coord0 = %f)\n", __LINE__, plucker_coord0);
         return;
     }
 
     double plucker_coord1 = plucker_edge_test(v1, v2, raya, rayb);
-    // printf("plucker_coord1 = %f\n", plucker_coord1);
     if (useOrientation && orientation * plucker_coord1 > 0) {
         // printf("Rejected Intersection at line %u due to:  orientation check failed at edge 1 (plucker_coord1 = %f)\n", __LINE__, plucker_coord1);
         return;
@@ -201,7 +189,6 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     }
 
     double plucker_coord2 = plucker_edge_test(v2, v0, raya, rayb);
-    // printf("plucker_coord2 = %f\n", plucker_coord2);
     if (useOrientation && orientation * plucker_coord2 > 0) {
         // printf("Rejected Intersection at line %u due to:  orientation check failed at edge 2 (plucker_coord2 = %f)\n", __LINE__, plucker_coord2);
         return;
@@ -254,12 +241,20 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
 
     float f32t = float(t);
     if (double(f32t) < t) f32t = next_after(f32t);
+    int global_prim_id = record.primitive_refs[primID].id;
 
-    double3 norm = dcross(double3(v1 - v0), double3(v2 - v0));
-    if (record.sense == 1) {
-        norm = -norm; // reverse the normal if the triangle is reverse sense
-        // printf("Reverse the normal \n");
+    double3 norm = record.normals[primID];
+
+    // sense adjustment of normal
+    if (record.primitive_refs[primID].sense == 1)
+    {
+        // printf("Reversing the normal due to reverse sense\n");
+        norm = -norm; // reverse the normal if the triangle is in the reverse volume
     }
+
+    double norm_dot_dir = dot(norm, direction);
+    uint hit_kind = norm_dot_dir < 0 ? HIT_KIND_TRIANGLE_FRONT_FACE
+                                     : HIT_KIND_TRIANGLE_BACK_FACE;
 
     int hitOrientation = record.rayIn[rayID].hitOrientation;
 
@@ -269,8 +264,6 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
         return;
     }
 
-    // printf("Checking exclude list for primID %d, exclude_count %d\n", primID, record.rayIn[rayID].exclude_count);
-    int global_prim_id = record.prim_ids[primID];
     for (int i = 0; i < record.rayIn[rayID].exclude_count; ++i)
     {
         if (record.rayIn[rayID].exclude_primitives[i] == global_prim_id) {
@@ -280,10 +273,8 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     }
     attr.global_prim_id = global_prim_id;  
 
-    uint hit_kind = dot(norm, direction) < 0 ? HIT_KIND_TRIANGLE_FRONT_FACE
-                                             : HIT_KIND_TRIANGLE_BACK_FACE;
-
-    // printf("Accepted Intersection at line %u for primID %d, t = %f, u = %f, v = %f, hit_kind = %u\n", __LINE__, primID, t, u, v, hit_kind);                                         
+    printf("Hit primitive %d at distance %f with normal (%f, %f, %f) and sense %d\n",
+           record.primitive_refs[primID].id, t, norm.x, norm.y, norm.z, record.primitive_refs[primID].sense);
     ReportHit(f32t, hit_kind, attr);
 }
 
@@ -291,6 +282,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
 // ------------------------------------------------- Helper functions -------------------------------------------------
 
 bool orientation_cull(in double3 ray, in double3 normal, in int orientation) {
+
     if (orientation == -1) return false; // No culling
     if (orientation == 0) return dot(ray, normal) < 0.0; // Cull exiting rays
     if (orientation == 1) return dot(ray, normal) > 0.0; // Cull entering rays
@@ -323,7 +315,7 @@ double plucker_edge_test(in double3 vertexa, in double3 vertexb, in double3 ray,
 
     if (near_zero > abs(pip)) pip = 0.0;
 
-    // printf("plucker_edge_test: vertexa = (%f, %f, %f), vertexb = (%f, %f, %f), ray = (%f, %f, %f), ray_normal = (%f, %f, %f), pip = %f\n",
+    // // // printf("plucker_edge_test: vertexa = (%f, %f, %f), vertexb = (%f, %f, %f), ray = (%f, %f, %f), ray_normal = (%f, %f, %f), pip = %f\n",
         //    vertexa.x, vertexa.y, vertexa.z,
         //    vertexb.x, vertexb.y, vertexb.z,
         //    ray.x, ray.y, ray.z,
