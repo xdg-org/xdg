@@ -80,9 +80,7 @@ bool plucker_ray_tri_intersect(const std::array<Position, 3> vertices,
   double plucker_coord2 =
     plucker_edge_test(vertices[2], vertices[0], raya, rayb);
   // printf("plucker_coord2 = %g\n", plucker_coord2);
-
   if (orientation) {
-    // printf("orientation = %d, orientation * plucker_coord2 = %g\n", *orientation, (*orientation) * plucker_coord2);
     if ((*orientation) * plucker_coord2 > 0) {
       // printf("Early exit: plucker_coord2 orientation check failed\n");
       return EXIT_EARLY;

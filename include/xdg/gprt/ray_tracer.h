@@ -73,11 +73,8 @@ namespace xdg {
       const std::shared_ptr<GeometryUserData>& geometry_data(MeshID surface) const override
       { };
   
-      void render_mesh(const std::shared_ptr<MeshManager> mesh_manager);
 
     private:
-      FloatingPointPrecision precision_;
-
       // GPRT objects 
       GPRTContext context_;
       GPRTProgram deviceCode_; // device code for float precision shaders
@@ -108,15 +105,7 @@ namespace xdg {
 
       // Internal GPRT Mappings
       std::unordered_map<GPRTGeom, std::shared_ptr<GeometryUserData>> user_data_map_;
-      std::unordered_map<MeshID, gprt::Instance> surface_to_instance_map_; //<! Map from mesh surface to GPRT instance
-
       std::unordered_map<TreeID, GPRTAccel> tree_to_vol_accel_map; // Map from XDG::TreeID to GPRTAccel for volume TLAS
-
-      // storage
-      std::unordered_map<GPRTAccel, std::vector<PrimitiveRef>> primitive_ref_storage_; // Comes from sharedCode.h?
-      std::vector<GPRTBufferOf<float3>> vertex_buffers; // <! vertex buffers for each geometry
-      std::vector<GPRTBufferOf<uint3>> connectivity_buffers; // <! connectivity buffers for each geometry
-      std::vector<GPRTGeomOf<TrianglesGeomData>> allTrianglesGeom; //<! Triangle geometries for each surface
     };
 
 } // namespace xdg

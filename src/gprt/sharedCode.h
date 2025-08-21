@@ -5,6 +5,9 @@
 // #define FLT_EPSILON	1.19209290e-7F
 // #define DBL_EPSILON	2.2204460492503131e-16
 
+enum PointInVolume : uint { Outside = 0, Inside = 1 };
+
+
 struct GPRTPrimitiveRef
 {
   int id; // ID of the primitive
@@ -44,7 +47,7 @@ struct dblRayOutput
   double distance;
   uint surf_id;
   uint primitive_id;
-  uint piv; // Point in volume check result (0 for outside, 1 for inside)
+  PointInVolume piv; // Point in volume check result (0 for outside, 1 for inside)
 };
 
 /* variables for the single precision triangle mesh geometry */

@@ -53,16 +53,12 @@ void GPRTRayTracer::init() {}
 TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume_id)
 {
   TreeID tree = next_tree_id();
-  printf("Registering volume %d with tree ID %d\n", volume_id, tree);
   trees_.push_back(tree);
   auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
-  std::vector<gprt::Instance> surfaceBlasInstances; // BLAS for each (surface) geometry in this volume
+  std::vector<gprt::Instance> surfaceBlasInstances; // BLAS for each (surface) geometry in this volumel
 
   for (const auto &surf : volume_surfaces) {
     bool first_visit = !surface_to_geometry_map_.count(surf);
-    auto triangleGeom = gprtGeomCreate<DPTriangleGeomData>(context_, trianglesGeomType_);
-    DPTriangleGeomData* geom_data = gprtGeomGetParameters(triangleGeom); // pointer to assign data to
-    gprt::Instance instance;
     auto num_faces = mesh_manager->num_surface_faces(surf);
 
     // get the sense of this surface with respect to the volume
@@ -70,93 +66,81 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
     auto surf_to_vol_senses = mesh_manager->get_parent_volumes(surf);
     if (volume_id == surf_to_vol_senses.first) triangle_sense = Sense::FORWARD;
     else if (volume_id == surf_to_vol_senses.second) triangle_sense = Sense::REVERSE;
+    DPTriangleGeomData* geom_data = nullptr;
 
+    auto triangleGeom = gprtGeomCreate<DPTriangleGeomData>(context_, trianglesGeomType_);
 
-    if (first_visit)
-    {
-      // Get storage for vertices
-      auto [vertices, indices] = mesh_manager->get_surface_mesh(surf);
-      std::vector<double3> dbl3Vertices;
-      dbl3Vertices.reserve(vertices.size());    
-      for (const auto &vertex : vertices) {
-        dbl3Vertices.push_back({vertex.x, vertex.y, vertex.z});
-      }
-
-      // Get storage for indices
-      std::vector<uint3> ui3Indices;
-      ui3Indices.reserve(indices.size() / 3);
-      for (size_t i = 0; i < indices.size(); i += 3) {
-        ui3Indices.emplace_back(indices[i], indices[i + 1], indices[i + 2]);
-      }
-
-      // Get storage for normals
-      std::vector<double3> normals;
-      std::vector<GPRTPrimitiveRef> primitive_refs;
-      primitive_refs.reserve(num_faces);
-      normals.reserve(num_faces);
-      for (const auto &face : mesh_manager->get_surface_faces(surf)) {
-        auto norm = mesh_manager->face_normal(face);
-        normals.push_back({norm.x, norm.y, norm.z});
-        GPRTPrimitiveRef prim_ref;
-        prim_ref.id = face;
-        prim_ref.sense = static_cast<int>(triangle_sense);
-        primitive_refs.push_back(prim_ref);
-      }
-
-      auto vertex_buffer = gprtDeviceBufferCreate<double3>(context_, dbl3Vertices.size(), dbl3Vertices.data());
-      auto aabb_buffer = gprtDeviceBufferCreate<float3>(context_, 2*num_faces, 0); // AABBs for each triangle
-      gprtAABBsSetPositions(triangleGeom, aabb_buffer, num_faces, 2*sizeof(float3), 0);
-      auto connectivity_buffer = gprtDeviceBufferCreate<uint3>(context_, ui3Indices.size(), ui3Indices.data());
-      auto normal_buffer = gprtDeviceBufferCreate<double3>(context_, num_faces, normals.data()); 
-      auto primitive_refs_buffer = gprtDeviceBufferCreate<GPRTPrimitiveRef>(context_, num_faces, primitive_refs.data()); // Buffer for primitive sense
-
-      geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffer);
-      geom_data->index = gprtBufferGetDevicePointer(connectivity_buffer);
-      geom_data->aabbs = gprtBufferGetDevicePointer(aabb_buffer);
-      geom_data->rayIn = gprtBufferGetDevicePointer(rayInputBuffer_);
-      geom_data->surf_id = surf;
-      geom_data->normals = gprtBufferGetDevicePointer(normal_buffer);
-      geom_data->primitive_refs = gprtBufferGetDevicePointer(primitive_refs_buffer);
-      geom_data->num_faces = num_faces;
-
-      /*
-        TODO: Figure out how to store the TreeID in geom_data per surface rather than per primitive
-        store the TreeID in the geom_data instead of MeshID
-        for forward and reverse volumes for use in ray tracing queries 
-      */
-      geom_data->forward_tree = tree; 
-      // geom_data->reverse_tree = TREEID_NONE; 
-
-      
-      gprtComputeLaunch(aabbPopulationProgram_, {num_faces, 1, 1}, {1, 1, 1}, *geom_data);
-
-      GPRTAccel blas = gprtAABBAccelCreate(context_, triangleGeom, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
-      gprtAccelBuild(context_, blas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
-
-      instance = gprtAccelGetInstance(blas);
-      instance.mask = 0xff;
-
-      // Store in maps
-      surface_to_geometry_map_[surf] = triangleGeom;
-      surface_to_instance_map_[surf] = instance;
-      globalBlasInstances_.push_back(instance);
+    geom_data = gprtGeomGetParameters(triangleGeom); // pointer to assign data to
+    // Get storage for vertices
+    auto [vertices, indices] = mesh_manager->get_surface_mesh(surf);
+    std::vector<double3> dbl3Vertices;
+    dbl3Vertices.reserve(vertices.size());    
+    for (const auto &vertex : vertices) {
+      dbl3Vertices.push_back({vertex.x, vertex.y, vertex.z});
     }
-    else 
-    {
-      triangleGeom = surface_to_geometry_map_.at(surf);
-      instance = surface_to_instance_map_.at(surf);
-      printf("Second visit to surface, setting reverse_tree\n");
-      geom_data->reverse_tree = tree;
+
+    // Get storage for indices
+    std::vector<uint3> ui3Indices;
+    ui3Indices.reserve(indices.size() / 3);
+    for (size_t i = 0; i < indices.size(); i += 3) {
+      ui3Indices.emplace_back(indices[i], indices[i + 1], indices[i + 2]);
     }
+
+    // Get storage for normals
+    std::vector<double3> normals;
+    std::vector<GPRTPrimitiveRef> primitive_refs;
+    primitive_refs.reserve(num_faces);
+    normals.reserve(num_faces);
+    for (const auto &face : mesh_manager->get_surface_faces(surf)) {
+      auto norm = mesh_manager->face_normal(face);
+      normals.push_back({norm.x, norm.y, norm.z});
+      GPRTPrimitiveRef prim_ref;
+      prim_ref.id = face;
+      primitive_refs.push_back(prim_ref);
+    }
+
+    auto vertex_buffer = gprtDeviceBufferCreate<double3>(context_, dbl3Vertices.size(), dbl3Vertices.data());
+    auto aabb_buffer = gprtDeviceBufferCreate<float3>(context_, 2*num_faces, 0); // AABBs for each triangle
+    gprtAABBsSetPositions(triangleGeom, aabb_buffer, num_faces, 2*sizeof(float3), 0);
+    auto connectivity_buffer = gprtDeviceBufferCreate<uint3>(context_, ui3Indices.size(), ui3Indices.data());
+    auto normal_buffer = gprtDeviceBufferCreate<double3>(context_, num_faces, normals.data()); 
+    auto primitive_refs_buffer = gprtDeviceBufferCreate<GPRTPrimitiveRef>(context_, num_faces, primitive_refs.data()); // Buffer for primitive sense
+
+    geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffer);
+    geom_data->index = gprtBufferGetDevicePointer(connectivity_buffer);
+    geom_data->aabbs = gprtBufferGetDevicePointer(aabb_buffer);
+    geom_data->rayIn = gprtBufferGetDevicePointer(rayInputBuffer_);
+    geom_data->surf_id = surf;
+    geom_data->normals = gprtBufferGetDevicePointer(normal_buffer);
+    geom_data->primitive_refs = gprtBufferGetDevicePointer(primitive_refs_buffer);
+    geom_data->num_faces = num_faces;
+    
+    gprtComputeLaunch(aabbPopulationProgram_, {num_faces, 1, 1}, {1, 1, 1}, *geom_data);
+
+    GPRTAccel blas = gprtAABBAccelCreate(context_, triangleGeom, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+    gprtAccelBuild(context_, blas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+    gprt::Instance instance;
+
+    instance = gprtAccelGetInstance(blas);
+    instance.mask = 0xff;
+
+    // Store in maps
+    surface_to_geometry_map_[surf] = triangleGeom;
+
+    geom_data = gprtGeomGetParameters(triangleGeom);
+    instance = gprtAccelGetInstance(blas);
+    instance.mask = 0xff;
     surfaceBlasInstances.push_back(instance);
+    globalBlasInstances_.push_back(instance);
     
     // Always update per-volume info
     auto [forward_parent, reverse_parent] = mesh_manager->get_parent_volumes(surf);
-
     if (volume_id == forward_parent) {
       geom_data->forward_vol = forward_parent;
+      geom_data->forward_tree = tree;
     } else if (volume_id == reverse_parent) {
       geom_data->reverse_vol = reverse_parent;
+      geom_data->reverse_tree = tree;
     } else {
       fatal_error("Volume {} is not a parent of surface {}", volume_id, surf);
     }
@@ -167,7 +151,6 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
   GPRTAccel volume_tlas = gprtInstanceAccelCreate(context_, surfaceBlasInstances.size(), instanceBuffer);
   gprtAccelBuild(context_, volume_tlas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
   tree_to_vol_accel_map[tree] = volume_tlas;
-
   return tree;
 }
 
@@ -388,7 +371,6 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID tree,
   auto surface = rayOutput[0].surf_id;
   auto primitive_id = rayOutput[0].primitive_id;
   gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
-  
   if (surface == XDG_GPRT_INVALID_GEOMETRY_ID)
     return {INFTY, ID_NONE};
   else
