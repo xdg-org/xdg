@@ -15,12 +15,6 @@ using namespace xdg;
 
 int main(int argc, char** argv) {
 
-
-
-  
-
-
-
 // argument parsing
 argparse::ArgumentParser args("XDG Ray Fire Tool", "1.0", argparse::default_arguments::help);
 
@@ -86,11 +80,6 @@ mm->init();
 mm->parse_metadata();
 xdg->prepare_raytracer();
 xdg->ray_tracing_interface()->init();
-
-for (auto &volume : mm->volumes())
-{
-  std::cout << volume << std::endl;
-}
 
 sim_data.xdg_ = xdg;
 

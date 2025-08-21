@@ -6,12 +6,11 @@ dblRayFirePushConstants PC;
 struct RayFirePayload {
     double distance;    // Distance to intersection
     int surf_id;     // ID of the surface hit
-    int2 vol_ids;       // ID of the volume the ray is in
     SurfaceAccelerationStructure tlas;
-    int next_vol;      // ID of the next volume
     uint primitive_id; // ID of the primitive hit
-    uint piv; // Point in volume check (0 for outside, 1 for inside) 
+    PointInVolume piv; // Point in volume check (0 for outside, 1 for inside) 
 };
+
 
 struct DPAttribute
 {
@@ -26,36 +25,30 @@ void ray_fire_hit(uniform DPTriangleGeomData record, inout RayFirePayload payloa
     uint hit_kind = HitKind();
     uint rayID = DispatchRaysIndex().x;
 
-    // The logic for next_volume isn't actually used just yet but I have copied it over from the original h5m reader code
+    // There is some logic for handling next volumes inside the h5m-reader which I could make use of too
     // TODO : Should the rayOutput struct return the next volume ID for the ray back to the host
 
-    if (hit_kind == HIT_KIND_TRIANGLE_FRONT_FACE){
-        payload.vol_ids.x = record.vols[0];
-        payload.vol_ids.y = record.vols[1];
-        payload.next_vol = record.reverse_vol;
-        payload.piv = 0; // front face hit implies point outside the volume
-    }
-    else {
-        payload.vol_ids.x = record.vols[1];
-        payload.vol_ids.y = record.vols[0];
-        payload.next_vol = record.forward_vol;
-        payload.piv = 1; // back face hit implies point inside the volume
-    }
+    payload.piv = (hit_kind == HIT_KIND_TRIANGLE_FRONT_FACE) 
+    ? PointInVolume::Outside
+    : PointInVolume::Inside; 
+
     int instanceID = InstanceID();
 
     payload.distance = attr.f64t;
     payload.surf_id = record.surf_id;
     payload.primitive_id = attr.global_prim_id;
+
 }
 
 [shader("miss")]
 void ray_fire_miss(inout RayFirePayload payload) {
     // Set the miss payload to default values
+    // printf("Miss shader called, setting default payload values for primitive %d\n");
+
     payload.distance = -1.0f;
     payload.surf_id = ~0u;
     payload.primitive_id = ~0u;
 
-    // printf("Miss shader called, setting default payload values\n");
 }
 
 // This ray generation program will kick off the ray tracing process,
@@ -100,8 +93,8 @@ void point_in_volume(uniform dblRayGenData record, uniform DPTriangleGeomData me
     // Pass the ray's origin and direction to the payload
     payload.surf_id = ~0u;
     payload.tlas = record.world;
-    payload.piv = 0; // Initialize point in volume check result to outside (0)
-
+    payload.piv = PointInVolume::Outside; // Initialize point in volume check result to outside (0)
+    
     TraceRay(record.world, RAY_FLAG_NONE, 0xff, 0, 1, 0, rayDesc, payload);
 
     record.out.surf_id = payload.surf_id;
@@ -135,13 +128,15 @@ populate_aabbs(uint3 DispatchThreadID: SV_DispatchThreadID, uniform DPTriangleGe
 [shader("intersection")]
 void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
 {
-    // // printf("\nNew Intersection found\n--------------------------------------------------------");
+    int primID = PrimitiveIndex();
+    int global_prim_id = record.primitive_refs[primID].id;
+
     uint rayID = DispatchRaysIndex().x;
     uint nRays = DispatchRaysDimensions().x;
     uint flags = RayFlags();
 
     if (rayID >= nRays) {
-        // // printf("Rejected Intersection at line %u due to:  rayID %u >= nRays %u\n", __LINE__, rayID, nRays);
+        // printf("Rejected Intersection at line %u due to:  rayID %u >= nRays %u\n", __LINE__, rayID, nRays);
         return;
     }
 
@@ -156,7 +151,6 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
         useOrientation = true;
     }
 
-    int primID = PrimitiveIndex();
     int3 indices = record.index[primID];
     double3 v0 = record.vertex[indices.x];
     double3 v1 = record.vertex[indices.y];
@@ -179,6 +173,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     }
 
     double plucker_coord1 = plucker_edge_test(v1, v2, raya, rayb);
+    // printf("plucker_coord0 = %g, plucker_coord1 = %g\n", plucker_coord0, plucker_coord1);
     if (useOrientation && orientation * plucker_coord1 > 0) {
         // printf("Rejected Intersection at line %u due to:  orientation check failed at edge 1 (plucker_coord1 = %f)\n", __LINE__, plucker_coord1);
         return;
@@ -189,6 +184,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     }
 
     double plucker_coord2 = plucker_edge_test(v2, v0, raya, rayb);
+    // printf("plucker_coord0 = %g, plucker_coord1 = %g, plucker_coord2 = %g\n", plucker_coord0, plucker_coord1, plucker_coord2);
     if (useOrientation && orientation * plucker_coord2 > 0) {
         // printf("Rejected Intersection at line %u due to:  orientation check failed at edge 2 (plucker_coord2 = %f)\n", __LINE__, plucker_coord2);
         return;
@@ -203,6 +199,8 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
         // printf("Rejected Intersection at line %u due to:  coplanar triangle (all Plücker coords are zero)\n", __LINE__);
         return;
     }
+
+
 
     const double inverse_sum = 1.0 / (plucker_coord0 + plucker_coord1 + plucker_coord2);
     const double3 intersection = double3(plucker_coord0 * inverse_sum * v2 +
@@ -223,6 +221,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     double u = plucker_coord2 * inverse_sum;
     double v = plucker_coord0 * inverse_sum;
 
+
     if(u < 0.0 || v < 0.0 || (u + v) > 1.0) {
         // printf("Rejected Intersection at line %u due to:  barycentric coordinates out of bounds (u = %f, v = %f)\n", __LINE__, u, v);
         t = -1.0;
@@ -241,15 +240,13 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
 
     float f32t = float(t);
     if (double(f32t) < t) f32t = next_after(f32t);
-    int global_prim_id = record.primitive_refs[primID].id;
 
-    double3 norm = record.normals[primID];
+    double3 norm = record.normals[primID]; // recover double precision normal. TODO - Should we calculate from vertices instead?
 
     // sense adjustment of normal
-    if (record.primitive_refs[primID].sense == 1)
+    if (record.rayIn[rayID].volume_tree == record.reverse_tree)
     {
-        // printf("Reversing the normal due to reverse sense\n");
-        norm = -norm; // reverse the normal if the triangle is in the reverse volume
+        norm = -norm;
     }
 
     double norm_dot_dir = dot(norm, direction);
@@ -272,9 +269,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
         }
     }
     attr.global_prim_id = global_prim_id;  
-
-    printf("Hit primitive %d at distance %f with normal (%f, %f, %f) and sense %d\n",
-           record.primitive_refs[primID].id, t, norm.x, norm.y, norm.z, record.primitive_refs[primID].sense);
+    // printf("Accepted Intersection at line %u with t = %f, u = %f, v = %f, global_prim_id = %d\n", __LINE__, t, u, v, global_prim_id);
     ReportHit(f32t, hit_kind, attr);
 }
 
@@ -315,7 +310,7 @@ double plucker_edge_test(in double3 vertexa, in double3 vertexb, in double3 ray,
 
     if (near_zero > abs(pip)) pip = 0.0;
 
-    // // // printf("plucker_edge_test: vertexa = (%f, %f, %f), vertexb = (%f, %f, %f), ray = (%f, %f, %f), ray_normal = (%f, %f, %f), pip = %f\n",
+    // // printf("plucker_edge_test: vertexa = (%f, %f, %f), vertexb = (%f, %f, %f), ray = (%f, %f, %f), ray_normal = (%f, %f, %f), pip = %f\n",
         //    vertexa.x, vertexa.y, vertexa.z,
         //    vertexb.x, vertexb.y, vertexb.z,
         //    ray.x, ray.y, ray.z,
