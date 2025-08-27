@@ -105,10 +105,12 @@ TEST_CASE("Test Ray Fire GPRT-MeshMock")
 {
   std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
   mm->init(); // this should do nothing, just good practice to call it
-  REQUIRE(mm->mesh_library() == MeshLibrary::INTERNAL);
+  REQUIRE(mm->mesh_library() == MeshLibrary::MOCK);
 
   std::shared_ptr<RayTracer> rti = std::make_shared<GPRTRayTracer>();
-  TreeID volume_tree = rti->register_volume(mm, mm->volumes()[0]);
+  auto [volume_tree, element_tree] = rti->register_volume(mm, mm->volumes()[0]);
+  REQUIRE(volume_tree != ID_NONE);
+  REQUIRE(element_tree == ID_NONE);
   rti->init();
 
   Position origin {0.0, 0.0, 0.0};

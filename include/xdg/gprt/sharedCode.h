@@ -1,5 +1,24 @@
 #include "gprt.h"
 
+#include "math/VectorTypes.h"
+
+// extending the math namespace from GPRT/VectorTypes.h
+namespace math
+{
+  using double1 = vector<double, 1>;
+  using double2 = vector<double, 2>;
+  using double3 = vector<double, 3>;
+  using double4 = vector<double, 4>;
+}
+
+// Type aliases for convenience
+using double1 = math::double1;
+using double2 = math::double2;
+using double3 = math::double3; 
+using double4 = math::double4;
+
+
+
 #define AA 3 // used for antialiasing
 #define EPSILON 2.2204460492503130808472633361816E-16
 // #define FLT_EPSILON	1.19209290e-7F
@@ -134,4 +153,3 @@ struct dblRayFirePushConstants {
   double tMin;
   uint8_t hitOrientation;
 };
-

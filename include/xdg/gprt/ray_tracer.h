@@ -28,15 +28,40 @@ namespace xdg {
       void set_geom_data(const std::shared_ptr<MeshManager> mesh_manager);
       void create_world_tlas();
   
-      TreeID register_triangle_geometry(const std::shared_ptr<MeshManager> mesh_manager, MeshID surface);
-      TreeID register_AABB_geometry(const std::shared_ptr<MeshManager> mesh_manager, MeshID surface);
-
       void init() override;
 
       // Setup the different shader programs for use with this ray tracer
       void setup_shaders();
 
-      TreeID register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume) override;
+      MeshID find_element(const Position& point) const override
+      {
+        std::cout << "Element trees not currently supported with GPRT ray tracer" << std::endl;
+        return ID_NONE;
+      };
+
+      MeshID find_element(TreeID tree, const Position& point) const override {
+        std::cout << "Element trees not currently supported with GPRT ray tracer" << std::endl;
+        return ID_NONE;
+      };
+
+
+      std::pair<TreeID, TreeID>
+      register_volume(const std::shared_ptr<MeshManager>& mesh_manager, MeshID volume) override;
+
+      TreeID create_surface_tree(const std::shared_ptr<MeshManager>& mesh_manager, MeshID volume) override;
+
+      TreeID create_element_tree(const std::shared_ptr<MeshManager>& mesh_manager, MeshID volume) override;
+
+
+      void create_global_surface_tree() override
+      {
+        std::cout << "Global surface trees not currently supported with GPRT ray tracer" << std::endl;
+      };
+
+      void create_global_element_tree() override
+      {
+        std::cout << "Global element trees not currently supported with GPRT ray tracer" << std::endl;
+      };
 
       bool point_in_volume(TreeID scene,
                           const Position& point,
@@ -69,9 +94,6 @@ namespace xdg {
   
       // const std::shared_ptr<GeometryUserData>& geometry_data(MeshID surface) const override
       // { return user_data_map_.at(surface_to_geometry_map_.at(surface)); };
-
-      const std::shared_ptr<GeometryUserData>& geometry_data(MeshID surface) const override
-      { };
   
 
     private:
@@ -104,7 +126,6 @@ namespace xdg {
       std::map<MeshID, GPRTGeomOf<DPTriangleGeomData>> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
 
       // Internal GPRT Mappings
-      std::unordered_map<GPRTGeom, std::shared_ptr<GeometryUserData>> user_data_map_;
       std::unordered_map<TreeID, GPRTAccel> tree_to_vol_accel_map; // Map from XDG::TreeID to GPRTAccel for volume TLAS
     };
 
