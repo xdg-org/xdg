@@ -125,7 +125,6 @@ list(APPEND xdg_sources
 src/gprt/ray_tracer.cpp
 )
 list(APPEND xdg_device_codes
-flt_deviceCode
 dbl_deviceCode
 )
 

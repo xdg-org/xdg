@@ -1,4 +1,4 @@
-#include "sharedCode.h"
+#include "../../include/xdg/gprt/sharedCode.h"
 
 [[vk::push_constant]]
 dblRayFirePushConstants PC;
