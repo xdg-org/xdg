@@ -50,10 +50,11 @@ void GPRTRayTracer::setup_shaders()
 
 void GPRTRayTracer::init() {}
 
-TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume_id)
+TreeID
+GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_manager, MeshID volume_id)
 {
-  TreeID tree = next_tree_id();
-  trees_.push_back(tree);
+  TreeID tree = next_surface_tree_id();
+  surface_trees_.push_back(tree);
   auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
   std::vector<gprt::Instance> surfaceBlasInstances; // BLAS for each (surface) geometry in this volumel
 
@@ -151,7 +152,25 @@ TreeID GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager> mesh_ma
   GPRTAccel volume_tlas = gprtInstanceAccelCreate(context_, surfaceBlasInstances.size(), instanceBuffer);
   gprtAccelBuild(context_, volume_tlas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
   tree_to_vol_accel_map[tree] = volume_tlas;
+  
   return tree;
+}
+
+TreeID
+GPRTRayTracer::create_element_tree(const std::shared_ptr<MeshManager>& mesh_manager, MeshID volume_id)
+{
+  std::cout << "Element trees not currently supported with GPRT ray tracer" << std::endl;
+  return TREE_NONE;
+};
+
+std::pair<TreeID,TreeID>
+GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager>& mesh_manager, MeshID volume_id)
+{
+  // set up ray tracing tree for boundary faces of the volume
+  TreeID faces_tree = create_surface_tree(mesh_manager, volume_id);
+  // set up point location tree for any volumetric elements. TODO - currently not supported with GPRT
+  TreeID element_tree = create_element_tree(mesh_manager, volume_id);
+  return {faces_tree, element_tree};
 }
 
 /* single precision version of register_volume
