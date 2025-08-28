@@ -4,6 +4,15 @@
 #ifndef __SLANG__ // only include this section for C++ compilation
 
 #include "math/VectorTypes.h"
+/*
+  Needed so that math vector types match exactly with Slang definitions on host & device
+  
+  When I tried to use linalg's definitions I had issues with ambiguous definitions of vector
+  types like float3, double3, between linalg and GPRT
+  
+  The following definitions extend the math utility definitions within GPRT but later versions of GPRT
+  may include these directly
+*/
 
 namespace math
 {
@@ -35,14 +44,6 @@ struct GPRTPrimitiveRef
   int sense;
 };
 
-/* Inputs for each ray */
-struct RayInput {
-  float3 origin;
-  float3 direction;
-  int32_t* exclude_primitives; // Optional for excluding primitives
-  uint32_t exclude_count;           // Number of excluded primitives
-};
-
 struct dblRayInput 
 {
   double3 origin;
@@ -55,30 +56,12 @@ struct dblRayInput
   uint volume_tree; // TreeID of the volume being queried
 };
 
-struct RayOutput 
-{
-  float distance;
-  uint surf_id;
-  float3 normal;
-  uint piv; // Point in volume check result (0 for outside, 1 for inside)
-};
-
 struct dblRayOutput 
 {
   double distance;
   uint surf_id;
   uint primitive_id;
   uint piv; // Point in volume check result (0 for outside, 1 for inside)
-};
-
-/* variables for the single precision triangle mesh geometry */
-struct TrianglesGeomData {
-  float3 *vertex; // vertex buffer
-  uint3 *index;   // index buffer
-  float3 *normals;
-  uint id;        // surface id
-  int forward_vol; 
-  int reverse_vol;
 };
 
 /* variables for double precision triangle mesh geometry */
@@ -99,26 +82,12 @@ struct DPTriangleGeomData {
   uint num_faces; // Number of faces in the geometry
 };
 
-struct RayGenData {
-  uint* frameBuffer;                     // Optional for debugging or visuals
-  SurfaceAccelerationStructure world;    // The top-level accel structure
-  RayInput *ray;
-  RayOutput *out;
-};
-
 struct dblRayGenData {
   uint* frameBuffer;                     // Optional for debugging or visuals
   SurfaceAccelerationStructure world;    // The top-level accel structure
   dblRayInput *ray;
   dblRayOutput *out;
   int orientation; // Orientation of the ray (0 for exiting, 1 for entering)
-};
-
-struct RayFireData {
-  uint* frameBuffer;                     // Optional for debugging or visuals
-  SurfaceAccelerationStructure world;    // The top-level accel structure
-  RayInput ray;
-  RayOutput out;
 };
 
 struct dblRayFireData {
@@ -128,30 +97,8 @@ struct dblRayFireData {
   dblRayOutput out;
 };
 
-/* variables for the miss program */
-struct MissProgData {
-  float3 color0;
-  float3 color1;
-};
-
 /* A small structure of constants that can change every frame without rebuilding the
   shader binding table. (must be 128 bytes or less) */
-struct PushConstants {
-  float time;
-  float3 scene_center;
-  struct Camera {
-    float radius;
-    float3 pos;
-    float3 dir_00;
-    float3 dir_du;
-    float3 dir_dv;
-  } camera;
-};
-
-struct RayFirePushConstants {
-  float dist_limit;
-  int orientation;
-};
 
 struct dblRayFirePushConstants {
   double tMax;
