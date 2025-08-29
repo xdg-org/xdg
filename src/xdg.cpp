@@ -69,7 +69,7 @@ std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib
     #endif
 
     // If no supported ray tracing library throw an error
-    std::string msg = fmt::format("Invalid ray tracing library '{}'. Supported:", RT_LIB_TO_STR.at(ray_tracing_lib));
+    std::string msg = fmt::format("Invalid ray tracing library '{}'. Supported:", RT_LIB_TO_STR(ray_tracing_lib));
     #ifdef XDG_ENABLE_EMBREE
     msg += " EMBREE";
     #endif

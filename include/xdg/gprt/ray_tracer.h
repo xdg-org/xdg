@@ -91,10 +91,9 @@ namespace xdg {
         // Check if the ray is occluded
         return false;
       }
-  
-      // const std::shared_ptr<GeometryUserData>& geometry_data(MeshID surface) const override
-      // { return user_data_map_.at(surface_to_geometry_map_.at(surface)); };
-  
+      
+      RTLibrary ray_tracing_library() const override { return RTLibrary::GPRT; }
+
 
     private:
       // GPRT objects 
