@@ -121,6 +121,9 @@ public:
                 const Direction& direction,
                 double& dist) const = 0;
 
+  virtual RTLibrary ray_tracing_library() const = 0;
+
+
   // Generic Accessors
   int num_registered_trees() const { return surface_trees_.size() + element_trees_.size(); };
   int num_registered_surface_trees() const { return surface_trees_.size(); };

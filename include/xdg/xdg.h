@@ -7,6 +7,7 @@
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/ray_tracing_interface.h"
 #include "xdg/embree/ray_tracer.h"
+#include "xdg/gprt/ray_tracer.h"
 
 namespace xdg {
 
@@ -25,8 +26,8 @@ public:
       set_ray_tracing_interface(std::make_shared<EmbreeRayTracer>());
       break;
     case RTLibrary::GPRT:
-      fatal_error("This backend is not yet implemented");
-      break;
+      set_ray_tracing_interface(std::make_shared<GPRTRayTracer>());
+    break;
     }
   }
 

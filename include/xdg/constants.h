@@ -60,11 +60,13 @@ static const std::map<MeshLibrary, std::string> MESH_LIB_TO_STR =
   {MeshLibrary::LIBMESH, "LIBMESH"}
 };
 
-static const std::map<RTLibrary, std::string> RT_LIB_TO_STR =
-{
-  {RTLibrary::EMBREE, "EMBREE"},
-  {RTLibrary::GPRT, "GPRT"},
-};
+inline const char* RT_LIB_TO_STR(RTLibrary lib) {
+  switch (lib) {
+    case RTLibrary::EMBREE: return "EMBREE";
+    case RTLibrary::GPRT:   return "GPRT";
+    default:                return "UNKNOWN";
+  }
+}
 
 // Mesh identifer type
 using MeshID = int32_t;
