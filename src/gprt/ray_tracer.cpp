@@ -225,7 +225,7 @@ bool GPRTRayTracer::point_in_volume(TreeID tree,
   gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
   
   // if ray hit nothing, the point is outside volume
-  if (surface == XDG_GPRT_INVALID_GEOMETRY_ID) return false;
+  if (surface == ID_NONE) return false;
 
   return piv;
 }
@@ -286,7 +286,7 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID tree,
   auto surface = rayOutput[0].surf_id;
   auto primitive_id = rayOutput[0].primitive_id;
   gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
-  if (surface == XDG_GPRT_INVALID_GEOMETRY_ID)
+  if (surface == ID_NONE)
     return {INFTY, ID_NONE};
   else
     if (exclude_primitives) exclude_primitives->push_back(primitive_id);

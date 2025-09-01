@@ -36,7 +36,7 @@ using double4 = math::double4;
 // #define FLT_EPSILON	1.19209290e-7F
 // #define DBL_EPSILON	2.2204460492503131e-16
 
-enum PointInVolume : uint { Outside = 0, Inside = 1 };
+enum PointInVolume : int { Outside = 0, Inside = 1 };
 
 struct GPRTPrimitiveRef
 {
@@ -51,17 +51,17 @@ struct dblRayInput
   double tMin; // Minimum distance for ray intersection
   double tMax; // Maximum distance for ray intersection
   int32_t* exclude_primitives; // Optional for excluding primitives
-  uint32_t exclude_count;           // Number of excluded primitives
-  uint8_t hitOrientation;
-  uint volume_tree; // TreeID of the volume being queried
+  int32_t exclude_count;           // Number of excluded primitives
+  int8_t hitOrientation;
+  int volume_tree; // TreeID of the volume being queried
 };
 
 struct dblRayOutput 
 {
   double distance;
-  uint surf_id;
-  uint primitive_id;
-  uint piv; // Point in volume check result (0 for outside, 1 for inside)
+  int surf_id;
+  int primitive_id;
+  int piv; // Point in volume check result (0 for outside, 1 for inside)
 };
 
 /* variables for double precision triangle mesh geometry */
@@ -70,16 +70,16 @@ struct DPTriangleGeomData {
   float3 *aabbs; // AABB buffer 
   uint3 *index;  // index buffer
   double3 *normals; // normals buffer
-  uint surf_id;
+  int surf_id;
   int2 vols;
   int forward_vol;
   int reverse_vol;
   dblRayInput *rayIn; // double precision rays
-  uint8_t hitOrientation;
+  int8_t hitOrientation;
   int forward_tree; // TreeID of the forward volume
   int reverse_tree; // TreeID of the reverse volume
   GPRTPrimitiveRef* primitive_refs;
-  uint num_faces; // Number of faces in the geometry
+  int num_faces; // Number of faces in the geometry
 };
 
 struct dblRayGenData {
@@ -91,7 +91,6 @@ struct dblRayGenData {
 };
 
 struct dblRayFireData {
-  uint* frameBuffer;                     // Optional for debugging or visuals
   SurfaceAccelerationStructure world;    // The top-level accel structure
   dblRayInput ray;
   dblRayOutput out;
@@ -103,5 +102,5 @@ struct dblRayFireData {
 struct dblRayFirePushConstants {
   double tMax;
   double tMin;
-  uint8_t hitOrientation;
+  int8_t hitOrientation;
 };

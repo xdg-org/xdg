@@ -234,8 +234,6 @@ TEST_CASE("TEST MOAB Find Element Method")
   mesh_manager->init();
   xdg->prepare_raytracer();
 
-  std::cout << "RT library: " << RT_LIB_TO_STR(xdg->ray_tracing_interface()->ray_tracing_library()) << "\n";
-
   MeshID volume = 1;
 
   MeshID element = xdg->find_element(volume, {0.0, 0.0, 100.0});

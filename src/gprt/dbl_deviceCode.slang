@@ -7,7 +7,7 @@ struct RayFirePayload {
     double distance;    // Distance to intersection
     int surf_id;     // ID of the surface hit
     SurfaceAccelerationStructure tlas;
-    uint primitive_id; // ID of the primitive hit
+    int primitive_id; // ID of the primitive hit
     PointInVolume piv; // Point in volume check (0 for outside, 1 for inside) 
 };
 
@@ -15,7 +15,7 @@ struct RayFirePayload {
 struct DPAttribute
 {
   double f64t; // double precision hit distance
-  uint global_prim_id;
+  int global_prim_id;
 };
 
 
@@ -46,8 +46,8 @@ void ray_fire_miss(inout RayFirePayload payload) {
     // printf("Miss shader called, setting default payload values for primitive %d\n");
 
     payload.distance = -1.0f;
-    payload.surf_id = ~0u;
-    payload.primitive_id = ~0u;
+    payload.surf_id = -1;
+    payload.primitive_id = -1;
 
 }
 
@@ -67,7 +67,7 @@ void ray_fire(uniform dblRayGenData record, uniform DPTriangleGeomData mesh) {
 
     // Pass the ray's origin and direction to the payload
     payload.distance = -1.0f;
-    payload.surf_id = ~0u;
+    payload.surf_id = -1;
     payload.tlas = record.world;
 
     TraceRay(record.world, RAY_FLAG_NONE, 0xff, 0, 1, 0, rayDesc, payload);
@@ -91,7 +91,7 @@ void point_in_volume(uniform dblRayGenData record, uniform DPTriangleGeomData me
     rayDesc.TMax = float(record.ray[rayID].tMax); 
 
     // Pass the ray's origin and direction to the payload
-    payload.surf_id = ~0u;
+    payload.surf_id = -1;
     payload.tlas = record.world;
     payload.piv = PointInVolume::Outside; // Initialize point in volume check result to outside (0)
     
