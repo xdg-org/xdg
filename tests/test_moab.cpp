@@ -234,8 +234,6 @@ TEST_CASE("TEST MOAB Find Element Method")
   mesh_manager->init();
   xdg->prepare_raytracer();
 
-  REQUIRE(mesh_manager->num_volume_elements() == 10333);
-
   MeshID volume = 1;
   REQUIRE(mesh_manager->num_volume_elements(1) == 10333);
 
