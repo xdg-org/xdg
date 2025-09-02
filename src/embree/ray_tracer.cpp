@@ -52,41 +52,25 @@ EmbreeRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_ma
 {
   SurfaceTreeID tree = next_surface_tree_id();
   surface_trees_.push_back(tree);
-  auto volume_scene = this->create_embree_scene();
+
+  RTCScene volume_scene = this->create_embree_scene();
   auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
 
-  // allocate total storage for all the primtives in a volume
-  size_t vol_face_count = 0;
-  for (auto& surface_id : volume_surfaces) {
-    if (!surface_to_geometry_map_.count(surface_id)) {
-      vol_face_count += mesh_manager->get_surface_faces(surface_id).size();
-    }
-  }
-
-  this->primitive_ref_storage_[volume_scene].resize(vol_face_count);
-  auto& triangle_storage = this->primitive_ref_storage_[volume_scene];
-  PrimitiveRef* tri_ref_ptr = triangle_storage.data();
-  auto bump = bounding_box_bump(mesh_manager, volume_id);
-  int storage_offset = 0;
+  const double bump = bounding_box_bump(mesh_manager, volume_id);
 
   for (auto& surface : volume_surfaces) {
-    RTCGeometry surface_geometry;
-    std::shared_ptr<SurfaceUserData> surface_data;
 
-    // Check if this surface already has cached geometry information
-    if (!surface_to_geometry_map_.count(surface))
-    { // First visit: Create new RTCGeometry and user data
-      std::tie(surface_geometry, surface_data) = register_surface(mesh_manager, surface, volume_scene, storage_offset);
-      surface_data->box_bump = bump; // set the box dilation value
-    }
-    else { // Second Visit: Recover existing RTCGeometry and user data
-      surface_geometry = surface_to_geometry_map_[surface];
-      surface_data = surface_user_data_map_.at(surface_geometry);
-      // set the box dilation value to the larger of the two box bump values for
-      // the volumes on either side of this surface
-      surface_data->box_bump = std::max(surface_data->box_bump, bump);
-      rtcAttachGeometry(volume_scene, surface_geometry);
-    }
+    // attempt to recover surface cache from map. If not default construct empty
+    auto& surfaceCache = surface_cache_map_[surface];
+
+    // if cache empty build embree objects and populate
+    if (!surfaceCache.scene) 
+      surfaceCache = register_surface(mesh_manager, surface);
+
+    auto& [surface_scene, surface_data, prims] = surfaceCache;
+
+    // update bbox bump
+    surface_data->box_bump = std::max(surface_data->box_bump, bump);
 
     // Set the correct parent TreeID
     auto [forward_parent, reverse_parent] = mesh_manager->surface_senses(surface);
@@ -97,41 +81,52 @@ EmbreeRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_ma
     } else {
       fatal_error("Volume {} is not a parent of surface {}", volume_id, surface);
     }
+
+    // Create an instance in the TLAS pointing to the BLAS
+    RTCGeometry inst = rtcNewGeometry(device_, RTC_GEOMETRY_TYPE_INSTANCE);
+    rtcSetGeometryInstancedScene(inst, surface_scene);
+    rtcSetGeometryUserData(inst, surface_data.get());
+    rtcCommitGeometry(inst);
+    rtcAttachGeometry(volume_scene, inst);
+    rtcReleaseGeometry(inst);
   }
 
+  // commit volume TLAS
   rtcCommitScene(volume_scene);
   surface_volume_tree_to_scene_map_[tree] = volume_scene;
   return tree;
 }
 
-std::pair<RTCGeometry, std::shared_ptr<SurfaceUserData>>
+EmbreeSurfaceCache
 EmbreeRayTracer::register_surface(const std::shared_ptr<MeshManager>& mesh_manager,
-                                  MeshID surface,
-                                  RTCScene& volume_scene,
-                                  int& storage_offset)
-{
-  auto& triangle_storage = this->primitive_ref_storage_[volume_scene];
-  PrimitiveRef* tri_ref_ptr = triangle_storage.data();
+                                  MeshID surface)
+{  
+  RTCScene surface_scene = create_embree_scene();
   auto surface_faces = mesh_manager->get_surface_faces(surface);
-  size_t surf_face_count = surface_faces.size();
+
+  std::vector<PrimitiveRef> prim_refs;
+  prim_refs.resize(surface_faces.size());
 
   // fill primitive refs
-  for (size_t i = 0; i < surf_face_count; ++i) {
-    triangle_storage[storage_offset + i].primitive_id = surface_faces[i];
+  for (size_t i = 0; i < surface_faces.size(); ++i) {
+    prim_refs[i].primitive_id = surface_faces[i];
   }
+
 
   // create new RTCGeometry for the surface
   auto surface_geometry = rtcNewGeometry(device_, RTC_GEOMETRY_TYPE_USER);
-  rtcSetGeometryUserPrimitiveCount(surface_geometry, surf_face_count);
-  rtcAttachGeometry(volume_scene, surface_geometry);
+  rtcSetGeometryUserPrimitiveCount(surface_geometry, surface_faces.size());
   surface_to_geometry_map_[surface] = surface_geometry;
 
   // create new SurfaceUserData for the surface
   auto surface_data = std::make_shared<SurfaceUserData>();
   surface_data->surface_id = surface;
   surface_data->mesh_manager = mesh_manager.get();
-  surface_data->prim_ref_buffer = tri_ref_ptr + storage_offset;
+  surface_data->prim_ref_buffer = prim_refs.data();
   surface_user_data_map_[surface_geometry] = surface_data;
+  surface_data->box_bump = 0.0; // will be set later by volume
+
+
   rtcSetGeometryUserData(surface_geometry, surface_data.get());
 
   // Set RTC callbacks
@@ -140,10 +135,12 @@ EmbreeRayTracer::register_surface(const std::shared_ptr<MeshManager>& mesh_manag
   rtcSetGeometryOccludedFunction(surface_geometry, (RTCOccludedFunctionN)&TriangleOcclusionFunc);
   rtcCommitGeometry(surface_geometry);
 
-  // increment storage offset by number of faces in this surface
-  storage_offset += surf_face_count;
+  rtcCommitGeometry(surface_geometry);
+  rtcAttachGeometry(surface_scene, surface_geometry);
+  rtcReleaseGeometry(surface_geometry);
+  rtcCommitScene(surface_scene);
 
-  return {surface_geometry, surface_data};
+  return {surface_scene, std::move(surface_data), std::move(prim_refs)};
 }
 
 ElementTreeID

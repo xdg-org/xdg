@@ -16,6 +16,12 @@
 
 namespace xdg {
 
+struct EmbreeSurfaceCache {
+  RTCScene scene {nullptr};
+  std::shared_ptr<SurfaceUserData> user_data {nullptr};
+  std::vector<PrimitiveRef> prim_refs;
+};
+
 class EmbreeRayTracer : public RayTracer {
   // constructors
 public:
@@ -76,12 +82,17 @@ public:
   // Mesh-to-Scene maps
   std::map<MeshID, RTCGeometry> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
 
+  
+
   // Internal Embree Mappings
   std::unordered_map<RTCGeometry, std::shared_ptr<SurfaceUserData>> surface_user_data_map_;
   std::unordered_map<RTCGeometry, std::shared_ptr<VolumeElementsUserData>> volume_user_data_map_;
 
   std::unordered_map<SurfaceTreeID, RTCScene> surface_volume_tree_to_scene_map_; // Map from SurfaceVolumeTreeID to specific embree scene/tree
   std::unordered_map<ElementTreeID, RTCScene> element_volume_tree_to_scene_map_; // Map from ElementVolumeTreeID to specific embree scene/tree
+
+  // instancing data structures
+  std::unordered_map<MeshID, EmbreeSurfaceCache> surface_cache_map_; //<! Cache of surfaces already registered with embree
 
   // storage
   std::unordered_map<RTCScene, std::vector<PrimitiveRef>> primitive_ref_storage_;
@@ -96,6 +107,8 @@ private:
   RTCScene global_element_scene_ {nullptr};
 
 };
+
+
 
 } // namespace xdg
 
