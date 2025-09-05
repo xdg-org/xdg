@@ -163,7 +163,7 @@ int main(int argc, char* argv[]) {
   double lastxpos, lastypos;
 
   // Retrieve the bounding box of the TLAS
-  auto worldBB = mm->world_bounding_box();
+  auto worldBB = mm->global_bounding_box();
   auto tlasMin = float3(worldBB.min_x, worldBB.min_y, worldBB.min_z);
   auto tlasMax = float3(worldBB.max_x, worldBB.max_y, worldBB.max_z);
 

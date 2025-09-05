@@ -92,7 +92,7 @@ namespace xdg {
         return false;
       }
       
-      RTLibrary ray_tracing_library() const override { return RTLibrary::GPRT; }
+      RTLibrary library() const override { return RTLibrary::GPRT; }
 
 
     private:

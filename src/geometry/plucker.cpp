@@ -29,8 +29,6 @@ double plucker_edge_test(const Position& vertexa, const Position& vertexb,
   return pip;
 }
 
-#include <cstdio>  // for // printf
-
 bool plucker_ray_tri_intersect(const std::array<Position, 3> vertices,
                                const Position& origin,
                                const Direction& direction,
@@ -47,14 +45,11 @@ bool plucker_ray_tri_intersect(const std::array<Position, 3> vertices,
   // Determine the value of the first Plucker coordinate from edge 0
   double plucker_coord0 =
     plucker_edge_test(vertices[0], vertices[1], raya, rayb);
-  // printf("plucker_coord0 = %g\n", plucker_coord0);
 
   // If orientation is set, confirm that sign of plucker_coordinate indicate
   // correct orientation of intersection
   if (orientation) {
-    // printf("orientation = %d, orientation * plucker_coord0 = %g\n", *orientation, (*orientation) * plucker_coord0);
     if ((*orientation) * plucker_coord0 > 0) {
-      // printf("Early exit: plucker_coord0 orientation check failed\n");
       return EXIT_EARLY;
     }
   }
@@ -62,40 +57,32 @@ bool plucker_ray_tri_intersect(const std::array<Position, 3> vertices,
   // Determine the value of the second Plucker coordinate from edge 1
   double plucker_coord1 =
     plucker_edge_test(vertices[1], vertices[2], raya, rayb);
-  // printf("plucker_coord1 = %g\n", plucker_coord1);
 
   if (orientation) {
-    // printf("orientation = %d, orientation * plucker_coord1 = %g\n", *orientation, (*orientation) * plucker_coord1);
     if ((*orientation) * plucker_coord1 > 0) {
-      // printf("Early exit: plucker_coord1 orientation check failed\n");
       return EXIT_EARLY;
     }
   } else if ((0.0 < plucker_coord0 && 0.0 > plucker_coord1) ||
              (0.0 > plucker_coord0 && 0.0 < plucker_coord1)) {
-    // printf("Early exit: plucker_coord0 and plucker_coord1 signs differ without orientation\n");
     return EXIT_EARLY;
   }
 
   // Determine the value of the third Plucker coordinate from edge 2
   double plucker_coord2 =
     plucker_edge_test(vertices[2], vertices[0], raya, rayb);
-  // printf("plucker_coord2 = %g\n", plucker_coord2);
   if (orientation) {
     if ((*orientation) * plucker_coord2 > 0) {
-      // printf("Early exit: plucker_coord2 orientation check failed\n");
       return EXIT_EARLY;
     }
   } else if ((0.0 < plucker_coord1 && 0.0 > plucker_coord2) ||
              (0.0 > plucker_coord1 && 0.0 < plucker_coord2) ||
              (0.0 < plucker_coord0 && 0.0 > plucker_coord2) ||
              (0.0 > plucker_coord0 && 0.0 < plucker_coord2)) {
-    // printf("Early exit: plucker_coords signs differ without orientation\n");
     return EXIT_EARLY;
   }
 
   // check for coplanar case to avoid dividing by zero
   if (0.0 == plucker_coord0 && 0.0 == plucker_coord1 && 0.0 == plucker_coord2) {
-    // printf("Early exit: coplanar case, all plucker_coords are zero\n");
     return EXIT_EARLY;
   }
 
@@ -125,7 +112,6 @@ bool plucker_ray_tri_intersect(const std::array<Position, 3> vertices,
       (neg_ray_len && *neg_ray_len >= dist_out) ||      // intersection is behind negative limit
       (!neg_ray_len && 0 > dist_out))                    // unless neg_ray_len used, don't allow negative distances
   {
-    // printf("Early exit: intersection out of range, dist_out = %g\n", dist_out);
     return EXIT_EARLY;
   }
 
