@@ -121,7 +121,7 @@ public:
                 const Direction& direction,
                 double& dist) const = 0;
 
-  virtual RTLibrary ray_tracing_library() const = 0;
+  virtual RTLibrary library() const = 0;
 
 
   // Generic Accessors

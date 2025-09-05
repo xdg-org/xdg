@@ -227,7 +227,7 @@ TEST_CASE("MOAB Get Surface Mesh")
 TEST_CASE("TEST MOAB Find Element Method")
 {
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB, RTLibrary::EMBREE);
-  REQUIRE(xdg->ray_tracing_interface()->ray_tracing_library() == RTLibrary::EMBREE);
+  REQUIRE(xdg->ray_tracing_interface()->library() == RTLibrary::EMBREE);
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
   const auto& mesh_manager = xdg->mesh_manager();
   mesh_manager->load_file("jezebel.h5m");

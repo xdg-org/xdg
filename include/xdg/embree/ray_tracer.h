@@ -67,7 +67,7 @@ public:
                 const Direction& direction,
                 double& dist) const override;
 
-  RTLibrary ray_tracing_library() const override { return RTLibrary::EMBREE; }
+  RTLibrary library() const override { return RTLibrary::EMBREE; }
 
 
   // Embree members
