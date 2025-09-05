@@ -65,6 +65,16 @@ MeshManager::get_volume_faces(MeshID volume) const
   return std::vector<MeshID>(elements.begin(), elements.end());
 }
 
+int
+MeshManager::num_volume_elements() const
+{
+  int n_elements = 0;
+  for (auto volume : volumes()) {
+    n_elements += num_volume_elements(volume);
+  }
+  return n_elements;
+}
+
 bool
 MeshManager::surface_has_property(MeshID surface, PropertyType type) const
 {

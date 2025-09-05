@@ -168,6 +168,12 @@ MOABMeshManager::num_volume_elements(MeshID volume) const
 }
 
 int
+MOABMeshManager::num_volume_elements() const
+{
+  return this->num_ents_of_dimension(3);
+}
+
+int
 MOABMeshManager::num_volume_faces(MeshID volume) const
 {
   int out {0};

@@ -83,6 +83,8 @@ public:
     return get_volume_elements(volume).size();
   }
 
+  int num_volume_elements() const override;
+
   int num_volume_faces(MeshID volume) const override {
     return mesh()->n_elem();
   }
