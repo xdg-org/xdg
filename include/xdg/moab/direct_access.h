@@ -10,7 +10,10 @@
 #include "xdg/constants.h"
 #include "xdg/vec3da.h"
 
+
 using namespace moab;
+
+namespace xdg {
 
 /*! Class to manage direct access of triangle connectivity and coordinates */
 class MBDirectAccess {
@@ -284,5 +287,7 @@ private:
   AdjacencyData element_adjacency_data_;
   VertexData vertex_data_;
 };
+
+} // namespace xdg
 
 #endif // include guard

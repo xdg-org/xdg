@@ -5,6 +5,8 @@
 
 #include "xdg/moab/direct_access.h"
 
+namespace xdg {
+
 MBDirectAccess::MBDirectAccess(Interface* mbi)
 : mbi(mbi)
 {
@@ -35,3 +37,5 @@ MBDirectAccess::update() {
   clear();
   setup();
 }
+
+} // namespace xdg
