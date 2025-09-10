@@ -168,6 +168,14 @@ MOABMeshManager::num_volume_elements(MeshID volume) const
 }
 
 int
+MOABMeshManager::num_volume_elements() const
+{
+  moab::Range elements;
+  this->moab_interface()->get_entities_by_dimension(this->root_set(), 3, elements);
+  return elements.size();
+}
+
+int
 MOABMeshManager::num_volume_faces(MeshID volume) const
 {
   int out {0};

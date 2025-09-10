@@ -245,6 +245,7 @@ TEST_CASE("Test Volume Element Count Jezebel")
 
   auto elements = mesh_manager->get_volume_elements(volume);
   REQUIRE(elements.size() == 10333);
+  REQUIRE(mesh_manager->num_volume_elements() == 10333);
 }
 
 TEST_CASE("Test Point Location Jezebel")
@@ -282,6 +283,8 @@ TEST_CASE("Test Point Location Cylinder-Brick")
   mesh_manager->load_file("cyl-brick.exo");
   mesh_manager->init();
   xdg->prepare_raytracer();
+
+  REQUIRE(mesh_manager->num_volume_elements() == 16624);
 
   MeshID expected_volume = 1;
 
@@ -333,6 +336,8 @@ TEST_CASE("Test Find Element Brick")
   mesh_manager->load_file("brick.exo");
   mesh_manager->init();
   xdg->prepare_raytracer();
+
+  REQUIRE(mesh_manager->num_volume_elements() == 8790);
 
   MeshID volume = 1;
 

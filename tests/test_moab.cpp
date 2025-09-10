@@ -230,7 +230,10 @@ TEST_CASE("TEST MOAB Find Element Method")
   mesh_manager->init();
   xdg->prepare_raytracer();
 
+  REQUIRE(mesh_manager->num_volume_elements() == 10333);
+
   MeshID volume = 1;
+  REQUIRE(mesh_manager->num_volume_elements(1) == 10333);
 
   MeshID element = xdg->find_element(volume, {0.0, 0.0, 100.0});
   REQUIRE(element == ID_NONE); // should not find an element since the point is outside the volume

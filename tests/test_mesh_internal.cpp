@@ -18,6 +18,9 @@ TEST_CASE("Test Mesh Mock")
   REQUIRE(mm->num_volumes() == 1);
   REQUIRE(mm->num_surfaces() == 6);
   REQUIRE(mm->num_volume_faces(1) == 12);
+
+  REQUIRE(mm->num_volume_elements() == 12);
+  REQUIRE(mm->num_volume_elements(1) == 12);
 }
 
 TEST_CASE("Mesh Mock Get Surface Mesh")

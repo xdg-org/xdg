@@ -53,6 +53,8 @@ public:
   // Mesh
   int num_volume_elements(MeshID volume) const override;
 
+  int num_volume_elements() const override;
+
   int num_volume_faces(MeshID volume) const override;
 
   int num_surface_faces(MeshID surface) const override;
