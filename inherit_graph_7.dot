@@ -5,5 +5,11 @@ digraph "Graphical Class Hierarchy"
   edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
   node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
   rankdir="LR";
-  Node0 [id="Node000000",label="xdg::BoundingBox",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$unionxdg_1_1BoundingBox.html",tooltip=" "];
+  Node0 [id="Node000000",label="xdg::ElementFaceAccessor",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structxdg_1_1ElementFaceAccessor.html",tooltip="Class to provide access to face vertices of mesh elements."];
+  Node0 -> Node1 [id="edge7_Node000000_Node000001",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node1 [id="Node000001",label="MockElementFaceAccessor",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structMockElementFaceAccessor.html",tooltip=" "];
+  Node0 -> Node2 [id="edge8_Node000000_Node000002",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node2 [id="Node000002",label="xdg::LibMeshElementFaceAccessor",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structxdg_1_1LibMeshElementFaceAccessor.html",tooltip=" "];
+  Node0 -> Node3 [id="edge9_Node000000_Node000003",dir="back",color="steelblue1",style="solid",tooltip=" "];
+  Node3 [id="Node000003",label="xdg::MOABElementFaceAccessor",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$structxdg_1_1MOABElementFaceAccessor.html",tooltip=" "];
 }

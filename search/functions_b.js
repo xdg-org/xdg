@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['update_0',['update',['../classMBDirectAccess.html#a4ce34bfc3ec4ce0091fff29dbc956b02',1,'MBDirectAccess']]]
+  ['update_0',['update',['../classxdg_1_1MBDirectAccess.html#ae429d35cb4bc7294a31682752f2dc8ce',1,'xdg::MBDirectAccess']]]
 ];

@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['mbdirectaccess_0',['MBDirectAccess',['../classMBDirectAccess.html',1,'']]],
+  ['mbdirectaccess_0',['MBDirectAccess',['../classxdg_1_1MBDirectAccess.html',1,'xdg']]],
   ['meshmanager_1',['MeshManager',['../classxdg_1_1MeshManager.html',1,'xdg']]],
   ['meshmock_2',['MeshMock',['../classMeshMock.html',1,'']]],
   ['metadata_3',['Metadata',['../classxdg_1_1Metadata.html',1,'xdg']]],

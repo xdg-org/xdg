@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['clear_0',['clear',['../classMBDirectAccess.html#a535024d1abd2b2d61057488da420091f',1,'MBDirectAccess']]],
+  ['clear_0',['clear',['../classxdg_1_1MBDirectAccess.html#a6ee0f502b4eca6bc7de24bf73c143041',1,'xdg::MBDirectAccess']]],
   ['create_1',['create',['../structxdg_1_1ElementFaceAccessor.html#affdb4b061160a46d3ca40d03759cde57',1,'xdg::ElementFaceAccessor']]],
   ['create_5fboundary_5fsideset_2',['create_boundary_sideset',['../classxdg_1_1LibMeshManager.html#aa5af7e0c222b2deba4867af544fa55fc',1,'xdg::LibMeshManager']]],
   ['create_5felement_5ftree_3',['create_element_tree',['../classxdg_1_1EmbreeRayTracer.html#a3d1a1c77d9474faf23417e4ada2bcc66',1,'xdg::EmbreeRayTracer::create_element_tree()'],['../classxdg_1_1RayTracer.html#aacf9e02b328e1daec6877180b4c34849',1,'xdg::RayTracer::create_element_tree()']]],
