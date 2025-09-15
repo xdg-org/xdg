@@ -75,6 +75,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="classxdg_1_1MOABMeshManager-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">xdg::MOABMeshManager Class Reference</div></div>
 </div><!--header-->
@@ -95,6 +96,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a24cd48caaabb391656dc4632276c8f35" id="r_a24cd48caaabb391656dc4632276c8f35"><td class="memItemLeft" align="right" valign="top"><a id="a24cd48caaabb391656dc4632276c8f35" name="a24cd48caaabb391656dc4632276c8f35"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>MOABMeshManager</b> (moab::Interface *mbi)</td></tr>
 <tr class="separator:a24cd48caaabb391656dc4632276c8f35"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4100a022cb9d48f028301a93431e1d76" id="r_a4100a022cb9d48f028301a93431e1d76"><td class="memItemLeft" align="right" valign="top">MeshLibrary&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1MOABMeshManager.html#a4100a022cb9d48f028301a93431e1d76">mesh_library</a> () const override</td></tr>
+<tr class="separator:a4100a022cb9d48f028301a93431e1d76"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8c404b87349c51f99a2c537ee8694570" id="r_a8c404b87349c51f99a2c537ee8694570"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1MOABMeshManager.html#a8c404b87349c51f99a2c537ee8694570">load_file</a> (const std::string &amp;filepath)</td></tr>
 <tr class="separator:a8c404b87349c51f99a2c537ee8694570"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af415856c807d28cdc6101d19ae9eac51" id="r_af415856c807d28cdc6101d19ae9eac51"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1MOABMeshManager.html#af415856c807d28cdc6101d19ae9eac51">init</a> () override</td></tr>
@@ -142,11 +145,6 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a8376fdd8dcb9529b4575a5b665e47aa1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae10ac44a75a621759a195f1879754e8b" id="r_ae10ac44a75a621759a195f1879754e8b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1MOABMeshManager.html#ae10ac44a75a621759a195f1879754e8b">parse_metadata</a> () override</td></tr>
 <tr class="separator:ae10ac44a75a621759a195f1879754e8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0e068f3896e8f33db62f3b33932fa72a" id="r_a0e068f3896e8f33db62f3b33932fa72a"><td class="memItemLeft" align="right" valign="top"><a id="a0e068f3896e8f33db62f3b33932fa72a" name="a0e068f3896e8f33db62f3b33932fa72a"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>graveyard_check</b> ()</td></tr>
-<tr class="separator:a0e068f3896e8f33db62f3b33932fa72a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4100a022cb9d48f028301a93431e1d76" id="r_a4100a022cb9d48f028301a93431e1d76"><td class="memItemLeft" align="right" valign="top">MeshLibrary&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1MOABMeshManager.html#a4100a022cb9d48f028301a93431e1d76">mesh_library</a> () const override</td></tr>
-<tr class="separator:a4100a022cb9d48f028301a93431e1d76"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade8c37d970c2b361fa6afef93f88cfcb" id="r_ade8c37d970c2b361fa6afef93f88cfcb"><td class="memItemLeft" align="right" valign="top"><a id="ade8c37d970c2b361fa6afef93f88cfcb" name="ade8c37d970c2b361fa6afef93f88cfcb"></a>
 moab::Interface *&#160;</td><td class="memItemRight" valign="bottom"><b>moab_interface</b> () const</td></tr>
 <tr class="separator:ade8c37d970c2b361fa6afef93f88cfcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -156,25 +154,6 @@ const std::shared_ptr&lt; <a class="el" href="classxdg_1_1MBDirectAccess.html">M
 <tr class="memitem:af29d700f79961c2c209b0bad75c51355" id="r_af29d700f79961c2c209b0bad75c51355"><td class="memItemLeft" align="right" valign="top"><a id="af29d700f79961c2c209b0bad75c51355" name="af29d700f79961c2c209b0bad75c51355"></a>
 moab::EntityHandle&#160;</td><td class="memItemRight" valign="bottom"><b>root_set</b> () const</td></tr>
 <tr class="separator:af29d700f79961c2c209b0bad75c51355"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa506cfbde6b8c14c7d3376e1d97a9c67" id="r_aa506cfbde6b8c14c7d3376e1d97a9c67"><td class="memTemplParams" colspan="2"><a id="aa506cfbde6b8c14c7d3376e1d97a9c67" name="aa506cfbde6b8c14c7d3376e1d97a9c67"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:aa506cfbde6b8c14c7d3376e1d97a9c67"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>tag_data</b> (moab::Tag tag, const moab::Range &amp;entities) const</td></tr>
-<tr class="separator:aa506cfbde6b8c14c7d3376e1d97a9c67"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a32fae56fb8a3dfaedcba451f45348065" id="r_a32fae56fb8a3dfaedcba451f45348065"><td class="memTemplParams" colspan="2"><a id="a32fae56fb8a3dfaedcba451f45348065" name="a32fae56fb8a3dfaedcba451f45348065"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a32fae56fb8a3dfaedcba451f45348065"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>tag_data</b> (moab::Tag tag, const std::vector&lt; moab::EntityHandle &gt; &amp;entities, int length=1) const</td></tr>
-<tr class="separator:a32fae56fb8a3dfaedcba451f45348065"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acf04e136b47a402f88f3b70a157e7d4e" id="r_acf04e136b47a402f88f3b70a157e7d4e"><td class="memTemplParams" colspan="2"><a id="acf04e136b47a402f88f3b70a157e7d4e" name="acf04e136b47a402f88f3b70a157e7d4e"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:acf04e136b47a402f88f3b70a157e7d4e"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>tag_data</b> (moab::Tag tag, const moab::EntityHandle entity, int length) const</td></tr>
-<tr class="separator:acf04e136b47a402f88f3b70a157e7d4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa9bf2a118294860fb84bd1894b5cb98" id="r_aaa9bf2a118294860fb84bd1894b5cb98"><td class="memTemplParams" colspan="2"><a id="aaa9bf2a118294860fb84bd1894b5cb98" name="aaa9bf2a118294860fb84bd1894b5cb98"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:aaa9bf2a118294860fb84bd1894b5cb98"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><b>tag_data</b> (moab::Tag tag, const moab::EntityHandle entity) const</td></tr>
-<tr class="separator:aaa9bf2a118294860fb84bd1894b5cb98"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a998f50da9b37263230eb91f7896d368e" id="r_a998f50da9b37263230eb91f7896d368e"><td class="memItemLeft" align="right" valign="top"><a id="a998f50da9b37263230eb91f7896d368e" name="a998f50da9b37263230eb91f7896d368e"></a>
-std::string&#160;</td><td class="memItemRight" valign="bottom"><b>tag_data</b> (moab::Tag tag, const moab::EntityHandle entity, int length) const</td></tr>
-<tr class="separator:a998f50da9b37263230eb91f7896d368e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classxdg_1_1MeshManager"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classxdg_1_1MeshManager')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classxdg_1_1MeshManager.html">xdg::MeshManager</a></td></tr>
 <tr class="memitem:a11ae3c074719fa3ceed836c848609bb2 inherit pub_methods_classxdg_1_1MeshManager" id="r_a11ae3c074719fa3ceed836c848609bb2"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; MeshID, double &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1MeshManager.html#a11ae3c074719fa3ceed836c848609bb2">walk_elements</a> (MeshID starting_element, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;start, const <a class="el" href="structxdg_1_1Vec3da.html">Position</a> &amp;end) const</td></tr>
 <tr class="memdesc:a11ae3c074719fa3ceed836c848609bb2 inherit pub_methods_classxdg_1_1MeshManager"><td class="mdescLeft">&#160;</td><td class="mdescRight">Walk through elements along a ray from start to end position.  <br /></td></tr>
@@ -248,6 +227,28 @@ std::vector&lt; MeshID &gt; &amp;&#160;</td><td class="memItemRight" valign="bot
 <tr class="memitem:aa7e5bb02283e0e3c06a05f014017c87d inherit pub_methods_classxdg_1_1MeshManager" id="r_aa7e5bb02283e0e3c06a05f014017c87d"><td class="memItemLeft" align="right" valign="top">
 MeshID&#160;</td><td class="memItemRight" valign="bottom"><b>implicit_complement</b> () const</td></tr>
 <tr class="separator:aa7e5bb02283e0e3c06a05f014017c87d inherit pub_methods_classxdg_1_1MeshManager"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:aa506cfbde6b8c14c7d3376e1d97a9c67" id="r_aa506cfbde6b8c14c7d3376e1d97a9c67"><td class="memTemplParams" colspan="2"><a id="aa506cfbde6b8c14c7d3376e1d97a9c67" name="aa506cfbde6b8c14c7d3376e1d97a9c67"></a>
+template&lt;typename T &gt; </td></tr>
+<tr class="memitem:aa506cfbde6b8c14c7d3376e1d97a9c67"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>tag_data</b> (moab::Tag tag, const moab::Range &amp;entities) const</td></tr>
+<tr class="separator:aa506cfbde6b8c14c7d3376e1d97a9c67"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32fae56fb8a3dfaedcba451f45348065" id="r_a32fae56fb8a3dfaedcba451f45348065"><td class="memTemplParams" colspan="2"><a id="a32fae56fb8a3dfaedcba451f45348065" name="a32fae56fb8a3dfaedcba451f45348065"></a>
+template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a32fae56fb8a3dfaedcba451f45348065"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>tag_data</b> (moab::Tag tag, const std::vector&lt; moab::EntityHandle &gt; &amp;entities, int length=1) const</td></tr>
+<tr class="separator:a32fae56fb8a3dfaedcba451f45348065"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf04e136b47a402f88f3b70a157e7d4e" id="r_acf04e136b47a402f88f3b70a157e7d4e"><td class="memTemplParams" colspan="2"><a id="acf04e136b47a402f88f3b70a157e7d4e" name="acf04e136b47a402f88f3b70a157e7d4e"></a>
+template&lt;typename T &gt; </td></tr>
+<tr class="memitem:acf04e136b47a402f88f3b70a157e7d4e"><td class="memTemplItemLeft" align="right" valign="top">std::vector&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>tag_data</b> (moab::Tag tag, const moab::EntityHandle entity, int length) const</td></tr>
+<tr class="separator:acf04e136b47a402f88f3b70a157e7d4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa9bf2a118294860fb84bd1894b5cb98" id="r_aaa9bf2a118294860fb84bd1894b5cb98"><td class="memTemplParams" colspan="2"><a id="aaa9bf2a118294860fb84bd1894b5cb98" name="aaa9bf2a118294860fb84bd1894b5cb98"></a>
+template&lt;typename T &gt; </td></tr>
+<tr class="memitem:aaa9bf2a118294860fb84bd1894b5cb98"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><b>tag_data</b> (moab::Tag tag, const moab::EntityHandle entity) const</td></tr>
+<tr class="separator:aaa9bf2a118294860fb84bd1894b5cb98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a998f50da9b37263230eb91f7896d368e" id="r_a998f50da9b37263230eb91f7896d368e"><td class="memItemLeft" align="right" valign="top"><a id="a998f50da9b37263230eb91f7896d368e" name="a998f50da9b37263230eb91f7896d368e"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>tag_data</b> (moab::Tag tag, const moab::EntityHandle entity, int length) const</td></tr>
+<tr class="separator:a998f50da9b37263230eb91f7896d368e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
