@@ -47,7 +47,6 @@ int main(int argc, char** argv) {
   const auto& mm = xdg->mesh_manager();
   mm->load_file(args.get<std::string>("filename"));
   mm->init();
-  mm->parse_metadata();
   xdg->prepare_raytracer();
 
   if (args.get<bool>("--list")) {
@@ -63,11 +62,32 @@ int main(int argc, char** argv) {
 
   MeshID volume = xdg->find_volume(position, direction);
 
+  std::cout << "Find Volume" << std::endl;
+  std::cout << "-----------" << std::endl;
   if (volume == ID_NONE) {
     std::cout << "No volume found for position " << position << std::endl;
   } else {
     std::cout << "Point " << position << " is in Volume " << volume << std::endl;
   }
+  std::cout << "-----------" << std::endl;
+
+  // perform the same check using a point in volume loop
+  MeshID piv_volume = ID_NONE;
+  for (auto volume_id : mm->volumes()) {
+    if (xdg->point_in_volume(volume_id, position, &direction)) {
+      piv_volume = volume_id;
+      break;
+    }
+  }
+
+  std::cout << "Point in Volume" << std::endl;
+  std::cout << "---------------" << std::endl;
+  if (piv_volume == ID_NONE) {
+    std::cout << "No volume found for position " << position << std::endl;
+  } else {
+    std::cout << "Point " << position << " is in Volume " << piv_volume << std::endl;
+  }
+  std::cout << "---------------" << std::endl;
 
   return 0;
 }
