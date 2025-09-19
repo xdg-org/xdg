@@ -111,7 +111,6 @@ TEST_CASE("Test Ray Fire GPRT-MeshMock")
   auto [volume_tree, element_tree] = rti->register_volume(mm, mm->volumes()[0]);
   REQUIRE(volume_tree != ID_NONE);
   REQUIRE(element_tree == ID_NONE);
-  rti->init();
 
   Position origin {0.0, 0.0, 0.0};
   Direction direction {1.0, 0.0, 0.0};
