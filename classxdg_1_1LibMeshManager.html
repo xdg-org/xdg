@@ -263,9 +263,11 @@ std::unordered_map&lt; MeshID, std::vector&lt; MeshID &gt; &gt;&#160;</td><td cl
 <tr class="separator:aaa11bbcf6b8a658214b0731ee46ed20e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a045269c7d16cbc246a6129055450fccf" id="r_a045269c7d16cbc246a6129055450fccf"><td class="memItemLeft" align="right" valign="top">std::unordered_map&lt; MeshID, std::pair&lt; MeshID, MeshID &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1LibMeshManager.html#a045269c7d16cbc246a6129055450fccf">surface_senses_</a></td></tr>
 <tr class="separator:a045269c7d16cbc246a6129055450fccf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a963ae92904b9c7228beb216bfd95af33" id="r_a963ae92904b9c7228beb216bfd95af33"><td class="memItemLeft" align="right" valign="top"><a id="a963ae92904b9c7228beb216bfd95af33" name="a963ae92904b9c7228beb216bfd95af33"></a>
-int32_t&#160;</td><td class="memItemRight" valign="bottom"><b>next_sidepair_id_</b> {1}</td></tr>
-<tr class="memdesc:a963ae92904b9c7228beb216bfd95af33"><td class="mdescLeft">&#160;</td><td class="mdescRight">Next available sidepair ID, starts at one. <br /></td></tr>
+<tr class="memitem:ae7f28c3b277b94345ffade8fbd59c664" id="r_ae7f28c3b277b94345ffade8fbd59c664"><td class="memItemLeft" align="right" valign="top"><a id="ae7f28c3b277b94345ffade8fbd59c664" name="ae7f28c3b277b94345ffade8fbd59c664"></a>
+int32_t&#160;</td><td class="memItemRight" valign="bottom"><b>num_elements_</b> {-1}</td></tr>
+<tr class="separator:ae7f28c3b277b94345ffade8fbd59c664"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a963ae92904b9c7228beb216bfd95af33" id="r_a963ae92904b9c7228beb216bfd95af33"><td class="memItemLeft" align="right" valign="top">int32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classxdg_1_1LibMeshManager.html#a963ae92904b9c7228beb216bfd95af33">next_sidepair_id_</a> {1}</td></tr>
+<tr class="memdesc:a963ae92904b9c7228beb216bfd95af33"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mapping of surfaces to the volumes on either side. Volumes are ordered.  <br /></td></tr>
 <tr class="separator:a963ae92904b9c7228beb216bfd95af33"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_classxdg_1_1MeshManager"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_classxdg_1_1MeshManager')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="classxdg_1_1MeshManager.html">xdg::MeshManager</a></td></tr>
 <tr class="memitem:a0ebcd5a1466e58d8ae14d95881f1a6a8 inherit pro_attribs_classxdg_1_1MeshManager" id="r_a0ebcd5a1466e58d8ae14d95881f1a6a8"><td class="memItemLeft" align="right" valign="top">
@@ -1093,6 +1095,31 @@ MeshID&#160;</td><td class="memItemRight" valign="bottom"><b>implicit_complement
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
+<a id="a963ae92904b9c7228beb216bfd95af33" name="a963ae92904b9c7228beb216bfd95af33"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a963ae92904b9c7228beb216bfd95af33">&#9670;&#160;</a></span>next_sidepair_id_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int32_t xdg::LibMeshManager::next_sidepair_id_ {1}</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Mapping of surfaces to the volumes on either side. Volumes are ordered. </p>
+<p>Next available sidepair ID, starts at one </p>
+
+</div>
+</div>
 <a id="ae4ef0ee60b1a5645b64f3605b9947dea" name="ae4ef0ee60b1a5645b64f3605b9947dea"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae4ef0ee60b1a5645b64f3605b9947dea">&#9670;&#160;</a></span>subdomain_interface_map_</h2>
 
