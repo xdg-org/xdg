@@ -55,7 +55,7 @@ struct dblRayOutput
   double distance;
   int surf_id;
   int primitive_id;
-  int piv; // Point in volume check result (0 for outside, 1 for inside)
+  PointInVolume piv; // Point in volume check result (0 for outside, 1 for inside)
 };
 
 /* variables for double precision triangle mesh geometry */
@@ -82,12 +82,6 @@ struct dblRayGenData {
   dblRayInput *ray;
   dblRayOutput *out;
   int orientation; // Orientation of the ray (0 for exiting, 1 for entering)
-};
-
-struct dblRayFireData {
-  SurfaceAccelerationStructure world;    // The top-level accel structure
-  dblRayInput ray;
-  dblRayOutput out;
 };
 
 /* A small structure of constants that can change every frame without rebuilding the

@@ -48,20 +48,22 @@ bool plucker_ray_tri_intersect(const std::array<Position, 3> vertices,
 
   // If orientation is set, confirm that sign of plucker_coordinate indicate
   // correct orientation of intersection
-  if (orientation) {
-    if ((*orientation) * plucker_coord0 > 0) {
-      return EXIT_EARLY;
-    }
+  if (orientation && (*orientation) * plucker_coord0 > 0) {
+    return EXIT_EARLY;
   }
 
   // Determine the value of the second Plucker coordinate from edge 1
   double plucker_coord1 =
     plucker_edge_test(vertices[1], vertices[2], raya, rayb);
 
+  // If orientation is set, confirm that sign of plucker_coordinate indicate
+  // correct orientation of intersection
   if (orientation) {
     if ((*orientation) * plucker_coord1 > 0) {
       return EXIT_EARLY;
     }
+    // If the orientation is not specified, all plucker_coords must be the same
+    // sign or zero.
   } else if ((0.0 < plucker_coord0 && 0.0 > plucker_coord1) ||
              (0.0 > plucker_coord0 && 0.0 < plucker_coord1)) {
     return EXIT_EARLY;
@@ -70,10 +72,15 @@ bool plucker_ray_tri_intersect(const std::array<Position, 3> vertices,
   // Determine the value of the third Plucker coordinate from edge 2
   double plucker_coord2 =
     plucker_edge_test(vertices[2], vertices[0], raya, rayb);
+
+  // If orientation is set, confirm that sign of plucker_coordinate indicate
+  // correct orientation of intersection
   if (orientation) {
     if ((*orientation) * plucker_coord2 > 0) {
       return EXIT_EARLY;
     }
+    // If the orientation is not specified, all plucker_coords must be the same
+    // sign or zero.
   } else if ((0.0 < plucker_coord1 && 0.0 > plucker_coord2) ||
              (0.0 > plucker_coord1 && 0.0 < plucker_coord2) ||
              (0.0 < plucker_coord0 && 0.0 > plucker_coord2) ||
