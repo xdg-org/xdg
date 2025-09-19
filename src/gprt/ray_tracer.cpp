@@ -50,10 +50,20 @@ void GPRTRayTracer::setup_shaders()
 
 void GPRTRayTracer::init() {}
 
-TreeID
+std::pair<TreeID,TreeID>
+GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager>& mesh_manager, MeshID volume_id)
+{
+  // set up ray tracing tree for boundary faces of the volume
+  TreeID faces_tree = create_surface_tree(mesh_manager, volume_id);
+  // set up point location tree for any volumetric elements. TODO - currently not supported with GPRT
+  TreeID element_tree = create_element_tree(mesh_manager, volume_id);
+  return {faces_tree, element_tree};
+}
+
+SurfaceTreeID
 GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_manager, MeshID volume_id)
 {
-  TreeID tree = next_surface_tree_id();
+  SurfaceTreeID tree = next_surface_tree_id();
   surface_trees_.push_back(tree);
   auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
   std::vector<gprt::Instance> surfaceBlasInstances; // BLAS for each (surface) geometry in this volumel
@@ -151,34 +161,24 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
   auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, surfaceBlasInstances.size(), surfaceBlasInstances.data());
   GPRTAccel volume_tlas = gprtInstanceAccelCreate(context_, surfaceBlasInstances.size(), instanceBuffer);
   gprtAccelBuild(context_, volume_tlas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
-  tree_to_vol_accel_map[tree] = volume_tlas;
+  surface_volume_tree_to_accel_map[tree] = volume_tlas;
   
   return tree;
 }
 
-TreeID
+ElementTreeID
 GPRTRayTracer::create_element_tree(const std::shared_ptr<MeshManager>& mesh_manager, MeshID volume_id)
 {
   std::cout << "Element trees not currently supported with GPRT ray tracer" << std::endl;
   return TREE_NONE;
 };
 
-std::pair<TreeID,TreeID>
-GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager>& mesh_manager, MeshID volume_id)
-{
-  // set up ray tracing tree for boundary faces of the volume
-  TreeID faces_tree = create_surface_tree(mesh_manager, volume_id);
-  // set up point location tree for any volumetric elements. TODO - currently not supported with GPRT
-  TreeID element_tree = create_element_tree(mesh_manager, volume_id);
-  return {faces_tree, element_tree};
-}
-
-bool GPRTRayTracer::point_in_volume(TreeID tree, 
+bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree, 
                                     const Position& point,
                                     const Direction* direction,
                                     const std::vector<MeshID>* exclude_primitives) const
 {
-  GPRTAccel volume = tree_to_vol_accel_map.at(tree);
+  GPRTAccel volume = surface_volume_tree_to_accel_map.at(tree);
   dblRayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPointInVolProgram_);
   rayGenPIVData->world = gprtAccelGetDeviceAddress(volume);
 
@@ -234,14 +234,14 @@ bool GPRTRayTracer::point_in_volume(TreeID tree,
 // This will launch the rays and run our shaders in the ray tracing pipeline
 // miss shader returns dist = 0.0 and elementID = -1
 // closest hit shader returns dist = distance to hit and elementID = triangle ID
-std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID tree,
+std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
                                                   const Position& origin,
                                                   const Direction& direction,
                                                   double dist_limit,
                                                   HitOrientation orientation,
                                                   std::vector<MeshID>* const exclude_primitives) 
 {
-  GPRTAccel volume = tree_to_vol_accel_map.at(tree);
+  GPRTAccel volume = surface_volume_tree_to_accel_map.at(tree);
   dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
   rayGenData->world = gprtAccelGetDeviceAddress(volume);
   
@@ -296,10 +296,15 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID tree,
 void GPRTRayTracer::create_global_surface_tree()
 {
   // Create a TLAS (Top-Level Acceleration Structure) for all the volumes
- 
-  auto worldBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, globalBlasInstances_.size(), globalBlasInstances_.data());
-  world_ = gprtInstanceAccelCreate(context_, globalBlasInstances_.size(), worldBuffer);
-  gprtAccelBuild(context_, world_, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+  auto globalBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, globalBlasInstances_.size(), globalBlasInstances_.data());
+  GPRTAccel global_accel = gprtInstanceAccelCreate(context_, globalBlasInstances_.size(), globalBuffer);
+  gprtAccelBuild(context_, global_accel, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+
+  SurfaceTreeID tree = next_surface_tree_id();
+  surface_trees_.push_back(tree);
+  surface_volume_tree_to_accel_map[tree] = global_accel;  
+  global_surface_tree_ = tree;
+  global_surface_accel_ = global_accel; 
 }
 
 } // namespace xdg
