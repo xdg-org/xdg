@@ -16,7 +16,7 @@ using namespace xdg;
 int main(int argc, char** argv) {
 
 // argument parsing
-argparse::ArgumentParser args("XDG Ray Fire Tool", "1.0", argparse::default_arguments::help);
+argparse::ArgumentParser args("XDG Particle Pseudo-Simulation", "1.0", argparse::default_arguments::help);
 
 args.add_argument("filename")
   .help("Path to the input file");
@@ -53,16 +53,7 @@ SimulationData sim_data;
 
 // create a mesh manager
 std::string mesh_str = args.get<std::string>("--mesh-library");
-std::string rt_str   = args.get<std::string>("--rt-library");
-
-MeshLibrary mesh_lib;
-if (mesh_str == "MOAB")
-  mesh_lib = MeshLibrary::MOAB;
-else if (mesh_str == "LIBMESH")
-  fatal_error("LibMesh is not currently supported with GPRT");
-  // mesh_lib = MeshLibrary::LIBMESH;
-else
-  fatal_error("Invalid mesh library '{}' specified", mesh_str);
+std::string rt_str = args.get<std::string>("--rt-library");
 
 RTLibrary rt_lib;
 if (rt_str == "EMBREE")
@@ -72,6 +63,17 @@ else if (rt_str == "GPRT")
 else
   fatal_error("Invalid ray tracing library '{}' specified", rt_str);
 
+MeshLibrary mesh_lib;
+if (mesh_str == "MOAB")
+  mesh_lib = MeshLibrary::MOAB;
+else if (mesh_str == "LIBMESH") {
+  mesh_lib = MeshLibrary::LIBMESH;
+  if (rt_lib == RTLibrary::GPRT)
+    fatal_error("LibMesh is not currently supported with GPRT");
+}
+else
+  fatal_error("Invalid mesh library '{}' specified", mesh_str);
+
 // create a mesh manager
 std::shared_ptr<XDG> xdg = XDG::create(mesh_lib, rt_lib);
 const auto& mm = xdg->mesh_manager();
@@ -79,7 +81,6 @@ mm->load_file(args.get<std::string>("filename"));
 mm->init();
 mm->parse_metadata();
 xdg->prepare_raytracer();
-xdg->ray_tracing_interface()->init();
 
 sim_data.xdg_ = xdg;
 
