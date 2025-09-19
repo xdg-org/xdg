@@ -86,10 +86,6 @@ TEST_CASE("Test Ray Fire MOAB")
   mesh_manager->load_file("cube.h5m");
   mesh_manager->init();
   xdg->prepare_raytracer();
-  xdg->ray_tracing_interface()->init();
-
-  double dist = 0.0;
-  
 
   MeshID volume = mesh_manager->volumes()[0];
 

@@ -72,7 +72,6 @@ TEST_CASE("Test Point in Volume GPRT-MeshMock")
   auto [volume_tree, element_tree] = rti->register_volume(mm, mm->volumes()[0]);
   REQUIRE(volume_tree != ID_NONE);
   REQUIRE(element_tree == ID_NONE);
-  rti->init();
 
   Position point {0.0, 0.0, 0.0};
   bool result = rti->point_in_volume(volume_tree, point);
