@@ -118,7 +118,12 @@ namespace xdg {
       std::map<MeshID, GPRTGeomOf<DPTriangleGeomData>> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
 
       // Internal GPRT Mappings
-      std::unordered_map<TreeID, GPRTAccel> tree_to_vol_accel_map; // Map from XDG::TreeID to GPRTAccel for volume TLAS
+      std::unordered_map<SurfaceTreeID, GPRTAccel> surface_volume_tree_to_accel_map; // Map from XDG::TreeID to GPRTAccel for volume TLAS
+      
+      // Global Tree IDs
+      GPRTAccel global_surface_accel_ {nullptr};
+      GPRTAccel global_element_accel_ {nullptr}; 
+    
     };
 
 } // namespace xdg

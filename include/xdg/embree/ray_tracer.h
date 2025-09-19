@@ -91,6 +91,7 @@ private:
                                                                              MeshID surface,
                                                                              RTCScene& volume_scene,
                                                                              int& storage_offset);
+  // Global Tree IDs
   RTCScene global_surface_scene_ {nullptr};
   RTCScene global_element_scene_ {nullptr};
 
