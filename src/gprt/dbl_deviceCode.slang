@@ -37,17 +37,14 @@ void ray_fire_hit(uniform DPTriangleGeomData record, inout RayFirePayload payloa
     payload.distance = attr.f64t;
     payload.surf_id = record.surf_id;
     payload.primitive_id = attr.global_prim_id;
-
 }
 
 [shader("miss")]
 void ray_fire_miss(inout RayFirePayload payload) {
     // Set the miss payload to default values
-
     payload.distance = -1.0f;
     payload.surf_id = -1;
     payload.primitive_id = -1;
-
 }
 
 // This ray generation program will kick off the ray tracing process,
@@ -138,7 +135,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
         return;
     }
 
-        bool useOrientation = false;
+    bool useOrientation = false;
     int orientation = 0;
     if ((flags & RAY_FLAG_CULL_BACK_FACING_TRIANGLES) != 0) {
         orientation = -1;
@@ -162,7 +159,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     double tMax = record.rayIn[rayID].tMax;
 
     const double3 raya = direction;
-    const double3 rayb = dp_cross(direction, origin);
+    const double3 rayb = cross(direction, origin);
 
     double plucker_coord0 = plucker_edge_test(v0, v1, raya, rayb);
     if (useOrientation && orientation * plucker_coord0 > 0) {
@@ -189,8 +186,6 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     if (0.0 == plucker_coord0 && 0.0 == plucker_coord1 && 0.0 == plucker_coord2) {
         return;
     }
-
-
 
     const double inverse_sum = 1.0 / (plucker_coord0 + plucker_coord1 + plucker_coord2);
     const double3 intersection = double3(plucker_coord0 * inverse_sum * v2 +
@@ -261,16 +256,11 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
 // ------------------------------------------------- Helper functions -------------------------------------------------
 
 bool orientation_cull(in double3 ray, in double3 normal, in int orientation) {
-
     if (orientation == -1) return false; // No culling
     if (orientation == 0) return dot(ray, normal) < 0.0; // Cull exiting rays
     if (orientation == 1) return dot(ray, normal) > 0.0; // Cull entering rays
     return false; // Default case, no culling
 }
-
-
-// Double precision cross product
-double3 dp_cross(in double3 a, in double3 b) { return double3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x); }
 
 // Plucker coordinate
 double plucker_edge_test(in double3 vertexa, in double3 vertexb, in double3 ray, in double3 ray_normal)
@@ -281,13 +271,13 @@ double plucker_edge_test(in double3 vertexa, in double3 vertexb, in double3 ray,
     if (first(vertexa, vertexb))
     {
         double3 edge = vertexb - vertexa;
-        double3 edge_normal = dp_cross(edge, vertexa);
+        double3 edge_normal = cross(edge, vertexa);
         pip = dot(ray, edge_normal) + dot(ray_normal, edge);
     }
     else
     {
         double3 edge = vertexa - vertexb;
-        double3 edge_normal = dp_cross(edge, vertexb);
+        double3 edge_normal = cross(edge, vertexb);
         pip = dot(ray, edge_normal) + dot(ray_normal, edge);
         pip = -pip;
     }
@@ -310,8 +300,6 @@ inline bool first(in double3 a, in double3 b)
 
     return false;
 }
-
-double3 dcross (in double3 a, in double3 b) { return double3(a.y*b.z-a.z*b.y, a.z*b.x-a.x*b.z, a.x*b.y-a.y*b.x); }
 
 float next_after(float a) {
   uint a_ = asuint(a);
