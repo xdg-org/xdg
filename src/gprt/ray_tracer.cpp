@@ -293,14 +293,10 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(TreeID tree,
   return {distance, surface};
 }
                 
-void GPRTRayTracer::create_world_tlas()
+void GPRTRayTracer::create_global_surface_tree()
 {
   // Create a TLAS (Top-Level Acceleration Structure) for all the volumes
  
-  std::cout << "[create_world_tlas] globalBlasInstances_ size: " << globalBlasInstances_.size() << std::endl;
-  for (size_t i = 0; i < globalBlasInstances_.size(); ++i)
-    std::cout << "  Instance " << i << " ptr: " << static_cast<const void*>(&globalBlasInstances_[i]) << std::endl;
-
   auto worldBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, globalBlasInstances_.size(), globalBlasInstances_.data());
   world_ = gprtInstanceAccelCreate(context_, globalBlasInstances_.size(), worldBuffer);
   gprtAccelBuild(context_, world_, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);

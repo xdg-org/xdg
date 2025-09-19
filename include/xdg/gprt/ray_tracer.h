@@ -24,10 +24,9 @@ namespace xdg {
     public:
       GPRTRayTracer();
       ~GPRTRayTracer();
+      RTLibrary library() const override { return RTLibrary::GPRT; }
   
       void set_geom_data(const std::shared_ptr<MeshManager> mesh_manager);
-      void create_world_tlas();
-  
       void init() override;
 
       // Setup the different shader programs for use with this ray tracer
@@ -35,15 +34,14 @@ namespace xdg {
 
       MeshID find_element(const Position& point) const override
       {
-        std::cout << "Element trees not currently supported with GPRT ray tracer" << std::endl;
+        fatal_error("Element trees not currently supported with GPRT ray tracer");
         return ID_NONE;
       };
 
       MeshID find_element(TreeID tree, const Position& point) const override {
-        std::cout << "Element trees not currently supported with GPRT ray tracer" << std::endl;
+        fatal_error("Element trees not currently supported with GPRT ray tracer");
         return ID_NONE;
       };
-
 
       std::pair<TreeID, TreeID>
       register_volume(const std::shared_ptr<MeshManager>& mesh_manager, MeshID volume) override;
@@ -52,15 +50,12 @@ namespace xdg {
 
       TreeID create_element_tree(const std::shared_ptr<MeshManager>& mesh_manager, MeshID volume) override;
 
-
-      void create_global_surface_tree() override
-      {
-        std::cout << "Global surface trees not currently supported with GPRT ray tracer" << std::endl;
-      };
+      void create_global_surface_tree() override;
 
       void create_global_element_tree() override
       {
-        std::cout << "Global element trees not currently supported with GPRT ray tracer" << std::endl;
+        warning("Global element trees not currently supported with GPRT ray tracer");
+        return;
       };
 
       bool point_in_volume(TreeID scene,
@@ -74,7 +69,6 @@ namespace xdg {
                                         const double dist_limit = INFTY,
                                         HitOrientation orientation = HitOrientation::EXITING,
                                         std::vector<MeshID>* const exclude_primitives = nullptr) override;
-        // Fire a ray and return the distance to the closest intersection
 
       void closest(TreeID scene,
                   const Position& origin,
@@ -89,12 +83,11 @@ namespace xdg {
                     const Direction& direction,
                     double& dist) const override {
         // Check if the ray is occluded
+
+        fatal_error("Occlusion queries are not currently supported with GPRT ray tracer");
         return false;
       }
       
-      RTLibrary library() const override { return RTLibrary::GPRT; }
-
-
     private:
       // GPRT objects 
       GPRTContext context_;
