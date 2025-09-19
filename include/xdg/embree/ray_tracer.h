@@ -21,6 +21,8 @@ class EmbreeRayTracer : public RayTracer {
 public:
   EmbreeRayTracer();
   ~EmbreeRayTracer();
+  RTLibrary library() const override { return RTLibrary::EMBREE; }
+
   void init() override;
   RTCScene create_embree_scene();
 
@@ -66,9 +68,6 @@ public:
                 const Position& origin,
                 const Direction& direction,
                 double& dist) const override;
-
-  RTLibrary library() const override { return RTLibrary::EMBREE; }
-
 
   // Embree members
   RTCDevice device_;
