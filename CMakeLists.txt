@@ -94,6 +94,15 @@ add_subdirectory(vendor/argparse)
 set(INDICATORS_INSTALL ON CACHE STRING "Ensure indicators targets are provided")
 add_subdirectory(vendor/indicators)
 
+# Ensure at least one ray tracing backend is enabled
+if (NOT XDG_ENABLE_EMBREE AND NOT XDG_ENABLE_GPRT)
+  message(FATAL_ERROR
+    "No ray tracing backend enabled. Enable at least one of:\n"
+    "  -DXDG_ENABLE_EMBREE=ON\n"
+    "  -DXDG_ENABLE_GPRT=ON")
+endif()
+
+
 # GPRT
 if (XDG_ENABLE_GPRT)
   add_subdirectory(vendor/GPRT)
