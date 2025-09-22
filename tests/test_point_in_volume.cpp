@@ -51,7 +51,7 @@ static void run_point_in_volume_suite(const std::shared_ptr<RayTracer>& rti) {
   REQUIRE(volume_tree != ID_NONE);
   REQUIRE(element_tree == ID_NONE);
 
-  Position point{0.0, 0.0, 0.0};
+  Position point {0.0, 0.0, 0.0};
   bool result = rti->point_in_volume(volume_tree, point);
   REQUIRE(result == true);
 
@@ -59,31 +59,35 @@ static void run_point_in_volume_suite(const std::shared_ptr<RayTracer>& rti) {
   result = rti->point_in_volume(volume_tree, point);
   REQUIRE(result == false);
 
-  // just inside +X boundary
+  // test a point just inside the positive x boundary
   point = {4.0 - 1e-6, 0.0, 0.0};
   result = rti->point_in_volume(volume_tree, point);
   REQUIRE(result == true);
 
-  // just outside +X, no direction
+  // test a point just outside on the positive x boundary
+  // no direction
   point = {5.001, 0.0, 0.0};
   result = rti->point_in_volume(volume_tree, point);
   REQUIRE(result == false);
 
-  // on +X boundary, with outward direction
+  // test a point on the positive x boundary
+  // and provide a direction
   point = {5.0, 0.0, 0.0};
   Direction dir{1.0, 0.0, 0.0};
   result = rti->point_in_volume(volume_tree, point, &dir);
   REQUIRE(result == true);
 
-  // just outside +X, outward direction
+  // test a point just outside the positive x boundary
+  // and provide a direction
   point = {5.1, 0.0, 0.0};
-  dir   = {1.0, 0.0, 0.0};
+  dir = {1.0, 0.0, 0.0};
   result = rti->point_in_volume(volume_tree, point, &dir);
   REQUIRE(result == false);
 
-  // just outside +X, inward direction
+  // test a point just outside the positive x boundary,
+  // flip the direction
   point = {5.1, 0.0, 0.0};
-  dir   = {-1.0, 0.0, 0.0};
+  dir = {-1.0, 0.0, 0.0};
   result = rti->point_in_volume(volume_tree, point, &dir);
   REQUIRE(result == false);
 }
