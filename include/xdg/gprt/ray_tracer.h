@@ -1,6 +1,8 @@
 #ifndef _XDG_GPRT_BASE_RAY_TRACING_INTERFACE_H
 #define _XDG_GPRT_BASE_RAY_TRACING_INTERFACE_H
 
+#ifdef XDG_ENABLE_GPRT // wrap the entire class inside this ifdef
+
 #include <memory>
 #include <vector>
 #include <unordered_map>
@@ -127,5 +129,7 @@ namespace xdg {
     };
 
 } // namespace xdg
+
+#endif // XDG_ENABLE_GPRT
 
 #endif // include guard
