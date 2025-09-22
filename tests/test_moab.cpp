@@ -5,6 +5,8 @@
 // testing includes
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
+#include <catch2/generators/catch_generators.hpp>
+#include <catch2/generators/catch_generators_range.hpp>
 
 // xdg includes
 #include "xdg/error.h"
@@ -69,46 +71,80 @@ TEST_CASE("Test BVH Build")
   REQUIRE(mesh_manager->num_volumes() == 2);
   REQUIRE(mesh_manager->num_surfaces() == 6);
 
-  std::unique_ptr<RayTracer> ray_tracing_interface = std::make_unique<EmbreeRayTracer>();
+#ifdef XDG_ENABLE_EMBREE
+  SECTION("Embree BVH Build")
+  {
+    std::unique_ptr<RayTracer> rti = std::make_unique<EmbreeRayTracer>();
 
-  for (auto volume : mesh_manager->volumes()) {
-    ray_tracing_interface->register_volume(mesh_manager, volume);
+    for (auto volume : mesh_manager->volumes()) {
+      rti->register_volume(mesh_manager, volume);
+    }
+
+    REQUIRE(rti->num_registered_trees() == 2);
   }
+#endif
 
-  REQUIRE(ray_tracing_interface->num_registered_trees() == 2);
+#ifdef XDG_ENABLE_GPRT
+  SECTION("GPRT BVH Build")
+  {
+    std::unique_ptr<RayTracer> rti = std::make_unique<GPRTRayTracer>();
+
+    for (auto volume : mesh_manager->volumes()) {
+      rti->register_volume(mesh_manager, volume);
+    }
+
+    REQUIRE(rti->num_registered_trees() == 2);
+  }
+#endif
 }
 
-TEST_CASE("Test Ray Fire MOAB")
-{
-  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB, RTLibrary::GPRT);
-  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
-  const auto& mesh_manager = xdg->mesh_manager();
-  mesh_manager->load_file("cube.h5m");
-  mesh_manager->init();
-  xdg->prepare_raytracer();
 
-  MeshID volume = mesh_manager->volumes()[0];
+TEST_CASE("Test Ray Fire MOAB (all built backends)", "[ray_tracer][moab]") {
+  // Build the list of backends based on what was compiled in
+  std::vector<RTLibrary> backends;
+#ifdef XDG_ENABLE_EMBREE
+  backends.push_back(RTLibrary::EMBREE);
+#endif
+#ifdef XDG_ENABLE_GPRT
+  backends.push_back(RTLibrary::GPRT);
+#endif
 
-  Position origin {0.0, 0.0, 0.0};
-  Direction direction {1.0, 0.0, 0.0};
-  std::pair<double, MeshID> intersection;
+  if (backends.empty()) {
+    SUCCEED("No RT backend enabled at build time (Embree/GPRT); skipping.");
+    return;
+  }
 
-  intersection = xdg->ray_fire(volume, origin, direction);
+  // Generate one test run per enabled backend
+  auto backend = GENERATE_REF(from_range(backends));
 
-  // this cube is 10 cm on a side, so the ray should hit the surface at 5 cm
-  REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
+  DYNAMIC_SECTION(std::string("Backend = ") + RT_LIB_TO_STR.at(backend)) {
+    auto xdg = XDG::create(MeshLibrary::MOAB, backend);
+    REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
 
-  origin = {3.0, 0.0, 0.0};
-  intersection = xdg->ray_fire(volume, origin, direction);
-  REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
+    const auto& mm = xdg->mesh_manager();
+    mm->load_file("cube.h5m");
+    mm->init();
+    xdg->prepare_raytracer();
 
-  origin = {-10.0, 0.0, 0.0};
-  intersection = xdg->ray_fire(volume, origin, direction);
-  REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(15.0, 1e-6));
+    MeshID volume = mm->volumes()[0];
 
-  origin = {0.0, 0.0, 0.0};
-  REQUIRE(xdg->point_in_volume(volume, origin));
+    Position  origin{0.0, 0.0, 0.0};
+    Direction dir{1.0, 0.0, 0.0};
 
+    auto hit = xdg->ray_fire(volume, origin, dir);
+    REQUIRE_THAT(hit.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
+
+    origin = {3.0, 0.0, 0.0};
+    hit = xdg->ray_fire(volume, origin, dir);
+    REQUIRE_THAT(hit.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
+
+    origin = {-10.0, 0.0, 0.0};
+    hit = xdg->ray_fire(volume, origin, dir);
+    REQUIRE_THAT(hit.first, Catch::Matchers::WithinAbs(15.0, 1e-6));
+
+    origin = {0.0, 0.0, 0.0};
+    REQUIRE(xdg->point_in_volume(volume, origin));
+  }
 }
 
 TEST_CASE("MOAB Element Types")
