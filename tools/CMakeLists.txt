@@ -10,7 +10,11 @@ foreach(tool ${TOOL_NAMES})
     string(REPLACE "_" "-" tool_exec ${tool})
     add_executable(${tool_exec} ${tool}.cpp)
     target_link_libraries(${tool_exec} xdg argparse indicators::indicators)
-    target_link_libraries(${tool_exec} xdg gprt)
+    
+    if (XDG_ENABLE_GPRT)
+        target_link_libraries(${tool_exec} PRIVATE gprt)
+    endif()
+    
     install(TARGETS ${tool_exec} DESTINATION ${CMAKE_INSTALL_BINDIR}/tools)
 endforeach()
 

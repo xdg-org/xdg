@@ -6,8 +6,7 @@
 
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/ray_tracing_interface.h"
-#include "xdg/embree/ray_tracer.h"
-#include "xdg/gprt/ray_tracer.h"
+
 
 namespace xdg {
 
@@ -17,19 +16,7 @@ public:
   // Constructors
   XDG() = default;
 
-  XDG(std::shared_ptr<MeshManager> mesh_manager, RTLibrary ray_tracing_lib = RTLibrary::EMBREE) : mesh_manager_(mesh_manager)
-  {
-    // construct internal raytracer for XDG
-    switch (ray_tracing_lib)
-    {
-    case RTLibrary::EMBREE:
-      set_ray_tracing_interface(std::make_shared<EmbreeRayTracer>());
-      break;
-    case RTLibrary::GPRT:
-      set_ray_tracing_interface(std::make_shared<GPRTRayTracer>());
-    break;
-    }
-  }
+  XDG(std::shared_ptr<MeshManager> mesh_manager, RTLibrary ray_tracing_lib = RTLibrary::EMBREE);
 
   // factory method that allows for specification of a backend mesh library and ray tracer. Default to MOAB + EMBREE
   static std::shared_ptr<XDG> create(MeshLibrary mesh_lib = MeshLibrary::MOAB, RTLibrary ray_tracing_lib = RTLibrary::EMBREE);
@@ -141,7 +128,6 @@ private:
   std::unordered_map<MeshID, TreeID> volume_to_surface_tree_map_;  //<! Map from mesh volume to raytracing tree
   std::unordered_map<MeshID, TreeID> surface_to_tree_map_; //<! Map from mesh surface to embree scnee
   std::unordered_map<MeshID, TreeID> volume_to_point_location_tree_map_; //<! Map from mesh volume to embree point location tree
-  std::unordered_map<MeshID, RTCGeometry> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
   TreeID global_scene_; // TODO: does this need to be in the RayTacer class or the XDG? class
 };
 
