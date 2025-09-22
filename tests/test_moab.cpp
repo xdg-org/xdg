@@ -13,7 +13,14 @@
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/moab/mesh_manager.h"
 #include "xdg/xdg.h"
-#include "xdg/embree/ray_tracer.h"
+
+#ifdef XDG_ENABLE_EMBREE
+  #include "xdg/embree/ray_tracer.h"
+#endif
+
+#ifdef XDG_ENABLE_GPRT
+  #include "xdg/gprt/ray_tracer.h"
+#endif
 
 using namespace xdg;
 
