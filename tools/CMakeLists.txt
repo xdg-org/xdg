@@ -12,7 +12,7 @@ foreach(tool ${TOOL_NAMES})
     target_link_libraries(${tool_exec} xdg argparse indicators::indicators)
     
     if (XDG_ENABLE_GPRT)
-        target_link_libraries(${tool_exec} PRIVATE gprt)
+        target_link_libraries(${tool_exec} gprt)
     endif()
     
     install(TARGETS ${tool_exec} DESTINATION ${CMAKE_INSTALL_BINDIR}/tools)
