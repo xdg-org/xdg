@@ -6,13 +6,13 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/generators/catch_generators.hpp>
-#include <catch2/generators/catch_generators_range.hpp>
 
 // xdg includes
 #include "xdg/error.h"
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/moab/mesh_manager.h"
 #include "xdg/xdg.h"
+#include "util.h"
 
 #ifdef XDG_ENABLE_EMBREE
   #include "xdg/embree/ray_tracer.h"
@@ -108,24 +108,13 @@ TEST_CASE("Test BVH Build")
 
 TEST_CASE("Test Ray Fire MOAB (all built backends)", "[ray_tracer][moab]") {
   // Build the list of backends based on what was compiled in
-  std::vector<RTLibrary> backends;
-#ifdef XDG_ENABLE_EMBREE
-  backends.push_back(RTLibrary::EMBREE);
-#endif
-#ifdef XDG_ENABLE_GPRT
-  backends.push_back(RTLibrary::GPRT);
-#endif
-
-  if (backends.empty()) {
-    SUCCEED("No RT backend enabled at build time (Embree/GPRT); skipping.");
-    return;
-  }
 
   // Generate one test run per enabled backend
-  auto backend = GENERATE_REF(from_range(backends));
+  auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
+  check_ray_tracer_supported(rt_backend);
 
-  DYNAMIC_SECTION(std::string("Backend = ") + RT_LIB_TO_STR.at(backend)) {
-    auto xdg = XDG::create(MeshLibrary::MOAB, backend);
+  DYNAMIC_SECTION(std::string("Backend = ") + RT_LIB_TO_STR.at(rt_backend)) {
+    auto xdg = XDG::create(MeshLibrary::MOAB, rt_backend);
     REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
 
     const auto& mm = xdg->mesh_manager();
@@ -170,7 +159,9 @@ TEST_CASE("MOAB Element Types")
 
 TEST_CASE("MOAB Get Surface Mesh")
 {
-  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
+  auto ray_tracer = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
+  check_ray_tracer_supported(ray_tracer);
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB, ray_tracer);
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
   const auto& mesh_manager = xdg->mesh_manager();
   mesh_manager->load_file("overlap-edge.h5m");
