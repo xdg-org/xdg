@@ -118,8 +118,8 @@ TEST_CASE("Test Ray Fire MOAB (all built backends)", "[ray_tracer][moab]") {
 
     MeshID volume = mm->volumes()[0];
 
-    Position  origin{0.0, 0.0, 0.0};
-    Direction dir{1.0, 0.0, 0.0};
+    Position origin {0.0, 0.0, 0.0};
+    Direction dir {1.0, 0.0, 0.0};
 
     auto hit = xdg->ray_fire(volume, origin, dir);
     REQUIRE_THAT(hit.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
