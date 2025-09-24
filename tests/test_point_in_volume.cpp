@@ -4,15 +4,9 @@
 // xdg includes
 #include "xdg/constants.h"
 #include "xdg/mesh_manager_interface.h"
-#include "mesh_mock.h"
+#include "xdg/ray_tracers.h"
 
-// Backend headers only if built
-#ifdef XDG_ENABLE_EMBREE
-  #include "xdg/embree/ray_tracer.h"
-#endif
-#ifdef XDG_ENABLE_GPRT
-  #include "xdg/gprt/ray_tracer.h"
-#endif
+#include "mesh_mock.h"
 
 using namespace xdg;
 
