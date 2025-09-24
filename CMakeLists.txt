@@ -26,6 +26,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
 #===============================================================================
+# OpenMP
+#===============================================================================
+find_package(OpenMP REQUIRED)
+
+#===============================================================================
 # libMesh
 #===============================================================================
 if(XDG_ENABLE_LIBMESH)
@@ -121,6 +126,7 @@ src/util/str_utils.cpp
 src/tetrahedron_contain.cpp
 src/overlap_check/overlap.cpp
 src/element_face_accessor.cpp
+src/timer.cpp
 src/xdg.cpp
 )
 
