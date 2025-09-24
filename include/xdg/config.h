@@ -33,12 +33,20 @@ private:
   // Configuration options
   std::unordered_map<std::string, std::string> options_;
 
-  void initialize_libraries();
 
 public:
 
+  void initialize_libraries();
+
   bool ray_tracer_enabled(RTLibrary rt_lib) const;
+
   bool mesh_manager_enabled(MeshLibrary mesh_lib) const;
+
+  bool initialized() const { return initialized_; }
+
+  #ifdef XDG_ENABLE_LIBMESH
+  const std::unique_ptr<libMesh::LibMeshInit>& libmesh_init() const { return libmesh_init_; }
+  #endif
 
 private:
   #ifdef XDG_ENABLE_LIBMESH

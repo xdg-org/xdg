@@ -1,5 +1,6 @@
 #include "xdg/libmesh/mesh_manager.h"
 
+#include "xdg/config.h"
 #include "xdg/error.h"
 #include "xdg/geometry/plucker.h"
 #include "xdg/geometry/face_common.h"
@@ -14,29 +15,20 @@ namespace xdg {
 
 // Constructors
 LibMeshManager::LibMeshManager(void *ptr) {
-  if (libmesh_init == nullptr) {
-    initialize_libmesh();
+  if (XDGConfig::config().initialized() == false) {
+    XDGConfig::config().initialize_libraries();
   }
 }
 
 LibMeshManager::LibMeshManager() : MeshManager() {
-  if (libmesh_init == nullptr) {
-    initialize_libmesh();
+  if (XDGConfig::config().initialized() == false) {
+    XDGConfig::config().initialize_libraries();
   }
 }
 
 void LibMeshManager::load_file(const std::string &filepath) {
-  mesh_ = std::make_unique<libMesh::Mesh>(libmesh_init->comm(), 3);
+  mesh_ = std::make_unique<libMesh::Mesh>(XDGConfig::config().libmesh_init()->comm(), 3);
   mesh_->read(filepath);
-}
-
-void LibMeshManager::initialize_libmesh() {
-  // libmesh requires the program name, so at least one argument is needed
-  int argc = 1;
-  const std::string argv{"XDG"};
-  const char *argv_cstr = argv.c_str();
-  libmesh_init =
-      std::move(std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, 0, 1));
 }
 
 void LibMeshManager::init() {
