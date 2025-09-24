@@ -6,26 +6,13 @@
 #include "xdg/constants.h"
 #include "xdg/geometry/measure.h"
 
-// mesh manager concrete implementations
-#ifdef XDG_ENABLE_MOAB
-#include "xdg/moab/mesh_manager.h"
-#endif
+#include "xdg/mesh_managers.h"
 
-#ifdef XDG_ENABLE_LIBMESH
-#include "xdg/libmesh/mesh_manager.h"
-#endif
+#include "xdg/ray_tracers.h"
 
-// ray tracing interface concrete implementations
-#ifdef XDG_ENABLE_EMBREE
-#include "xdg/embree/ray_tracer.h"
-#endif
-
-#ifdef XDG_ENABLE_GPRT
-#include "xdg/gprt/ray_tracer.h"
-#endif
 namespace xdg {
 
-XDG::XDG(std::shared_ptr<MeshManager> mesh_manager, RTLibrary ray_tracing_lib) 
+XDG::XDG(std::shared_ptr<MeshManager> mesh_manager, RTLibrary ray_tracing_lib)
         : mesh_manager_(mesh_manager)
 {
   switch (ray_tracing_lib) {
