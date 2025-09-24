@@ -274,7 +274,7 @@ MeshManager::display_model_topology() const
   size_t total_triangles = 0;
 
   for (auto surface : this->surfaces()) {
-    total_triangles += this->get_surface_elements(surface).size();
+    total_triangles += this->num_surface_faces(surface);
   }
 
   std::cout << "Model Topology Information" << std::endl;
@@ -291,7 +291,7 @@ MeshManager::display_model_topology() const
     auto surfaces = this->get_volume_surfaces(volume);
     size_t num_triangles = 0;
     for (auto surface : surfaces) {
-      num_triangles += this->get_surface_elements(surface).size();
+      num_triangles += this->num_surface_faces(surface);
     }
 
     std::cout << "Volume ID: " << volume << std::endl;
@@ -318,7 +318,7 @@ MeshManager::display_model_topology() const
   std::cout << "===================" << std::endl;
   for (auto surface : this->surfaces()) {
     auto parent_volumes = this->get_parent_volumes(surface);
-    size_t num_triangles = this->get_surface_elements(surface).size();
+    size_t num_triangles = this->num_surface_faces(surface);
 
     std::cout << "Surface ID: " << surface << std::endl;
     std::cout << "  Parent Volumes: ";
@@ -368,7 +368,7 @@ void MeshManager::write_topology_to_xml(const std::string filename) const
     auto surfaces = this->get_volume_surfaces(volume);
     size_t num_triangles = 0;
     for (auto surface : surfaces) {
-      num_triangles += this->get_surface_elements(surface).size();
+      num_triangles += this->num_surface_faces(surface);
     }
 
     file << "    <node id=\"Volume " << volume << "\">\n";
@@ -386,7 +386,7 @@ void MeshManager::write_topology_to_xml(const std::string filename) const
   // Write surface nodes
   for (auto surface : this->surfaces()) {
     auto parent_volumes = this->get_parent_volumes(surface);
-    size_t num_triangles = this->get_surface_elements(surface).size();
+    size_t num_triangles = this->num_surface_faces(surface);
 
     file << "    <node id=\"Surface " << surface << "\">\n";
     file << "      <data key=\"type\">surface</data>\n";
