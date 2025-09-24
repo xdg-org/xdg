@@ -6,9 +6,13 @@
 #include <string>
 #include <unordered_map>
 
+#include "xdg/constants.h"
+
 #ifdef XDG_ENABLE_LIBMESH
 #include "libmesh/libmesh.h"
 #endif
+
+namespace xdg {
 
 class XDGConfig {
 public:
@@ -29,15 +33,22 @@ private:
   // Configuration options
   std::unordered_map<std::string, std::string> options_;
 
-  #ifdef XDG_ENABLE_LIBMESH
-  void initialize_libmesh();
+  void initialize_libraries();
 
+public:
+
+  bool ray_tracer_enabled(RTLibrary rt_lib) const;
+  bool mesh_manager_enabled(MeshLibrary mesh_lib) const;
+
+private:
+  #ifdef XDG_ENABLE_LIBMESH
   std::unique_ptr<libMesh::LibMeshInit> libmesh_init_ {nullptr};
   #endif
-
   // Data members
   int n_threads_ {-1};
   bool initialized_ {false};
 };
+
+} // namespace xdg
 
 #endif // XDG_CONFIG_H
