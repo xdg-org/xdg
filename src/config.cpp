@@ -25,10 +25,6 @@ XDGConfig::XDGConfig(int n_threads) {
 
   // Initialize libMesh if enabled
   initialize_libraries();
-
-  initialized_ = true;
-
-  // set values for which mesh and ray tracing libraries are enabled
 }
 
 void XDGConfig::initialize_libraries() {
@@ -39,6 +35,8 @@ void XDGConfig::initialize_libraries() {
   const char *argv_cstr = argv.c_str();
   libmesh_init_ = std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, 0, n_threads_);
 #endif
+
+  initialized_ = true;
 }
 
 bool XDGConfig::ray_tracer_enabled(RTLibrary rt_lib) const {
