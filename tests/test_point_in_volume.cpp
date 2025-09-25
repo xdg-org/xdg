@@ -4,33 +4,10 @@
 // xdg includes
 #include "xdg/constants.h"
 #include "xdg/mesh_manager_interface.h"
-#include "xdg/ray_tracers.h"
-
+#include "util.h"
 #include "mesh_mock.h"
 
 using namespace xdg;
-
-// Factory method to create ray tracer based on which library selected
-static std::shared_ptr<RayTracer> make_raytracer(RTLibrary rt) {
-  switch (rt) {
-    case RTLibrary::EMBREE:
-    #ifdef XDG_ENABLE_EMBREE
-      return std::make_shared<EmbreeRayTracer>();
-    #else
-      SUCCEED("Embree backend not built; skipping.");
-      return {};
-    #endif
-    case RTLibrary::GPRT:
-    #ifdef XDG_ENABLE_GPRT
-      return std::make_shared<GPRTRayTracer>();
-    #else
-      SUCCEED("GPRT backend not built; skipping.");
-      return {};
-    #endif
-  }
-  FAIL("Unknown RT backend enum value");
-  return {};
-}
 
 // Actual code for test suite
 static void run_point_in_volume_suite(const std::shared_ptr<RayTracer>& rti) {
@@ -67,7 +44,7 @@ static void run_point_in_volume_suite(const std::shared_ptr<RayTracer>& rti) {
   // test a point on the positive x boundary
   // and provide a direction
   point = {5.0, 0.0, 0.0};
-  Direction dir{1.0, 0.0, 0.0};
+  Direction dir {1.0, 0.0, 0.0};
   result = rti->point_in_volume(volume_tree, point, &dir);
   REQUIRE(result == true);
 
@@ -92,7 +69,7 @@ TEST_CASE("Point-in-volume on MeshMock (per-backend sections)", "[piv][mock]") {
   const RTLibrary candidates[] = { RTLibrary::EMBREE, RTLibrary::GPRT };
 
   for (RTLibrary rt : candidates) {
-    auto rti = make_raytracer(rt);
+    auto rti = create_raytracer(rt);
     if (!rti) continue; // backend not built → skip
     DYNAMIC_SECTION(std::string("Backend = ") + RT_LIB_TO_STR.at(rt)) {
       run_point_in_volume_suite(rti);

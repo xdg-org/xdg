@@ -11,9 +11,7 @@
 #include "xdg/error.h"
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/moab/mesh_manager.h"
-#include "xdg/ray_tracers.h"
 #include "xdg/xdg.h"
-
 #include "util.h"
 
 using namespace xdg;

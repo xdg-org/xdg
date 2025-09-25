@@ -5,33 +5,10 @@
 // xdg includes
 #include "xdg/constants.h"
 #include "xdg/mesh_manager_interface.h"
-#include "xdg/ray_tracers.h"
 #include "mesh_mock.h"
+#include "util.h"
 
 using namespace xdg;
-
-// Factory method to create ray tracer based on which library selected
-static std::shared_ptr<RayTracer> make_raytracer(RTLibrary rt) {
-  switch (rt) {
-    case RTLibrary::EMBREE:
-    #ifdef XDG_ENABLE_EMBREE
-      return std::make_shared<EmbreeRayTracer>();
-    #else
-      SUCCEED("Embree backend not built; skipping.");
-      return {};
-    #endif
-
-    case RTLibrary::GPRT:
-    #ifdef XDG_ENABLE_GPRT
-      return std::make_shared<GPRTRayTracer>();
-    #else
-      SUCCEED("GPRT backend not built; skipping.");
-      return {};
-    #endif
-  }
-  FAIL("Unknown RT backend enum value");
-  return {};
-}
 
 // Actual code for test suite
 static void run_ray_fire_suite(const std::shared_ptr<RayTracer>& rti) {
@@ -94,13 +71,13 @@ static void run_ray_fire_suite(const std::shared_ptr<RayTracer>& rti) {
   intersection = rti->ray_fire(volume_tree, origin, direction, INFTY, HitOrientation::ENTERING);
   REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
 
-  // if the distance is just enough, we should still get a hit
   // limit distance of the ray, shouldn't get a hit
   origin = {0.0, 0.0, 0.0};
   direction = {1.0, 0.0, 0.0};
   intersection = rti->ray_fire(volume_tree, origin, direction, 4.5);
   REQUIRE(intersection.second == ID_NONE);
 
+  // if the distance is just enough, we should still get a hit
   intersection = rti->ray_fire(volume_tree, origin, direction, 5.1);
   REQUIRE(intersection.second != ID_NONE);
   REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
@@ -123,7 +100,7 @@ TEST_CASE("Ray Fire on MeshMock (per-backend sections)", "[rayfire][mock]") {
   const RTLibrary candidates[] = { RTLibrary::EMBREE, RTLibrary::GPRT };
 
   for (RTLibrary rt : candidates) {
-    auto rti = make_raytracer(rt);
+    auto rti = create_raytracer(rt);
     if (!rti) continue; // backend not built → gracefully skip
 
     DYNAMIC_SECTION(std::string("Backend = ") + RT_LIB_TO_STR.at(rt)) {
