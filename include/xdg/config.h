@@ -14,6 +14,9 @@
 
 namespace xdg {
 
+#ifdef XDG_ENABLE_LIBMESH
+extern std::unique_ptr<libMesh::LibMeshInit> xdg_libmesh_init;
+#endif
 class XDGConfig {
 public:
   // Get the singleton instance
@@ -28,7 +31,7 @@ public:
 
 private:
   // Private constructor
-  XDGConfig(int n_threads = -1);
+  XDGConfig() {};
 
   // Configuration options
   std::unordered_map<std::string, std::string> options_;
@@ -36,7 +39,11 @@ private:
 
 public:
 
-  void initialize_libraries();
+  void initialize();
+
+  int n_threads() const { return n_threads_; }
+
+  void set_n_threads(int n_threads);
 
   bool ray_tracer_enabled(RTLibrary rt_lib) const;
 
@@ -45,13 +52,10 @@ public:
   bool initialized() const { return initialized_; }
 
   #ifdef XDG_ENABLE_LIBMESH
-  const std::unique_ptr<libMesh::LibMeshInit>& libmesh_init() const { return libmesh_init_; }
+  const std::unique_ptr<libMesh::LibMeshInit>& libmesh_init();
   #endif
 
 private:
-  #ifdef XDG_ENABLE_LIBMESH
-  std::unique_ptr<libMesh::LibMeshInit> libmesh_init_ {nullptr};
-  #endif
   // Data members
   int n_threads_ {-1};
   bool initialized_ {false};

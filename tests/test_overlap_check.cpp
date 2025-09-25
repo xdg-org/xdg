@@ -10,17 +10,16 @@
 #endif
 
 // xdg includes
+#include "xdg/config.h"
 #include "xdg/error.h"
 #include "xdg/overlap.h"
 
 using namespace xdg;
 
 struct OMP_SingleThreadFixture {
-    OMP_SingleThreadFixture() {
-      #ifdef XDG_HAVE_OPENMP
-        omp_set_num_threads(1);
-      #endif
-    }
+  OMP_SingleThreadFixture() {
+    xdg::XDGConfig::config().set_n_threads(1);
+  }
 };
 
 TEST_CASE_METHOD(OMP_SingleThreadFixture, "Overlapping Volumes Test", "[single-thread]")
