@@ -109,7 +109,7 @@ TEST_CASE("Ray Fire on MeshMock (per-backend sections)", "[rayfire][mock]") {
   #endif
 
   auto rti = create_raytracer(rt_backend);
-  DYNAMIC_SECTION(std::string("Backend = ") + RT_LIB_TO_STR.at(rt_backend)) {
+  DYNAMIC_SECTION(std::string("Ray tracer Backend used  = ") + RT_LIB_TO_STR.at(rt_backend)) {
     run_ray_fire_suite(rti);
   }
 }

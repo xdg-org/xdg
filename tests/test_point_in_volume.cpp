@@ -78,7 +78,7 @@ TEST_CASE("Point-in-volume on MeshMock (per-backend sections)", "[piv][mock]") {
   #endif
 
   auto rti = create_raytracer(rt_backend);
-  DYNAMIC_SECTION(std::string("Backend = ") + RT_LIB_TO_STR.at(rt_backend)) {
+  DYNAMIC_SECTION(std::string("Ray tracer Backend used = ") + RT_LIB_TO_STR.at(rt_backend)) {
     run_point_in_volume_suite(rti);
   }
 }
