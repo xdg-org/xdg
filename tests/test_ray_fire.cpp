@@ -1,6 +1,8 @@
 // for testing
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
+#include <catch2/generators/catch_generators.hpp>
+
 
 // xdg includes
 #include "xdg/constants.h"
@@ -97,14 +99,17 @@ static void run_ray_fire_suite(const std::shared_ptr<RayTracer>& rti) {
 // ------- single test, multiple sections (one per built backend) --------------
 
 TEST_CASE("Ray Fire on MeshMock (per-backend sections)", "[rayfire][mock]") {
-  const RTLibrary candidates[] = { RTLibrary::EMBREE, RTLibrary::GPRT };
 
-  for (RTLibrary rt : candidates) {
-    auto rti = create_raytracer(rt);
-    if (!rti) continue; // backend not built → gracefully skip
+  #if defined(XDG_ENABLE_EMBREE) && defined(XDG_ENABLE_GPRT)
+    auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
+  #elif defined(XDG_ENABLE_EMBREE)
+    auto rt_backend = GENERATE(RTLibrary::EMBREE);
+  #elif defined(XDG_ENABLE_GPRT)
+    auto rt_backend = GENERATE(RTLibrary::GPRT);
+  #endif
 
-    DYNAMIC_SECTION(std::string("Backend = ") + RT_LIB_TO_STR.at(rt)) {
-      run_ray_fire_suite(rti);
-    }
+  auto rti = create_raytracer(rt_backend);
+  DYNAMIC_SECTION(std::string("Backend = ") + RT_LIB_TO_STR.at(rt_backend)) {
+    run_ray_fire_suite(rti);
   }
 }

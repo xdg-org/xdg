@@ -1,5 +1,7 @@
 // for testing
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
+
 
 // xdg includes
 #include "xdg/constants.h"
@@ -66,13 +68,17 @@ static void run_point_in_volume_suite(const std::shared_ptr<RayTracer>& rti) {
 // ---------- single test, sections per backend --------------------------------
 
 TEST_CASE("Point-in-volume on MeshMock (per-backend sections)", "[piv][mock]") {
-  const RTLibrary candidates[] = { RTLibrary::EMBREE, RTLibrary::GPRT };
+  // Generate a test only for the backends that we compiled with
+  #if defined(XDG_ENABLE_EMBREE) && defined(XDG_ENABLE_GPRT)
+    auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
+  #elif defined(XDG_ENABLE_EMBREE)
+    auto rt_backend = GENERATE(RTLibrary::EMBREE);
+  #elif defined(XDG_ENABLE_GPRT)
+    auto rt_backend = GENERATE(RTLibrary::GPRT);
+  #endif
 
-  for (RTLibrary rt : candidates) {
-    auto rti = create_raytracer(rt);
-    if (!rti) continue; // backend not built → skip
-    DYNAMIC_SECTION(std::string("Backend = ") + RT_LIB_TO_STR.at(rt)) {
-      run_point_in_volume_suite(rti);
-    }
+  auto rti = create_raytracer(rt_backend);
+  DYNAMIC_SECTION(std::string("Backend = ") + RT_LIB_TO_STR.at(rt_backend)) {
+    run_point_in_volume_suite(rti);
   }
 }
