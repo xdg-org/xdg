@@ -41,6 +41,8 @@ void XDGConfig::initialize() {
   const char *argv_cstr = argv.c_str();
   xdg_libmesh_init = std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, 0, n_threads());
   // register for cleanup at program exit
+  // TODO: explore cleaner options that ensure this occurs after
+  // destruction of all other libMesh objects more elegantly
   std::atexit(cleanup_libmesh_at_exit);
 #endif
 
