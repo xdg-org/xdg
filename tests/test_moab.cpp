@@ -105,7 +105,7 @@ TEST_CASE("Test Ray Fire MOAB (all built backends)", "[ray_tracer][moab]") {
   auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
   check_ray_tracer_supported(rt_backend);
 
-  DYNAMIC_SECTION(std::string("Backend = ") + RT_LIB_TO_STR.at(rt_backend)) {
+  DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     auto xdg = XDG::create(MeshLibrary::MOAB, rt_backend);
     REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
 

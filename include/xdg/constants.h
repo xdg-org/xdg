@@ -6,6 +6,8 @@
 #include <limits>
 #include <string>
 
+#include "fmt/format.h"
+
 namespace xdg {
 
 constexpr double INFTY {std::numeric_limits<double>::max()};
@@ -66,7 +68,6 @@ static const std::map<RTLibrary, std::string> RT_LIB_TO_STR =
   {RTLibrary::GPRT, "GPRT"}
 };
 
-
 // Mesh identifer type
 using MeshID = int32_t;
 
@@ -113,10 +114,10 @@ static Property VOID_MATERIAL {PropertyType::MATERIAL, "void"};
 enum class RayFireType { VOLUME, POINT_CONTAINMENT, ACCUMULATE_HITS, FIND_VOLUME };
 
 //
-enum class HitOrientation { 
-  ANY = -1, 
-  EXITING = 0, 
-  ENTERING = 1, 
+enum class HitOrientation {
+  ANY = -1,
+  EXITING = 0,
+  ENTERING = 1,
 };
 
 // Enumerator for different element types (maybe we want more here?)
@@ -136,5 +137,22 @@ enum class FloatingPointPrecision {
 };
 
 } // namespace xdg
+
+namespace fmt {
+  template <>
+struct formatter<xdg::RTLibrary> : fmt::formatter<std::string> {
+  auto format(xdg::RTLibrary lib, fmt::format_context& ctx) {
+    return fmt::formatter<std::string>::format(xdg::RT_LIB_TO_STR.at(lib), ctx);
+  }
+};
+
+template <>
+struct formatter<xdg::MeshLibrary> : fmt::formatter<std::string> {
+  auto format(xdg::MeshLibrary lib, fmt::format_context& ctx) {
+    return fmt::formatter<std::string>::format(xdg::MESH_LIB_TO_STR.at(lib), ctx);
+  }
+};
+
+}
 
 #endif // include guard
