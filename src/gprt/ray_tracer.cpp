@@ -27,6 +27,9 @@ GPRTRayTracer::GPRTRayTracer()
   dblRayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPointInVolProgram_);
   rayGenPIVData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
   rayGenPIVData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
+
+  // Set up build parameters for acceleration structures
+  buildParams_.buildMode = GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE;
 }
 
 GPRTRayTracer::~GPRTRayTracer()
@@ -69,7 +72,7 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
   SurfaceTreeID tree = next_surface_tree_id();
   surface_trees_.push_back(tree);
   auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
-  std::vector<gprt::Instance> surfaceBlasInstances; // BLAS for each (surface) geometry in this volumel
+  std::vector<gprt::Instance> surfaceBlasInstances; // BLAS for each (surface) geometry in this volume
 
   for (const auto &surf : volume_surfaces) {
     bool first_visit = !surface_to_geometry_map_.count(surf);
@@ -131,8 +134,9 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
     
     gprtComputeLaunch(aabbPopulationProgram_, {num_faces, 1, 1}, {1, 1, 1}, *geom_data);
 
-    GPRTAccel blas = gprtAABBAccelCreate(context_, triangleGeom, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
-    gprtAccelBuild(context_, blas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+    GPRTAccel blas = gprtAABBAccelCreate(context_, triangleGeom, buildParams_.buildMode);
+
+    gprtAccelBuild(context_, blas, buildParams_);
     gprt::Instance instance;
 
     instance = gprtAccelGetInstance(blas);
@@ -163,7 +167,7 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
   // Create a TLAS (Top-Level Acceleration Structure) for all BLAS instances in this volume
   auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, surfaceBlasInstances.size(), surfaceBlasInstances.data());
   GPRTAccel volume_tlas = gprtInstanceAccelCreate(context_, surfaceBlasInstances.size(), instanceBuffer);
-  gprtAccelBuild(context_, volume_tlas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+  gprtAccelBuild(context_, volume_tlas, buildParams_);
   surface_volume_tree_to_accel_map[tree] = volume_tlas;
   
   return tree;
@@ -301,7 +305,7 @@ void GPRTRayTracer::create_global_surface_tree()
   // Create a TLAS (Top-Level Acceleration Structure) for all the volumes
   auto globalBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, globalBlasInstances_.size(), globalBlasInstances_.data());
   GPRTAccel global_accel = gprtInstanceAccelCreate(context_, globalBlasInstances_.size(), globalBuffer);
-  gprtAccelBuild(context_, global_accel, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+  gprtAccelBuild(context_, global_accel, buildParams_);
 
   SurfaceTreeID tree = next_surface_tree_id();
   surface_trees_.push_back(tree);

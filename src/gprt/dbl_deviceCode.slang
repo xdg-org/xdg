@@ -66,7 +66,7 @@ void ray_fire(uniform dblRayGenData record, uniform DPTriangleGeomData mesh) {
     payload.surf_id = -1;
     payload.tlas = record.world;
 
-    TraceRay(record.world, RAY_FLAG_NONE, 0xff, 0, 1, 0, rayDesc, payload);
+    TraceRay(record.world, RAY_FLAG_NONE, 0xff, 0, 1, rayDesc, payload);
 
     // Store the distance to the hit point and the surface ID in buffers for CPU
     record.out[rayID].distance = payload.distance;
@@ -91,7 +91,7 @@ void point_in_volume(uniform dblRayGenData record, uniform DPTriangleGeomData me
     payload.tlas = record.world;
     payload.piv = PointInVolume::Outside; // Initialize point in volume check result to outside (0)
     
-    TraceRay(record.world, RAY_FLAG_NONE, 0xff, 0, 1, 0, rayDesc, payload);
+    TraceRay(record.world, RAY_FLAG_NONE, 0xff, 0, 1, rayDesc, payload);
 
     record.out.surf_id = payload.surf_id;
     record.out[rayID].piv = payload.piv; // Point in volume check result

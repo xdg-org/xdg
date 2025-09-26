@@ -92,6 +92,7 @@ namespace xdg {
       GPRTProgram deviceCode_; // device code for float precision shaders
       GPRTModule module_; // device code module for single precision shaders
       GPRTAccel world_; 
+      GPRTBuildParams buildParams_; //<! Build parameters for acceleration structures
 
       // Shader programs
       GPRTRayGenOf<dblRayGenData> rayGenProgram_; 
