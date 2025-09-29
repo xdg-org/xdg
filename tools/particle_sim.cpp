@@ -19,12 +19,12 @@ int main(int argc, char** argv) {
 argparse::ArgumentParser args("XDG Particle Pseudo-Simulation", "1.0", argparse::default_arguments::help);
 
 args.add_argument("filename")
-  .help("Path to the input file");
+    .help("Path to the input file");
 
 args.add_argument("-v", "--verbose")
-  .default_value(false)
-  .implicit_value(true)
-  .help("Enable verbose output of particle events");
+    .default_value(false)
+    .implicit_value(true)
+    .help("Enable verbose output of particle events");
 
 args.add_argument("-m", "--mfp")
     .default_value(1.0)
@@ -74,7 +74,7 @@ else if (mesh_str == "LIBMESH") {
 else
   fatal_error("Invalid mesh library '{}' specified", mesh_str);
 
-// create a mesh manager
+// create an XDG instance with the specified mesh and ray tracing library
 std::shared_ptr<XDG> xdg = XDG::create(mesh_lib, rt_lib);
 const auto& mm = xdg->mesh_manager();
 mm->load_file(args.get<std::string>("filename"));
