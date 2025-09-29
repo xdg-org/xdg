@@ -1,35 +1,5 @@
 #include "gprt.h"
 
-
-#ifndef __SLANG__ // only include this section for C++ compilation
-
-#include "math/VectorTypes.h"
-/*
-  Needed so that math vector types match exactly with Slang definitions on host & device
-  
-  When I tried to use linalg's definitions I had issues with ambiguous definitions of vector
-  types like float3, double3, between linalg and GPRT
-  
-  The following definitions extend the math utility definitions within GPRT but later versions of GPRT
-  may include these directly
-*/
-
-namespace math
-{
-  using double1 = vector<double, 1>;
-  using double2 = vector<double, 2>;
-  using double3 = vector<double, 3>;
-  using double4 = vector<double, 4>;
-}
-
-// Type aliases for convenience
-using double1 = math::double1;
-using double2 = math::double2;
-using double3 = math::double3; 
-using double4 = math::double4;
-
-#endif // __SLANG__
-
 enum PointInVolume : int { Outside = 0, Inside = 1 };
 
 struct GPRTPrimitiveRef
