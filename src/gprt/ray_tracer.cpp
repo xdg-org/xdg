@@ -29,7 +29,7 @@ GPRTRayTracer::GPRTRayTracer()
   rayGenPIVData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
 
   // Set up build parameters for acceleration structures
-  buildParams_.buildMode = GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE;
+  buildParams_.buildMode = GPRT_BUILD_MODE_FAST_BUILD_NO_UPDATE;
 }
 
 GPRTRayTracer::~GPRTRayTracer()
@@ -134,6 +134,8 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
     
     gprtComputeLaunch(aabbPopulationProgram_, {num_faces, 1, 1}, {1, 1, 1}, *geom_data);
 
+    gprtComputeSynchronize(context_); // Ensure all GPU operations are complete before accessing results
+
     GPRTAccel blas = gprtAABBAccelCreate(context_, triangleGeom, buildParams_.buildMode);
 
     gprtAccelBuild(context_, blas, buildParams_);
@@ -224,6 +226,8 @@ bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree,
 
   gprtRayGenLaunch1D(context_, rayGenPointInVolProgram_, 1);
 
+  gprtGraphicsSynchronize(context_); // Ensure all GPU operations are complete before accessing results
+
   // Retrieve the output from the ray output buffer
   gprtBufferMap(rayOutputBuffer_);
   dblRayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
@@ -285,6 +289,9 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
   
   // Launch the ray generation shader with push constants and buffer bindings
   gprtRayGenLaunch1D(context_, rayGenProgram_, 1);
+
+  gprtGraphicsSynchronize(context_); // Ensure all GPU operations are complete before accessing results
+
                                                   
   // Retrieve the output from the ray output buffer
   gprtBufferMap(rayOutputBuffer_);
