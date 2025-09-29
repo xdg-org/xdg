@@ -118,6 +118,8 @@ namespace xdg {
 
       // Internal GPRT Mappings
       std::unordered_map<SurfaceTreeID, GPRTAccel> surface_volume_tree_to_accel_map; // Map from XDG::TreeID to GPRTAccel for volume TLAS
+      std::vector<GPRTAccel> blas_handles_; // Store BLAS handles so that they can be explicitly referenced in destructor
+
       
       // Global Tree IDs
       GPRTAccel global_surface_accel_ {nullptr};

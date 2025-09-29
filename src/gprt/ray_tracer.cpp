@@ -34,7 +34,38 @@ GPRTRayTracer::GPRTRayTracer()
 
 GPRTRayTracer::~GPRTRayTracer()
 {
+  // Ensure all GPU operations are complete before destroying resources
+  gprtGraphicsSynchronize(context_); 
+  gprtComputeSynchronize(context_);
+
+
+  // Destroy TLAS structures
+  for (const auto& [tree, accel] : surface_volume_tree_to_accel_map) {
+    gprtAccelDestroy(accel);
+  }
+  if (global_element_accel_) gprtAccelDestroy(global_element_accel_);
+  if (global_surface_accel_) gprtAccelDestroy(global_surface_accel_);
+
+  // Destroy BLAS structures
+  for (const auto& blas : blas_handles_) {
+    gprtAccelDestroy(blas);
+  }
+
+  // Destroy Geoms and Types
+  for (const auto& [surf, geom] : surface_to_geometry_map_) {
+    gprtGeomDestroy(geom);
+  }
+  gprtGeomTypeDestroy(trianglesGeomType_);
+  
+  // Destroy Buffers
+  gprtBufferDestroy(rayInputBuffer_);
+  gprtBufferDestroy(rayOutputBuffer_);
+  gprtBufferDestroy(excludePrimitivesBuffer_);
+
+  // Destroy module and context
+  gprtModuleDestroy(module_);
   gprtContextDestroy(context_);
+
 }
 
 void GPRTRayTracer::setup_shaders()
