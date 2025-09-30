@@ -18,6 +18,4 @@ metadata system. Such user-defined sidesets can partially replace discovered
 interface surfaces. It is expected that user-defined sidesets with names that
 XDG will recognize contain faces between no more than two subdomains.
 
-Current restrictions:
-
-  - meshes of linear tetrahedra
+This file format is currently restricted to linear tetrahedral elements.
