@@ -42,6 +42,8 @@ void XDG::prepare_raytracer()
 
   ray_tracing_interface()->create_global_element_tree();
   ray_tracing_interface()->create_global_surface_tree();
+
+  ray_tracing_interface()->init(); // Initialize the ray tracer (e.g. build SBT for GPRT)
 }
 
 void XDG::prepare_volume_for_raytracing(MeshID volume) {

@@ -61,12 +61,14 @@ void ray_fire(uniform dblRayGenData record, uniform DPTriangleGeomData mesh) {
     rayDesc.TMin = float(record.ray[rayID].tMin); 
     rayDesc.TMax = float(record.ray[rayID].tMax); 
 
+    SurfaceAccelerationStructure world = record.ray[rayID].volume_accel;
+
     // Pass the ray's origin and direction to the payload
     payload.distance = -1.0f;
     payload.surf_id = -1;
-    payload.tlas = record.world;
+    payload.tlas = world;
 
-    TraceRay(record.world, RAY_FLAG_NONE, 0xff, 0, 1, rayDesc, payload);
+    TraceRay(world, RAY_FLAG_NONE, 0xff, 0, 1, rayDesc, payload);
 
     // Store the distance to the hit point and the surface ID in buffers for CPU
     record.out[rayID].distance = payload.distance;
@@ -86,12 +88,14 @@ void point_in_volume(uniform dblRayGenData record, uniform DPTriangleGeomData me
     rayDesc.TMin = float(record.ray[rayID].tMin); 
     rayDesc.TMax = float(record.ray[rayID].tMax); 
 
+    SurfaceAccelerationStructure world = record.ray[rayID].volume_accel;
+
     // Pass the ray's origin and direction to the payload
     payload.surf_id = -1;
-    payload.tlas = record.world;
+    payload.tlas = world;
     payload.piv = PointInVolume::Outside; // Initialize point in volume check result to outside (0)
     
-    TraceRay(record.world, RAY_FLAG_NONE, 0xff, 0, 1, rayDesc, payload);
+    TraceRay(world, RAY_FLAG_NONE, 0xff, 0, 1, rayDesc, payload);
 
     record.out.surf_id = payload.surf_id;
     record.out[rayID].piv = payload.piv; // Point in volume check result

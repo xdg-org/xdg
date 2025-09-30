@@ -22,6 +22,7 @@ TEST_CASE("Point-in-volume on MeshMock", "[piv][mock]")
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     auto rti = create_raytracer(rt_backend);
     REQUIRE(rti);
+    rti->init();
 
     // Keep MeshMock usage consistent across backends
     auto mm = std::make_shared<MeshMock>(false);
@@ -31,6 +32,8 @@ TEST_CASE("Point-in-volume on MeshMock", "[piv][mock]")
     auto [volume_tree, element_tree] = rti->register_volume(mm, mm->volumes()[0]);
     REQUIRE(volume_tree != ID_NONE);
     REQUIRE(element_tree == ID_NONE);
+
+    rti->init(); // Ensure ray tracer is initialized (e.g. build SBT for GPRT)
 
     Position point {0.0, 0.0, 0.0};
     bool result = rti->point_in_volume(volume_tree, point);

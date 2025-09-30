@@ -18,6 +18,7 @@ struct dblRayInput
   int32_t exclude_count;           // Number of excluded primitives
   int8_t hitOrientation;
   int volume_tree; // TreeID of the volume being queried
+  SurfaceAccelerationStructure volume_accel; // The volume accel 
 };
 
 struct dblRayOutput 
@@ -47,11 +48,8 @@ struct DPTriangleGeomData {
 };
 
 struct dblRayGenData {
-  uint* frameBuffer;                     // Optional for debugging or visuals
-  SurfaceAccelerationStructure world;    // The top-level accel structure
   dblRayInput *ray;
   dblRayOutput *out;
-  int orientation; // Orientation of the ray (0 for exiting, 1 for entering)
 };
 
 /* A small structure of constants that can change every frame without rebuilding the

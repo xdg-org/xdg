@@ -31,6 +31,7 @@ TEST_CASE("Ray Fire on MeshMock (per-backend sections)", "[rayfire][mock]") {
     REQUIRE(volume_tree != ID_NONE);
     REQUIRE(element_tree == ID_NONE);
 
+    rti->init(); // Ensure ray tracer is initialized (e.g. build SBT for GPRT)
     Position origin {0.0, 0.0, 0.0};
     Direction direction {1.0, 0.0, 0.0};
     std::pair<double, MeshID> intersection;
