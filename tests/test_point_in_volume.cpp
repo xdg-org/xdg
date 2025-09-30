@@ -11,74 +11,65 @@
 
 using namespace xdg;
 
-// Actual code for test suite
-static void run_point_in_volume_suite(const std::shared_ptr<RayTracer>& rti) {
-  REQUIRE(rti);
-
-  // Keep MeshMock usage consistent across backends
-  auto mm = std::make_shared<MeshMock>(false);
-  mm->init();
-  REQUIRE(mm->mesh_library() == MeshLibrary::MOCK);
-
-  auto [volume_tree, element_tree] = rti->register_volume(mm, mm->volumes()[0]);
-  REQUIRE(volume_tree != ID_NONE);
-  REQUIRE(element_tree == ID_NONE);
-
-  Position point {0.0, 0.0, 0.0};
-  bool result = rti->point_in_volume(volume_tree, point);
-  REQUIRE(result == true);
-
-  point = {0.0, 0.0, 1000.0};
-  result = rti->point_in_volume(volume_tree, point);
-  REQUIRE(result == false);
-
-  // test a point just inside the positive x boundary
-  point = {4.0 - 1e-6, 0.0, 0.0};
-  result = rti->point_in_volume(volume_tree, point);
-  REQUIRE(result == true);
-
-  // test a point just outside on the positive x boundary
-  // no direction
-  point = {5.001, 0.0, 0.0};
-  result = rti->point_in_volume(volume_tree, point);
-  REQUIRE(result == false);
-
-  // test a point on the positive x boundary
-  // and provide a direction
-  point = {5.0, 0.0, 0.0};
-  Direction dir {1.0, 0.0, 0.0};
-  result = rti->point_in_volume(volume_tree, point, &dir);
-  REQUIRE(result == true);
-
-  // test a point just outside the positive x boundary
-  // and provide a direction
-  point = {5.1, 0.0, 0.0};
-  dir = {1.0, 0.0, 0.0};
-  result = rti->point_in_volume(volume_tree, point, &dir);
-  REQUIRE(result == false);
-
-  // test a point just outside the positive x boundary,
-  // flip the direction
-  point = {5.1, 0.0, 0.0};
-  dir = {-1.0, 0.0, 0.0};
-  result = rti->point_in_volume(volume_tree, point, &dir);
-  REQUIRE(result == false);
-}
-
 // ---------- single test, sections per backend --------------------------------
 
-TEST_CASE("Point-in-volume on MeshMock (per-backend sections)", "[piv][mock]") {
-  // Generate a test only for the backends that we compiled with
-  #if defined(XDG_ENABLE_EMBREE) && defined(XDG_ENABLE_GPRT)
-    auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
-  #elif defined(XDG_ENABLE_EMBREE)
-    auto rt_backend = GENERATE(RTLibrary::EMBREE);
-  #elif defined(XDG_ENABLE_GPRT)
-    auto rt_backend = GENERATE(RTLibrary::GPRT);
-  #endif
+TEST_CASE("Point-in-volume on MeshMock", "[piv][mock]") 
+{
+  // Generate one test run per enabled backend
+  auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
+  check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
 
-  auto rti = create_raytracer(rt_backend);
-  DYNAMIC_SECTION(fmt::format("Ray tracer Backend used = {}", rt_backend)) {
-    run_point_in_volume_suite(rti);
+  DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
+    auto rti = create_raytracer(rt_backend);
+    REQUIRE(rti);
+
+    // Keep MeshMock usage consistent across backends
+    auto mm = std::make_shared<MeshMock>(false);
+    mm->init();
+    REQUIRE(mm->mesh_library() == MeshLibrary::MOCK);
+
+    auto [volume_tree, element_tree] = rti->register_volume(mm, mm->volumes()[0]);
+    REQUIRE(volume_tree != ID_NONE);
+    REQUIRE(element_tree == ID_NONE);
+
+    Position point {0.0, 0.0, 0.0};
+    bool result = rti->point_in_volume(volume_tree, point);
+    REQUIRE(result == true);
+
+    point = {0.0, 0.0, 1000.0};
+    result = rti->point_in_volume(volume_tree, point);
+    REQUIRE(result == false);
+
+    // test a point just inside the positive x boundary
+    point = {4.0 - 1e-6, 0.0, 0.0};
+    result = rti->point_in_volume(volume_tree, point);
+    REQUIRE(result == true);
+
+    // test a point just outside on the positive x boundary
+    // no direction
+    point = {5.001, 0.0, 0.0};
+    result = rti->point_in_volume(volume_tree, point);
+    REQUIRE(result == false);
+
+    // test a point on the positive x boundary
+    // and provide a direction
+    point = {5.0, 0.0, 0.0};
+    Direction dir {1.0, 0.0, 0.0};
+    result = rti->point_in_volume(volume_tree, point, &dir);
+    REQUIRE(result == true);
+
+    // test a point just outside the positive x boundary
+    // and provide a direction
+    point = {5.1, 0.0, 0.0};
+    dir = {1.0, 0.0, 0.0};
+    result = rti->point_in_volume(volume_tree, point, &dir);
+    REQUIRE(result == false);
+
+    // test a point just outside the positive x boundary,
+    // flip the direction
+    point = {5.1, 0.0, 0.0};
+    dir = {-1.0, 0.0, 0.0};
+    result = rti->point_in_volume(volume_tree, point, &dir);
+    REQUIRE(result == false);
   }
 }

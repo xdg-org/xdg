@@ -1,8 +1,6 @@
 #include "xdg/gprt/ray_tracer.h"
 #include "gprt/gprt.h"
 
-
-
 namespace xdg {
 
 GPRTRayTracer::GPRTRayTracer()
@@ -43,8 +41,6 @@ GPRTRayTracer::~GPRTRayTracer()
   for (const auto& [tree, accel] : surface_volume_tree_to_accel_map) {
     gprtAccelDestroy(accel);
   }
-  if (global_element_accel_) gprtAccelDestroy(global_element_accel_);
-  if (global_surface_accel_) gprtAccelDestroy(global_surface_accel_);
 
   // Destroy BLAS structures
   for (const auto& blas : blas_handles_) {
@@ -56,7 +52,7 @@ GPRTRayTracer::~GPRTRayTracer()
     gprtGeomDestroy(geom);
   }
   gprtGeomTypeDestroy(trianglesGeomType_);
-  
+
   // Destroy Buffers
   gprtBufferDestroy(rayInputBuffer_);
   gprtBufferDestroy(rayOutputBuffer_);
@@ -65,7 +61,6 @@ GPRTRayTracer::~GPRTRayTracer()
   // Destroy module and context
   gprtModuleDestroy(module_);
   gprtContextDestroy(context_);
-
 }
 
 void GPRTRayTracer::setup_shaders()
@@ -170,10 +165,10 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
     GPRTAccel blas = gprtAABBAccelCreate(context_, triangleGeom, buildParams_.buildMode);
 
     gprtAccelBuild(context_, blas, buildParams_);
-    gprt::Instance instance;
 
-    instance = gprtAccelGetInstance(blas);
-    instance.mask = 0xff;
+    gprt::Instance instance;
+    instance = gprtAccelGetInstance(blas); // create instance of BLAS to be added to TLAS
+    instance.mask = 0xff; // mask can be used to filter instances during ray traversal. 0xff ensures no filtering
 
     // Store in maps
     surface_to_geometry_map_[surf] = triangleGeom;
