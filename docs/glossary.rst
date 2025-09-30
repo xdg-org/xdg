@@ -32,6 +32,10 @@ Glossary
     FEA
         Finite Element Analysis
 
+    Implicit complement
+        A volume that represents the space outside of a mesh-based geometry. It can also
+        be thought of as the "negative" space of a mesh-based geometry.
+
     `MOAB <https://sigma.mcs.anl.gov/moab-library/>`_
         Mesh-Oriented datABase
 
