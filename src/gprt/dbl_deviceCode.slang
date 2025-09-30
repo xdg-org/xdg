@@ -105,9 +105,9 @@ void
 populate_aabbs(uint3 DispatchThreadID: SV_DispatchThreadID, uniform DPTriangleGeomData record) {
     int primID = DispatchThreadID.x;
     int3 indices = record.index[primID];
-    double3 A = record.vertex[indices.x];
-    double3 B = record.vertex[indices.y];
-    double3 C = record.vertex[indices.z];
+    double3 A = record.vertex[indices[0]];
+    double3 B = record.vertex[indices[1]];
+    double3 C = record.vertex[indices[2]];
     double3 dpaabbmin = min(min(A, B), C);
     double3 dpaabbmax = max(max(A, B), C);
     float3 fpaabbmin = float3(dpaabbmin - float3(FLT_EPSILON, FLT_EPSILON, FLT_EPSILON));
@@ -147,9 +147,9 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     }
 
     int3 indices = record.index[primID];
-    double3 v0 = record.vertex[indices.x];
-    double3 v1 = record.vertex[indices.y];
-    double3 v2 = record.vertex[indices.z];
+    double3 v0 = record.vertex[indices[0]];
+    double3 v1 = record.vertex[indices[1]];
+    double3 v2 = record.vertex[indices[2]];
 
     double3 origin = record.rayIn[rayID].origin;
     double3 direction = record.rayIn[rayID].direction;
@@ -292,11 +292,11 @@ double plucker_edge_test(in double3 vertexa, in double3 vertexb, in double3 ray,
     coordinates... */
 inline bool first(in double3 a, in double3 b)
 {
-    if (a.x < b.x) return true;
+    if (a[0] < b[0]) return true;
 
-    if (a.x == b.x && a.y < b.y) return true;
+    if (a[0] == b[0] && a[1] < b[1]) return true;
 
-    if (a.y == b.y && a.z < b.z) return true;
+    if (a[1] == b[1] && a[2] < b[2]) return true;
 
     return false;
 }
