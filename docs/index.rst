@@ -50,6 +50,7 @@ Table of Contents
 
     intro/index
     usersguide/index
+    usersguide/formats/index
     api/index
     methods/index
     glossary

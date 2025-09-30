@@ -46,12 +46,15 @@ associated with the geometry. Examples of these properties include:
   - Temperatures
   - Tallies
 
-Please refer to :ref:`code-specific-steps` for any properties that may be specific
-to the transport code you intened to use.
+Please refer to the transport code documentation for any properties that may be specific
+to the transport code you intended to use.
 
 .. _geom_tags:
 
-.. table:: **Geometric EntitySet Tag Descriptions**
+Geometry EntitySet Tags
+---------------------
+
+.. table:: Geometric EntitySet Tag Descriptions
 
 +-----------------------+------------------+------------+------+-------------+--------------------------------------------------------------------------------------------------------------+
 | Tag Name              | Type             | Real Type  | Size | Tagged On   | Purpose                                                                                                      |
@@ -59,10 +62,10 @@ to the transport code you intened to use.
 | `GLOBAL_ID`           | `MB_TYPE_INT`    | `int`      | 1    | `EntitySet` | Value of an ID associated with a geometric `EntitySet`.                                                      |
 +-----------------------+------------------+------------+------+-------------+--------------------------------------------------------------------------------------------------------------+
 | `GEOM_SENSE_2`        | `EntityHandle`   | `uint64_t` | 2    | `EntitySet` | Relates a surface to the two volumes on either side of the surface. An entry in the first position           |
-|                       |                  |            |      |             | indicates tht the surafce has a sense that is forward with respect to                                        |
+|                       |                  |            |      |             | indicates that the surface has a sense that is forward with respect to                                       |
 |                       |                  |            |      |             | the volume `EntityHandle` in that position. An entry in the second position                                  |
 |                       |                  |            |      |             | indicates that the surface has a sense reversed with respect to the volume `EntityHandle` in that position.  |
-|                       |                  |            |      |             | Only relevant for `EntitySet`s that represent a surface.                  |
+|                       |                  |            |      |             | Only relevant for `EntitySet`s that represent a surface.                                                     |
 +-----------------------+------------------+------------+------+-------------+--------------------------------------------------------------------------------------------------------------+
 | `GEOM_SENSE_N_ENTS`   | `EntityHandle`   | `uint64_t` | N    | `EntitySet` | Relates a curve to any topologically adjacent surface `EntitySet`s.                                          |
 +-----------------------+------------------+------------+------+-------------+--------------------------------------------------------------------------------------------------------------+
@@ -78,13 +81,15 @@ to the transport code you intened to use.
 |                       |                  |            |      |             | `EntitySet`'s with a `CATEGORY` tag whose value is "Group"                                                   |
 +-----------------------+------------------+------------+------+-------------+--------------------------------------------------------------------------------------------------------------+
 
-
 .. _geom_dim_table:
+
+Dimensionality Values of the `GEOM_DIM` Tag
+--------------------------------------
 
 .. table:: Dimensionality Values of the `GEOM_DIM` Tag
 
 +-----------------+----------------------+
-| Geometry Object | Dimensionality [*]_ |
+| Geometry Object | Dimensionality [*]_  |
 +=================+======================+
 | Vertex          | 0                    |
 +-----------------+----------------------+
@@ -99,7 +104,7 @@ to the transport code you intened to use.
 
 
 Topology¶
-~~~~~~~~
+~~~~~~~~~~
 
 Every mesh-based geometry contains :term:`EntitySet`'s that are either
 volumes or surfaces. There are two types of relationships that can
@@ -129,10 +134,10 @@ that the boundary triangles of the volumetric elements correspond to the
 triangles of the child surface :term:`EntitySet`'s of the volume.
 
 *Note: Curves and vertices are not required for transport, but may be present
-in the mesh file depending on it's point of origin.
+in the mesh file depending on it's point of origin.*
 
 Sense tags¶
-~~~~~~~~~~
+~~~~~~~~~~~~
 
 The parent volumes of each surface are specified using the `GEOM_SENSE_2` tag on
 the surface :term:`EntitySet`. The first entry in the tag corresponds to the volume
