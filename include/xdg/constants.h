@@ -8,6 +8,8 @@
 
 #include "fmt/format.h"
 
+#include "xdg/gprt/shared_enums.h"
+
 namespace xdg {
 
 constexpr double INFTY {std::numeric_limits<double>::max()};
@@ -113,13 +115,6 @@ static Property VOID_MATERIAL {PropertyType::MATERIAL, "void"};
 // Enumerator for different ray fire types
 enum class RayFireType { VOLUME, POINT_CONTAINMENT, ACCUMULATE_HITS, FIND_VOLUME };
 
-//
-enum class HitOrientation {
-  ANY = -1,
-  EXITING = 0,
-  ENTERING = 1,
-};
-
 // Enumerator for different element types (maybe we want more here?)
 enum class SurfaceElementType {
   TRI = 0,
@@ -129,11 +124,6 @@ enum class SurfaceElementType {
 enum class VolumeElementType {
   TET = 0,
   HEX = 1,
-};
-
-enum class FloatingPointPrecision {
-  SINGLE = 0, // Single precision (float)
-  DOUBLE = 1  // Double precision (double)
 };
 
 } // namespace xdg
@@ -152,6 +142,7 @@ struct formatter<xdg::MeshLibrary> : fmt::formatter<std::string> {
     return fmt::formatter<std::string>::format(xdg::MESH_LIB_TO_STR.at(lib), ctx);
   }
 };
+
 
 }
 

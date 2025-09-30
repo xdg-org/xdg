@@ -1,4 +1,5 @@
-#include "../../include/xdg/gprt/sharedCode.h"
+#include "../../include/xdg/gprt/shared_structs.h"
+#include "../../include/xdg/gprt/shared_enums.h"
 
 [[vk::push_constant]]
 dblRayFirePushConstants PC;
@@ -29,8 +30,8 @@ void ray_fire_hit(uniform DPTriangleGeomData record, inout RayFirePayload payloa
     // TODO : Should the rayOutput struct return the next volume ID for the ray back to the host
 
     payload.piv = (hit_kind == HIT_KIND_TRIANGLE_FRONT_FACE) 
-    ? PointInVolume::Outside
-    : PointInVolume::Inside; 
+    ? PointInVolume::OUTSIDE
+    : PointInVolume::INSIDE; 
 
     int instanceID = InstanceID();
 
@@ -93,7 +94,7 @@ void point_in_volume(uniform dblRayGenData record, uniform DPTriangleGeomData me
     // Pass the ray's origin and direction to the payload
     payload.surf_id = -1;
     payload.tlas = world;
-    payload.piv = PointInVolume::Outside; // Initialize point in volume check result to outside (0)
+    payload.piv = PointInVolume::OUTSIDE; // Initialize point in volume check result to outside (0)
     
     TraceRay(world, RAY_FLAG_NONE, 0xff, 0, 1, rayDesc, payload);
 
@@ -239,7 +240,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     uint hit_kind = norm_dot_dir < 0 ? HIT_KIND_TRIANGLE_FRONT_FACE
                                      : HIT_KIND_TRIANGLE_BACK_FACE;
 
-    int hitOrientation = record.rayIn[rayID].hitOrientation;
+    HitOrientation hitOrientation = record.rayIn[rayID].hitOrientation;
 
     if (orientation_cull(direction, norm, hitOrientation))
     {
@@ -259,10 +260,10 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
 
 // ------------------------------------------------- Helper functions -------------------------------------------------
 
-bool orientation_cull(in double3 ray, in double3 normal, in int orientation) {
-    if (orientation == -1) return false; // No culling
-    if (orientation == 0) return dot(ray, normal) < 0.0; // Cull exiting rays
-    if (orientation == 1) return dot(ray, normal) > 0.0; // Cull entering rays
+bool orientation_cull(in double3 ray, in double3 normal, in HitOrientation orientation) {
+    if (orientation == HitOrientation::ANY) return false; // No culling
+    if (orientation == HitOrientation::EXITING) return dot(ray, normal) < 0.0; // Cull exiting rays
+    if (orientation == HitOrientation::ENTERING) return dot(ray, normal) > 0.0; // Cull entering rays
     return false; // Default case, no culling
 }
 

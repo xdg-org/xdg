@@ -13,7 +13,7 @@
 #include "xdg/ray.h"
 #include "xdg/error.h"
 #include "gprt/gprt.h"
-#include "sharedCode.h"
+#include "shared_structs.h"
 
 extern GPRTProgram dbl_deviceCode;
 namespace xdg {

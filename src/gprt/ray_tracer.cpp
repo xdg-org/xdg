@@ -228,7 +228,7 @@ bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree,
   rayInput[0].tMax = INFTY; // Set a large distance limit
   rayInput[0].tMin = 0.0;
   rayInput[0].volume_tree = tree; // Set the TreeID of the volume being queried
-  rayInput[0].hitOrientation = -1; // No orientation culling for point-in-volume check
+  rayInput[0].hitOrientation = HitOrientation::ANY; // No orientation culling for point-in-volume check
 
   if (exclude_primitives) {
     if (!exclude_primitives->empty()) gprtBufferResize(context_, excludePrimitivesBuffer_, exclude_primitives->size(), false);
@@ -283,7 +283,7 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
   rayInput[0].direction = {direction.x, direction.y, direction.z};
   rayInput[0].tMax = dist_limit;
   rayInput[0].tMin = 0.0;
-  rayInput[0].hitOrientation = static_cast<int>(orientation); // Set orientation for the ray
+  rayInput[0].hitOrientation = orientation; // Set orientation for the ray
   rayInput[0].volume_tree = tree; // Set the TreeID of the volume being queried
 
   if (exclude_primitives) {

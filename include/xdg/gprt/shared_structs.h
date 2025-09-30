@@ -1,7 +1,5 @@
 #include "gprt.h"
 
-enum PointInVolume : int { Outside = 0, Inside = 1 };
-
 struct GPRTPrimitiveRef
 {
   int id; // ID of the primitive
@@ -16,7 +14,7 @@ struct dblRayInput
   double tMax; // Maximum distance for ray intersection
   int32_t* exclude_primitives; // Optional for excluding primitives
   int32_t exclude_count;           // Number of excluded primitives
-  int8_t hitOrientation;
+  HitOrientation hitOrientation;
   int volume_tree; // TreeID of the volume being queried
   SurfaceAccelerationStructure volume_accel; // The volume accel 
 };
@@ -40,7 +38,7 @@ struct DPTriangleGeomData {
   int forward_vol;
   int reverse_vol;
   dblRayInput *rayIn; // double precision rays
-  int8_t hitOrientation;
+  HitOrientation hitOrientation;
   int forward_tree; // TreeID of the forward volume
   int reverse_tree; // TreeID of the reverse volume
   GPRTPrimitiveRef* primitive_refs;
