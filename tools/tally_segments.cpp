@@ -73,7 +73,6 @@ else
 const auto& mm = xdg->mesh_manager();
 mm->load_file(args.get<std::string>("filename"));
 mm->init();
-mm->parse_metadata();
 xdg->prepare_raytracer();
 
 // get the bounding box of the mesh
