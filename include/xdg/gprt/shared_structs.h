@@ -1,4 +1,5 @@
 #include "gprt.h"
+#include "../shared_enums.h"
 
 struct GPRTPrimitiveRef
 {

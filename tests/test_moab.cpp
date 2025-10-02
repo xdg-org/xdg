@@ -72,7 +72,8 @@ TEST_CASE("Test BVH Build")
 
   // Generate one test run per enabled backend
   auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
-  check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
+  // skip if backend not enabled at configuration time
+  check_ray_tracer_supported(rt_backend); 
 
   // Actual testing logic
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
@@ -140,7 +141,8 @@ TEST_CASE("MOAB Get Surface Mesh")
 {
   // Generate one test run per enabled backend
   auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
-  check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
+  // skip if backend not enabled at configuration time
+  check_ray_tracer_supported(rt_backend); 
   
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB, rt_backend);

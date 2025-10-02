@@ -83,8 +83,6 @@ class GPRTRayTracer : public RayTracer {
                   const Position& origin,
                   const Direction& direction,
                   double& dist) const override {
-      // Check if the ray is occluded
-
       fatal_error("Occlusion queries are not currently supported with GPRT ray tracer");
       return false;
     }

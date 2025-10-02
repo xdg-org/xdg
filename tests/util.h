@@ -28,9 +28,8 @@ inline void check_ray_tracer_supported(xdg::RTLibrary rt) {
   #endif
 }
 
-// Factory method to create ray tracer based on which library selected
+// Factory function to create ray tracer based on which library selected
 inline std::shared_ptr<xdg::RayTracer> create_raytracer(xdg::RTLibrary rt) {
-
   #ifdef XDG_ENABLE_EMBREE
   if (rt == xdg::RTLibrary::EMBREE) 
     return std::make_shared<xdg::EmbreeRayTracer>();

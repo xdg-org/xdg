@@ -1,5 +1,4 @@
 #include "../../include/xdg/gprt/shared_structs.h"
-#include "../../include/xdg/gprt/shared_enums.h"
 
 [[vk::push_constant]]
 dblRayFirePushConstants PC;

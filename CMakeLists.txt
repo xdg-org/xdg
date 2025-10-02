@@ -239,17 +239,15 @@ if (XDG_ENABLE_EMBREE)
   target_link_libraries(xdg embree fmt::fmt)
 endif()
 
-# compile both single and double precision shaders for GPRT
+# Compile device code for each slang file (currently only dbl_deviceCode.slang)
 foreach(device_code ${xdg_device_codes})
   if (XDG_ENABLE_GPRT)
     target_link_libraries(xdg $<BUILD_INTERFACE:gprt>)
-    # Compile device code for single precision shaders
     embed_devicecode(
     OUTPUT_TARGET
     ${device_code}
     HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/include/xdg/gprt/shared_structs.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/xdg/gprt/shared_enums.h
     SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/${device_code}.slang
   )
@@ -282,7 +280,7 @@ install(TARGETS xdg
   INCLUDES DESTINATION include
 )
 
-# Install both single and double precision device code for GPRT
+# Install targets for each slang file compiled (currently only dbl_deviceCode)
 foreach(device_code ${xdg_device_codes})
   install(TARGETS ${device_code}
     EXPORT xdg-targets

@@ -90,8 +90,8 @@ GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager>& mesh_manager,
   // set up ray tracing tree for boundary faces of the volume
   TreeID faces_tree = create_surface_tree(mesh_manager, volume_id);
   // set up point location tree for any volumetric elements. TODO - currently not supported with GPRT
-  // TreeID element_tree = create_element_tree(mesh_manager, volume_id); 
-  return {faces_tree, TREE_NONE}; // return TREE_NONE for element tree until implmemented
+  TreeID element_tree = create_element_tree(mesh_manager, volume_id); 
+  return {faces_tree, element_tree}; // return TREE_NONE for element tree until implmemented
 }
 
 SurfaceTreeID
@@ -204,7 +204,7 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
 ElementTreeID
 GPRTRayTracer::create_element_tree(const std::shared_ptr<MeshManager>& mesh_manager, MeshID volume_id)
 {
-  fatal_error("Element trees not currently supported with GPRT ray tracer");
+  warning("Element trees not currently supported with GPRT ray tracer");
   return TREE_NONE;
 };
 
