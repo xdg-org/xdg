@@ -8,39 +8,38 @@
 
 namespace xdg {
 
-constexpr bool EXIT_EARLY = false;
+constexpr PluckerIntersectionResult EXIT_EARLY = {false, 0.0};
 
-double plucker_edge_test(const Position& vertexa, const Position& vertexb,
-  const Position& ray, const Position& ray_normal)
+double plucker_edge_test(const dp::vec3& vertexa, const dp::vec3& vertexb,
+  const dp::vec3& ray, const dp::vec3& ray_normal)
 {
   double pip;
   if (lower(vertexa, vertexb)) {
-    const Position edge = vertexb - vertexa;
-    const Position edge_normal = edge.cross(vertexa);
-    pip = ray.dot(edge_normal) + ray_normal.dot(edge);
+    const dp::vec3 edge = vertexb - vertexa;
+    const dp::vec3 edge_normal = dp::cross(edge, vertexa);
+    pip = dp::dot(ray, edge_normal) + dp::dot(ray_normal, edge);
   } else {
-    const Position edge = vertexa - vertexb;
-    const Position edge_normal = edge.cross(vertexb);
-    pip = ray.dot(edge_normal) + ray_normal.dot(edge);
+    const dp::vec3 edge = vertexa - vertexb;
+    const dp::vec3 edge_normal = dp::cross(edge, vertexb);
+    pip = dp::dot(ray, edge_normal) + dp::dot(ray_normal, edge);
     pip = -pip;
   }
-  if (PLUCKER_ZERO_TOL > fabs(pip))
+  if (PLUCKER_ZERO_TOL > dp::abs(pip))  // <-- absd
     pip = 0.0;
   return pip;
 }
 
-bool plucker_ray_tri_intersect(const std::array<Position, 3> vertices,
-                               const Position& origin,
-                               const Direction& direction,
-                               double& dist_out,
+PluckerIntersectionResult plucker_ray_tri_intersect(const std::array<dp::vec3, 3> vertices,
+                               const dp::vec3& origin,
+                               const dp::vec3& direction,
                                const double nonneg_ray_len,
                                const double* neg_ray_len,
                                const int* orientation)
 {
-  dist_out = INFTY;
+  double dist_out = INFTY;
 
-  const Position raya = direction;
-  const Position rayb = direction.cross(origin);
+  const dp::vec3 raya = direction;
+  const dp::vec3 rayb = direction.cross(origin);
 
   // Determine the value of the first Plucker coordinate from edge 0
   double plucker_coord0 =
@@ -98,7 +97,7 @@ bool plucker_ray_tri_intersect(const std::array<Position, 3> vertices,
     1.0 / (plucker_coord0 + plucker_coord1 + plucker_coord2);
   assert(0.0 != inverse_sum);
 
-  const Position intersection(plucker_coord0 * inverse_sum * vertices[2] +
+  const dp::vec3 intersection(plucker_coord0 * inverse_sum * vertices[2] +
                               plucker_coord1 * inverse_sum * vertices[0] +
                               plucker_coord2 * inverse_sum * vertices[1]);
 
@@ -106,9 +105,9 @@ bool plucker_ray_tri_intersect(const std::array<Position, 3> vertices,
   int idx = 0;
   double max_abs_dir = 0;
   for (unsigned int i = 0; i < 3; ++i) {
-    if (fabs(direction[i]) > max_abs_dir) {
+    if (dp::abs(direction[i]) > max_abs_dir) {
       idx = i;
-      max_abs_dir = fabs(direction[i]);
+      max_abs_dir = dp::abs(direction[i]);
     }
   }
 
@@ -122,7 +121,7 @@ bool plucker_ray_tri_intersect(const std::array<Position, 3> vertices,
     return EXIT_EARLY;
   }
 
-  return true;
+  return {true, dist_out};
 }
 
 

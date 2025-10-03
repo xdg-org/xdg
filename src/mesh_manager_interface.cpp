@@ -145,7 +145,7 @@ MeshManager::next_element(MeshID current_element,
                            const Position& r,
                            const Position& u) const
 {
-   std::array<double, 4> dists = {INFTY, INFTY, INFTY, INFTY};
+  std::array<double, 4> dists = {INFTY, INFTY, INFTY, INFTY};
   std::array<bool, 4> hit_types;
 
   auto element_face_accessor = ElementFaceAccessor::create(this, current_element);
@@ -162,15 +162,17 @@ MeshManager::next_element(MeshID current_element,
     // with respect to the element
     int orientation = 1;
     // perform ray-triangle intersection
-    hit_types[i] = plucker_ray_tri_intersect(coords,
-                                             r,
-                                             u,
-                                             dists[i],
-                                             INFTY,
-                                             nullptr,
-                                             &orientation);
+
+    auto result = plucker_ray_tri_intersect(coords,
+                                            r,
+                                            u,
+                                            INFTY,
+                                            nullptr,
+                                            &orientation);
+
+    hit_types[i] = result.hit;
     // set distance and ensure it is non-negative
-    dists[i] = std::max(0.0, dists[i]);
+    dists[i] = result.hit ? std::max(0.0, result.t) : INFTY;
   }
 
   // determine the minimum distance to exit and the face number
