@@ -1,7 +1,6 @@
 #ifndef _XDG_PLUCKER_H
 #define _XDG_PLUCKER_H
 
-#include "xdg/vec3da.h"
 #include "xdg/geometry/dp_math.h"
 
 namespace xdg {
@@ -33,7 +32,7 @@ constexpr PluckerIntersectionResult EXIT_EARLY = {false, 0.0};
   representation. This would be more simple with MOAB handles instead of
   coordinates... 
 */
-inline bool first(const dp::vec3& a, const dp::vec3& b) {
+inline bool first(dp::vec3 a, dp::vec3 b) {
   if (a[0] < b[0]) return true;  
   if (a[0] > b[0]) return false;
 
@@ -43,11 +42,11 @@ inline bool first(const dp::vec3& a, const dp::vec3& b) {
   return a[2] < b[2];
 }
 
-inline double plucker_edge_test(const dp::vec3& vertexa, const dp::vec3& vertexb,
-                                const dp::vec3& ray, const dp::vec3& ray_normal)
+inline double plucker_edge_test(dp::vec3 vertexa, dp::vec3 vertexb,
+                                dp::vec3 ray, dp::vec3 ray_normal)
 {
   double pip;
-  if (lower(vertexa, vertexb)) {
+  if (first(vertexa, vertexb)) {
     const dp::vec3 edge = vertexb - vertexa;
     const dp::vec3 edge_normal = dp::cross(edge, vertexa);
     pip = dp::dot(ray, edge_normal) + dp::dot(ray_normal, edge);
@@ -57,22 +56,23 @@ inline double plucker_edge_test(const dp::vec3& vertexa, const dp::vec3& vertexb
     pip = dp::dot(ray, edge_normal) + dp::dot(ray_normal, edge);
     pip = -pip;
   }
-  if (PLUCKER_ZERO_TOL > dp::abs(pip))  // <-- absd
+  if (dp::DBL_ZERO_TOL > dp::abs(pip))  // <-- absd
     pip = 0.0;
   return pip;
 }
 
-inline PluckerIntersectionResult plucker_ray_tri_intersect(const std::array<dp::vec3, 3> vertices,
-                               const dp::vec3& origin,
-                               const dp::vec3& direction,
-                               const double nonneg_ray_len = INFTY,
-                               const double* neg_ray_len = nullptr,
-                               const int* orientation = nullptr)
+inline PluckerIntersectionResult plucker_ray_tri_intersect(dp::vec3 vertices[3],
+                                dp::vec3 origin,
+                                dp::vec3 direction,
+                                double tMax,
+                                double tMin,
+                                bool useOrientation,
+                                int orientation)
 {
-  double dist_out = INFTY;
+  double dist_out = dp::INFTY;
 
   const dp::vec3 raya = direction;
-  const dp::vec3 rayb = direction.cross(origin);
+  const dp::vec3 rayb = dp::cross(direction, origin);
 
   // Determine the value of the first Plucker coordinate from edge 0
   double plucker_coord0 =
@@ -80,7 +80,7 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(const std::array<dp::
 
   // If orientation is set, confirm that sign of plucker_coordinate indicate
   // correct orientation of intersection
-  if (orientation && (*orientation) * plucker_coord0 > 0) {
+  if (useOrientation && orientation * plucker_coord0 > 0) {
     return EXIT_EARLY;
   }
 
@@ -90,8 +90,8 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(const std::array<dp::
 
   // If orientation is set, confirm that sign of plucker_coordinate indicate
   // correct orientation of intersection
-  if (orientation) {
-    if ((*orientation) * plucker_coord1 > 0) {
+  if (useOrientation) {
+    if (orientation * plucker_coord1 > 0) {
       return EXIT_EARLY;
     }
     // If the orientation is not specified, all plucker_coords must be the same
@@ -107,8 +107,8 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(const std::array<dp::
 
   // If orientation is set, confirm that sign of plucker_coordinate indicate
   // correct orientation of intersection
-  if (orientation) {
-    if ((*orientation) * plucker_coord2 > 0) {
+  if (useOrientation) {
+    if (orientation * plucker_coord2 > 0) {
       return EXIT_EARLY;
     }
     // If the orientation is not specified, all plucker_coords must be the same
@@ -128,16 +128,15 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(const std::array<dp::
   // get the distance to intersection
   const double inverse_sum =
     1.0 / (plucker_coord0 + plucker_coord1 + plucker_coord2);
-  assert(0.0 != inverse_sum);
 
-  const dp::vec3 intersection(plucker_coord0 * inverse_sum * vertices[2] +
-                              plucker_coord1 * inverse_sum * vertices[0] +
-                              plucker_coord2 * inverse_sum * vertices[1]);
+  const dp::vec3 intersection = dp::vec3(plucker_coord0 * inverse_sum * vertices[2] +
+                                         plucker_coord1 * inverse_sum * vertices[0] +
+                                         plucker_coord2 * inverse_sum * vertices[1]);
 
   // To minimize numerical error, get index of largest magnitude direction.
   int idx = 0;
   double max_abs_dir = 0;
-  for (unsigned int i = 0; i < 3; ++i) {
+  for (uint i = 0; i < 3; ++i) {
     if (dp::abs(direction[i]) > max_abs_dir) {
       idx = i;
       max_abs_dir = dp::abs(direction[i]);
@@ -146,13 +145,18 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(const std::array<dp::
 
   dist_out = (intersection[idx] - origin[idx]) / direction[idx];
 
-  // is the intersection within distance limits?
-  if ((nonneg_ray_len && nonneg_ray_len < dist_out) ||  // intersection is beyond positive limit
-      (neg_ray_len && *neg_ray_len >= dist_out) ||      // intersection is behind negative limit
-      (!neg_ray_len && 0 > dist_out))                    // unless neg_ray_len used, don't allow negative distances
-  {
-    return EXIT_EARLY;
+  // Barycentric coords check
+  double u = plucker_coord2 * inverse_sum;
+  double v = plucker_coord0 * inverse_sum;
+
+  // Barycentric coords check
+  if (u < 0.0 || v < 0.0 || (u + v) > 1.0) {
+      dist_out = -1.0;
   }
+
+  // is the intersection within distance limits?
+  if (dist_out < tMin || dist_out > tMax) return EXIT_EARLY;
+
 
   return {true, dist_out};
 }

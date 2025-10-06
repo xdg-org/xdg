@@ -65,7 +65,13 @@ void TriangleIntersectionFunc(RTCIntersectFunctionNArguments* args) {
   Direction ray_direction = {ray.ddir[0], ray.ddir[1], ray.ddir[2]};
 
   // local variable for distance to the triangle intersection
-  auto result = plucker_ray_tri_intersect(vertices, ray_origin, ray_direction);
+  auto result = plucker_ray_tri_intersect(vertices.data(), 
+                                          ray_origin, 
+                                          ray_direction,
+                                          rayhit->ray.dtfar,
+                                          0.0,
+                                          false,
+                                          0);
   double plucker_dist = result.t;
 
   if (!result.hit) return;
@@ -141,7 +147,13 @@ void TriangleOcclusionFunc(RTCOccludedFunctionNArguments* args) {
   // get the double precision ray from the args
   RTCSurfaceDualRay* ray = (RTCSurfaceDualRay*) args->ray;
 
-  auto result = plucker_ray_tri_intersect(vertices, ray->dorg, ray->ddir);
+  auto result = plucker_ray_tri_intersect(vertices.data(), 
+                                          ray->dorg, 
+                                          ray->ddir,
+                                          ray->dtfar,
+                                          0.0,
+                                          false,
+                                          0);
   double plucker_dist = result.t;
 
   if (result.hit) {
