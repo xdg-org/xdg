@@ -8,7 +8,7 @@
 
 #include "fmt/format.h"
 
-#include "xdg/gprt/shared_enums.h"
+#include "xdg/shared_enums.h"
 
 namespace xdg {
 
