@@ -163,12 +163,13 @@ MeshManager::next_element(MeshID current_element,
     int orientation = 1;
     // perform ray-triangle intersection
 
-    auto result = plucker_ray_tri_intersect(coords,
+    auto result = plucker_ray_tri_intersect(coords.data(),
                                             r,
                                             u,
                                             INFTY,
-                                            nullptr,
-                                            &orientation);
+                                            0.0,
+                                            true,
+                                            orientation);
 
     hit_types[i] = result.hit;
     // set distance and ensure it is non-negative

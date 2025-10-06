@@ -1,4 +1,5 @@
-#include "../../include/xdg/gprt/shared_structs.h"
+#include "xdg/gprt/shared_structs.h"
+#include "xdg/geometry/plucker.h"
 
 [[vk::push_constant]]
 dblRayFirePushConstants PC;
@@ -141,7 +142,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     dp::vec3 v0 = record.vertex[indices[0]];
     dp::vec3 v1 = record.vertex[indices[1]];
     dp::vec3 v2 = record.vertex[indices[2]];
-    dp::vec3[3] vertices = { v0, v1, v2 };
+    dp::vec3 vertices[3] = { v0, v1, v2 };
 
     // Load rays
     dp::vec3 origin = record.rayIn[rayID].origin;
@@ -149,54 +150,20 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     double tMin = record.rayIn[rayID].tMin;
     double tMax = record.rayIn[rayID].tMax;
 
-    // ----- Perform plucker intersection test -----
+    bool useOrientation = false;
+    int orientation = 0;
 
-    const dp::vec3 raya = direction;
-    const dp::vec3 rayb = dp::cross(direction, origin);
+    xdg::PluckerIntersectionResult result = xdg::plucker_ray_tri_intersect(vertices, 
+                                                                           origin, 
+                                                                           direction, 
+                                                                           tMax, 
+                                                                           tMin, 
+                                                                           useOrientation, 
+                                                                           orientation);
+    if (result.hit == false) return; // No intersection
 
-    double plucker_coord0 = plucker_edge_test(v0, v1, raya, rayb);
-    double plucker_coord1 = plucker_edge_test(v1, v2, raya, rayb);
+    double t = result.t;
     
-    // sign-consistency check
-    if ((0.0 < plucker_coord0 && 0.0 > plucker_coord1) || (0.0 > plucker_coord0 && 0.0 < plucker_coord1)) return;
-
-    double plucker_coord2 = plucker_edge_test(v2, v0, raya, rayb);
-    if ((0.0 < plucker_coord1 && 0.0 > plucker_coord2) || (0.0 > plucker_coord1 && 0.0 < plucker_coord2) ||
-        (0.0 < plucker_coord0 && 0.0 > plucker_coord2) || (0.0 > plucker_coord0 && 0.0 < plucker_coord2)) return;
-
-    // coplanar check
-    if (0.0 == plucker_coord0 && 0.0 == plucker_coord1 && 0.0 == plucker_coord2) return;
-
-    const double inverse_sum = 1.0 / (plucker_coord0 + plucker_coord1 + plucker_coord2);
-    const dp::vec3 intersection = dp::vec3(plucker_coord0 * inverse_sum * v2 +
-                                         plucker_coord1 * inverse_sum * v0 +
-                                         plucker_coord2 * inverse_sum * v1);
-
-    int idx = 0;
-    double max_abs_dir = 0;
-    for(uint i = 0; i < 3; ++i) {
-        if(abs(direction[i]) > max_abs_dir) {
-            idx = i;
-            max_abs_dir = abs(direction[i]);
-        }
-    }
-    const double dist = (intersection[idx] - origin[idx]) / direction[idx];
-
-    double t = dist;
-    double u = plucker_coord2 * inverse_sum;
-    double v = plucker_coord0 * inverse_sum;
-
-    // Barycentric coords check
-    if (u < 0.0 || v < 0.0 || (u + v) > 1.0) {
-        t = -1.0;
-    }
-
-    // Check t range
-    if (t > tMax) return;
-    if (t < tMin) return;
-
-    // ----- End of plucker intersection test -----
-
     DPAttribute attr;
     attr.f64t = t;
 
