@@ -157,7 +157,6 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(dp::vec3 vertices[3],
   // is the intersection within distance limits?
   if (dist_out < tMin || dist_out > tMax) return EXIT_EARLY;
 
-
   return {true, dist_out};
 }
 
