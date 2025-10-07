@@ -161,7 +161,6 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
                                                                            useOrientation, 
                                                                            orientation);
     if (result.hit == false) return; // No intersection
-
     double t = result.t;
     
     DPAttribute attr;
