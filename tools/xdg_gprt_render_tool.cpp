@@ -6,7 +6,7 @@
 
 #include "xdg/xdg.h"
 #include "gprt/gprt.h"
-#include "xdg_gprt_renderer_sharedCode.h"
+#include "xdg_gprt_render_tool_shared.h"
 #include "argparse/argparse.hpp"
 
 
@@ -25,7 +25,7 @@
   std::cout << GPRT_TERMINAL_DEFAULT;
 
 using namespace xdg;
-extern GPRTProgram xdg_gprt_renderer_deviceCode;
+extern GPRTProgram xdg_gprt_render_tool_deviceCode;
 
 
 // Initial image resolution
@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
 
   // Initialize GPRT context and modules
   GPRTContext context = gprtContextCreate();
-  GPRTModule module = gprtModuleCreate(context, xdg_gprt_renderer_deviceCode);  
+  GPRTModule module = gprtModuleCreate(context, xdg_gprt_render_tool_deviceCode);  
 
   // New: Create a "triangle" geometry type and set it's closest-hit program
   auto trianglesGeomType = gprtGeomTypeCreate<TrianglesGeomData>(context, GPRT_TRIANGLES);
@@ -123,11 +123,15 @@ int main(int argc, char* argv[]) {
     gprtTrianglesSetIndices(trianglesGeom[i], connectivity_buffers[i], index_counts[i]);
   }
 
+  // Create build objects
+  GPRTBuildParams buildParams;
+  buildParams.buildMode = GPRT_BUILD_MODE_FAST_BUILD_NO_UPDATE;
+
   // Create a BLAS for each geometry
   std::vector<GPRTAccel> blasList;
   for (size_t i = 0; i < trianglesGeom.size(); i++) {
-      GPRTAccel blas = gprtTriangleAccelCreate(context, trianglesGeom[i], GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
-      gprtAccelBuild(context, blas, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+      GPRTAccel blas = gprtTriangleAccelCreate(context, trianglesGeom[i], buildParams.buildMode);
+      gprtAccelBuild(context, blas, buildParams);
       blasList.push_back(blas);
   }
 
@@ -139,7 +143,7 @@ int main(int argc, char* argv[]) {
 
   auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context, instances.size(), instances.data());
   GPRTAccel world = gprtInstanceAccelCreate(context, instances.size(), instanceBuffer);
-  gprtAccelBuild(context, world, GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE);
+  gprtAccelBuild(context, world, buildParams);
 
   // Set up ray generation and miss programs
   GPRTRayGenOf<RayGenData> rayGen = gprtRayGenCreate<RayGenData>(context, module, "raygen");
@@ -150,6 +154,7 @@ int main(int argc, char* argv[]) {
   // we go to trace our rays.
   RayGenData *rayGenData = gprtRayGenGetParameters(rayGen);
   rayGenData->world = gprtAccelGetDeviceAddress(world);
+
 
   GPRTBufferOf<uint32_t> frameBuffer = gprtDeviceBufferCreate<uint32_t>(context, fbSize.x * fbSize.y);
   rayGenData->frameBuffer = gprtBufferGetDevicePointer(frameBuffer);
