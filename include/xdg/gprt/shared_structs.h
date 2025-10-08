@@ -15,7 +15,7 @@ struct dblRayInput
   double tMax; // Maximum distance for ray intersection
   int32_t* exclude_primitives; // Optional for excluding primitives
   int32_t exclude_count;           // Number of excluded primitives
-  HitOrientation hitOrientation;
+  xdg::HitOrientation hitOrientation;
   int volume_tree; // TreeID of the volume being queried
   SurfaceAccelerationStructure volume_accel; // The volume accel 
 };
@@ -25,7 +25,7 @@ struct dblRayOutput
   double distance;
   int surf_id;
   int primitive_id;
-  PointInVolume piv; // Point in volume check result (0 for outside, 1 for inside)
+  xdg::PointInVolume piv; // Point in volume check result (0 for outside, 1 for inside)
 };
 
 /* variables for double precision triangle mesh geometry */
@@ -39,7 +39,7 @@ struct DPTriangleGeomData {
   int forward_vol;
   int reverse_vol;
   dblRayInput *rayIn; // double precision rays
-  HitOrientation hitOrientation;
+  xdg::HitOrientation hitOrientation;
   int forward_tree; // TreeID of the forward volume
   int reverse_tree; // TreeID of the reverse volume
   GPRTPrimitiveRef* primitive_refs;
@@ -57,5 +57,4 @@ struct dblRayGenData {
 struct dblRayFirePushConstants {
   double tMax;
   double tMin;
-  int8_t hitOrientation;
 };
