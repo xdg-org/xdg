@@ -104,6 +104,7 @@ endif()
 
 
 # GPRT
+set(GPRT_BUILD_SHARED ON  CACHE BOOL "Build GPRT as a shared library" FORCE)
 if (XDG_ENABLE_GPRT)
   add_subdirectory(vendor/GPRT)
 endif() 
@@ -229,6 +230,7 @@ endif()
 
 if (XDG_ENABLE_GPRT)
   target_compile_definitions(xdg PUBLIC XDG_ENABLE_GPRT)
+  target_link_options(xdg INTERFACE -Wl,--unresolved-symbols=ignore-in-shared-libs)
 endif()
 
 # ==========================
@@ -239,10 +241,9 @@ if (XDG_ENABLE_EMBREE)
   target_link_libraries(xdg embree fmt::fmt)
 endif()
 
-# Compile device code for each slang file (currently only dbl_deviceCode.slang)
-foreach(device_code ${xdg_device_codes})
-  if (XDG_ENABLE_GPRT)
-    target_link_libraries(xdg $<BUILD_INTERFACE:gprt>)
+if (XDG_ENABLE_GPRT)
+  # Compile device code for each slang file (currently only dbl_deviceCode.slang)
+  foreach(device_code ${xdg_device_codes})
     embed_devicecode(
     OUTPUT_TARGET
     ${device_code}
@@ -250,10 +251,11 @@ foreach(device_code ${xdg_device_codes})
     ${CMAKE_CURRENT_SOURCE_DIR}/include/xdg/gprt/shared_structs.h
     SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/${device_code}.slang
-  )
-  target_link_libraries(xdg ${device_code})
-  endif()
-endforeach()
+    )
+    target_link_libraries(xdg ${device_code})
+  endforeach()
+target_link_libraries(xdg $<BUILD_INTERFACE:gprt>)
+endif()
 
 # ===================
 # Link mesh libraries
@@ -280,6 +282,15 @@ install(TARGETS xdg
   INCLUDES DESTINATION include
 )
 
+# Install GPRT Targets from shared library
+if (TARGET gprt)
+  install(TARGETS gprt
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+endif()
+
 # Install targets for each slang file compiled (currently only dbl_deviceCode)
 foreach(device_code ${xdg_device_codes})
   install(TARGETS ${device_code}
@@ -288,8 +299,6 @@ foreach(device_code ${xdg_device_codes})
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   )
 endforeach()
-
-
 
 install(EXPORT xdg-targets
   FILE XDGTargets.cmake
