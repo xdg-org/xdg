@@ -17,9 +17,9 @@ using namespace xdg;
 TEST_CASE("Ray Fire on MeshMock (per-backend sections)", "[rayfire][mock]") {
   // Generate one test run per enabled backend
   auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
-  check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
+    check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
     auto rti = create_raytracer(rt_backend);
     REQUIRE(rti);
 
