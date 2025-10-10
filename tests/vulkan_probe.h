@@ -20,11 +20,4 @@ inline bool system_has_vk_device(uint32_t min_instance = VK_API_VERSION_1_1) {
   VkInstance instance = VK_NULL_HANDLE;
   if (vkCreateInstance(&ici, nullptr, &instance) != VK_SUCCESS || !instance)
     return false;
-
-  // See if there’s at least one physical device
-  uint32_t count = 0;
-  vkEnumeratePhysicalDevices(instance, &count, nullptr);
-
-  vkDestroyInstance(instance, nullptr);
-  return count > 0;
 }
