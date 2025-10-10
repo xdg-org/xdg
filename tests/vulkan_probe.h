@@ -8,6 +8,7 @@ inline bool system_has_vk_device(uint32_t min_instance = VK_API_VERSION_1_1) {
   uint32_t loaderVer = VK_API_VERSION_1_0;
   vkEnumerateInstanceVersion(&loaderVer);
 
+  // Create VK instance
   VkApplicationInfo app{ VK_STRUCTURE_TYPE_APPLICATION_INFO };
   app.pApplicationName = "vk-probe";
   app.applicationVersion = 1;
@@ -21,5 +22,20 @@ inline bool system_has_vk_device(uint32_t min_instance = VK_API_VERSION_1_1) {
   VkInstance instance = VK_NULL_HANDLE;
   if (vkCreateInstance(&ici, nullptr, &instance) != VK_SUCCESS || !instance)
     return false;
+
+  // Look for at least one physical device
+  uint32_t devCount = 0;
+  VkResult r = vkEnumeratePhysicalDevices(instance, &devCount, nullptr);
+
+  // Clean up the instance before returning
+  vkDestroyInstance(instance, nullptr);
+
+  // Check for errors and non-zero device count
+  if (r != VK_SUCCESS || devCount == 0) {
+    return false;
+  }
+
+  return true; // VK device detected
 }
+
 #endif
