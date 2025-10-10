@@ -4,6 +4,7 @@
 
 #include "xdg/constants.h"
 #include "xdg/ray_tracers.h"
+#include "vulkan_probe.h"
 
 static std::random_device rd;
 static std::mt19937 gen(rd());
@@ -17,13 +18,17 @@ inline double rand_double(double min, double max)
 inline void check_ray_tracer_supported(xdg::RTLibrary rt) {
   #ifndef XDG_ENABLE_EMBREE
   if (rt == xdg::RTLibrary::EMBREE) {
-    SKIP("Embree backend not built; skipping.");
+    SKIP("XDG not built with Embree backend; skipping Embree tests.");
   }
   #endif
 
   #ifndef XDG_ENABLE_GPRT
   if (rt == xdg::RTLibrary::GPRT) {
-    SKIP("GPRT backend not built; skipping.");
+    SKIP("XDG not built with GPRT backend; skipping GPRT tests.");
+  }
+  #else
+  if (rt == xdg::RTLibrary::GPRT && !system_has_vk_device()) {
+    SKIP("No Vulkan device found; skipping GPRT tests.");
   }
   #endif
 }
