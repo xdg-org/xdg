@@ -1,5 +1,6 @@
-// vulkan_probe.h
 #pragma once
+
+#ifdef XDG_ENABLE_GPRT
 #include <iostream>
 #include <vulkan/vulkan.h>
 
@@ -21,3 +22,4 @@ inline bool system_has_vk_device(uint32_t min_instance = VK_API_VERSION_1_1) {
   if (vkCreateInstance(&ici, nullptr, &instance) != VK_SUCCESS || !instance)
     return false;
 }
+#endif

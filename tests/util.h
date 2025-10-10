@@ -26,7 +26,7 @@ inline void check_ray_tracer_supported(xdg::RTLibrary rt) {
   if (rt == xdg::RTLibrary::GPRT) {
     SKIP("XDG not built with GPRT backend; skipping GPRT tests.");
   }
-  #else
+  #else // XDG_ENABLE_GPRT
   if (rt == xdg::RTLibrary::GPRT && !system_has_vk_device()) {
     SKIP("No Vulkan device found; skipping GPRT tests.");
   }
