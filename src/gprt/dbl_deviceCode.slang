@@ -1,5 +1,13 @@
+#include "../../include/xdg/gprt/shared_structs.h"
+#include "../../include/xdg/geometry/plucker.h"
+
+/* 
+For now we have to use relative paths for includes, which is not ideal. If https://github.com/gprt-org/GPRT/pull/82 gets 
+merged into GPRT we will be able to more robustly include these headers in the manner below: 
+
 #include "xdg/gprt/shared_structs.h"
 #include "xdg/geometry/plucker.h"
+*/
 
 [[vk::push_constant]]
 dblRayFirePushConstants PC;
@@ -201,7 +209,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
 
 // ------------------------------------------------- Helper functions -------------------------------------------------
 
-bool orientation_cull(in dp::vec3 ray, in dp::vec3 normal, in HitOrientation orientation) {
+bool orientation_cull(in dp::vec3 ray, in dp::vec3 normal, in xdg::HitOrientation orientation) {
     if (orientation == xdg::HitOrientation::ANY) return false; // No culling
     if (orientation == xdg::HitOrientation::EXITING) return dp::dot(ray, normal) < 0.0; // Cull exiting rays
     if (orientation == xdg::HitOrientation::ENTERING) return dp::dot(ray, normal) > 0.0; // Cull entering rays

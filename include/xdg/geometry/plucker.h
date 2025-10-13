@@ -1,7 +1,7 @@
 #ifndef _XDG_PLUCKER_H
 #define _XDG_PLUCKER_H
 
-#include "xdg/geometry/dp_math.h"
+#include "dp_math.h"
 
 namespace xdg {
 

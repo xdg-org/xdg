@@ -1,6 +1,6 @@
 #include "gprt.h"
 #include "../shared_enums.h"
-#include "xdg/geometry/dp_math.h"
+#include "../geometry/dp_math.h"
 
 struct GPRTPrimitiveRef
 {
