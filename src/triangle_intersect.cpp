@@ -72,9 +72,8 @@ void TriangleIntersectionFunc(RTCIntersectFunctionNArguments* args) {
                                           0.0,
                                           false,
                                           0);
-  double plucker_dist = result.t;
-
   if (!result.hit) return;
+  double plucker_dist = result.t;
 
   if (plucker_dist > rayhit->ray.dtfar) return;
 
