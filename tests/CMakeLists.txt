@@ -41,7 +41,9 @@ endif()
 foreach(test ${TEST_NAMES})
     add_executable(${test} ${test}.cpp)
     target_link_libraries(${test} xdg Catch2::Catch2WithMain)
-    add_test(NAME ${test} COMMAND ${test} WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    add_test(NAME ${test} 
+             COMMAND ${test} --allow-running-no-tests 
+             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endforeach()
 
 set(
