@@ -1,6 +1,8 @@
 var searchData=
 [
-  ['edgerayquery_0',['EdgeRayQuery',['../structEdgeRayQuery.html',1,'']]],
-  ['elementfaceaccessor_1',['ElementFaceAccessor',['../structxdg_1_1ElementFaceAccessor.html',1,'xdg']]],
-  ['embreeraytracer_2',['EmbreeRayTracer',['../classxdg_1_1EmbreeRayTracer.html',1,'xdg']]]
+  ['dblrayfirepushconstants_0',['dblRayFirePushConstants',['../structdblRayFirePushConstants.html',1,'']]],
+  ['dblraygendata_1',['dblRayGenData',['../structdblRayGenData.html',1,'']]],
+  ['dblrayinput_2',['dblRayInput',['../structdblRayInput.html',1,'']]],
+  ['dblrayoutput_3',['dblRayOutput',['../structdblRayOutput.html',1,'']]],
+  ['dptrianglegeomdata_4',['DPTriangleGeomData',['../structDPTriangleGeomData.html',1,'']]]
 ];

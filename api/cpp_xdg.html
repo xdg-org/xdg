@@ -129,6 +129,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer7closestE6TreeIDRK8PositionRdR6MeshID"><code class="docutils literal notranslate"><span class="pre">closest()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4N3xdg9RayTracer7closestE6TreeIDRK8PositionRd"><code class="docutils literal notranslate"><span class="pre">closest()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer8occludedE6TreeIDRK8PositionRK9DirectionRd"><code class="docutils literal notranslate"><span class="pre">occluded()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer7libraryEv"><code class="docutils literal notranslate"><span class="pre">library()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer20num_registered_treesEv"><code class="docutils literal notranslate"><span class="pre">num_registered_trees()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer28num_registered_surface_treesEv"><code class="docutils literal notranslate"><span class="pre">num_registered_surface_trees()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#_CPPv4NK3xdg9RayTracer28num_registered_element_treesEv"><code class="docutils literal notranslate"><span class="pre">num_registered_element_trees()</span></code></a></li>
@@ -250,7 +251,7 @@
 
 <dl class="cpp function">
 <dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG3XDGENSt10shared_ptrI11MeshManagerEE9RTLibrary">
-<span id="_CPPv3N3xdg3XDG3XDGENSt10shared_ptrI11MeshManagerEE9RTLibrary"></span><span id="_CPPv2N3xdg3XDG3XDGENSt10shared_ptrI11MeshManagerEE9RTLibrary"></span><span id="xdg::XDG::XDG__std::shared_ptr:MeshManager:.RTLibrary"></span><span class="target" id="classxdg_1_1XDG_1a5ee3e33f99879f63a9a9d325c689cb8e"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">XDG</span></span></span><span class="sig-paren">(</span>
+<span id="_CPPv3N3xdg3XDG3XDGENSt10shared_ptrI11MeshManagerEE9RTLibrary"></span><span id="_CPPv2N3xdg3XDG3XDGENSt10shared_ptrI11MeshManagerEE9RTLibrary"></span><span id="xdg::XDG::XDG__std::shared_ptr:MeshManager:.RTLibrary"></span><span class="target" id="classxdg_1_1XDG_1a5ee3e33f99879f63a9a9d325c689cb8e"></span><span class="sig-name descname"><span class="n"><span class="pre">XDG</span></span></span><span class="sig-paren">(</span>
 
 <dl>
 <dd><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N3xdg11MeshManagerE" title="xdg::MeshManager"><span class="n"><span class="pre">MeshManager</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">mesh_manager</span></span>,</dd>
@@ -538,11 +539,6 @@
 <dl class="cpp var">
 <dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG34volume_to_point_location_tree_map_E">
 <span id="_CPPv3N3xdg3XDG34volume_to_point_location_tree_map_E"></span><span id="_CPPv2N3xdg3XDG34volume_to_point_location_tree_map_E"></span><span id="xdg::XDG::volume_to_point_location_tree_map___std::unordered_map:MeshID.TreeID:"></span><span class="target" id="classxdg_1_1XDG_1acbaee56d6877dfe7fb239b565bddc724"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unordered_map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">TreeID</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">volume_to_point_location_tree_map_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg3XDG34volume_to_point_location_tree_map_E" title="Link to this definition"></a><br /></dt>
-<dd></dd></dl>
-
-<dl class="cpp var">
-<dt class="sig sig-object cpp" id="_CPPv4N3xdg3XDG24surface_to_geometry_map_E">
-<span id="_CPPv3N3xdg3XDG24surface_to_geometry_map_E"></span><span id="_CPPv2N3xdg3XDG24surface_to_geometry_map_E"></span><span id="xdg::XDG::surface_to_geometry_map___std::unordered_map:MeshID.RTCGeometry:"></span><span class="target" id="classxdg_1_1XDG_1a64aaff18af29824d1ba6d4c44536056f"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unordered_map</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">MeshID</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">RTCGeometry</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">surface_to_geometry_map_</span></span></span><a class="headerlink" href="#_CPPv4N3xdg3XDG24surface_to_geometry_map_E" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
 
 <dl class="cpp var">
@@ -952,7 +948,7 @@
 <dd><dl class="cpp class">
 <dt class="sig sig-object cpp" id="_CPPv4N3xdg9RayTracerE">
 <span id="_CPPv3N3xdg9RayTracerE"></span><span id="_CPPv2N3xdg9RayTracerE"></span><span id="xdg::RayTracer"></span><span class="target" id="classxdg_1_1RayTracer"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RayTracer</span></span></span><a class="headerlink" href="#_CPPv4N3xdg9RayTracerE" title="Link to this definition"></a><br /></dt>
-<dd><p>Subclassed by xdg::EmbreeRayTracer</p>
+<dd><p>Subclassed by xdg::EmbreeRayTracer, xdg::GPRTRayTracer</p>
 <div class="breathe-sectiondef docutils container">
 <p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
 <dl class="cpp function">
@@ -1135,6 +1131,11 @@
 </dl>
 
 <span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg9RayTracer8occludedE6TreeIDRK8PositionRK9DirectionRd" title="Link to this definition"></a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK3xdg9RayTracer7libraryEv">
+<span id="_CPPv3NK3xdg9RayTracer7libraryEv"></span><span id="_CPPv2NK3xdg9RayTracer7libraryEv"></span><span id="xdg::RayTracer::libraryC"></span><span class="target" id="classxdg_1_1RayTracer_1a48ee77b70faaf33661f917baac252562"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">RTLibrary</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">library</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK3xdg9RayTracer7libraryEv" title="Link to this definition"></a><br /></dt>
 <dd></dd></dl>
 
 <dl class="cpp function">
