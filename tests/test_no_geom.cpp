@@ -1,39 +1,35 @@
 // testing includes
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
+#include <catch2/generators/catch_generators.hpp>
 
 // xdg includes
-#include "xdg/moab/mesh_manager.h"
-#include "xdg/libmesh/mesh_manager.h"
+#include "util.h"
 
 using namespace xdg;
 
-TEST_CASE("Test MOAB Mesh Without Geometry")
+
+TEST_CASE("Test Mesh Without Geometry")
 {
-  std::unique_ptr<MeshManager> mesh_manager = std::make_unique<MOABMeshManager>();
+  auto mesh_backend = GENERATE(MeshLibrary::MOAB, MeshLibrary::LIBMESH);
 
-  mesh_manager->load_file("cube-mesh-no-geom.h5m");
-  mesh_manager->init();
+  DYNAMIC_SECTION(fmt::format("Backend = {}", mesh_backend))
+  {
+    check_mesh_library_supported(mesh_backend); // skip if backend not enabled at configuration time
+    auto mesh_manager = create_mesh_manager(mesh_backend);
+    REQUIRE(mesh_manager);
 
-  // there will be two volumes: one for the cube and one for the implicit complement
-  REQUIRE(mesh_manager->num_volumes() == 2);
-  // one surface (the boundary of the mesh) separates the two volumes
-  REQUIRE(mesh_manager->num_surfaces() == 1);
+    const std::string file = std::string("cube-mesh-no-geom.") +
+                         (mesh_backend == MeshLibrary::MOAB ? "h5m" : "exo");
 
-  REQUIRE(mesh_manager->num_volume_elements() == 8814);
-}
+    mesh_manager->load_file(file);
+    mesh_manager->init();
 
-TEST_CASE("Test libMesh Mesh Without Geometry")
-{
-  std::unique_ptr<MeshManager> mesh_manager = std::make_unique<LibMeshManager>();
+    // there will be two volumes: one for the cube and one for the implicit complement
+    REQUIRE(mesh_manager->num_volumes() == 2);
+    // one surface (the boundary of the mesh) separates the two volumes
+    REQUIRE(mesh_manager->num_surfaces() == 1);
 
-  mesh_manager->load_file("cube-mesh-no-geom.exo");
-  mesh_manager->init();
-
-  // there will be two volumes: one for the cube and one for the implicit complement
-  REQUIRE(mesh_manager->num_volumes() == 2);
-  // one surface (the boundary of the mesh) separates the two volumes
-  REQUIRE(mesh_manager->num_surfaces() == 1);
-
-  REQUIRE(mesh_manager->num_volume_elements() == 8814);
+    REQUIRE(mesh_manager->num_volume_elements() == 8814);
+  }
 }
