@@ -230,7 +230,7 @@ int main(int argc, char* argv[]) {
     ImGuiIO &io = ImGui::GetIO();
     ImGui::NewFrame();
 
-    float speed = .001f;
+    float panning_speed = .01f;
     lastxpos = xpos;
     lastypos = ypos;
     gprtGetCursorPos(context, &xpos, &ypos);
@@ -286,8 +286,8 @@ int main(int argc, char* argv[]) {
     // Camera panning (right mouse button)
     if (rstate == GPRT_PRESS) {
         float3 lookRight = cross(lookUp, normalize(lookAt - lookFrom));
-        float dx = float(lastxpos - xpos) * speed;
-        float dy = float(lastypos - ypos) * speed;
+        float dx = float(lastxpos - xpos) * panning_speed;
+        float dy = float(lastypos - ypos) * panning_speed;
 
         // Calculate translation vector
         float3 translation = lookRight * dx + lookUp * -dy;
@@ -356,10 +356,12 @@ int main(int argc, char* argv[]) {
     pc.time = float(gprtGetTime(context));
     gprtRayGenLaunch2D(context, rayGen, fbSize.x, fbSize.y, pc);
     
-    // Set our ImGui state
-    bool show_demo_window = true;
-    if (show_demo_window)
-      ImGui::ShowDemoWindow(&show_demo_window);
+    // Set ImGui state
+    ImGui::Begin("Camera Controls");
+      ImGui::Text("Left mouse button: Rotate camera");
+      ImGui::Text("Right mouse button: Pan camera");
+      ImGui::Text("Middle mouse button: Zoom camera");
+    ImGui::End();
     ImGui::EndFrame();
 
         // Rasterize our gui
