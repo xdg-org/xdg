@@ -9,6 +9,8 @@
 #include "xdg_gprt_render_tool_shared.h"
 #include "argparse/argparse.hpp"
 
+// The framework we'll use to create a user interface
+#include "imgui.h"
 
 
 #ifdef _OPENMP
@@ -73,7 +75,10 @@ int main(int argc, char* argv[]) {
   GPRTContext context = gprtContextCreate();
   GPRTModule module = gprtModuleCreate(context, xdg_gprt_render_tool_deviceCode);  
 
-  // New: Create a "triangle" geometry type and set it's closest-hit program
+  // A kernel for compositing imgui and handling temporal antialiasing
+  GPRTComputeOf<CompositeGuiConstants> CompositeGui =
+    gprtComputeCreate<CompositeGuiConstants>(context, module, "CompositeGui");
+
   auto trianglesGeomType = gprtGeomTypeCreate<TrianglesGeomData>(context, GPRT_TRIANGLES);
   gprtGeomTypeSetClosestHitProg(trianglesGeomType, 0, module, "TriangleMesh");
 
@@ -149,12 +154,20 @@ int main(int argc, char* argv[]) {
   GPRTRayGenOf<RayGenData> rayGen = gprtRayGenCreate<RayGenData>(context, module, "raygen");
   GPRTMissOf<void> miss = gprtMissCreate<void>(context, module, "miss");
 
-  // New: Here, we place a reference to our TLAS in the ray generation
-  // kernel's parameters, so that we can access that tree when
-  // we go to trace our rays.
+  auto imageBuffer = gprtDeviceBufferCreate<float4>(context, fbSize.x * fbSize.y);
+
+  GPRTTextureParams f32TexParams;
+  f32TexParams.type = GPRT_IMAGE_TYPE_2D;
+  f32TexParams.format = GPRT_FORMAT_R32G32B32A32_SFLOAT;
+  f32TexParams.width = fbSize.x;
+  f32TexParams.height = fbSize.y;
+  auto imageTexture = gprtDeviceTextureCreate<float4>(context, f32TexParams, nullptr);
+
+  GPRTBufferOf<uint32_t> frameBuffer = gprtDeviceBufferCreate<uint32_t>(context, fbSize.x * fbSize.y);
+
   RayGenData *rayGenData = gprtRayGenGetParameters(rayGen);
   rayGenData->world = gprtAccelGetDeviceAddress(world);
-
+  
 
   GPRTBufferOf<uint32_t> frameBuffer = gprtDeviceBufferCreate<uint32_t>(context, fbSize.x * fbSize.y);
   rayGenData->frameBuffer = gprtBufferGetDevicePointer(frameBuffer);
@@ -200,8 +213,26 @@ int main(int argc, char* argv[]) {
   bool flipY = false;
   bool flipZ = false;
 
+  // This is new, setup GUI frame buffer. We'll rasterize the GUI to this texture, then composite the GUI on top of the
+  // rendered scene.
+  GPRTTextureParams srgbTexParams = f32TexParams, d32TexParams = f32TexParams;
+  srgbTexParams.format = GPRT_FORMAT_R8G8B8A8_SRGB;
+  d32TexParams.format = GPRT_FORMAT_D32_SFLOAT;
+  GPRTTextureOf<uint32_t> guiColorAttachment = gprtDeviceTextureCreate<uint32_t>(context, srgbTexParams, nullptr);
+  GPRTTextureOf<float> guiDepthAttachment = gprtDeviceTextureCreate<float>(context, d32TexParams, nullptr);
+  gprtGuiSetRasterAttachments(context, guiColorAttachment, guiDepthAttachment);
+
+  CompositeGuiConstants guiPC;
+  guiPC.fbSize = fbSize;
+  guiPC.frameBuffer = gprtBufferGetDevicePointer(frameBuffer);
+  guiPC.imageBuffer = gprtBufferGetDevicePointer(imageBuffer);
+  guiPC.guiTexture = gprtTextureGet2DHandle<float4>(guiColorAttachment);
+
   // Main render loop
   do {
+    ImGuiIO &io = ImGui::GetIO();
+    ImGui::NewFrame();
+
     float speed = .001f;
     lastxpos = xpos;
     lastypos = ypos;
@@ -327,11 +358,31 @@ int main(int argc, char* argv[]) {
 
     pc.time = float(gprtGetTime(context));
     gprtRayGenLaunch2D(context, rayGen, fbSize.x, fbSize.y, pc);
+    
+    // Set our ImGui state
+    bool show_demo_window = true;
+    if (show_demo_window)
+      ImGui::ShowDemoWindow(&show_demo_window);
+    ImGui::EndFrame();
+
+        // Rasterize our gui
+    gprtTextureClear(guiDepthAttachment);
+    gprtTextureClear(guiColorAttachment);
+    gprtGuiRasterize(context);
+
+    // Finally, composite the gui onto the screen using a compute shader.
+    gprtBufferTextureCopy(context, imageBuffer, imageTexture, 0, 0, 0, 0, 0, 0, fbSize.x, fbSize.y, 1);
+
+    gprtComputeLaunch(CompositeGui, {fbSize.x, fbSize.y, 1}, {1, 1, 1}, guiPC);
+
     gprtBufferPresent(context, frameBuffer);
   } while (!gprtWindowShouldClose(context));
 
   // Save final frame to an image
   gprtBufferSaveImage(frameBuffer, fbSize.x, fbSize.y, outFileName);
+
+  gprtTextureDestroy(guiColorAttachment);
+  gprtTextureDestroy(guiDepthAttachment);
 
   // Clean up resources
   gprtContextDestroy(context);

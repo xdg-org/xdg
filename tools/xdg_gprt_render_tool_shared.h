@@ -13,7 +13,7 @@ struct TrianglesGeomData {
 };
 
 struct RayGenData {
-  uint *frameBuffer;
+  float4 *imageBuffer;
   SurfaceAccelerationStructure world;
 };
 
@@ -33,4 +33,11 @@ struct PushConstants {
     float3 dir_du;
     float3 dir_dv;
   } camera;
+};
+
+struct CompositeGuiConstants {
+  uint2 fbSize;
+  float4 *imageBuffer;
+  uint *frameBuffer;
+  DescriptorHandle<Texture2D<float4>> guiTexture;
 };
