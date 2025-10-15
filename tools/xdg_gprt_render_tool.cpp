@@ -196,6 +196,11 @@ int main(int argc, char* argv[]) {
   // Set the up vector
   lookUp = float3(0.0f, 1.0f, 0.0f); // Y-axis up
 
+  // store baseline view
+  auto baseLookFrom = lookFrom;
+  auto baseLookAt = lookAt;
+  auto baseLookUp = lookUp;
+
   // Update push constants
   pc.camera.pos = lookFrom;
   pc.camera.dir_00 = normalize(lookAt - lookFrom);
@@ -227,7 +232,35 @@ int main(int argc, char* argv[]) {
 
   // Main render loop
   do {
+
+    // Get mouse states
+    int lstate = gprtGetMouseButton(context, GPRT_MOUSE_BUTTON_LEFT);   // Left mouse button
+    int rstate = gprtGetMouseButton(context, GPRT_MOUSE_BUTTON_RIGHT);  // Right mouse button
+    int mstate = gprtGetMouseButton(context, GPRT_MOUSE_BUTTON_MIDDLE); // Middle mouse button
+
+    // Get key states
+    int yKeyState = gprtGetKey(context, GPRT_KEY_Y); // Check Y key state
+    int xKeyState = gprtGetKey(context, GPRT_KEY_X); // Check X key state
+    int zKeyState = gprtGetKey(context, GPRT_KEY_Z); // Check Z key state
+    int spaceKeyState = gprtGetKey(context, GPRT_KEY_SPACE); // Check space key state
+
     ImGuiIO &io = ImGui::GetIO();
+    
+    if (spaceKeyState == GPRT_PRESS && !io.WantCaptureKeyboard) {
+      lookAt   = baseLookAt;
+      lookFrom = baseLookFrom;
+      lookUp   = baseLookUp;
+
+      // Recompute camera rays
+      pc.camera.pos   = lookFrom;
+      pc.camera.dir_00 = normalize(lookAt - lookFrom);
+      float aspect = float(fbSize.x) / float(fbSize.y);
+      pc.camera.dir_du = cosFovy * aspect * normalize(cross(pc.camera.dir_00, lookUp));
+      pc.camera.dir_dv = cosFovy * normalize(cross(pc.camera.dir_du, pc.camera.dir_00));
+      pc.camera.dir_00 -= 0.5f * pc.camera.dir_du;
+      pc.camera.dir_00 -= 0.5f * pc.camera.dir_dv;
+    }
+
     ImGui::NewFrame();
 
     float panning_speed = .01f;
@@ -239,15 +272,7 @@ int main(int argc, char* argv[]) {
         lastypos = ypos;
     }
 
-    // Get mouse button states
-    int lstate = gprtGetMouseButton(context, GPRT_MOUSE_BUTTON_LEFT);   // Left mouse button
-    int rstate = gprtGetMouseButton(context, GPRT_MOUSE_BUTTON_RIGHT);  // Right mouse button
-    int mstate = gprtGetMouseButton(context, GPRT_MOUSE_BUTTON_MIDDLE); // Middle mouse button
 
-    // Get key states
-    int yKeyState = gprtGetKey(context, GPRT_KEY_Y); // Check Y key state
-    int xKeyState = gprtGetKey(context, GPRT_KEY_X); // Check X key state
-    int zKeyState = gprtGetKey(context, GPRT_KEY_Z); // Check Z key state
 
     // Camera rotation (left mouse button)
     if (lstate == GPRT_PRESS || firstFrame) {
@@ -361,6 +386,8 @@ int main(int argc, char* argv[]) {
       ImGui::Text("Left mouse button: Rotate camera");
       ImGui::Text("Right mouse button: Pan camera");
       ImGui::Text("Middle mouse button: Zoom camera");
+      ImGui::Separator();
+      ImGui::Text("Press Space: reset view");
     ImGui::End();
     ImGui::EndFrame();
 
