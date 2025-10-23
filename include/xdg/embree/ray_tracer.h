@@ -98,10 +98,8 @@ public:
   std::unordered_map<RTCScene, std::vector<PrimitiveRef>> primitive_ref_storage_;
 
 private:
-  std::pair<RTCGeometry, std::shared_ptr<SurfaceUserData>> register_surface(const std::shared_ptr<MeshManager>& mesh_manager,
-                                                                             MeshID surface,
-                                                                             RTCScene& volume_scene,
-                                                                             int& storage_offset);
+  EmbreeSurfaceCache register_surface(const std::shared_ptr<MeshManager>& mesh_manager,
+                                                                             MeshID surface);
   // Global Tree IDs
   RTCScene global_surface_scene_ {nullptr};
   RTCScene global_element_scene_ {nullptr};

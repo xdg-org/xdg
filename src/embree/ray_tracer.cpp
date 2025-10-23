@@ -191,8 +191,14 @@ void EmbreeRayTracer::create_global_surface_tree()
   }
   global_surface_scene_ = create_embree_scene();
 
-  for(auto& [geom, surface_data] : surface_user_data_map_) {
-      rtcAttachGeometry(global_surface_scene_, geom);
+  for (auto& [surface, cache] : surface_cache_map_) {
+    auto& [surface_scene, surface_data, prims] = cache;
+
+    RTCGeometry inst = rtcNewGeometry(device_, RTC_GEOMETRY_TYPE_INSTANCE);
+    rtcSetGeometryInstancedScene(inst, surface_scene);
+    rtcCommitGeometry(inst);
+    rtcAttachGeometry(global_surface_scene_, inst);
+    rtcReleaseGeometry(inst);
   }
 
   rtcCommitScene(global_surface_scene_);
