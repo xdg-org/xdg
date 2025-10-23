@@ -107,14 +107,8 @@ public:
    */
   virtual MeshID find_element(TreeID tree, const Position& point) const = 0;
 
-  virtual void closest(TreeID tree,
-               const Position& origin,
-               double& dist,
-               MeshID& triangle) = 0;
-
-  virtual void closest(TreeID tree,
-               const Position& origin,
-               double& dist) = 0;
+  virtual std::pair<double, MeshID> closest(TreeID tree,
+                                            const Position& origin) = 0;
 
   virtual bool occluded(TreeID tree,
                 const Position& origin,

@@ -239,21 +239,18 @@ XDG::ray_fire(MeshID volume,
   return ray_tracing_interface()->ray_fire(scene, origin, direction, dist_limit, orientation, exclude_primitives);
 }
 
-void XDG::closest(MeshID volume,
-              const Position& origin,
-              double& dist,
-              MeshID& triangle) const
+std::pair<double, MeshID> XDG::closest(MeshID volume,
+                                       const Position& origin) const
 {
   TreeID scene = volume_to_surface_tree_map_.at(volume);
-  ray_tracing_interface()->closest(scene, origin, dist, triangle);
+  return ray_tracing_interface()->closest(scene, origin);
 }
 
-void XDG::closest(MeshID volume,
-              const Position& origin,
-              double& dist) const
+double XDG::closest_distance(MeshID volume,
+                             const Position& origin) const
 {
   TreeID scene = volume_to_surface_tree_map_.at(volume);
-  ray_tracing_interface()->closest(scene, origin, dist);
+  return ray_tracing_interface()->closest(scene, origin).first;
 }
 
 bool XDG::occluded(MeshID volume,
@@ -274,9 +271,8 @@ Direction XDG::surface_normal(MeshID surface,
     element = exclude_primitives->back();
   } else {
     auto surface_vols = mesh_manager()->get_parent_volumes(surface);
-    double dist;
     TreeID scene = volume_to_surface_tree_map_.at(surface_vols.first);
-    ray_tracing_interface()->closest(scene, point, dist, element);
+    element = ray_tracing_interface()->closest(scene, point).second;
 
     // TODO: bring this back when we have a better way to handle this
     // if (geom_data.surface_id != surface) {
