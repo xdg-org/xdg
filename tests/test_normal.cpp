@@ -4,7 +4,7 @@
 
 // xdg includes
 #include "xdg/mesh_manager_interface.h"
-#include "xdg/primitive_ref.h"
+#include "xdg/embree/primitive_ref.h"
 #include "xdg/xdg.h"
 
 #include "mesh_mock.h"

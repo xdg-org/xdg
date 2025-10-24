@@ -6,10 +6,10 @@
 #include <unordered_map>
 
 #include "xdg/constants.h"
-#include "xdg/embree_interface.h"
+#include "xdg/embree/embree_interface.h"
 #include "xdg/mesh_manager_interface.h"
-#include "xdg/primitive_ref.h"
-#include "xdg/geometry_data.h"
+#include "xdg/embree/primitive_ref.h"
+#include "xdg/embree/geometry_data.h"
 
 namespace xdg
 {

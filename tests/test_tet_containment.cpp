@@ -6,7 +6,7 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include "xdg/ray_tracing_interface.h"
-#include "xdg/tetrahedron_contain.h"
+#include "xdg/embree/tetrahedron_contain.h"
 #include "xdg/vec3da.h"
 
 using namespace xdg;
