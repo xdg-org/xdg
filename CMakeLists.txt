@@ -116,9 +116,9 @@ src/geometry/closest.cpp
 src/error.cpp
 src/mesh_manager_interface.cpp
 src/ray_tracing_interface.cpp
-src/triangle_intersect.cpp
+src/embree/triangle_intersect.cpp
 src/util/str_utils.cpp
-src/tetrahedron_contain.cpp
+src/embree/tetrahedron_contain.cpp
 src/overlap_check/overlap.cpp
 src/element_face_accessor.cpp
 src/xdg.cpp

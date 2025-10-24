@@ -1,10 +1,10 @@
 #include <algorithm> // for find
 
 #include "xdg/geometry/closest.h"
-#include "xdg/primitive_ref.h"
-#include "xdg/geometry_data.h"
+#include "xdg/embree/primitive_ref.h"
+#include "xdg/embree/geometry_data.h"
 #include "xdg/geometry/plucker.h"
-#include "xdg/ray.h"
+#include "xdg/embree/ray.h"
 
 namespace xdg
 {
