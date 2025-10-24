@@ -77,29 +77,22 @@ public:
 
   // Embree members
   RTCDevice device_;
-  std::vector<RTCGeometry> geometries_; //<! All geometries created by this ray tracer
 
-  // Mesh-to-Scene maps
-  std::map<MeshID, RTCGeometry> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
-
+  // Storage for surface caches (RTCScenes, User Data, PrimitiveRefs)
+  std::unordered_map<MeshID, EmbreeSurfaceCache> surface_cache_map_; //<! Cache of surfaces already registered with embree
   
-
   // Internal Embree Mappings
-  std::unordered_map<RTCGeometry, std::shared_ptr<SurfaceUserData>> surface_user_data_map_;
   std::unordered_map<RTCGeometry, std::shared_ptr<VolumeElementsUserData>> volume_user_data_map_;
 
   std::unordered_map<SurfaceTreeID, RTCScene> surface_volume_tree_to_scene_map_; // Map from SurfaceVolumeTreeID to specific embree scene/tree
   std::unordered_map<ElementTreeID, RTCScene> element_volume_tree_to_scene_map_; // Map from ElementVolumeTreeID to specific embree scene/tree
 
-  // instancing data structures
-  std::unordered_map<MeshID, EmbreeSurfaceCache> surface_cache_map_; //<! Cache of surfaces already registered with embree
-
-  // storage
+  // storage (TODO - No longer required for surface elements but still needed for volumetric element primitive storage)
   std::unordered_map<RTCScene, std::vector<PrimitiveRef>> primitive_ref_storage_;
 
 private:
   EmbreeSurfaceCache register_surface(const std::shared_ptr<MeshManager>& mesh_manager,
-                                                                             MeshID surface);
+                                      MeshID surface);
   // Global Tree IDs
   RTCScene global_surface_scene_ {nullptr};
   RTCScene global_element_scene_ {nullptr};

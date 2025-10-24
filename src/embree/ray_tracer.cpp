@@ -85,7 +85,15 @@ EmbreeRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_ma
     // Create an instance in the TLAS pointing to the BLAS
     RTCGeometry inst = rtcNewGeometry(device_, RTC_GEOMETRY_TYPE_INSTANCE);
     rtcSetGeometryInstancedScene(inst, surface_scene);
-    rtcSetGeometryUserData(inst, surface_data.get());
+    
+    // annoyingly user_data needs to be attached to the instance so it can be accessed in point queries
+    rtcSetGeometryUserData(inst, surface_data.get()); 
+
+    // Set Surface mask
+    // This will essentially group surfaces into sets of 32 possible masks
+    // Then during ray traversal 
+    uint32_t mask = 1u << (surface % 32); 
+    rtcSetGeometryMask(inst, mask);
     rtcCommitGeometry(inst);
     rtcAttachGeometry(volume_scene, inst);
     rtcReleaseGeometry(inst);
@@ -116,25 +124,21 @@ EmbreeRayTracer::register_surface(const std::shared_ptr<MeshManager>& mesh_manag
   // create new RTCGeometry for the surface
   auto surface_geometry = rtcNewGeometry(device_, RTC_GEOMETRY_TYPE_USER);
   rtcSetGeometryUserPrimitiveCount(surface_geometry, surface_faces.size());
-  surface_to_geometry_map_[surface] = surface_geometry;
 
   // create new SurfaceUserData for the surface
   auto surface_data = std::make_shared<SurfaceUserData>();
   surface_data->surface_id = surface;
   surface_data->mesh_manager = mesh_manager.get();
   surface_data->prim_ref_buffer = prim_refs.data();
-  surface_user_data_map_[surface_geometry] = surface_data;
   surface_data->box_bump = 0.0; // will be set later by volume
 
-
-  rtcSetGeometryUserData(surface_geometry, surface_data.get());
+  rtcSetGeometryUserData(surface_geometry, surface_data.get()); // attach user data to BLAS
 
   // Set RTC callbacks
   rtcSetGeometryBoundsFunction(surface_geometry, (RTCBoundsFunction)&TriangleBoundsFunc, nullptr);
   rtcSetGeometryIntersectFunction(surface_geometry, (RTCIntersectFunctionN)&TriangleIntersectionFunc);
   rtcSetGeometryOccludedFunction(surface_geometry, (RTCOccludedFunctionN)&TriangleOcclusionFunc);
-  rtcCommitGeometry(surface_geometry);
-
+  
   rtcCommitGeometry(surface_geometry);
   rtcAttachGeometry(surface_scene, surface_geometry);
   rtcReleaseGeometry(surface_geometry);

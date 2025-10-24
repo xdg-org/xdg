@@ -114,7 +114,6 @@ bool TriangleClosestFunc(RTCPointQueryFunctionArguments* args) {
   RTCGeometry instGeom = rtcGetGeometry(tlas, instGeomID);
   const SurfaceUserData* user_data = (const SurfaceUserData*) rtcGetGeometryUserData(instGeom);
 
-
   const MeshManager* mesh_manager = user_data->mesh_manager;
 
   const PrimitiveRef& primitive_ref = user_data->prim_ref_buffer[args->primID];
