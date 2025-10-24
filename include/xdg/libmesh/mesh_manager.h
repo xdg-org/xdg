@@ -86,11 +86,15 @@ public:
   int num_volume_elements() const override;
 
   int num_volume_faces(MeshID volume) const override {
-    return mesh()->n_elem();
+    int count = 0;
+    for (auto s : this->get_volume_surfaces(volume)) {
+      count += surface_map_.at(s).size();
+    }
+    return count;
   }
 
   int num_surface_faces(MeshID surface) const override {
-    return mesh()->n_elem();
+    return surface_map_.at(surface).size();
   }
 
   std::vector<MeshID> get_volume_elements(MeshID volume) const;
