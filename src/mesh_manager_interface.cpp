@@ -3,12 +3,19 @@
 #include <algorithm>
 #include <set>
 
+#include "xdg/config.h"
 #include "xdg/error.h"
 #include "xdg/geometry/plucker.h"
 #include "xdg/geometry/face_common.h"
 #include "xdg/element_face_accessor.h"
 
 namespace xdg {
+
+MeshManager::MeshManager() {
+  if (XDGConfig::config().initialized() == false) {
+    XDGConfig::config().initialize();
+  }
+}
 
 MeshID
 MeshManager::create_implicit_complement()
