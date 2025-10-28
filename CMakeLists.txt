@@ -116,9 +116,7 @@ src/geometry/closest.cpp
 src/error.cpp
 src/mesh_manager_interface.cpp
 src/ray_tracing_interface.cpp
-src/embree/triangle_intersect.cpp
 src/util/str_utils.cpp
-src/embree/tetrahedron_contain.cpp
 src/overlap_check/overlap.cpp
 src/element_face_accessor.cpp
 src/xdg.cpp
@@ -127,6 +125,8 @@ src/xdg.cpp
 if (XDG_ENABLE_EMBREE)
 list(APPEND xdg_sources
 src/embree/ray_tracer.cpp
+src/embree/triangle_intersect.cpp
+src/embree/tetrahedron_contain.cpp
 )
 endif()
 
@@ -187,6 +187,7 @@ endif()
 add_library(xdg SHARED ${xdg_sources})
 
 target_link_libraries(xdg indicators::indicators)
+target_link_libraries(xdg fmt::fmt)
 
 if(XDG_ENABLE_EMBREE)
   # pass precompile definition depending on embree version
@@ -238,7 +239,7 @@ endif()
 # ==========================
 
 if (XDG_ENABLE_EMBREE)
-  target_link_libraries(xdg embree fmt::fmt)
+  target_link_libraries(xdg embree)
 endif()
 
 if (XDG_ENABLE_GPRT)

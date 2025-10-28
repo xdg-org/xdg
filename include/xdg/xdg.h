@@ -118,8 +118,11 @@ Direction surface_normal(MeshID surface,
   }
 // Private methods
 private:
-  double _triangle_volume_contribution(const PrimitiveRef& triangle) const;
-  double _triangle_area_contribution(const PrimitiveRef& triangle) const;
+
+  #ifdef XDG_ENABLE_EMBREE
+    double _triangle_volume_contribution(const PrimitiveRef& triangle) const;
+    double _triangle_area_contribution(const PrimitiveRef& triangle) const;
+  #endif
 
 // Data members
   std::shared_ptr<RayTracer> ray_tracing_interface_ {nullptr};

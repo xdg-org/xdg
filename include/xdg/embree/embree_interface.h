@@ -7,8 +7,4 @@
 
 #include "xdg/embree/embree3.h"
 
-#else
-
-#error "No embree version for XDG provided to compiler"
-
 #endif
