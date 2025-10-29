@@ -14,14 +14,16 @@ test_normal
 test_measure
 test_no_geom
 test_xdg_interface
-test_tet_containment
 test_tracks
-test_tet_intersection
 test_tally_segments
 )
 
 if (XDG_ENABLE_EMBREE)
-    list (APPEND TEST_NAMES test_ray_duals)
+    list (APPEND TEST_NAMES 
+            test_ray_duals 
+            test_tet_containment 
+            test_tet_intersection
+         )
 endif()
 
 if (XDG_ENABLE_MOAB)
