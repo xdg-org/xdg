@@ -12,24 +12,25 @@ merged into GPRT we will be able to more robustly include these headers in the m
 [[vk::push_constant]]
 dblRayFirePushConstants PC;
 
-struct RayFirePayload {
+struct Payload {
     double distance;    // Distance to intersection
     int surf_id;     // ID of the surface hit
     SurfaceAccelerationStructure tlas;
     int primitive_id; // ID of the primitive hit
-    xdg::PointInVolume piv; // Point in volume check (0 for outside, 1 for inside) 
+    xdg::PointInVolume piv; // Point in volume check (0 for outside, 1 for inside)
+    xdg::Visibility visibility; // 1 if visible, 1 if occluded
+
 };
-
-
 struct DPAttribute
 {
   double f64t; // double precision hit distance
   int global_prim_id;
 };
 
+// ------------------------------------------------- Hit Shaders -------------------------------------------------
 
 [shader("closesthit")]
-void ray_fire_hit(uniform DPTriangleGeomData record, inout RayFirePayload payload, in DPAttribute attr) {
+void ray_fire_hit(uniform DPTriangleGeomData record, inout Payload payload, in DPAttribute attr) {
     // Distance from the ray origin to the hit point
     uint hit_kind = HitKind();
     uint rayID = DispatchRaysIndex().x;
@@ -48,19 +49,31 @@ void ray_fire_hit(uniform DPTriangleGeomData record, inout RayFirePayload payloa
     payload.primitive_id = attr.global_prim_id;
 }
 
+[shader("anyhit")]
+void occlusion_anyhit(uniform DPTriangleGeomData record, inout Payload payload) {
+    payload.visibility = xdg::Visibility::OCCLUDED;
+    AcceptHitAndEndSearch();
+}
+
+// ------------------------------------------------- Miss Shaders -------------------------------------------------
+
+// GPRT doesn't currently support setting multiple miss shaders so only a single miss shader is possible in a single GPRT context
+
 [shader("miss")]
-void ray_fire_miss(inout RayFirePayload payload) {
+void miss(inout Payload payload) {
     // Set the miss payload to default values
     payload.distance = -1.0f;
     payload.surf_id = -1;
     payload.primitive_id = -1;
+
+    payload.visibility = xdg::Visibility::VISIBLE;
 }
 
-// This ray generation program will kick off the ray tracing process,
-// generating rays and tracing them into the world.
+// ------------------------------------------------- RayGen Shaders -------------------------------------------------
+
 [shader("raygeneration")]
 void ray_fire(uniform dblRayGenData record, uniform DPTriangleGeomData mesh) {
-    RayFirePayload payload;
+    Payload payload;
     uint rayID = DispatchRaysIndex().x;
 
     // Trace the ray into the scene
@@ -77,7 +90,9 @@ void ray_fire(uniform dblRayGenData record, uniform DPTriangleGeomData mesh) {
     payload.surf_id = -1;
     payload.tlas = world;
 
-    TraceRay(world, RAY_FLAG_NONE, 0xff, 0, 1, rayDesc, payload);
+    int missIndex = 0; // must be 0 as we only have a single miss shader 
+    int hitGroupIndex = 0; // 0 index used for ray hitgroup [ray_fire] + [point_in_volume]
+    TraceRay(world, RAY_FLAG_NONE, 0xff, hitGroupIndex, missIndex, rayDesc, payload);
 
     // Store the distance to the hit point and the surface ID in buffers for CPU
     record.out[rayID].distance = payload.distance;
@@ -87,7 +102,7 @@ void ray_fire(uniform dblRayGenData record, uniform DPTriangleGeomData mesh) {
 
 [shader("raygeneration")]
 void point_in_volume(uniform dblRayGenData record, uniform DPTriangleGeomData mesh) {
-    RayFirePayload payload;
+    Payload payload;
     uint rayID = DispatchRaysIndex().x;
 
     // Trace the ray into the scene
@@ -104,10 +119,36 @@ void point_in_volume(uniform dblRayGenData record, uniform DPTriangleGeomData me
     payload.tlas = world;
     payload.piv = xdg::PointInVolume::OUTSIDE; // Initialize point in volume check result to outside (0)
     
-    TraceRay(world, RAY_FLAG_NONE, 0xff, 0, 1, rayDesc, payload);
+    int missIndex = 0; // must be 0 as we only have a single miss shader 
+    int hitGroupIndex = 0; // 0 index used for ray hitgroup [ray_fire] + [point_in_volume]
+
+    TraceRay(world, RAY_FLAG_NONE, 0xff, hitGroupIndex, missIndex, rayDesc, payload);
 
     record.out.surf_id = payload.surf_id;
     record.out[rayID].piv = payload.piv; // Point in volume check result
+}
+
+[shader("raygeneration")]
+void occluded(uniform dblRayGenData record, uniform DPTriangleGeomData mesh) {
+    Payload payload;
+    uint rayID = DispatchRaysIndex().x;
+
+    // Trace the ray into the scene
+    RayDesc rayDesc;
+    rayDesc.Origin = float3(record.ray[rayID].origin);
+    rayDesc.Direction = normalize(float3(record.ray[rayID].direction));
+    rayDesc.TMin = float(record.ray[rayID].tMin); 
+    rayDesc.TMax = float(record.ray[rayID].tMax); 
+
+    SurfaceAccelerationStructure world = record.ray[rayID].volume_accel;
+    payload.visibility = xdg::Visibility::VISIBLE; // Initialize visibility to visible (0)
+
+    int missIndex = 0; // must be 0 as we only have a single miss shader 
+    int hitGroupIndex = 1; // 1 index used for ray hitgroup [occluded]
+
+    TraceRay(world, RAY_FLAG_NONE, 0xff, hitGroupIndex, missIndex, rayDesc, payload);
+
+    record.out[rayID].visibility = payload.visibility;
 }
 
 // ------------------------------------------------- Compute Shaders -------------------------------------------------
@@ -206,6 +247,50 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     ReportHit(f32t, hit_kind, attr);
 }
 
+// DP plucker intersection shader for occlusion queries
+[shader("intersection")]
+void DPTrianglePluckerIntersection_occluded(uniform DPTriangleGeomData record)
+{
+    int primID = PrimitiveIndex();
+    int global_prim_id = record.primitive_refs[primID].id;
+
+    uint rayID = DispatchRaysIndex().x;
+    uint nRays = DispatchRaysDimensions().x;
+
+    if (rayID >= nRays) return;
+
+    // Load vertices
+    int3 indices = record.index[primID];
+    dp::vec3 v0 = record.vertex[indices[0]];
+    dp::vec3 v1 = record.vertex[indices[1]];
+    dp::vec3 v2 = record.vertex[indices[2]];
+    dp::vec3 vertices[3] = { v0, v1, v2 };
+
+    // Load rays
+    dp::vec3 origin = record.rayIn[rayID].origin;
+    dp::vec3 direction = record.rayIn[rayID].direction;
+    double tMin = record.rayIn[rayID].tMin;
+    double tMax = record.rayIn[rayID].tMax;
+
+    xdg::PluckerIntersectionResult result = xdg::plucker_ray_tri_intersect(vertices, 
+                                                                           origin, 
+                                                                           direction, 
+                                                                           tMax, 
+                                                                           tMin, 
+                                                                           false, 
+                                                                           0);
+    if (result.hit == false) return; // No intersection
+    double t = result.t;
+    
+    DPAttribute attr;
+    attr.f64t = t;
+
+    float f32t = float(t);
+    if (double(f32t) < t) f32t = next_after(f32t);
+
+    // hit kind, distance, attribute not actually needed. But we still need to report a hit to end the search
+    ReportHit(f32t, HIT_KIND_TRIANGLE_FRONT_FACE, attr);
+}
 
 // ------------------------------------------------- Helper functions -------------------------------------------------
 

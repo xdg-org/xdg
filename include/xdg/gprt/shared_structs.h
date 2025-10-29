@@ -27,6 +27,7 @@ struct dblRayOutput
   int surf_id;
   int primitive_id;
   xdg::PointInVolume piv; // Point in volume check result (0 for outside, 1 for inside)
+  xdg::Visibility visibility; // 0 if visible, 1 if occluded
 };
 
 /* variables for double precision triangle mesh geometry */
