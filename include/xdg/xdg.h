@@ -75,6 +75,25 @@ std::pair<double, MeshID> ray_fire(MeshID volume,
                                    HitOrientation orientation = HitOrientation::EXITING,
                                    std::vector<MeshID>* const exclude_primitives = nullptr) const;
 
+// Array version of point_in_volume
+void batch_point_in_volume(MeshID volume,
+                                  const Position* points,
+                                  const Direction* const* directions, // [num_points] array of Direction pointers
+                                  const size_t num_points,
+                                  uint8_t* results,
+                                  std::vector<MeshID>* exclude_primitives = nullptr) const;
+
+// Array version of ray_fire
+void batch_ray_fire(MeshID volume,
+                           const Position* origins,
+                           const Direction* directions,
+                           const size_t num_rays,
+                           double* hitDistances,
+                           MeshID* surfaceIDs,
+                           const double dist_limit = INFTY,
+                           HitOrientation orientation = HitOrientation::EXITING,
+                           std::vector<MeshID>* const exclude_primitives = nullptr);
+
 std::pair<double, MeshID> closest(MeshID volume,
                                   const Position& origin) const;
 

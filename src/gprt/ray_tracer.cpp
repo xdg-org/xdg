@@ -374,11 +374,15 @@ void GPRTRayTracer::batch_point_in_volume(TreeID tree,
     rayInput[i].exclude_primitives = nullptr; // Not currently supported in batch version
   }
 
+  rayGenPIVData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
+  rayGenPIVData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
+
   gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
 
   gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
 
   gprtRayGenLaunch1D(context_, rayGenPointInVolProgram_, num_points);
+  gprtGraphicsSynchronize(context_);
 
   // Retrieve the output from the ray output buffer
   gprtBufferMap(rayOutputBuffer_);
@@ -436,12 +440,16 @@ void GPRTRayTracer::batch_ray_fire(TreeID tree,
     rayInput[i].exclude_primitives = nullptr; // Not currently supported in batch version
   }
 
+  rayGenData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
+  rayGenData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
+
   gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
   
   gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
   
   // Launch the ray generation shader with push constants and buffer bindings
   gprtRayGenLaunch1D(context_, rayGenProgram_, num_rays);
+  gprtGraphicsSynchronize(context_);
                                                   
   // Retrieve the output from the ray output buffer
   gprtBufferMap(rayOutputBuffer_);
