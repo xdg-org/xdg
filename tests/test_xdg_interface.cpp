@@ -1,14 +1,16 @@
 #include <memory>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 
 // xdg includes
 #include "xdg/xdg.h"
-#include "xdg/embree/ray_tracer.h"
 #include "xdg/moab/mesh_manager.h"
 
 #ifdef XDG_ENABLE_LIBMESH
 #include "xdg/libmesh/mesh_manager.h"
 #endif
+
+#include "util.h"
 
 using namespace xdg;
 
@@ -20,38 +22,92 @@ TEST_CASE("XDG Interface") {
 
 TEST_CASE("XDG Factory Creation") {
   // Create xdg instances using the factory method
-  std::shared_ptr<XDG> default_xdg = XDG::create();
-  REQUIRE(std::dynamic_pointer_cast<EmbreeRayTracer>(default_xdg->ray_tracing_interface()) != nullptr);
-  REQUIRE(std::dynamic_pointer_cast<MOABMeshManager>(default_xdg->mesh_manager()) != nullptr);
 
-  // Check that the factory method creates pointers to ray_tracing_interface and mesh_manager
-  REQUIRE(default_xdg->ray_tracing_interface() != nullptr);
-  REQUIRE(default_xdg->mesh_manager() != nullptr);
+  auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
+  auto mesh_backend = GENERATE(MeshLibrary::MOAB, MeshLibrary::LIBMESH);
 
-  std::shared_ptr<XDG> moab_embree_xdg = XDG::create(MeshLibrary::MOAB, RTLibrary::EMBREE);
-  REQUIRE(moab_embree_xdg->ray_tracing_interface() != nullptr);
-  REQUIRE(moab_embree_xdg->mesh_manager() != nullptr);
-  // Check that the factory method creates interface pointers of the right types
-  REQUIRE(std::dynamic_pointer_cast<EmbreeRayTracer>(moab_embree_xdg->ray_tracing_interface()) != nullptr);
-  REQUIRE(std::dynamic_pointer_cast<MOABMeshManager>(moab_embree_xdg->mesh_manager()) != nullptr);
+  DYNAMIC_SECTION(fmt::format("Mesh Backend = {}, RT Backend = {}", mesh_backend, rt_backend)) {
+    check_mesh_library_supported(mesh_backend); // skip if mesh backend not enabled at configuration time
+    check_ray_tracer_supported(rt_backend);     // skip if rt backend not enabled at configuration
 
-#ifdef XDG_ENABLE_LIBMESH
-  // Create xdg instances using the factory method
-  std::shared_ptr<XDG> libmesh_embree_xdg = XDG::create(MeshLibrary::LIBMESH, RTLibrary::EMBREE);
-  // Check that the factory method creates interface pointers of the right types
-  REQUIRE(std::dynamic_pointer_cast<EmbreeRayTracer>(libmesh_embree_xdg->ray_tracing_interface()) != nullptr);
-  REQUIRE(std::dynamic_pointer_cast<LibMeshManager>(libmesh_embree_xdg->mesh_manager()) != nullptr);
-#endif
+    std::shared_ptr<XDG> xdg = XDG::create(mesh_backend, rt_backend);
+    
+    // Check that the factory method creates interface pointers
+    REQUIRE(xdg->ray_tracing_interface() != nullptr);
+    REQUIRE(xdg->mesh_manager() != nullptr);
 
+    // Check that the factory method creates RT interface pointers of the right types
+    switch (rt_backend) {
+      #ifdef XDG_ENABLE_EMBREE
+      case RTLibrary::EMBREE:
+        REQUIRE(std::dynamic_pointer_cast<EmbreeRayTracer>(xdg->ray_tracing_interface()) != nullptr);
+        break;
+      #endif
+
+      #ifdef XDG_ENABLE_GPRT
+      case RTLibrary::GPRT:
+        REQUIRE(std::dynamic_pointer_cast<GPRTRayTracer>(xdg->ray_tracing_interface()) != nullptr);
+        break;
+      #endif
+    }
+    
+    // Check that the factory method creates MeshManager interface pointers of the right types
+    switch (mesh_backend) {
+      #ifdef XDG_ENABLE_MOAB
+      case MeshLibrary::MOAB:
+        REQUIRE(std::dynamic_pointer_cast<MOABMeshManager>(xdg->mesh_manager()) != nullptr);
+        break;
+      #endif 
+
+      #ifdef XDG_ENABLE_LIBMESH
+      case MeshLibrary::LIBMESH:
+        REQUIRE(std::dynamic_pointer_cast<LibMeshManager>(xdg->mesh_manager()) != nullptr);
+        break;
+      #endif
+    }
+  }
 }
 
 TEST_CASE("XDG Constructor") {
-  // Create meshmanager instances
-  std::shared_ptr<MeshManager> moab_mm = std::make_shared<MOABMeshManager>();
-  // Create xdg instances
-  std::shared_ptr<XDG> moab_embree_xdg = std::make_shared<XDG>(moab_mm, RTLibrary::EMBREE);
 
-  // Check that the constructor creates interface pointers of the right types
-  REQUIRE(std::dynamic_pointer_cast<EmbreeRayTracer>(moab_embree_xdg->ray_tracing_interface()) != nullptr);
-  REQUIRE(std::dynamic_pointer_cast<MOABMeshManager>(moab_embree_xdg->mesh_manager()) != nullptr);
+  auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
+  auto mesh_backend = GENERATE(MeshLibrary::MOAB, MeshLibrary::LIBMESH);
+
+  DYNAMIC_SECTION(fmt::format("Mesh Backend = {}, RT Backend = {}", mesh_backend, rt_backend)) {
+    check_mesh_library_supported(mesh_backend); // skip if mesh backend not enabled at configuration time
+    check_ray_tracer_supported(rt_backend);     // skip if rt backend not enabled at configuration
+
+    std::shared_ptr<MeshManager> mm = create_mesh_manager(mesh_backend);
+    std::shared_ptr<XDG> xdg = std::make_shared<XDG>(mm, rt_backend);
+
+    // Check that constructor creates RT interface pointers of the right types
+    switch (rt_backend) {
+      #ifdef XDG_ENABLE_EMBREE
+      case RTLibrary::EMBREE:
+        REQUIRE(std::dynamic_pointer_cast<EmbreeRayTracer>(xdg->ray_tracing_interface()) != nullptr);
+        break;
+      #endif
+
+      #ifdef XDG_ENABLE_GPRT
+      case RTLibrary::GPRT:
+        REQUIRE(std::dynamic_pointer_cast<GPRTRayTracer>(xdg->ray_tracing_interface()) != nullptr);
+        break;
+      #endif
+    }
+    
+    // Check that the constructor creates MeshManager interface pointers of the right types
+    switch (mesh_backend) {
+      #ifdef XDG_ENABLE_MOAB
+      case MeshLibrary::MOAB:
+        REQUIRE(std::dynamic_pointer_cast<MOABMeshManager>(xdg->mesh_manager()) != nullptr);
+        break;
+      #endif 
+
+      #ifdef XDG_ENABLE_LIBMESH
+      case MeshLibrary::LIBMESH:
+        REQUIRE(std::dynamic_pointer_cast<LibMeshManager>(xdg->mesh_manager()) != nullptr);
+        break;
+      #endif
+    }
+  }
 }
