@@ -326,7 +326,144 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
     if (exclude_primitives) exclude_primitives->push_back(primitive_id);
   return {distance, surface};
 }
-                
+
+void GPRTRayTracer::batch_point_in_volume(TreeID tree,
+                                          const Position* points,
+                                          const Direction* const* directions, // [num_points] array of Direction pointers
+                                          const size_t num_points,
+                                          uint8_t* results,
+                                          std::vector<MeshID>* exclude_primitives) const
+{
+  if (num_points == 0) return; // no work to do. Early exit
+
+  GPRTAccel volume = surface_volume_tree_to_accel_map.at(tree);
+  dblRayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPointInVolProgram_);
+
+  // Set a default direction to be used if no direction is provided
+  const Direction defaultDir = Direction{1. / std::sqrt(2.0), 1. / std::sqrt(2.0), 0.0};
+
+  // resize buffers to the number of points to be queried
+  gprtBufferResize(context_, rayInputBuffer_, num_points, false);
+  gprtBufferResize(context_, rayOutputBuffer_, num_points, false);
+
+  // Since we have resized the ray input buffer, we need to update the geom_data->rayIn pointers in all geometries 
+  for (auto const& [surf, geom] : surface_to_geometry_map_) {
+    DPTriangleGeomData* geom_data = gprtGeomGetParameters(geom);
+    geom_data->rayIn = gprtBufferGetDevicePointer(rayInputBuffer_); 
+  }
+
+  // TODO - handle exclude_primitives for batch version
+
+  // Map the region start
+  gprtBufferMap(rayInputBuffer_); 
+  dblRayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
+  for (size_t i = 0; i < num_points; ++i) {
+    const auto& point = points[i];
+    const auto& direction = directions[i];
+
+    const Direction* dptr = directions ? directions[i] : nullptr; // if directions array is empty. Set dptr to nullptr
+    const Direction directionUsed = dptr ? *dptr : defaultDir; // if dptr is nullptr use default direction, othewise dereference to actual Direction
+    rayInput[i].volume_accel = gprtAccelGetDeviceAddress(volume);
+
+    rayInput[i].origin = {point.x, point.y, point.z};
+    rayInput[i].direction = {directionUsed.x, directionUsed.y, directionUsed.z};
+    rayInput[i].tMax = INFTY; // Set a large distance limit
+    rayInput[i].tMin = 0.0;
+    rayInput[i].volume_tree = tree; // Set the TreeID of the volume being queried
+    rayInput[i].hitOrientation = HitOrientation::ANY; // No orientation culling for point-in-volume check
+    rayInput[i].exclude_primitives = nullptr; // Not currently supported in batch version
+  }
+
+  gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
+
+  gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
+
+  gprtRayGenLaunch1D(context_, rayGenPointInVolProgram_, num_points);
+
+  // Retrieve the output from the ray output buffer
+  gprtBufferMap(rayOutputBuffer_);
+  dblRayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
+  for (size_t i = 0; i < num_points; ++i) {
+    auto piv = rayOutput[i].piv; // Point in volume check result
+    results[i] = static_cast<uint8_t>(piv);
+  }
+  gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
+  
+  return;
+}
+  
+
+
+// Array version of ray_fire
+void GPRTRayTracer::batch_ray_fire(TreeID tree,
+                                   const Position* origins,
+                                   const Direction* directions,
+                                   const size_t num_rays,
+                                   double* hitDistances,
+                                   MeshID* surfaceIDs,
+                                   const double dist_limit,
+                                   HitOrientation orientation,
+                                   std::vector<MeshID>* const exclude_primitives)
+{
+  if (num_rays == 0) return; // no work to do. Early exit
+
+  GPRTAccel volume = surface_volume_tree_to_accel_map.at(tree);
+  dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
+
+  // resize buffers to the number of points to be queried
+  gprtBufferResize(context_, rayInputBuffer_, num_rays, false);
+  gprtBufferResize(context_, rayOutputBuffer_, num_rays, false);
+
+  // Since we have resized the ray input buffer, we need to update the geom_data->rayIn pointers in all geometries 
+  for (auto const& [surf, geom] : surface_to_geometry_map_) {
+    DPTriangleGeomData* geom_data = gprtGeomGetParameters(geom);
+    geom_data->rayIn = gprtBufferGetDevicePointer(rayInputBuffer_); 
+  }
+    
+  gprtBufferMap(rayInputBuffer_); 
+  dblRayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
+  for (size_t i = 0; i < num_rays; ++i) {
+    const auto& origin = origins[i];
+    const auto& direction = directions[i];
+
+    rayInput[i].volume_accel = gprtAccelGetDeviceAddress(volume);
+    rayInput[i].origin = {origin.x, origin.y, origin.z};
+    rayInput[i].direction = {direction.x, direction.y, direction.z};
+    rayInput[i].tMax = dist_limit;
+    rayInput[i].tMin = 0.0;
+    rayInput[i].hitOrientation = orientation; // Set orientation for the ray
+    rayInput[i].volume_tree = tree; // Set the TreeID of the volume being queried
+    rayInput[i].exclude_primitives = nullptr; // Not currently supported in batch version
+  }
+
+  gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
+  
+  gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
+  
+  // Launch the ray generation shader with push constants and buffer bindings
+  gprtRayGenLaunch1D(context_, rayGenProgram_, num_rays);
+                                                  
+  // Retrieve the output from the ray output buffer
+  gprtBufferMap(rayOutputBuffer_);
+  dblRayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
+  // populate the result arrays
+  for (size_t i = 0; i < num_rays; ++i) {
+    const MeshID surfaceHit = rayOutput[i].surf_id;
+    if (surfaceHit == ID_NONE) {
+      hitDistances[i] = INFTY;
+      surfaceIDs[i] = ID_NONE;
+    }
+    else {
+      hitDistances[i] = rayOutput[i].distance;
+      surfaceIDs[i] = surfaceHit;
+      // TODO - handle exclude_primitives for batch version
+    }
+  }
+  gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
+
+  return;
+}
+
 void GPRTRayTracer::create_global_surface_tree()
 {
   // Create a TLAS (Top-Level Acceleration Structure) for all the volumes
