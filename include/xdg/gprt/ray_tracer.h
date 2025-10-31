@@ -77,10 +77,7 @@ class GPRTRayTracer : public RayTracer {
     bool occluded(TreeID scene,
                   const Position& origin,
                   const Direction& direction,
-                  double& dist) const override {
-      fatal_error("Occlusion queries are not currently supported with GPRT ray tracer");
-      return false;
-    }
+                  double& dist) const override;
     
   private:
     // GPRT objects 
@@ -93,7 +90,8 @@ class GPRTRayTracer : public RayTracer {
     // Shader programs
     GPRTRayGenOf<dblRayGenData> rayGenProgram_; 
     GPRTRayGenOf<dblRayGenData> rayGenPointInVolProgram_;
-    GPRTMissOf<void> missProgram_; 
+    GPRTRayGenOf<dblRayGenData> rayGenOccludedProgram_;
+    GPRTMissOf<void> missProgram_;
     GPRTComputeOf<DPTriangleGeomData> aabbPopulationProgram_; //<! AABB population program for double precision rays
     
     // Buffers 
@@ -113,7 +111,7 @@ class GPRTRayTracer : public RayTracer {
     std::map<MeshID, GPRTGeomOf<DPTriangleGeomData>> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
 
     // Internal GPRT Mappings
-    std::unordered_map<SurfaceTreeID, GPRTAccel> surface_volume_tree_to_accel_map; // Map from XDG::TreeID to GPRTAccel for volume TLAS
+    std::unordered_map<SurfaceTreeID, GPRTAccel> surface_volume_tree_to_accel_map_; // Map from XDG::TreeID to GPRTAccel for volume TLAS
     std::vector<GPRTAccel> blas_handles_; // Store BLAS handles so that they can be explicitly referenced in destructor
 
     // Global Tree IDs

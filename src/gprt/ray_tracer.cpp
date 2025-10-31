@@ -5,6 +5,7 @@ namespace xdg {
 
 GPRTRayTracer::GPRTRayTracer()
 {
+  numRayTypes_ = 2; // ray_fire/point_in_volume + occluded
   gprtRequestRayTypeCount(numRayTypes_); // Set the number of shaders which can be set to the same geometry
   context_ = gprtContextCreate();
   module_ = gprtModuleCreate(context_, dbl_deviceCode);
@@ -26,6 +27,11 @@ GPRTRayTracer::GPRTRayTracer()
   rayGenPIVData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
   rayGenPIVData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
 
+
+  dblRayGenData* rayGenOccludedData = gprtRayGenGetParameters(rayGenOccludedProgram_);
+  rayGenOccludedData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
+  rayGenOccludedData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
+
   // Set up build parameters for acceleration structures
   buildParams_.buildMode = GPRT_BUILD_MODE_FAST_BUILD_NO_UPDATE;
 }
@@ -38,7 +44,7 @@ GPRTRayTracer::~GPRTRayTracer()
 
 
   // Destroy TLAS structures
-  for (const auto& [tree, accel] : surface_volume_tree_to_accel_map) {
+  for (const auto& [tree, accel] : surface_volume_tree_to_accel_map_) {
     gprtAccelDestroy(accel);
   }
 
@@ -68,13 +74,18 @@ void GPRTRayTracer::setup_shaders()
   // Set up ray generation and miss programs
   rayGenProgram_ = gprtRayGenCreate<dblRayGenData>(context_, module_, "ray_fire");
   rayGenPointInVolProgram_ = gprtRayGenCreate<dblRayGenData>(context_, module_, "point_in_volume");
-  missProgram_ = gprtMissCreate<void>(context_, module_, "ray_fire_miss");
+  rayGenOccludedProgram_ = gprtRayGenCreate<dblRayGenData>(context_, module_, "occluded");
+  missProgram_ = gprtMissCreate<void>(context_, module_, "miss");
   aabbPopulationProgram_ = gprtComputeCreate<DPTriangleGeomData>(context_, module_, "populate_aabbs");
 
-  // Create a "triangle" geometry type and set its closest-hit program
   trianglesGeomType_ = gprtGeomTypeCreate<DPTriangleGeomData>(context_, GPRT_AABBS);
+  // Set its closest-hit program and intersection program for ray-fire and point-in-volume queries
   gprtGeomTypeSetClosestHitProg(trianglesGeomType_, 0, module_, "ray_fire_hit"); // closesthit for ray queries
   gprtGeomTypeSetIntersectionProg(trianglesGeomType_, 0, module_, "DPTrianglePluckerIntersection"); // set intersection program for double precision rays
+
+  // Set any-hit program and intersection program for occlusion queries
+  gprtGeomTypeSetAnyHitProg(trianglesGeomType_, 1, module_, "occlusion_anyhit"); // anyhit for occlusion queries
+  gprtGeomTypeSetIntersectionProg(trianglesGeomType_, 1, module_, "DPTrianglePluckerIntersection_occluded"); // set intersection program for double precision rays for occlusion queries
 }
 
 void GPRTRayTracer::init() 
@@ -196,7 +207,7 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
   auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, surfaceBlasInstances.size(), surfaceBlasInstances.data());
   GPRTAccel volume_tlas = gprtInstanceAccelCreate(context_, surfaceBlasInstances.size(), instanceBuffer);
   gprtAccelBuild(context_, volume_tlas, buildParams_);
-  surface_volume_tree_to_accel_map[tree] = volume_tlas;
+  surface_volume_tree_to_accel_map_[tree] = volume_tlas;
   
   return tree;
 }
@@ -213,7 +224,7 @@ bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree,
                                     const Direction* direction,
                                     const std::vector<MeshID>* exclude_primitives) const
 {
-  GPRTAccel volume = surface_volume_tree_to_accel_map.at(tree);
+  GPRTAccel volume = surface_volume_tree_to_accel_map_.at(tree);
   dblRayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPointInVolProgram_);
 
   // Use provided direction or if Direction == nulptr use default direction
@@ -273,7 +284,7 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
                                                   HitOrientation orientation,
                                                   std::vector<MeshID>* const exclude_primitives) 
 {
-  GPRTAccel volume = surface_volume_tree_to_accel_map.at(tree);
+  GPRTAccel volume = surface_volume_tree_to_accel_map_.at(tree);
   dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
   
   gprtBufferMap(rayInputBuffer_); // Update the ray input buffer
@@ -320,6 +331,38 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
   return {distance, surface};
 }
                 
+
+bool GPRTRayTracer::occluded(SurfaceTreeID tree,
+                         const Position& origin,
+                         const Direction& direction,
+                         double& distance) const
+{
+  GPRTAccel volume = surface_volume_tree_to_accel_map_.at(tree);
+  dblRayGenData* rayGenOccludedData = gprtRayGenGetParameters(rayGenOccludedProgram_);
+
+  gprtBufferMap(rayInputBuffer_); // Update the ray input buffer
+  dblRayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
+  rayInput[0].volume_accel = gprtAccelGetDeviceAddress(volume); 
+  rayInput[0].origin = {origin.x, origin.y, origin.z};
+  rayInput[0].direction = {direction.x, direction.y, direction.z};
+  rayInput[0].tMax = INFTY; // Set a large distance limit
+  rayInput[0].tMin = 0.0;
+  rayInput[0].volume_tree = tree; // Set the TreeID of the volume being queried
+  rayInput[0].hitOrientation = HitOrientation::ANY; // No orientation culling for occlusion check
+  gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
+
+  gprtRayGenLaunch1D(context_, rayGenOccludedProgram_, 1); // Launch raygen shader (entry point to RT pipeline)
+  gprtGraphicsSynchronize(context_); // Ensure all GPU operations are complete before returning control flow to CPU
+
+  // Retrieve the output from the ray output buffer
+  gprtBufferMap(rayOutputBuffer_);
+  dblRayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
+  auto visibility = rayOutput->visibility; 
+  gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
+  
+  return visibility;
+}
+
 void GPRTRayTracer::create_global_surface_tree()
 {
   // Create a TLAS (Top-Level Acceleration Structure) for all the volumes
@@ -329,7 +372,7 @@ void GPRTRayTracer::create_global_surface_tree()
 
   SurfaceTreeID tree = next_surface_tree_id();
   surface_trees_.push_back(tree);
-  surface_volume_tree_to_accel_map[tree] = global_accel;  
+  surface_volume_tree_to_accel_map_[tree] = global_accel;  
   global_surface_tree_ = tree;
   global_surface_accel_ = global_accel; 
 }

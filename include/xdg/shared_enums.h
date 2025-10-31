@@ -8,6 +8,11 @@ namespace xdg {
     INSIDE = 1 
   };
 
+  enum Visibility : int { 
+    VISIBLE = 0, 
+    OCCLUDED = 1 
+  };
+
   enum HitOrientation : int {
     ANY = -1,
     EXITING = 0,
