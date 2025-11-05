@@ -10,6 +10,8 @@
 #include "mesh_mock.h"
 #include "util.h"
 
+#include <chrono>
+
 using namespace xdg;
 
 // ------- single test, multiple sections (one per built backend) --------------
@@ -127,60 +129,90 @@ TEST_CASE("Batch API Ray Fire on MeshMock", "[rayfire][mock][batch]") {
 
     rti->init();
 
-    // Create a set of 64 rays to be used throughout this test_case
-    std::vector<Position> origins;
-    std::vector<Direction> directions;
-    origins.reserve(64); 
-    directions.reserve(64);
-    for (int i = 0; i < 64; ++i) {
-      int axis = i % 3; 
-      double s = (i % 2) ? 1.0 : -1.0;
-      origins.push_back({0,0,0});
-      directions.push_back(axis == 0 ? Direction{s,0,0}
-                           : axis == 1 ? Direction{0,s,0}
-                                       : Direction{0,0,s});
-    }
-    
-    // Store results of scalar ray_fires to verify batch against scalar
-    std::vector<double> scalar_ray_fire_distances(origins.size(), INFTY);
-    std::vector<MeshID> scalar_ray_fire_surface_id(origins.size(), ID_NONE);
-    for (size_t i = 0; i < origins.size(); ++i) {
-      auto [distance, surfID] = rti->ray_fire(volume_tree, origins[i], directions[i], INFTY, HitOrientation::EXITING);
-      scalar_ray_fire_distances[i] = distance;
-      scalar_ray_fire_surface_id[i] = surfID;
-    }
+    // Helper to synthesize origins/directions like your 64-ray pattern, extended to N
+    auto make_rays = [](size_t N, std::vector<Position>& origins, std::vector<Direction>& directions) {
+      origins.clear(); directions.clear();
+      origins.reserve(N); directions.reserve(N);
+      for (size_t i = 0; i < N; ++i) {
+        int axis = int(i % 3);
+        double s = (i % 2) ? 1.0 : -1.0;
+        origins.push_back({0.0, 0.0, 0.0});
+        if (axis == 0) directions.push_back({s, 0.0, 0.0});
+        else if (axis == 1) directions.push_back({0.0, s, 0.0});
+        else directions.push_back({0.0, 0.0, s});
+      }
+    };
 
+    // ---- N = 0 ----
     SECTION("N=0 no-op") {
       rti->batch_ray_fire(volume_tree, nullptr, nullptr, 0, nullptr, nullptr,
                           INFTY, HitOrientation::EXITING, nullptr);
       SUCCEED("N=0 completed without error");
     }
 
+    // ---- N = 1 ----
     SECTION("N=1 equals scalar") {
-      double hd;
-      MeshID sid = ID_NONE;
+      std::vector<Position> origins;
+      std::vector<Direction> directions;
+      make_rays(1, origins, directions);
 
-      rti->batch_ray_fire(volume_tree, &origins[0], &directions[0], 1, &hd, 
-                          &sid, INFTY, HitOrientation::EXITING, nullptr);
+      auto [dist_scalar, id_scalar] = rti->ray_fire(volume_tree, origins[0], directions[0], INFTY, HitOrientation::EXITING);
 
-      REQUIRE(sid != ID_NONE); // expect a hit 
-      
-      // Ensure that hit matches scalar ray_fire
-      REQUIRE_THAT(hd, Catch::Matchers::WithinAbs(scalar_ray_fire_distances[0], 1e-6));
-      REQUIRE(sid == scalar_ray_fire_surface_id[0]);
+      double dist_batch = -1.0;
+      MeshID id_batch = ID_NONE;
+      rti->batch_ray_fire(volume_tree, origins.data(), directions.data(), 1,
+                          &dist_batch, &id_batch, INFTY, HitOrientation::EXITING, nullptr);
+
+      REQUIRE(id_batch == id_scalar);
+      REQUIRE_THAT(dist_batch, Catch::Matchers::WithinAbs(dist_scalar, 1e-6));
     }
 
-    SECTION("N=64") {
-      std::vector<double> hd(origins.size(), -1.0);
-      std::vector<MeshID> sid(origins.size(), ID_NONE);
-      rti->batch_ray_fire(volume_tree, origins.data(), directions.data(),
-                          origins.size(), hd.data(), sid.data(),
-                          INFTY, HitOrientation::EXITING, nullptr);
-      
-      // Ensure that hits match scalar ray_fires
-      for (size_t i = 0; i < origins.size(); ++i) {
-        REQUIRE_THAT(hd[i], Catch::Matchers::WithinAbs(scalar_ray_fire_distances[i], 1e-6));
-        REQUIRE(sid[i] == scalar_ray_fire_surface_id[i]);
+    // ---- N = 64 ----
+    SECTION("N=64 matches scalar for all") {
+      std::vector<Position> origins;
+      std::vector<Direction> directions;
+      make_rays(64, origins, directions);
+
+      std::vector<double> dist_scalar(64, INFTY);
+      std::vector<MeshID> id_scalar(64, ID_NONE);
+      for (size_t i = 0; i < 64; ++i) {
+        auto [d, id] = rti->ray_fire(volume_tree, origins[i], directions[i], INFTY, HitOrientation::EXITING);
+        dist_scalar[i] = d; id_scalar[i] = id;
+      }
+
+      std::vector<double> dist_batch(64, -1.0);
+      std::vector<MeshID> id_batch(64, ID_NONE);
+      rti->batch_ray_fire(volume_tree, origins.data(), directions.data(), origins.size(),
+                          dist_batch.data(), id_batch.data(), INFTY, HitOrientation::EXITING, nullptr);
+
+      for (size_t i = 0; i < 64; ++i) {
+        REQUIRE(id_batch[i] == id_scalar[i]);
+        REQUIRE_THAT(dist_batch[i], Catch::Matchers::WithinAbs(dist_scalar[i], 1e-6));
+      }
+    }
+
+    // ---- N = 10,000,000 ----
+    SECTION("N=10,000,000 batch with basic sanity checks") {
+      const size_t N = 10000000;
+      std::vector<Position> origins;
+      std::vector<Direction> directions;
+      make_rays(N, origins, directions);
+
+      // Batch compute
+      std::vector<double> dist_batch(N, -1.0);
+      std::vector<MeshID> id_batch(N, ID_NONE);
+      auto t0 = std::chrono::high_resolution_clock::now();
+      rti->batch_ray_fire(volume_tree, origins.data(), directions.data(), N,
+                          dist_batch.data(), id_batch.data(), INFTY, HitOrientation::EXITING, nullptr);
+      auto t1 =  std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> batch_time = t1 - t0;
+      printf("Completed batch ray fire for N=%zu rays, in %f seconds\n", N, batch_time.count());
+
+      // Basic sanity checks over 100 rays
+      for (size_t i = 0; i < N; i += N/100) {
+        REQUIRE(id_batch[i] != ID_NONE);
+        REQUIRE(std::isfinite(dist_batch[i]));
+        REQUIRE(dist_batch[i] >= 0.0);
       }
     }
   }
