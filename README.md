@@ -1,5 +1,5 @@
 
-[![CI](https://github.com/pshriwise/xdg/actions/workflows/ci.yml/badge.svg)](https://github.com/pshriwise/xdg/actions/workflows/ci.yml)
+[![CI](https://github.com/xdg-org/xdg/actions/workflows/ci.yml/badge.svg)](https://github.com/xdg-org/xdg/actions/workflows/ci.yml)
 
 Accelerated Discretized Geometry
 --------------------------------
