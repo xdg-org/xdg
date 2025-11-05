@@ -329,18 +329,15 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
 
 void GPRTRayTracer::batch_point_in_volume(TreeID tree,
                                           const Position* points,
-                                          const Direction* const* directions, // [num_points] array of Direction pointers
+                                          const Direction* directions, // [num_points] array of Direction pointers
                                           const size_t num_points,
                                           uint8_t* results,
+                                          const uint8_t* has_dir,
                                           std::vector<MeshID>* exclude_primitives) const
 {
   if (num_points == 0) return; // no work to do. Early exit
 
   GPRTAccel volume = surface_volume_tree_to_accel_map.at(tree);
-  dblRayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPointInVolProgram_);
-
-  // Set a default direction to be used if no direction is provided
-  const Direction defaultDir = Direction{1. / std::sqrt(2.0), 1. / std::sqrt(2.0), 0.0};
 
   // resize buffers to the number of points to be queried
   gprtBufferResize(context_, rayInputBuffer_, num_points, false);
@@ -352,20 +349,32 @@ void GPRTRayTracer::batch_point_in_volume(TreeID tree,
     geom_data->rayIn = gprtBufferGetDevicePointer(rayInputBuffer_); 
   }
 
+  // Refresh raygen IO after resize
+  dblRayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPointInVolProgram_);
+  rayGenPIVData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
+  rayGenPIVData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
+
   // TODO - handle exclude_primitives for batch version
+
+  // Set a default direction to be used if no direction is provided
+  const Direction defaultDir = Direction{1. / std::sqrt(2.0), 1. / std::sqrt(2.0), 0.0};
 
   // Map the region start
   gprtBufferMap(rayInputBuffer_); 
   dblRayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
+  const auto volumeAddr = gprtAccelGetDeviceAddress(volume);
   for (size_t i = 0; i < num_points; ++i) {
-    const auto& point = points[i];
-    const auto& direction = directions[i];
+    Direction directionUsed =
+        (!directions || (has_dir && !has_dir[i])) ? defaultDir : directions[i];
 
-    const Direction* dptr = directions ? directions[i] : nullptr; // if directions array is empty. Set dptr to nullptr
-    const Direction directionUsed = dptr ? *dptr : defaultDir; // if dptr is nullptr use default direction, othewise dereference to actual Direction
-    rayInput[i].volume_accel = gprtAccelGetDeviceAddress(volume);
+    // Catch directions with zero length
+    const double l2 = directionUsed.x*directionUsed.x
+                    + directionUsed.y*directionUsed.y
+                    + directionUsed.z*directionUsed.z;
+    if (l2 == 0.0) directionUsed = defaultDir;
 
-    rayInput[i].origin = {point.x, point.y, point.z};
+    rayInput[i].volume_accel = volumeAddr;
+    rayInput[i].origin = {points[i].x, points[i].y, points[i].z};
     rayInput[i].direction = {directionUsed.x, directionUsed.y, directionUsed.z};
     rayInput[i].tMax = INFTY; // Set a large distance limit
     rayInput[i].tMin = 0.0;
@@ -374,12 +383,10 @@ void GPRTRayTracer::batch_point_in_volume(TreeID tree,
     rayInput[i].exclude_primitives = nullptr; // Not currently supported in batch version
   }
 
-  rayGenPIVData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
-  rayGenPIVData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
-
   gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
-
-  gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
+  
+  // rebuild SBT geom and raygen only
+  gprtBuildShaderBindingTable(context_, static_cast<GPRTBuildSBTFlags>(GPRT_SBT_GEOM | GPRT_SBT_RAYGEN));
 
   gprtRayGenLaunch1D(context_, rayGenPointInVolProgram_, num_points);
   gprtGraphicsSynchronize(context_);
@@ -445,7 +452,8 @@ void GPRTRayTracer::batch_ray_fire(TreeID tree,
 
   gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
   
-  gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
+  // rebuild SBT geom and raygen only
+  gprtBuildShaderBindingTable(context_, static_cast<GPRTBuildSBTFlags>(GPRT_SBT_GEOM | GPRT_SBT_RAYGEN));
   
   // Launch the ray generation shader with push constants and buffer bindings
   gprtRayGenLaunch1D(context_, rayGenProgram_, num_rays);
