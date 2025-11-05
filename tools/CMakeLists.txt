@@ -4,6 +4,7 @@ ray_fire
 batch_ray_fire
 find_volume
 point_in_volume
+batch_point_in_volume
 overlap_check
 walk_elements
 tally_segments
