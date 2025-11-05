@@ -12,9 +12,6 @@
 
 #include "argparse/argparse.hpp"
 
-using namespace xdg;
-
-// --------------------------- Helpers to determine what kind of batch to use ---------------------------
 enum class BatchMode {
   ORIGIN_BROADCAST,    // 1 origin, many directions
   DIRECTION_BROADCAST, // many origins, 1 direction
@@ -52,7 +49,8 @@ inline BatchMode deduce_batch_mode(size_t num_origins, size_t num_directions) {
     );
   }
 }
-// ------------------------------------------------------------------------------------------------------
+
+using namespace xdg;
 
 int main(int argc, char** argv) {
 
@@ -90,12 +88,12 @@ int main(int argc, char** argv) {
 
     // High-level rules in the description
     args.add_description(
-    "This tool supports two modes of operation for batch ray firing: 'Broadcast' and 'Pairwise'\n\n"
-    "To use 'Broadcast' mode, provide one origin and many directions, or one direction and many origins:\n"
-    "   --origin x y z --direction u1 v1 w1 --direction u2 v2 w2 ...\n"
-    "   --direction u v w --origin x1 y1 z1 --origin x2 y2 z2 ...\n\n"
-    "To use 'Pairwise' mode, each origin is paired with a corresponding direction in order:\n"
-    "   --origin x1 y1 z1 --direction u1 v1 w1 --origin x2 y2 z2 --direction u2 v2 w2 ...\n"
+      "This tool supports two modes of operation for batch ray firing: 'Broadcast' and 'Pairwise'\n\n"
+      "To use 'Broadcast' mode, provide one origin and many directions, or one direction and many origins:\n"
+      "   --origin x y z --direction u1 v1 w1 --direction u2 v2 w2 ...\n"
+      "   --direction u v w --origin x1 y1 z1 --origin x2 y2 z2 ...\n\n"
+      "To use 'Pairwise' mode, each origin is paired with a corresponding direction in order:\n"
+      "   --origin x1 y1 z1 --direction u1 v1 w1 --origin x2 y2 z2 --direction u2 v2 w2 ...\n"
     );
 
 
@@ -144,6 +142,16 @@ int main(int argc, char** argv) {
   // Gather our inputs and determine which mode of operation the tool will be working in 
   auto flat_origins    = args.get<std::vector<double>>("--origin");
   auto flat_directions = args.get<std::vector<double>>("--direction");
+
+  if (flat_origins.empty()) {
+    fatal_error("You must supply at least one --origin x y z");
+  }
+  if (flat_origins.size() % 3 != 0) {
+    fatal_error("Origins must be supplied in groups of 3 numbers.");
+  }
+  if (flat_directions.size() % 3 != 0) {
+    fatal_error("Directions must be supplied in groups of 3 numbers.");
+  }
 
   // group every 3 into Position / Direction
   std::vector<std::vector<double>> args_origins;
