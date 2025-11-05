@@ -110,6 +110,18 @@ bool XDG::point_in_volume(MeshID volume,
   return ray_tracing_interface()->point_in_volume(tree, point, direction, exclude_primitives);
 }
 
+void XDG::batch_point_in_volume(MeshID volume,
+                                   const Position* points,
+                                   const Direction* directions, // [num_points] array of Direction pointers
+                                   const size_t num_points,
+                                   uint8_t* results,
+                                   const uint8_t* has_dir,
+                                   std::vector<MeshID>* exclude_primitives) const
+{
+  TreeID tree = volume_to_surface_tree_map_.at(volume);
+  ray_tracing_interface()->batch_point_in_volume(tree, points, directions, num_points, results, has_dir, exclude_primitives);
+}
+
 MeshID XDG::find_volume(const Position& point,
                                                    const Direction& direction) const
 {

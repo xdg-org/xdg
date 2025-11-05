@@ -78,9 +78,10 @@ std::pair<double, MeshID> ray_fire(MeshID volume,
 // Array version of point_in_volume
 void batch_point_in_volume(MeshID volume,
                                   const Position* points,
-                                  const Direction* const* directions, // [num_points] array of Direction pointers
+                                  const Direction* directions, // [num_points] array of Direction pointers
                                   const size_t num_points,
                                   uint8_t* results,
+                                  const uint8_t* has_dir = nullptr,
                                   std::vector<MeshID>* exclude_primitives = nullptr) const;
 
 // Array version of ray_fire
