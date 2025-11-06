@@ -18,6 +18,21 @@
 extern GPRTProgram dbl_deviceCode;
 namespace xdg {
 
+enum class RayGenType {
+  RAY_FIRE,
+  POINT_IN_VOLUME,
+  OCCLUDED,
+  CLOSEST
+};
+
+struct gprtRayIO {
+  size_t capacity = 1; // number of rays allocated in buffers
+  GPRTBufferOf<dblRayInput> ray = nullptr;
+  GPRTBufferOf<dblRayOutput> out = nullptr;
+  dblRayInput* deviceRayInAddress = nullptr;
+  dblRayOutput* deviceRayOutAddress = nullptr;
+};
+
 class GPRTRayTracer : public RayTracer {
   public:
     GPRTRayTracer();
@@ -83,6 +98,8 @@ class GPRTRayTracer : public RayTracer {
     }
     
   private:
+    void check_ray_buffer_capacity(size_t N);
+
     // GPRT objects 
     GPRTContext context_;
     GPRTProgram deviceCode_; // device code for float precision shaders
@@ -91,14 +108,13 @@ class GPRTRayTracer : public RayTracer {
     GPRTBuildParams buildParams_; //<! Build parameters for acceleration structures
 
     // Shader programs
-    GPRTRayGenOf<dblRayGenData> rayGenProgram_; 
-    GPRTRayGenOf<dblRayGenData> rayGenPointInVolProgram_;
+    std::map<RayGenType, GPRTRayGenOf<dblRayGenData>> rayGenPrograms_;
+
     GPRTMissOf<void> missProgram_; 
     GPRTComputeOf<DPTriangleGeomData> aabbPopulationProgram_; //<! AABB population program for double precision rays
     
     // Buffers 
-    GPRTBufferOf<dblRayInput> rayInputBuffer_; //<! Ray buffer for ray generation
-    GPRTBufferOf<dblRayOutput> rayOutputBuffer_; //<! Ray output buffer for ray generation
+    gprtRayIO rayBuffers_;
     GPRTBufferOf<int32_t> excludePrimitivesBuffer_; //<! Buffer for excluded primitives
     
     // Geometry Type and Instances
@@ -119,7 +135,7 @@ class GPRTRayTracer : public RayTracer {
     // Global Tree IDs
     GPRTAccel global_surface_accel_ {nullptr};
     GPRTAccel global_element_accel_ {nullptr}; 
-  
+
   };
 
 } // namespace xdg
