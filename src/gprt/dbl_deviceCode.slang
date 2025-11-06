@@ -1,4 +1,13 @@
 #include "../../include/xdg/gprt/shared_structs.h"
+#include "../../include/xdg/geometry/plucker.h"
+
+/* 
+For now we have to use relative paths for includes, which is not ideal. If https://github.com/gprt-org/GPRT/pull/82 gets 
+merged into GPRT we will be able to more robustly include these headers in the manner below: 
+
+#include "xdg/gprt/shared_structs.h"
+#include "xdg/geometry/plucker.h"
+*/
 
 [[vk::push_constant]]
 dblRayFirePushConstants PC;
@@ -109,11 +118,11 @@ void
 populate_aabbs(uint3 DispatchThreadID: SV_DispatchThreadID, uniform DPTriangleGeomData record) {
     int primID = DispatchThreadID.x;
     int3 indices = record.index[primID];
-    double3 A = record.vertex[indices[0]];
-    double3 B = record.vertex[indices[1]];
-    double3 C = record.vertex[indices[2]];
-    double3 dpaabbmin = min(min(A, B), C);
-    double3 dpaabbmax = max(max(A, B), C);
+    dp::vec3 A = record.vertex[indices[0]];
+    dp::vec3 B = record.vertex[indices[1]];
+    dp::vec3 C = record.vertex[indices[2]];
+    dp::vec3 dpaabbmin = min(min(A, B), C);
+    dp::vec3 dpaabbmax = max(max(A, B), C);
     float3 fpaabbmin = float3(dpaabbmin - float3(FLT_EPSILON, FLT_EPSILON, FLT_EPSILON));
     float3 fpaabbmax = float3(dpaabbmax + float3(FLT_EPSILON, FLT_EPSILON, FLT_EPSILON));
 
@@ -133,101 +142,42 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
 
     uint rayID = DispatchRaysIndex().x;
     uint nRays = DispatchRaysDimensions().x;
-    uint flags = RayFlags();
 
-    if (rayID >= nRays) {
-        return;
-    }
+    if (rayID >= nRays) return;
 
-    bool useOrientation = false;
-    int orientation = 0;
-    if ((flags & RAY_FLAG_CULL_BACK_FACING_TRIANGLES) != 0) {
-        orientation = -1;
-        useOrientation = true;
-    }
-    else if ((flags & RAY_FLAG_CULL_FRONT_FACING_TRIANGLES) != 0) {
-        orientation = 1;
-        useOrientation = true;
-    }
-
+    // Load vertices
     int3 indices = record.index[primID];
-    double3 v0 = record.vertex[indices[0]];
-    double3 v1 = record.vertex[indices[1]];
-    double3 v2 = record.vertex[indices[2]];
+    dp::vec3 v0 = record.vertex[indices[0]];
+    dp::vec3 v1 = record.vertex[indices[1]];
+    dp::vec3 v2 = record.vertex[indices[2]];
+    dp::vec3 vertices[3] = { v0, v1, v2 };
 
-    double3 origin = record.rayIn[rayID].origin;
-    double3 direction = record.rayIn[rayID].direction;
-
-    // double tMin = record.rayIn[rayID].tMin;
+    // Load rays
+    dp::vec3 origin = record.rayIn[rayID].origin;
+    dp::vec3 direction = record.rayIn[rayID].direction;
     double tMin = record.rayIn[rayID].tMin;
     double tMax = record.rayIn[rayID].tMax;
 
-    const double3 raya = direction;
-    const double3 rayb = cross(direction, origin);
+    bool useOrientation = false;
+    int orientation = 0;
 
-    double plucker_coord0 = plucker_edge_test(v0, v1, raya, rayb);
-    if (useOrientation && orientation * plucker_coord0 > 0) {
-        return;
-    }
-
-    double plucker_coord1 = plucker_edge_test(v1, v2, raya, rayb);
-    if (useOrientation && orientation * plucker_coord1 > 0) {
-        return;
-    }
-    else if ((0.0 < plucker_coord0 && 0.0 > plucker_coord1) || (0.0 > plucker_coord0 && 0.0 < plucker_coord1)) {
-        return;
-    }
-
-    double plucker_coord2 = plucker_edge_test(v2, v0, raya, rayb);
-    if (useOrientation && orientation * plucker_coord2 > 0) {
-        return;
-    }
-    else if ((0.0 < plucker_coord1 && 0.0 > plucker_coord2) || (0.0 > plucker_coord1 && 0.0 < plucker_coord2) ||
-             (0.0 < plucker_coord0 && 0.0 > plucker_coord2) || (0.0 > plucker_coord0 && 0.0 < plucker_coord2)) {
-        return;
-    }
-
-    if (0.0 == plucker_coord0 && 0.0 == plucker_coord1 && 0.0 == plucker_coord2) {
-        return;
-    }
-
-    const double inverse_sum = 1.0 / (plucker_coord0 + plucker_coord1 + plucker_coord2);
-    const double3 intersection = double3(plucker_coord0 * inverse_sum * v2 +
-                                         plucker_coord1 * inverse_sum * v0 +
-                                         plucker_coord2 * inverse_sum * v1);
-
-    int idx = 0;
-    double max_abs_dir = 0;
-    for(uint i = 0; i < 3; ++i) {
-        if(abs(direction[i]) > max_abs_dir) {
-            idx         = i;
-            max_abs_dir = abs(direction[i]);
-        }
-    }
-    const double dist = (intersection[idx] - origin[idx]) / direction[idx];
-
-    double t = dist;
-    double u = plucker_coord2 * inverse_sum;
-    double v = plucker_coord0 * inverse_sum;
-
-
-    if(u < 0.0 || v < 0.0 || (u + v) > 1.0) {
-        t = -1.0;
-    }
-    if (t > tMax) {
-        return;
-    }
-    if (t < tMin) {
-        return;
-    }
-
+    xdg::PluckerIntersectionResult result = xdg::plucker_ray_tri_intersect(vertices, 
+                                                                           origin, 
+                                                                           direction, 
+                                                                           tMax, 
+                                                                           tMin, 
+                                                                           useOrientation, 
+                                                                           orientation);
+    if (result.hit == false) return; // No intersection
+    double t = result.t;
+    
     DPAttribute attr;
     attr.f64t = t;
 
     float f32t = float(t);
     if (double(f32t) < t) f32t = next_after(f32t);
 
-    double3 norm = record.normals[primID]; // recover double precision normal. TODO - Should we calculate from vertices instead?
+    dp::vec3 norm = record.normals[primID]; // recover double precision normal. TODO - Should we calculate from vertices instead?
 
     // sense adjustment of normal
     if (record.rayIn[rayID].volume_tree == record.reverse_tree)
@@ -235,7 +185,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
         norm = -norm;
     }
 
-    double norm_dot_dir = dot(norm, direction);
+    double norm_dot_dir = dp::dot(norm, direction);
     uint hit_kind = norm_dot_dir < 0 ? HIT_KIND_TRIANGLE_FRONT_FACE
                                      : HIT_KIND_TRIANGLE_BACK_FACE;
 
@@ -259,30 +209,30 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
 
 // ------------------------------------------------- Helper functions -------------------------------------------------
 
-bool orientation_cull(in double3 ray, in double3 normal, in xdg::HitOrientation orientation) {
+bool orientation_cull(in dp::vec3 ray, in dp::vec3 normal, in xdg::HitOrientation orientation) {
     if (orientation == xdg::HitOrientation::ANY) return false; // No culling
-    if (orientation == xdg::HitOrientation::EXITING) return dot(ray, normal) < 0.0; // Cull exiting rays
-    if (orientation == xdg::HitOrientation::ENTERING) return dot(ray, normal) > 0.0; // Cull entering rays
+    if (orientation == xdg::HitOrientation::EXITING) return dp::dot(ray, normal) < 0.0; // Cull exiting rays
+    if (orientation == xdg::HitOrientation::ENTERING) return dp::dot(ray, normal) > 0.0; // Cull entering rays
     return false; // Default case, no culling
 }
 
 // Plucker coordinate
-double plucker_edge_test(in double3 vertexa, in double3 vertexb, in double3 ray, in double3 ray_normal)
+double plucker_edge_test(in dp::vec3 vertexa, in dp::vec3 vertexb, in dp::vec3 ray, in dp::vec3 ray_normal)
 {
     double pip;
     const double near_zero = 10 * DBL_EPSILON;
 
     if (first(vertexa, vertexb))
     {
-        double3 edge = vertexb - vertexa;
-        double3 edge_normal = cross(edge, vertexa);
-        pip = dot(ray, edge_normal) + dot(ray_normal, edge);
+        dp::vec3 edge = vertexb - vertexa;
+        dp::vec3 edge_normal = dp::cross(edge, vertexa);
+        pip = dp::dot(ray, edge_normal) + dp::dot(ray_normal, edge);
     }
     else
     {
-        double3 edge = vertexa - vertexb;
-        double3 edge_normal = cross(edge, vertexb);
-        pip = dot(ray, edge_normal) + dot(ray_normal, edge);
+        dp::vec3 edge = vertexa - vertexb;
+        dp::vec3 edge_normal = dp::cross(edge, vertexb);
+        pip = dp::dot(ray, edge_normal) + dp::dot(ray_normal, edge);
         pip = -pip;
     }
 
@@ -294,7 +244,7 @@ double plucker_edge_test(in double3 vertexa, in double3 vertexb, in double3 ray,
     ray-edge computation, the Plücker test needs to use consistent edge
     representation. This would be more simple with MOAB handles instead of
     coordinates... */
-inline bool first(in double3 a, in double3 b)
+inline bool first(in dp::vec3 a, in dp::vec3 b)
 {
     if (a[0] < b[0]) return true;
 
