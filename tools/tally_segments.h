@@ -35,8 +35,14 @@ void tally_segments(const TallyContext& context) {
   using namespace indicators;
   auto prog_bar = block_progress_bar(fmt::format("Running {} tally tracks", context.n_tracks_));
 
-  omp_set_num_threads(context.n_threads_);
-  std::cout << fmt::format("Using {} threads", context.n_threads_) << "\n";
+  #ifdef XDG_OPENMP
+    omp_set_num_threads(context.n_threads_);
+    std::cout << fmt::format("Using {} threads", context.n_threads_) << "\n";
+  #else
+    if (context.n_threads_ != 1) {
+      std::cout << "Warning: OpenMP not enabled; running in single-threaded mode\n";
+    }
+  #endif
 
   int n_tracks_run = 0;
 

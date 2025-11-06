@@ -38,8 +38,15 @@ void walk_elements(const WalkElementsContext& context) {
 
   int n_particles_run = 0;
 
-  omp_set_num_threads(context.n_threads_);
-  std::cout << fmt::format("Using {} threads", context.n_threads_) << "\n";
+  #ifdef XDG_OPENMP
+    omp_set_num_threads(context.n_threads_);
+    std::cout << fmt::format("Using {} threads", context.n_threads_) << "\n";
+  #else
+    if (context.n_threads_ != 1) {
+      std::cout << "Warning: OpenMP not enabled; running in single-threaded mode\n";
+    }
+  #endif
+
 
   Timer timer;
   timer.start();
