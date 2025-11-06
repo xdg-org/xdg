@@ -96,7 +96,6 @@ int main(int argc, char** argv) {
       "   --origin x1 y1 z1 --direction u1 v1 w1 --origin x2 y2 z2 --direction u2 v2 w2 ...\n"
     );
 
-
   try {
     args.parse_args(argc, argv);
   }
@@ -107,7 +106,7 @@ int main(int argc, char** argv) {
   }
   
   std::string mesh_str = args.get<std::string>("--mesh-library");
-  std::string rt_str   = args.get<std::string>("--rt-library");
+  std::string rt_str = args.get<std::string>("--rt-library");
 
   MeshLibrary mesh_lib;
   if (mesh_str == "MOAB") mesh_lib = MeshLibrary::MOAB;
