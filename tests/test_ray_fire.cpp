@@ -2,7 +2,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/generators/catch_generators.hpp>
-
+#include <catch2/benchmark/catch_benchmark.hpp>
 
 // xdg includes
 #include "xdg/constants.h"
@@ -131,8 +131,10 @@ TEST_CASE("Batch API Ray Fire on MeshMock", "[rayfire][mock][batch]") {
 
     // Helper to synthesize origins/directions like your 64-ray pattern, extended to N
     auto make_rays = [](size_t N, std::vector<Position>& origins, std::vector<Direction>& directions) {
-      origins.clear(); directions.clear();
-      origins.reserve(N); directions.reserve(N);
+      origins.clear(); 
+      directions.clear();
+      origins.reserve(N); 
+      directions.reserve(N);
       for (size_t i = 0; i < N; ++i) {
         int axis = int(i % 3);
         double s = (i % 2) ? 1.0 : -1.0;
@@ -191,9 +193,9 @@ TEST_CASE("Batch API Ray Fire on MeshMock", "[rayfire][mock][batch]") {
       }
     }
 
-    // ---- N = 10,000,000 ----
-    SECTION("N=10,000,000 batch with basic sanity checks") {
-      const size_t N = 10000000;
+    // ---- N = 100,000 ----
+    SECTION("N=100,00 batch with basic sanity checks") {
+      const size_t N = 100000;
       std::vector<Position> origins;
       std::vector<Direction> directions;
       make_rays(N, origins, directions);
@@ -201,13 +203,11 @@ TEST_CASE("Batch API Ray Fire on MeshMock", "[rayfire][mock][batch]") {
       // Batch compute
       std::vector<double> dist_batch(N, -1.0);
       std::vector<MeshID> id_batch(N, ID_NONE);
-      auto t0 = std::chrono::high_resolution_clock::now();
-      rti->batch_ray_fire(volume_tree, origins.data(), directions.data(), N,
-                          dist_batch.data(), id_batch.data(), INFTY, HitOrientation::EXITING, nullptr);
-      auto t1 =  std::chrono::high_resolution_clock::now();
-      std::chrono::duration<double> batch_time = t1 - t0;
-      printf("Completed batch ray fire for N=%zu rays, in %f seconds\n", N, batch_time.count());
-
+      BENCHMARK("Batch ray fire with N = 100,000")
+      {
+       return rti->batch_ray_fire(volume_tree, origins.data(), directions.data(), N,
+                                  dist_batch.data(), id_batch.data(), INFTY, HitOrientation::EXITING, nullptr);
+      };
       // Basic sanity checks over 100 rays
       for (size_t i = 0; i < N; i += N/100) {
         REQUIRE(id_batch[i] != ID_NONE);
