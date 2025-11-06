@@ -10,14 +10,11 @@
 #include "xdg/util/progress_bars.h"
 #include "xdg/vec3da.h"
 #include "xdg/timer.h"
+#include "xdg/bbox.h"
 
 #include "xdg/xdg.h"
 
 using namespace xdg;
-
-Position sample_box_location(const BoundingBox& bbox) {
-  return bbox.lower_left() + bbox.width() * Vec3da(drand48(), drand48(), drand48());
-}
 
 struct WalkElementsContext {
   std::shared_ptr<XDG> xdg_;
@@ -60,7 +57,7 @@ void walk_elements(const WalkElementsContext& context) {
 
       // sample a location within the model
       while (element == ID_NONE) {
-        r = sample_box_location(bbox);
+        r = bbox.sample_location();
         element = xdg->find_element(r);
       }
 

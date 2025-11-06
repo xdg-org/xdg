@@ -10,9 +10,9 @@
 #include "xdg/util/progress_bars.h"
 #include "xdg/vec3da.h"
 #include "xdg/timer.h"
+#include "xdg/bbox.h"
 
 #include "xdg/xdg.h"
-
 
 using namespace xdg;
 
@@ -24,10 +24,6 @@ struct TallyContext {
   bool verbose_ {false};
   bool quiet_ {false};
 };
-
-Position sample_box_location(const BoundingBox& bbox) {
-  return bbox.lower_left() + bbox.width() * Vec3da(drand48(), drand48(), drand48());
-}
 
 void tally_segments(const TallyContext& context) {
   const auto& xdg = context.xdg_;
@@ -51,10 +47,10 @@ void tally_segments(const TallyContext& context) {
     #pragma omp for
     for (int i = 0; i < context.n_tracks_; i++) {
       // sample a location within the bounding box
-      Position r1 = sample_box_location(bbox);
+      Position r1 = bbox.sample_location();
       if (!bbox.contains(r1)) fatal_error(fmt::format("Point {} is not within the mesh bounding box", r1));
 
-      Position r2 = sample_box_location(bbox);
+      Position r2 = bbox.sample_location();
       if (!bbox.contains(r2)) fatal_error(fmt::format("Point {} is not within the mesh bounding box", r2));
 
       auto segments = xdg->segments(r1, r2);
