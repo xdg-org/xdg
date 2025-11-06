@@ -8,8 +8,8 @@
 #include "xdg/vec3da.h"
 
 #include "xdg/constants.h"
-#include "xdg/embree_interface.h"
-#include "xdg/primitive_ref.h"
+#include "xdg/embree/embree_interface.h"
+#include "xdg/embree/primitive_ref.h"
 
 namespace xdg {
 

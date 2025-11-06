@@ -1,8 +1,8 @@
 #include "xdg/embree/ray_tracer.h"
 #include "xdg/error.h"
-#include "xdg/geometry_data.h"
-#include "xdg/ray.h"
-#include "xdg/tetrahedron_contain.h"
+#include "xdg/embree/geometry_data.h"
+#include "xdg/embree/ray.h"
+#include "xdg/embree/tetrahedron_contain.h"
 
 
 namespace xdg {
