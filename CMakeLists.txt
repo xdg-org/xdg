@@ -249,6 +249,8 @@ if (XDG_ENABLE_GPRT)
     ${device_code}
     HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/include/xdg/gprt/shared_structs.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/xdg/shared_enums.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/xdg/geometry/dp_math.h
     SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/${device_code}.slang
     )
