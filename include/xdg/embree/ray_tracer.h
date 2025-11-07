@@ -62,7 +62,7 @@ public:
                                      const size_t num_points,
                                      uint8_t* results,
                                      const uint8_t* has_dir = nullptr,
-                                     std::vector<MeshID>* exclude_primitives = nullptr) const override
+                                     std::vector<MeshID>* exclude_primitives = nullptr) override
   {
     fatal_error("Batch point_in_volume not yet implemented for EmbreeRayTracer");
   };
