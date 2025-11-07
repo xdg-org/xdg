@@ -9,22 +9,26 @@ GPRTRayTracer::GPRTRayTracer()
   context_ = gprtContextCreate();
   module_ = gprtModuleCreate(context_, dbl_deviceCode);
 
-  numRays = 1; // Set the number of rays to be cast
-  rayInputBuffer_ = gprtDeviceBufferCreate<dblRayInput>(context_, numRays);
-  rayOutputBuffer_ = gprtDeviceBufferCreate<dblRayOutput>(context_, numRays); 
+  rayHitBuffers_.capacity = 1; // Preallocate space for 1 ray
+  rayHitBuffers_.ray = gprtDeviceBufferCreate<dblRay>(context_, rayHitBuffers_.capacity);
+  rayHitBuffers_.hit = gprtDeviceBufferCreate<dblHit>(context_, rayHitBuffers_.capacity);
+  rayHitBuffers_.devRayAddr = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
+  rayHitBuffers_.devHitAddr = gprtBufferGetDevicePointer(rayHitBuffers_.hit);
+
   excludePrimitivesBuffer_ = gprtDeviceBufferCreate<int32_t>(context_); // initialise buffer of size 1
 
   setup_shaders();
 
+  
   // Bind the buffers to the RayGenData structure
-  dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
-  rayGenData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
-  rayGenData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
+  dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGenPrograms_.at(RayGenType::RAY_FIRE));
+  rayGenData->ray = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
+  rayGenData->hit = gprtBufferGetDevicePointer(rayHitBuffers_.hit);
 
   // Bind the buffers to the RayGenData structure
-  dblRayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPointInVolProgram_);
-  rayGenPIVData->ray = gprtBufferGetDevicePointer(rayInputBuffer_);
-  rayGenPIVData->out = gprtBufferGetDevicePointer(rayOutputBuffer_);
+  dblRayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPrograms_.at(RayGenType::POINT_IN_VOLUME));
+  rayGenPIVData->ray = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
+  rayGenPIVData->hit = gprtBufferGetDevicePointer(rayHitBuffers_.hit);
 
   // Set up build parameters for acceleration structures
   buildParams_.buildMode = GPRT_BUILD_MODE_FAST_BUILD_NO_UPDATE;
@@ -54,8 +58,8 @@ GPRTRayTracer::~GPRTRayTracer()
   gprtGeomTypeDestroy(trianglesGeomType_);
 
   // Destroy Buffers
-  gprtBufferDestroy(rayInputBuffer_);
-  gprtBufferDestroy(rayOutputBuffer_);
+  gprtBufferDestroy(rayHitBuffers_.ray);
+  gprtBufferDestroy(rayHitBuffers_.hit);
   gprtBufferDestroy(excludePrimitivesBuffer_);
 
   // Destroy module and context
@@ -66,8 +70,10 @@ GPRTRayTracer::~GPRTRayTracer()
 void GPRTRayTracer::setup_shaders()
 {
   // Set up ray generation and miss programs
-  rayGenProgram_ = gprtRayGenCreate<dblRayGenData>(context_, module_, "ray_fire");
-  rayGenPointInVolProgram_ = gprtRayGenCreate<dblRayGenData>(context_, module_, "point_in_volume");
+  rayGenPrograms_[RayGenType::RAY_FIRE] = gprtRayGenCreate<dblRayGenData>(context_, module_, "ray_fire");
+  rayGenPrograms_[RayGenType::POINT_IN_VOLUME] = gprtRayGenCreate<dblRayGenData>(context_, module_, "point_in_volume");
+  // TODO: Add Occluded and closest raygen entry points
+
   missProgram_ = gprtMissCreate<void>(context_, module_, "ray_fire_miss");
   aabbPopulationProgram_ = gprtComputeCreate<DPTriangleGeomData>(context_, module_, "populate_aabbs");
 
@@ -153,14 +159,13 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
     geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffer);
     geom_data->index = gprtBufferGetDevicePointer(connectivity_buffer);
     geom_data->aabbs = gprtBufferGetDevicePointer(aabb_buffer);
-    geom_data->rayIn = gprtBufferGetDevicePointer(rayInputBuffer_);
+    geom_data->ray = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
     geom_data->surf_id = surf;
     geom_data->normals = gprtBufferGetDevicePointer(normal_buffer);
     geom_data->primitive_refs = gprtBufferGetDevicePointer(primitive_refs_buffer);
     geom_data->num_faces = num_faces;
     
     gprtComputeLaunch(aabbPopulationProgram_, {num_faces, 1, 1}, {1, 1, 1}, *geom_data);
-    gprtComputeSynchronize(context_); // Ensure all GPU operations are complete before accessing results
 
     GPRTAccel blas = gprtAABBAccelCreate(context_, triangleGeom, buildParams_.buildMode);
 
@@ -191,7 +196,7 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
       fatal_error("Volume {} is not a parent of surface {}", volume_id, surf);
     }
   }
-
+  gprtComputeSynchronize(context_); // Ensure all GPU operations are complete before accessing results
   // Create a TLAS (Top-Level Acceleration Structure) for all BLAS instances in this volume
   auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, surfaceBlasInstances.size(), surfaceBlasInstances.data());
   GPRTAccel volume_tlas = gprtInstanceAccelCreate(context_, surfaceBlasInstances.size(), instanceBuffer);
@@ -214,21 +219,22 @@ bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree,
                                     const std::vector<MeshID>* exclude_primitives) const
 {
   GPRTAccel volume = surface_volume_tree_to_accel_map.at(tree);
-  dblRayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGenPointInVolProgram_);
+  auto rayGen = rayGenPrograms_.at(RayGenType::POINT_IN_VOLUME);
+  dblRayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGen);
 
   // Use provided direction or if Direction == nulptr use default direction
   Direction directionUsed = (direction != nullptr) ? Direction{direction->x, direction->y, direction->z} 
                             : Direction{1. / std::sqrt(2.0), 1. / std::sqrt(2.0), 0.0};
 
-  gprtBufferMap(rayInputBuffer_); // Update the ray input buffer
-  dblRayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
-  rayInput[0].volume_accel = gprtAccelGetDeviceAddress(volume); 
-  rayInput[0].origin = {point.x, point.y, point.z};
-  rayInput[0].direction = {directionUsed.x, directionUsed.y, directionUsed.z};
-  rayInput[0].tMax = INFTY; // Set a large distance limit
-  rayInput[0].tMin = 0.0;
-  rayInput[0].volume_tree = tree; // Set the TreeID of the volume being queried
-  rayInput[0].hitOrientation = HitOrientation::ANY; // No orientation culling for point-in-volume check
+  gprtBufferMap(rayHitBuffers_.ray); // Update the ray input buffer
+  dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
+  ray[0].volume_accel = gprtAccelGetDeviceAddress(volume); 
+  ray[0].origin = {point.x, point.y, point.z};
+  ray[0].direction = {directionUsed.x, directionUsed.y, directionUsed.z};
+  ray[0].tMax = INFTY; // Set a large distance limit
+  ray[0].tMin = 0.0;
+  ray[0].volume_tree = tree; // Set the TreeID of the volume being queried
+  ray[0].hitOrientation = HitOrientation::ANY; // No orientation culling for point-in-volume check
 
   if (exclude_primitives) {
     if (!exclude_primitives->empty()) gprtBufferResize(context_, excludePrimitivesBuffer_, exclude_primitives->size(), false);
@@ -236,25 +242,25 @@ bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree,
     std::copy(exclude_primitives->begin(), exclude_primitives->end(), gprtBufferGetHostPointer(excludePrimitivesBuffer_));
     gprtBufferUnmap(excludePrimitivesBuffer_);
 
-    rayInput[0].exclude_primitives = gprtBufferGetDevicePointer(excludePrimitivesBuffer_);
-    rayInput[0].exclude_count = exclude_primitives->size();
+    ray[0].exclude_primitives = gprtBufferGetDevicePointer(excludePrimitivesBuffer_);
+    ray[0].exclude_count = exclude_primitives->size();
   } 
   else {
     // If no primitives are excluded, set the pointer to null and count to 0
-    rayInput[0].exclude_primitives = nullptr;
-    rayInput[0].exclude_count = 0;
+    ray[0].exclude_primitives = nullptr;
+    ray[0].exclude_count = 0;
   }
-  gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
+  gprtBufferUnmap(rayHitBuffers_.ray); // required to sync buffer back on GPU?
 
-  gprtRayGenLaunch1D(context_, rayGenPointInVolProgram_, 1); // Launch raygen shader (entry point to RT pipeline)
+  gprtRayGenLaunch1D(context_, rayGen, 1); // Launch raygen shader (entry point to RT pipeline)
   gprtGraphicsSynchronize(context_); // Ensure all GPU operations are complete before returning control flow to CPU
 
-  // Retrieve the output from the ray output buffer
-  gprtBufferMap(rayOutputBuffer_);
-  dblRayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
-  auto surface = rayOutput[0].surf_id;
-  auto piv = rayOutput[0].piv; // Point in volume check result
-  gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
+  // Retrieve the hit from the dblHit buffer
+  gprtBufferMap(rayHitBuffers_.hit);
+  dblHit* hit = gprtBufferGetHostPointer(rayHitBuffers_.hit);
+  auto surface = hit[0].surf_id;
+  auto piv = hit[0].piv; // Point in volume check result
+  gprtBufferUnmap(rayHitBuffers_.hit); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
   
   // if ray hit nothing, the point is outside volume
   if (surface == ID_NONE) return false;
@@ -274,17 +280,18 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
                                                   std::vector<MeshID>* const exclude_primitives) 
 {
   GPRTAccel volume = surface_volume_tree_to_accel_map.at(tree);
-  dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGenProgram_);
+  auto rayGen = rayGenPrograms_.at(RayGenType::RAY_FIRE);
+  dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGen);
   
-  gprtBufferMap(rayInputBuffer_); // Update the ray input buffer
-  dblRayInput* rayInput = gprtBufferGetHostPointer(rayInputBuffer_);
-  rayInput[0].volume_accel = gprtAccelGetDeviceAddress(volume);
-  rayInput[0].origin = {origin.x, origin.y, origin.z};
-  rayInput[0].direction = {direction.x, direction.y, direction.z};
-  rayInput[0].tMax = dist_limit;
-  rayInput[0].tMin = 0.0;
-  rayInput[0].hitOrientation = orientation; // Set orientation for the ray
-  rayInput[0].volume_tree = tree; // Set the TreeID of the volume being queried
+  gprtBufferMap(rayHitBuffers_.ray); // Update the ray input buffer
+  dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
+  ray[0].volume_accel = gprtAccelGetDeviceAddress(volume);
+  ray[0].origin = {origin.x, origin.y, origin.z};
+  ray[0].direction = {direction.x, direction.y, direction.z};
+  ray[0].tMax = dist_limit;
+  ray[0].tMin = 0.0;
+  ray[0].hitOrientation = orientation; // Set orientation for the ray
+  ray[0].volume_tree = tree; // Set the TreeID of the volume being queried
 
   if (exclude_primitives) {
     if (!exclude_primitives->empty()) gprtBufferResize(context_, excludePrimitivesBuffer_, exclude_primitives->size(), false);
@@ -292,26 +299,26 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
     std::copy(exclude_primitives->begin(), exclude_primitives->end(), gprtBufferGetHostPointer(excludePrimitivesBuffer_));
     gprtBufferUnmap(excludePrimitivesBuffer_);
 
-    rayInput[0].exclude_primitives = gprtBufferGetDevicePointer(excludePrimitivesBuffer_);
-    rayInput[0].exclude_count = exclude_primitives->size();
+    ray[0].exclude_primitives = gprtBufferGetDevicePointer(excludePrimitivesBuffer_);
+    ray[0].exclude_count = exclude_primitives->size();
   } 
   else {
     // If no primitives are excluded, set the pointer to null and count to 0
-    rayInput[0].exclude_primitives = nullptr;
-    rayInput[0].exclude_count = 0;
+    ray[0].exclude_primitives = nullptr;
+    ray[0].exclude_count = 0;
   }
-  gprtBufferUnmap(rayInputBuffer_); // required to sync buffer back on GPU?
+  gprtBufferUnmap(rayHitBuffers_.ray); // required to sync buffer back on GPU?
   
-  gprtRayGenLaunch1D(context_, rayGenProgram_, 1); // Launch raygen shader (entry point to RT pipeline)
+  gprtRayGenLaunch1D(context_, rayGen, 1); // Launch raygen shader (entry point to RT pipeline)
   gprtGraphicsSynchronize(context_); // Ensure all GPU operations are complete before returning control flow to CPU
                                                   
-  // Retrieve the output from the ray output buffer
-  gprtBufferMap(rayOutputBuffer_);
-  dblRayOutput* rayOutput = gprtBufferGetHostPointer(rayOutputBuffer_);
-  auto distance = rayOutput[0].distance;
-  auto surface = rayOutput[0].surf_id;
-  auto primitive_id = rayOutput[0].primitive_id;
-  gprtBufferUnmap(rayOutputBuffer_); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
+  // Retrieve the hit from the dblHit buffer
+  gprtBufferMap(rayHitBuffers_.hit);
+  dblHit* hit = gprtBufferGetHostPointer(rayHitBuffers_.hit);
+  auto distance = hit[0].distance;
+  auto surface = hit[0].surf_id;
+  auto primitive_id = hit[0].primitive_id;
+  gprtBufferUnmap(rayHitBuffers_.hit); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
   
   if (surface == ID_NONE)
     return {INFTY, ID_NONE};
@@ -332,6 +339,33 @@ void GPRTRayTracer::create_global_surface_tree()
   surface_volume_tree_to_accel_map[tree] = global_accel;  
   global_surface_tree_ = tree;
   global_surface_accel_ = global_accel; 
+}
+
+void GPRTRayTracer::check_ray_buffer_capacity(size_t N)
+{
+  if (N <= rayHitBuffers_.capacity) return; // current capacity is sufficient
+
+  // Resize buffers to accommodate N rays
+  size_t newCapacity = std::max(N, rayHitBuffers_.capacity * 2); // double the capacity or set to N, whichever is larger
+
+  gprtBufferResize(context_, rayHitBuffers_.ray, newCapacity, false);
+  gprtBufferResize(context_, rayHitBuffers_.hit, newCapacity, false);
+  rayHitBuffers_.capacity = newCapacity;
+
+  // Since we have resized the ray buffers, we need to update the geom_data->rayIn pointers in all geometries too 
+  for (auto const& [surf, geom] : surface_to_geometry_map_) {
+    DPTriangleGeomData* geom_data = gprtGeomGetParameters(geom);
+    geom_data->ray = gprtBufferGetDevicePointer(rayHitBuffers_.ray); 
+  }
+
+  // Update raygen data pointers
+  for (auto const& [type, rayGen] : rayGenPrograms_) {
+    dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGen);
+    rayGenData->ray = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
+    rayGenData->hit = gprtBufferGetDevicePointer(rayHitBuffers_.hit);
+  }
+
+  gprtBuildShaderBindingTable(context_, static_cast<GPRTBuildSBTFlags>(GPRT_SBT_GEOM | GPRT_SBT_RAYGEN));
 }
 
 } // namespace xdg
