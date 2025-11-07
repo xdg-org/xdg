@@ -25,12 +25,16 @@ enum class RayGenType {
   CLOSEST
 };
 
-struct gprtRayIO {
-  size_t capacity = 1; // number of rays allocated in buffers
-  GPRTBufferOf<dblRayInput> ray = nullptr;
-  GPRTBufferOf<dblRayOutput> out = nullptr;
-  dblRayInput* deviceRayInAddress = nullptr;
-  dblRayOutput* deviceRayOutAddress = nullptr;
+struct gprtRayHit {
+  size_t capacity = 1; // Max number of rays allocated 
+  size_t size = 0;     // Current number of active rays 
+
+  GPRTBufferOf<dblRay> ray = nullptr;
+  GPRTBufferOf<dblHit> hit = nullptr;
+  dblRay* devRayAddr = nullptr;
+  dblHit* devHitAddr = nullptr;
+
+  bool is_valid() const { return capacity > 0 && ray && hit && devRayAddr && devHitAddr; }
 };
 
 class GPRTRayTracer : public RayTracer {
@@ -114,7 +118,7 @@ class GPRTRayTracer : public RayTracer {
     GPRTComputeOf<DPTriangleGeomData> aabbPopulationProgram_; //<! AABB population program for double precision rays
     
     // Buffers 
-    gprtRayIO rayBuffers_;
+    gprtRayHit rayHitBuffers_;
     GPRTBufferOf<int32_t> excludePrimitivesBuffer_; //<! Buffer for excluded primitives
     
     // Geometry Type and Instances
@@ -122,7 +126,6 @@ class GPRTRayTracer : public RayTracer {
     GPRTGeomTypeOf<DPTriangleGeomData> trianglesGeomType_; //<! Geometry type for triangles
 
     // Ray Generation parameters
-    size_t numRays = 1; //<! Number of rays to be cast
     uint32_t numRayTypes_ = 1; // <! Number of ray types. Allows multiple shaders to be set to the same geometery
     
     // Mesh-to-Scene maps 
