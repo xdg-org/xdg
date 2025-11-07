@@ -95,7 +95,7 @@ public:
                                      const size_t num_points,
                                      uint8_t* results,
                                      const uint8_t* has_dir = nullptr,
-                                     std::vector<MeshID>* exclude_primitives = nullptr) const = 0;
+                                     std::vector<MeshID>* exclude_primitives = nullptr) = 0;
 
   // Array version of ray_fire
   virtual void batch_ray_fire(TreeID tree,

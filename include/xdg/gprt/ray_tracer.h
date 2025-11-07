@@ -36,7 +36,6 @@ struct gprtRayHit {
 
   bool is_valid() const { return capacity > 0 && ray && hit && devRayAddr && devHitAddr; }
 };
-
 class GPRTRayTracer : public RayTracer {
   public:
     GPRTRayTracer();
@@ -97,7 +96,7 @@ class GPRTRayTracer : public RayTracer {
                                         const size_t num_points,
                                         uint8_t* results,
                                         const uint8_t* has_dir = nullptr,
-                                        std::vector<MeshID>* exclude_primitives = nullptr) const override;
+                                        std::vector<MeshID>* exclude_primitives = nullptr) override;
 
       // Array version of ray_fire
       void batch_ray_fire(TreeID tree,
@@ -122,7 +121,7 @@ class GPRTRayTracer : public RayTracer {
     }
     
   private:
-    void check_ray_buffer_capacity(size_t N);
+    void check_ray_buffer_capacity(const size_t N);
 
     // GPRT objects 
     GPRTContext context_;
