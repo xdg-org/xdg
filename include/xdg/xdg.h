@@ -63,11 +63,39 @@ next_element(MeshID current_element,
                   const Position& r,
                   const Direction& u) const;
 
+/**
+ * @brief Check whether a point lies in a specified volume
+ *
+ * This method performs a check to see whether a given point is inside a volume provided.
+ * It computes this by firing a ray from the point and checking whether or not the ray is Entering or Exiting
+ * the volume boundary. If no direction is provided, a default direction will be used.
+ * 
+ * @param[in] volume The MeshID of the volume we are querying against
+ * @param[in] point A Position object representing the starting points of the rays
+ * @param[in] direction Direction object to launch a ray in a specified direction
+ * @param[in] exclude_primitives (optional) vector of surface element MeshIDs to exclude from intersection tests
+ * @return Boolean result of point in volume check
+ */ 
 bool point_in_volume(MeshID volume,
       const Position point,
       const Direction* direction = nullptr,
       const std::vector<MeshID>* exclude_primitives = nullptr) const;
 
+/**
+ * @brief Fire a ray against a given volume and return the first hit
+ *
+ * This method fires a ray from a given origin in a specified direction against the surfaces of a volume.
+ * It returns the distance to the closest hit and the MeshID of the surface hit. The user can specify
+ * a distance limit and whether Entering/Exiting hits should be rejected.
+ * 
+ * @param[in] volume The MeshID of the volume we are querying against
+ * @param[in] origin An array of Position objects representing the starting points of the rays
+ * @param[in] direction (optional) Direction object to launch a ray in a specified direction
+ * @param[in] dist_limit (optional) maximum distance to consider for intersections
+ * @param[in] orientation (optional) flag to consider whether Entering/Exiting hits should be rejected. Defaults to EXITING
+ * @param[in] exclude_primitives (optional) vector of surface element MeshIDs to exclude from intersection tests
+ * @return A pair containing the distance to the closest hit and the MeshID of the surface hit
+ */ 
 std::pair<double, MeshID> ray_fire(MeshID volume,
                                    const Position& origin,
                                    const Direction& direction,
@@ -75,7 +103,22 @@ std::pair<double, MeshID> ray_fire(MeshID volume,
                                    HitOrientation orientation = HitOrientation::EXITING,
                                    std::vector<MeshID>* const exclude_primitives = nullptr) const;
 
-// Array version of point_in_volume
+/**
+ * @brief Array based version of point_in_volume query
+ *
+ * This method performs a set of point_in_volume queries on a batch of rays defined by their origins and directions.
+ * It computes whether or not a point lies in a given volume for each point in the batch. With GPRT ray tracing
+ * this launches the RT pipeline with the number of rays provided.
+ * 
+ * @param[in] volume The MeshID of the volume we are querying against
+ * @param[in] points An array of Position objects representing the starting points of the rays
+ * @param[in] directions An array of Direction objects representing the directions of the rays
+ * @param[in] num_points The number of points to be processed in the batch
+ * @param[out] results An output array to store the computed results for each point (1 if inside volume, 0 if outside)
+ * @param[in] has_dir (optional) array to mask which points have valid directions
+ * @param[in] exclude_primitives (optional) vector of surface element MeshIDs to exclude from intersection tests
+ * @return Void. Outputs stored in results array
+ */  
 void point_in_volume(MeshID volume,
                      const Position* points,
                      const Direction* directions, // [num_points] array of Direction pointers
@@ -91,15 +134,15 @@ void point_in_volume(MeshID volume,
  * It computes the intersection distances and surface IDs for each ray in the batch. With GPRT ray tracing
  * this launches the RT pipeline with the number of rays provided.
  *
- * @param volume The MeshID of the volume we are querying against
- * @param origin An array of Position objects representing the starting points of the rays
- * @param direction An array of Direction objects representing the directions of the rays
- * @param num_rays The number of rays to be processed in the batch
- * @param hitDistances An output array to store the computed intersection distances for each ray
- * @param surfaceIDs An output array to store the MeshIDs of the surfaces hit by each ray
- * @param dist_limit The maximum distance to consider for intersections
- * @param orientation Flag to consider whether Entering/Exiting hits should be rejected
- * @param exclude_primitives An optional vector of surface element MeshIDs to exclude from intersection tests
+ * @param[in] tree The TreeID of the volume we are querying against
+ * @param[in] origins An array of Position objects representing the starting points of the rays
+ * @param[in] directions An array of Direction objects representing the directions of the rays
+ * @param[in] num_rays The number of rays to be processed in the batch
+ * @param[out] hitDistances An output array to store the computed intersection distances for each ray
+ * @param[out] surfaceIDs An output array to store the MeshIDs of the surfaces hit by each ray
+ * @param[in] dist_limit (optional) maximum distance to consider for intersections
+ * @param[in] orientation (optional) flag to consider whether Entering/Exiting hits should be rejected. Defaults to EXITING
+ * @param[in] exclude_primitives (optional) vector of surface element MeshIDs to exclude from intersection tests
  * @return Void. Outputs stored in hitDistances and surfaceIDs arrays
  */  
 void ray_fire(MeshID volume,
