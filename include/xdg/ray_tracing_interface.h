@@ -87,26 +87,43 @@ public:
                                      std::vector<MeshID>* const exclude_primitives = nullptr) = 0;
 
   // Array based queries
-  
-  // Array version of point_in_volume
-  virtual void batch_point_in_volume(TreeID tree,
-                                     const Position* points,
-                                     const Direction* directions, // [num_points] array of Direction pointers
-                                     const size_t num_points,
-                                     uint8_t* results,
-                                     const uint8_t* has_dir = nullptr,
-                                     std::vector<MeshID>* exclude_primitives = nullptr) = 0;
 
-  // Array version of ray_fire
-  virtual void batch_ray_fire(TreeID tree,
-                              const Position* origin,
-                              const Direction* direction,
-                              const size_t num_rays,
-                              double* hitDistances,
-                              MeshID* surfaceIDs,
-                              const double dist_limit = INFTY,
-                              HitOrientation orientation = HitOrientation::EXITING,
-                              std::vector<MeshID>* const exclude_primitives = nullptr) = 0;
+  // Array version of point_in_volume
+  virtual void point_in_volume(TreeID tree,
+                               const Position* points,
+                               const Direction* directions, // [num_points] array of Direction pointers
+                               const size_t num_points,
+                               uint8_t* results,
+                               const uint8_t* has_dir = nullptr,
+                               std::vector<MeshID>* exclude_primitives = nullptr) = 0;
+
+  /**
+   * @brief Array based version of ray_fire query
+   *
+   * This method performs a set of ray fire queries on a batch of rays defined by their origins and directions.
+   * It computes the intersection distances and surface IDs for each ray in the batch. With GPRT ray tracing
+   * this launches the RT pipeline with the number of rays provided.
+   *
+   * @param tree The TreeID of the volume we are querying against
+   * @param origin An array of Position objects representing the starting points of the rays
+   * @param direction An array of Direction objects representing the directions of the rays
+   * @param num_rays The number of rays to be processed in the batch
+   * @param hitDistances An output array to store the computed intersection distances for each ray
+   * @param surfaceIDs An output array to store the MeshIDs of the surfaces hit by each ray
+   * @param dist_limit The maximum distance to consider for intersections
+   * @param orientation Flag to consider whether Entering/Exiting hits should be rejected
+   * @param exclude_primitives An optional vector of surface element MeshIDs to exclude from intersection tests
+   * @return Void. Outputs stored in hitDistances and surfaceIDs arrays
+   */  
+  virtual void ray_fire(TreeID tree,
+                        const Position* origin,
+                        const Direction* direction,
+                        const size_t num_rays,
+                        double* hitDistances,
+                        MeshID* surfaceIDs,
+                        const double dist_limit = INFTY,
+                        HitOrientation orientation = HitOrientation::EXITING,
+                        std::vector<MeshID>* const exclude_primitives = nullptr) = 0;
 
   /**
    * @brief Finds the element containing a given point using the global element tree.

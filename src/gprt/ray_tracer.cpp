@@ -327,7 +327,7 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
   return {distance, surface};
 }
 
-void GPRTRayTracer::batch_point_in_volume(TreeID tree,
+void GPRTRayTracer::point_in_volume(TreeID tree,
                                           const Position* points,
                                           const Direction* directions, // [num_points] array of Direction pointers
                                           const size_t num_points,
@@ -391,18 +391,16 @@ void GPRTRayTracer::batch_point_in_volume(TreeID tree,
   return;
 }
   
-
-
 // Array version of ray_fire
-void GPRTRayTracer::batch_ray_fire(TreeID tree,
-                                   const Position* origins,
-                                   const Direction* directions,
-                                   const size_t num_rays,
-                                   double* hitDistances,
-                                   MeshID* surfaceIDs,
-                                   const double dist_limit,
-                                   HitOrientation orientation,
-                                   std::vector<MeshID>* const exclude_primitives)
+void GPRTRayTracer::ray_fire(TreeID tree,
+                             const Position* origins,
+                             const Direction* directions,
+                             const size_t num_rays,
+                             double* hitDistances,
+                             MeshID* surfaceIDs,
+                             const double dist_limit,
+                             HitOrientation orientation,
+                             std::vector<MeshID>* const exclude_primitives)
 {
   if (num_rays == 0) return; // no work to do. Early exit
 

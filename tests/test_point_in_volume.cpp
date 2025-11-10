@@ -126,20 +126,20 @@ TEST_CASE("Batch API Point-in-volume on MeshMock", "[piv][mock][batch]") {
     }
 
     SECTION("N=0 no-op") {
-      rti->batch_point_in_volume(volume_tree, nullptr, nullptr, 0, nullptr, nullptr);
+      rti->point_in_volume(volume_tree, nullptr, nullptr, 0, nullptr, nullptr);
       SUCCEED("N=0 completed without error");
     }
 
     SECTION("N=1") {
       uint8_t result = 0xFF; // sentinel
-      rti->batch_point_in_volume(volume_tree, &points[0], &directions[0], 1, &result, &has_dir[0]);
+      rti->point_in_volume(volume_tree, &points[0], &directions[0], 1, &result, &has_dir[0]);
       REQUIRE((result == 0 || result == 1));
       REQUIRE(result == truth[0]);
     }
 
     SECTION("N=64") {
       std::vector<uint8_t> results(num_points, 0xFF);
-      rti->batch_point_in_volume(volume_tree, points.data(), directions.data(), num_points, results.data(), has_dir.data());
+      rti->point_in_volume(volume_tree, points.data(), directions.data(), num_points, results.data(), has_dir.data());
       for (size_t i = 0; i < points.size(); ++i) {
         REQUIRE(results[i] == truth[i]);
       }
