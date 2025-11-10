@@ -121,6 +121,7 @@ src/util/str_utils.cpp
 src/tetrahedron_contain.cpp
 src/overlap_check/overlap.cpp
 src/element_face_accessor.cpp
+src/timer.cpp
 src/xdg.cpp
 )
 

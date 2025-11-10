@@ -5,6 +5,8 @@
 
 #include "xdg/constants.h"
 #include "xdg/vec3da.h"
+#include "xdg/util/rng.h"
+
 namespace xdg {
 
 union BoundingBox {
@@ -106,6 +108,10 @@ static BoundingBox from_points(const T& points) {
     bbox.update(p);
   }
   return bbox;
+}
+
+Position sample_location() const {
+  return lower_left() + width() * Vec3da(rand_double(0.0, 1.0), rand_double(0.0, 1.0), rand_double(0.0, 1.0));
 }
 
 };

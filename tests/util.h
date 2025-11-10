@@ -7,15 +7,6 @@
 #include "xdg/mesh_managers.h"
 #include "vulkan_probe.h"
 
-static std::random_device rd;
-static std::mt19937 gen(rd());
-
-inline double rand_double(double min, double max)
-{
-  std::uniform_real_distribution<double> dis(min, max);
-  return dis(gen);
-}
-
 // Library availability checks
 
 inline void check_ray_tracer_supported(xdg::RTLibrary rt) {
@@ -71,7 +62,7 @@ create_raytracer(xdg::RTLibrary rt) {
   if (rt == xdg::RTLibrary::EMBREE)
     return std::make_shared<xdg::EmbreeRayTracer>();
   #endif
-  
+
   #ifdef XDG_ENABLE_GPRT
   if (rt == xdg::RTLibrary::GPRT)
     return std::make_shared<xdg::GPRTRayTracer>();
