@@ -211,7 +211,7 @@ int main(int argc, char** argv) {
   std::vector<double> hitDistances(num_rays);
   std::vector<MeshID> surfacesHit(num_rays);
 
-  xdg->batch_ray_fire(volume, origins.data(), directions.data(), num_rays, hitDistances.data(), surfacesHit.data());
+  xdg->ray_fire(volume, origins.data(), directions.data(), num_rays, hitDistances.data(), surfacesHit.data());
 
   std::cout << std::endl << "Printing Batch Ray results..." << std::endl;
 

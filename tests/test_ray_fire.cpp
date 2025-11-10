@@ -147,8 +147,8 @@ TEST_CASE("Batch API Ray Fire on MeshMock", "[rayfire][mock][batch]") {
 
     // ---- N = 0 ----
     SECTION("N=0 no-op") {
-      rti->batch_ray_fire(volume_tree, nullptr, nullptr, 0, nullptr, nullptr,
-                          INFTY, HitOrientation::EXITING, nullptr);
+      rti->ray_fire(volume_tree, nullptr, nullptr, 0, nullptr, nullptr,
+                    INFTY, HitOrientation::EXITING, nullptr);
       SUCCEED("N=0 completed without error");
     }
 
@@ -162,8 +162,8 @@ TEST_CASE("Batch API Ray Fire on MeshMock", "[rayfire][mock][batch]") {
 
       double dist_batch = -1.0;
       MeshID id_batch = ID_NONE;
-      rti->batch_ray_fire(volume_tree, origins.data(), directions.data(), 1,
-                          &dist_batch, &id_batch, INFTY, HitOrientation::EXITING, nullptr);
+      rti->ray_fire(volume_tree, origins.data(), directions.data(), 1,
+                    &dist_batch, &id_batch, INFTY, HitOrientation::EXITING, nullptr);
 
       REQUIRE(id_batch == id_scalar);
       REQUIRE_THAT(dist_batch, Catch::Matchers::WithinAbs(dist_scalar, 1e-6));
@@ -184,8 +184,8 @@ TEST_CASE("Batch API Ray Fire on MeshMock", "[rayfire][mock][batch]") {
 
       std::vector<double> dist_batch(64, -1.0);
       std::vector<MeshID> id_batch(64, ID_NONE);
-      rti->batch_ray_fire(volume_tree, origins.data(), directions.data(), origins.size(),
-                          dist_batch.data(), id_batch.data(), INFTY, HitOrientation::EXITING, nullptr);
+      rti->ray_fire(volume_tree, origins.data(), directions.data(), origins.size(),
+                    dist_batch.data(), id_batch.data(), INFTY, HitOrientation::EXITING, nullptr);
 
       for (size_t i = 0; i < 64; ++i) {
         REQUIRE(id_batch[i] == id_scalar[i]);
@@ -205,8 +205,8 @@ TEST_CASE("Batch API Ray Fire on MeshMock", "[rayfire][mock][batch]") {
       std::vector<MeshID> id_batch(N, ID_NONE);
       BENCHMARK("Batch ray fire with N = 100,000")
       {
-       return rti->batch_ray_fire(volume_tree, origins.data(), directions.data(), N,
-                                  dist_batch.data(), id_batch.data(), INFTY, HitOrientation::EXITING, nullptr);
+       return rti->ray_fire(volume_tree, origins.data(), directions.data(), N,
+                            dist_batch.data(), id_batch.data(), INFTY, HitOrientation::EXITING, nullptr);
       };
       // Basic sanity checks over 100 rays
       for (size_t i = 0; i < N; i += N/100) {

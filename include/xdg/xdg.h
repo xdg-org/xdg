@@ -76,24 +76,41 @@ std::pair<double, MeshID> ray_fire(MeshID volume,
                                    std::vector<MeshID>* const exclude_primitives = nullptr) const;
 
 // Array version of point_in_volume
-void batch_point_in_volume(MeshID volume,
-                                  const Position* points,
-                                  const Direction* directions, // [num_points] array of Direction pointers
-                                  const size_t num_points,
-                                  uint8_t* results,
-                                  const uint8_t* has_dir = nullptr,
-                                  std::vector<MeshID>* exclude_primitives = nullptr) const;
+void point_in_volume(MeshID volume,
+                     const Position* points,
+                     const Direction* directions, // [num_points] array of Direction pointers
+                     const size_t num_points,
+                     uint8_t* results,
+                     const uint8_t* has_dir = nullptr,
+                     std::vector<MeshID>* exclude_primitives = nullptr) const;
 
-// Array version of ray_fire
-void batch_ray_fire(MeshID volume,
-                           const Position* origins,
-                           const Direction* directions,
-                           const size_t num_rays,
-                           double* hitDistances,
-                           MeshID* surfaceIDs,
-                           const double dist_limit = INFTY,
-                           HitOrientation orientation = HitOrientation::EXITING,
-                           std::vector<MeshID>* const exclude_primitives = nullptr);
+/**
+ * @brief Array based version of ray_fire query
+ *
+ * This method performs a set of ray fire queries on a batch of rays defined by their origins and directions.
+ * It computes the intersection distances and surface IDs for each ray in the batch. With GPRT ray tracing
+ * this launches the RT pipeline with the number of rays provided.
+ *
+ * @param volume The MeshID of the volume we are querying against
+ * @param origin An array of Position objects representing the starting points of the rays
+ * @param direction An array of Direction objects representing the directions of the rays
+ * @param num_rays The number of rays to be processed in the batch
+ * @param hitDistances An output array to store the computed intersection distances for each ray
+ * @param surfaceIDs An output array to store the MeshIDs of the surfaces hit by each ray
+ * @param dist_limit The maximum distance to consider for intersections
+ * @param orientation Flag to consider whether Entering/Exiting hits should be rejected
+ * @param exclude_primitives An optional vector of surface element MeshIDs to exclude from intersection tests
+ * @return Void. Outputs stored in hitDistances and surfaceIDs arrays
+ */  
+void ray_fire(MeshID volume,
+              const Position* origins,
+              const Direction* directions,
+              const size_t num_rays,
+              double* hitDistances,
+              MeshID* surfaceIDs,
+              const double dist_limit = INFTY,
+              HitOrientation orientation = HitOrientation::EXITING,
+              std::vector<MeshID>* const exclude_primitives = nullptr);
 
 std::pair<double, MeshID> closest(MeshID volume,
                                   const Position& origin) const;
