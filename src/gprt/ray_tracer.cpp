@@ -222,9 +222,17 @@ bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree,
   auto rayGen = rayGenPrograms_.at(RayGenType::POINT_IN_VOLUME);
   dblRayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGen);
 
+  const Direction defaultDir = Direction{1. / std::sqrt(2.0), 1. / std::sqrt(2.0), 0.0};
+
   // Use provided direction or if Direction == nulptr use default direction
   Direction directionUsed = (direction != nullptr) ? Direction{direction->x, direction->y, direction->z} 
-                            : Direction{1. / std::sqrt(2.0), 1. / std::sqrt(2.0), 0.0};
+                            : defaultDir;
+
+  // Catch directions with zero length
+  const double l2 = directionUsed.x*directionUsed.x
+                  + directionUsed.y*directionUsed.y
+                  + directionUsed.z*directionUsed.z;
+  if (l2 == 0.0) directionUsed = defaultDir;
 
   gprtBufferMap(rayHitBuffers_.ray); // Update the ray input buffer
   dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
