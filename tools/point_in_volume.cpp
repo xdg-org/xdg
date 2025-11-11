@@ -96,6 +96,7 @@ else
   Direction direction = args.get<std::vector<double>>("--direction");
 
   xdg->prepare_volume_for_raytracing(volume);
+  rti->init(); // Typically called during XDG::prepare_raytracer(). Required to build SBT after volume registration.
 
   if (xdg->point_in_volume(volume, position, &direction)) {
     std::cout << "Point " << position << " is in Volume " << volume << " (True)" << std::endl;
