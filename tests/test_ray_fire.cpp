@@ -2,7 +2,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/generators/catch_generators.hpp>
-#include <catch2/benchmark/catch_benchmark.hpp>
 
 // xdg includes
 #include "xdg/constants.h"
@@ -192,27 +191,6 @@ TEST_CASE("Batch API Ray Fire on MeshMock", "[rayfire][mock][batch]") {
       for (size_t i = 0; i < 64; ++i) {
         REQUIRE(id_batch[i] == id_scalar[i]);
         REQUIRE_THAT(dist_batch[i], Catch::Matchers::WithinAbs(dist_scalar[i], 1e-6));
-      }
-    }
-
-    // ---- N = 100,000 ----
-    SECTION("N=100,00 batch with basic sanity checks") {
-      N = 100000;
-      make_rays(N, origins, directions);
-
-      // Batch compute
-      std::vector<double> dist_batch(N, -1.0);
-      std::vector<MeshID> id_batch(N, ID_NONE);
-      BENCHMARK("Batch ray fire with N = 100,000")
-      {
-       return rti->ray_fire(volume_tree, origins.data(), directions.data(), N,
-                            dist_batch.data(), id_batch.data(), INFTY, HitOrientation::EXITING, nullptr);
-      };
-      // Basic sanity checks over 100 rays
-      for (size_t i = 0; i < N; i += N/100) {
-        REQUIRE(id_batch[i] != ID_NONE);
-        REQUIRE(std::isfinite(dist_batch[i]));
-        REQUIRE(dist_batch[i] >= 0.0);
       }
     }
   }

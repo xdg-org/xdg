@@ -1,7 +1,6 @@
 // for testing
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
-#include <catch2/benchmark/catch_benchmark.hpp>
 
 // xdg includes
 #include "xdg/constants.h"
@@ -153,18 +152,6 @@ TEST_CASE("Batch API Point-in-volume on MeshMock", "[piv][mock][batch]") {
       for (size_t i = 0; i < points.size(); ++i) {
         REQUIRE(batch_results[i] == scalar_results[i]);
       }
-    }
-
-    // ---- N = 100,000 ----
-    SECTION("N=100,00 batch with basic sanity checks") {
-      N = 100000;
-      make_points(N, points, directions);
-
-      std::vector<uint8_t> batch_results(N, 0xFF);
-      BENCHMARK("Batch point_in_volume with N = 100,000")
-      {
-       return rti->point_in_volume(volume_tree, points.data(), N, batch_results.data(), directions.data());
-      };
     }
   }
 }
