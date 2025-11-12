@@ -337,10 +337,9 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
 
 void GPRTRayTracer::point_in_volume(TreeID tree,
                                           const Position* points,
-                                          const Direction* directions, // [num_points] array of Direction pointers
                                           const size_t num_points,
                                           uint8_t* results,
-                                          const uint8_t* has_dir,
+                                          const Direction* directions,
                                           std::vector<MeshID>* exclude_primitives)
 {
   if (num_points == 0) return; // no work to do. Early exit
@@ -359,24 +358,25 @@ void GPRTRayTracer::point_in_volume(TreeID tree,
   gprtBufferMap(rayHitBuffers_.ray); 
   dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
   const auto volumeAddr = gprtAccelGetDeviceAddress(volume);
+
+  // Common ray params 
   for (size_t i = 0; i < num_points; ++i) {
-    Direction directionUsed =
-        (!directions || (has_dir && !has_dir[i])) ? defaultDir : directions[i];
-
-    // Catch directions with zero length
-    const double l2 = directionUsed.x*directionUsed.x
-                    + directionUsed.y*directionUsed.y
-                    + directionUsed.z*directionUsed.z;
-    if (l2 == 0.0) directionUsed = defaultDir;
-
     ray[i].volume_accel = volumeAddr;
     ray[i].origin = {points[i].x, points[i].y, points[i].z};
-    ray[i].direction = {directionUsed.x, directionUsed.y, directionUsed.z};
-    ray[i].tMax = INFTY; // Set a large distance limit
+    ray[i].tMax = INFTY;
     ray[i].tMin = 0.0;
-    ray[i].volume_tree = tree; // Set the TreeID of the volume being queried
-    ray[i].hitOrientation = HitOrientation::ANY; // No orientation culling for point-in-volume check
-    ray[i].exclude_primitives = nullptr; // Not currently supported in batch version
+    ray[i].volume_tree = tree;
+    ray[i].hitOrientation = HitOrientation::ANY;
+    ray[i].exclude_primitives = nullptr;
+  }
+
+  // Directions
+  if (!directions) {
+    for (size_t i = 0; i < num_points; ++i) 
+      ray[i].direction = double3{ defaultDir.x, defaultDir.y, defaultDir.z };
+  } else {
+    for (size_t i = 0; i < num_points; ++i) 
+      ray[i].direction = double3{ directions[i].x, directions[i].y, directions[i].z };
   }
 
   gprtBufferUnmap(rayHitBuffers_.ray); // required to sync buffer back on GPU?

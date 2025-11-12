@@ -177,10 +177,9 @@ int main(int argc, char** argv) {
 
   xdg->point_in_volume(volume,
                        origins.data(),
-                       directions.data(),
                        N,
                        results.data(),
-                       has_dir.data());
+                       directions.data());
   
   std::cout << std::endl << "Printing Batch point in volume results..." << std::endl;
 

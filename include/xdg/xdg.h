@@ -69,10 +69,11 @@ next_element(MeshID current_element,
  * This method performs a check to see whether a given point is inside a volume provided.
  * It computes this by firing a ray from the point and checking whether or not the ray is Entering or Exiting
  * the volume boundary. If no direction is provided, a default direction will be used.
+ * Note - zero length direction vectors are not explicitly checked for internally and should be avoided to avoid causing undefined behavior.
  * 
- * @param[in] volume The MeshID of the volume we are querying against
- * @param[in] point A Position object representing the starting points of the rays
- * @param[in] direction Direction object to launch a ray in a specified direction
+ * @param[in] tree The TreeID of the volume we are querying against
+ * @param[in] point The point to be queried
+ * @param[in] direction (optional) direction to launch a ray in a specified direction - must be non-zero length
  * @param[in] exclude_primitives (optional) vector of surface element MeshIDs to exclude from intersection tests
  * @return Boolean result of point in volume check
  */ 
@@ -110,21 +111,19 @@ std::pair<double, MeshID> ray_fire(MeshID volume,
  * It computes whether or not a point lies in a given volume for each point in the batch. With GPRT ray tracing
  * this launches the RT pipeline with the number of rays provided.
  * 
- * @param[in] volume The MeshID of the volume we are querying against
- * @param[in] points An array of Position objects representing the starting points of the rays
- * @param[in] directions An array of Direction objects representing the directions of the rays
+ * @param[in] tree The TreeID of the volume we are querying against
+ * @param[in] points An array of points to query
  * @param[in] num_points The number of points to be processed in the batch
  * @param[out] results An output array to store the computed results for each point (1 if inside volume, 0 if outside)
- * @param[in] has_dir (optional) array to mask which points have valid directions
+ * @param[in] directions (optional) array of directions to launch rays in explicit directions per point - these must be non-zero length
  * @param[in] exclude_primitives (optional) vector of surface element MeshIDs to exclude from intersection tests
  * @return Void. Outputs stored in results array
  */  
 void point_in_volume(MeshID volume,
                      const Position* points,
-                     const Direction* directions, // [num_points] array of Direction pointers
                      const size_t num_points,
                      uint8_t* results,
-                     const uint8_t* has_dir = nullptr,
+                     const Direction* directions = nullptr,
                      std::vector<MeshID>* exclude_primitives = nullptr) const;
 
 /**

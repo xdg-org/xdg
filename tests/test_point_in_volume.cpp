@@ -12,21 +12,17 @@
 using namespace xdg;
 
 static void make_points(size_t N,
-                  std::vector<Position>& points,
-                  std::vector<Direction>& directions,
-                  std::vector<uint8_t>& has_dir) 
+                        std::vector<Position>& points,
+                        std::vector<Direction>& directions) 
 {
   points.resize(N);
   directions.resize(N);
-  has_dir.assign(N, 0);
   for (size_t i = 0; i < N; ++i) {
     // evens inside (origin), odds just outside +X
     points[i] = (i % 2 == 0) ? xdg::Position{0,0,0} : xdg::Position{5.1,0,0};
-    // every 3rd masked off; others alternate ±X
-    if (i % 3 != 0) {
-      directions[i] = (i % 2 == 0) ? xdg::Direction{ 1,0,0} : xdg::Direction{-1,0,0};
-      has_dir[i] = 1;
-    }
+    // alternate ±X directions
+    directions[i] = (i % 2 == 0) ? xdg::Direction{ 1,0,0}
+                                 : xdg::Direction{-1,0,0};
   }
 }
 
@@ -124,34 +120,36 @@ TEST_CASE("Batch API Point-in-volume on MeshMock", "[piv][mock][batch]") {
     size_t N; 
 
     SECTION("N=0 no-op") {
-      rti->point_in_volume(volume_tree, nullptr, nullptr, 0, nullptr, nullptr);
+      rti->point_in_volume(volume_tree, 
+                           nullptr, /*points*/
+                           0,       /*num_points*/
+                           nullptr /*results*/);
       SUCCEED("N=0 completed without error");
     }
 
     SECTION("N=1") {
       N = 1;
-      make_points(N, points, directions, has_dir);
+      make_points(N, points, directions);
 
-      auto scalar_result = rti->point_in_volume(volume_tree, points[0], &directions[0]);
+      auto scalar_result = static_cast<uint8_t>(rti->point_in_volume(volume_tree, points[0], &directions[0]));
 
       std::vector<uint8_t> batch_result(N, 0xFF);
-      rti->point_in_volume(volume_tree, &points[0], &directions[0], N, &batch_result[0], nullptr);
-      REQUIRE(batch_result[0] == static_cast<uint8_t>(scalar_result));
+      rti->point_in_volume(volume_tree, points.data(), N, batch_result.data(), directions.data());
+      REQUIRE(batch_result[0] == scalar_result);
     }
 
     SECTION("N=64") {
       N = 64;
-      make_points(N, points, directions, has_dir);
+      make_points(N, points, directions);
 
       // Store results of scalar point_in_volume calls to verify batch against scalar
       std::vector<uint8_t> scalar_results(N, 0);
       for (size_t i = 0; i < N; ++i) {
-        const Direction* dptr = has_dir[i] ? &directions[i] : nullptr;
-        scalar_results[i] = static_cast<uint8_t>(rti->point_in_volume(volume_tree, points[i], dptr));
+        scalar_results[i] = static_cast<uint8_t>(rti->point_in_volume(volume_tree, points[i], &directions[i]));
       }
 
       std::vector<uint8_t> batch_results(N, 0xFF);
-      rti->point_in_volume(volume_tree, points.data(), directions.data(), N, batch_results.data(), has_dir.data());
+      rti->point_in_volume(volume_tree, points.data(), N, batch_results.data(), directions.data());
       for (size_t i = 0; i < points.size(); ++i) {
         REQUIRE(batch_results[i] == scalar_results[i]);
       }
@@ -160,12 +158,12 @@ TEST_CASE("Batch API Point-in-volume on MeshMock", "[piv][mock][batch]") {
     // ---- N = 100,000 ----
     SECTION("N=100,00 batch with basic sanity checks") {
       N = 100000;
-      make_points(N, points, directions, has_dir);
+      make_points(N, points, directions);
 
       std::vector<uint8_t> batch_results(N, 0xFF);
       BENCHMARK("Batch point_in_volume with N = 100,000")
       {
-       return rti->point_in_volume(volume_tree, points.data(), directions.data(), N, batch_results.data(), has_dir.data());
+       return rti->point_in_volume(volume_tree, points.data(), N, batch_results.data(), directions.data());
       };
     }
   }
