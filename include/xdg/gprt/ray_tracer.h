@@ -36,7 +36,6 @@ struct gprtRayHit {
 
   bool is_valid() const { return capacity > 0 && ray && hit && devRayAddr && devHitAddr; }
 };
-
 class GPRTRayTracer : public RayTracer {
   public:
     GPRTRayTracer();
@@ -83,12 +82,29 @@ class GPRTRayTracer : public RayTracer {
                         const Direction* direction = nullptr,
                         const std::vector<MeshID>* exclude_primitives = nullptr) const override;
 
+    void point_in_volume(TreeID tree,
+                         const Position* points,
+                         const size_t num_points,
+                         uint8_t* results,
+                         const Direction* directions = nullptr, 
+                         std::vector<MeshID>* exclude_primitives = nullptr) override;
+
     std::pair<double, MeshID> ray_fire(TreeID scene,
                                       const Position& origin,
                                       const Direction& direction,
                                       const double dist_limit = INFTY,
                                       HitOrientation orientation = HitOrientation::EXITING,
                                       std::vector<MeshID>* const exclude_primitives = nullptr) override;
+
+    void ray_fire(TreeID tree,
+                  const Position* origins,
+                  const Direction* directions,
+                  const size_t num_rays,
+                  double* hitDistances,
+                  MeshID* surfaceIDs,
+                  const double dist_limit = INFTY,
+                  HitOrientation orientation = HitOrientation::EXITING,
+                  std::vector<MeshID>* const exclude_primitives = nullptr) override;
 
     std::pair<double, MeshID> closest(TreeID scene,
                                       const Position& origin) override {};
@@ -102,7 +118,7 @@ class GPRTRayTracer : public RayTracer {
     }
     
   private:
-    void check_ray_buffer_capacity(size_t N);
+    void check_ray_buffer_capacity(const size_t N);
 
     // GPRT objects 
     GPRTContext context_;
