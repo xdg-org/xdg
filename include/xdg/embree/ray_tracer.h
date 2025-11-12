@@ -50,10 +50,9 @@ public:
   // Array version of point_in_volume
   void point_in_volume(TreeID tree,
                                      const Position* points,
-                                     const Direction* directions, // [num_points] array of Direction pointers
                                      const size_t num_points,
                                      uint8_t* results,
-                                     const uint8_t* has_dir = nullptr,
+                                     const Direction* directions = nullptr, 
                                      std::vector<MeshID>* exclude_primitives = nullptr) override
   {
     fatal_error("Batch point_in_volume not yet implemented for EmbreeRayTracer");
