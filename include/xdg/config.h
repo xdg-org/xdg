@@ -52,7 +52,8 @@ public:
   bool initialized() const { return initialized_; }
 
   #ifdef XDG_ENABLE_LIBMESH
-  const std::unique_ptr<libMesh::LibMeshInit>& libmesh_init();
+  const libMesh::LibMeshInit* libmesh_init();
+  const libMesh::Parallel::Communicator* libmesh_comm();
   #endif
 
 private:

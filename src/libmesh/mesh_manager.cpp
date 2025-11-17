@@ -19,7 +19,7 @@ LibMeshManager::LibMeshManager(void *ptr) {}
 LibMeshManager::LibMeshManager() : MeshManager() {}
 
 void LibMeshManager::load_file(const std::string &filepath) {
-  mesh_ = std::make_unique<libMesh::Mesh>(XDGConfig::config().libmesh_init()->comm(), 3);
+  mesh_ = std::make_unique<libMesh::Mesh>(*XDGConfig::config().libmesh_comm(), 3);
   mesh_->read(filepath);
 }
 
