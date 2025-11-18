@@ -381,9 +381,6 @@ void GPRTRayTracer::point_in_volume(TreeID tree,
 
   gprtBufferUnmap(rayHitBuffers_.ray); // required to sync buffer back on GPU?
   
-  // rebuild SBT geom and raygen only
-  gprtBuildShaderBindingTable(context_, static_cast<GPRTBuildSBTFlags>(GPRT_SBT_GEOM | GPRT_SBT_RAYGEN));
-
   gprtRayGenLaunch1D(context_, rayGen, num_points);
   gprtGraphicsSynchronize(context_);
 
@@ -419,11 +416,12 @@ void GPRTRayTracer::ray_fire(TreeID tree,
     
   gprtBufferMap(rayHitBuffers_.ray); 
   dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
+  const auto volAddr = gprtAccelGetDeviceAddress(volume);
   for (size_t i = 0; i < num_rays; ++i) {
     const auto& origin = origins[i];
     const auto& direction = directions[i];
 
-    ray[i].volume_accel = gprtAccelGetDeviceAddress(volume);
+    ray[i].volume_accel = volAddr;
     ray[i].origin = {origin.x, origin.y, origin.z};
     ray[i].direction = {direction.x, direction.y, direction.z};
     ray[i].tMax = dist_limit;
@@ -434,10 +432,7 @@ void GPRTRayTracer::ray_fire(TreeID tree,
   }
 
   gprtBufferUnmap(rayHitBuffers_.ray); // required to sync buffer back on GPU?
-  
-  // rebuild SBT geom and raygen only
-  gprtBuildShaderBindingTable(context_, static_cast<GPRTBuildSBTFlags>(GPRT_SBT_GEOM | GPRT_SBT_RAYGEN));
-  
+    
   // Launch the ray generation shader with push constants and buffer bindings
   gprtRayGenLaunch1D(context_, rayGen, num_rays);
   gprtGraphicsSynchronize(context_);
