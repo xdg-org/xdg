@@ -17,7 +17,7 @@ namespace xdg {
 
 namespace config {
 
-  #ifdef XDG_ENABLE_LIBMESH
+#ifdef XDG_ENABLE_LIBMESH
 extern std::unique_ptr<libMesh::LibMeshInit> xdg_libmesh_init;
 extern const libMesh::LibMeshInit* external_libmesh_init;
 extern const libMesh::Parallel::Communicator* external_libmesh_comm;
