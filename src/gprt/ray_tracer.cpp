@@ -1,6 +1,7 @@
 #include "xdg/gprt/ray_tracer.h"
 #include "gprt/gprt.h"
 
+#include <chrono>
 namespace xdg {
 
 GPRTRayTracer::GPRTRayTracer()
@@ -436,6 +437,17 @@ void GPRTRayTracer::ray_fire(TreeID tree,
 
   gprtBufferUnmap(rayHitBuffers_.ray); // required to sync buffer back on GPU?
     
+  std::cout << "Starting ray fire benchmark with " << num_rays << " rays"  << " using " 
+            << "GPRT" << ": \n" << std::endl;
+  auto start = std::chrono::high_resolution_clock::now();
+
+  // Launch the ray generation shader with push constants and buffer bindings
+  gprtRayGenLaunch1D(context_, rayGen, num_rays);
+  gprtGraphicsSynchronize(context_);
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+  double rays_per_second = static_cast<double>(num_rays) / elapsed.count();
+
   // Launch the ray generation shader with push constants and buffer bindings
   gprtRayGenLaunch1D(context_, rayGen, num_rays);
   gprtGraphicsSynchronize(context_);
@@ -457,6 +469,12 @@ void GPRTRayTracer::ray_fire(TreeID tree,
     }
   }
   gprtBufferUnmap(rayHitBuffers_.hit); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
+
+  std::cout << "----------------------------------------" << std::endl;
+  std::cout << "Completed " << num_rays << " rays in " << elapsed.count() << " seconds." << std::endl;
+  std::cout << "Ray tracing throughput: " << rays_per_second << " rays/second." << std::endl;
+  std::cout << "---------------------------------------- \n" << std::endl;
+
 
   return;
 }
