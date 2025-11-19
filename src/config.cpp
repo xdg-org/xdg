@@ -11,17 +11,19 @@ using namespace xdg;
 
 namespace xdg {
 #ifdef XDG_ENABLE_LIBMESH
-std::unique_ptr<libMesh::LibMeshInit> xdg_libmesh_init {nullptr};
 
+namespace config {
+std::unique_ptr<libMesh::LibMeshInit> xdg_libmesh_init {nullptr};
 // External pointers that can be set by external applications
 const libMesh::LibMeshInit* external_libmesh_init {nullptr};
 const libMesh::Parallel::Communicator* external_libmesh_comm {nullptr};
+} // namespace config
 
 // Custom cleanup function that will be called at program exit
 // This ensures LibMeshInit is destroyed after all other global destructors
 static void cleanup_libmesh_at_exit() {
-  if (xdg_libmesh_init) {
-    xdg_libmesh_init.reset();
+  if (config::xdg_libmesh_init) {
+    config::xdg_libmesh_init.reset();
   }
 }
 #endif
@@ -42,7 +44,7 @@ void XDGConfig::initialize() {
 
 #ifdef XDG_ENABLE_LIBMESH
   // libmesh requires the program name, so at least one argument is needed
-  if (external_libmesh_init == nullptr) {
+  if (config::external_libmesh_init == nullptr) {
     int argc = 1;
     const std::string argv{"XDG"};
     const char *argv_cstr = argv.c_str();
@@ -50,9 +52,11 @@ void XDGConfig::initialize() {
     // another, it is MPI_Comm (which is not compatible with int for some MPI
     // implementations), so we need to handle both cases here.
     #ifdef LIBMESH_HAVE_MPI
-    xdg_libmesh_init = std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, MPI_COMM_WORLD, n_threads());
+    config::xdg_libmesh_init =
+      std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, MPI_COMM_WORLD, n_threads());
     #else
-    xdg_libmesh_init = std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, 0, n_threads());
+    config::xdg_libmesh_init =
+      std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, 0, n_threads());
     #endif
   }
   // register for cleanup at program exit
@@ -71,7 +75,7 @@ void XDGConfig::set_n_threads(int n_threads) {
   if (n_threads <= 0)
     warning("Number of threads must be positive. Using 1 thread.");
 
-  if (xdg_libmesh_init != nullptr || external_libmesh_init != nullptr) {
+  if (config::xdg_libmesh_init != nullptr || config::external_libmesh_init != nullptr) {
     warning("Changing number of threads after LibMesh initialization has no effect.\n"
       "       Please set number of threads before accessing any LibMesh functionality on this class.");
   }
@@ -85,16 +89,16 @@ XDGConfig::libmesh_init() {
   if (!initialized()) {
     initialize();
   }
-  if (external_libmesh_init != nullptr) {
-    return external_libmesh_init;
+  if (config::external_libmesh_init != nullptr) {
+    return config::external_libmesh_init;
   }
-  return xdg_libmesh_init.get();
+  return config::xdg_libmesh_init.get();
 }
 
 const libMesh::Parallel::Communicator*
 XDGConfig::libmesh_comm() {
-  if (external_libmesh_comm != nullptr) {
-    return external_libmesh_comm;
+  if (config::external_libmesh_comm != nullptr) {
+    return config::external_libmesh_comm;
   }
   return &(libmesh_init()->comm());
 }

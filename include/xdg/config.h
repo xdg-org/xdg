@@ -15,11 +15,15 @@
 
 namespace xdg {
 
-#ifdef XDG_ENABLE_LIBMESH
+namespace config {
+
+  #ifdef XDG_ENABLE_LIBMESH
 extern std::unique_ptr<libMesh::LibMeshInit> xdg_libmesh_init;
 extern const libMesh::LibMeshInit* external_libmesh_init;
 extern const libMesh::Parallel::Communicator* external_libmesh_comm;
 #endif
+
+} // namespace config
 class XDGConfig {
 public:
   // Get the singleton instance
@@ -35,12 +39,12 @@ public:
   void reset() {
     initialized_ = false;
     n_threads_ = -1;
-    if (xdg_libmesh_init) {
-      xdg_libmesh_init.reset();
+    if (config::xdg_libmesh_init) {
+      config::xdg_libmesh_init.reset();
     }
     // reset external pointers if set
-    external_libmesh_init = nullptr;
-    external_libmesh_comm = nullptr;
+    config::external_libmesh_init = nullptr;
+    config::external_libmesh_comm = nullptr;
   }
 
 private:
@@ -80,11 +84,11 @@ public:
     libMesh::LibMeshInit* libmesh_init
   )
   {
-    if (external_libmesh_init != nullptr) {
+    if (config::external_libmesh_init != nullptr) {
       fatal_error("LibMesh external initialization has already been set. Overwriting.");
     }
-    external_libmesh_init = libmesh_init;
-    external_libmesh_comm = &(libmesh_init->comm());
+    config::external_libmesh_init = libmesh_init;
+    config::external_libmesh_comm = &(libmesh_init->comm());
   }
   #endif
 

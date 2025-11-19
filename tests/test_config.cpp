@@ -33,15 +33,15 @@ TEST_CASE("External LibMesh Initialization")
 TEST_CASE("Internal LibMesh Initialization")
 {
   xdg::XDGConfig::config().reset();
-  REQUIRE(xdg::xdg_libmesh_init == nullptr);
+  REQUIRE(xdg::config::xdg_libmesh_init == nullptr);
 
   // the first call for these objects through the XDGConfig singleton
   // should cause XDG to initialize its own LibMeshInit object
   REQUIRE(xdg::XDGConfig::config().libmesh_init() != nullptr);
   REQUIRE(xdg::XDGConfig::config().libmesh_comm() != nullptr);
 
-  REQUIRE(xdg::xdg_libmesh_init.get() == xdg::XDGConfig::config().libmesh_init());
-  REQUIRE(&xdg::xdg_libmesh_init->comm() == xdg::XDGConfig::config().libmesh_comm());
+  REQUIRE(xdg::config::xdg_libmesh_init.get() == xdg::XDGConfig::config().libmesh_init());
+  REQUIRE(&xdg::config::xdg_libmesh_init->comm() == xdg::XDGConfig::config().libmesh_comm());
 }
 #endif
 
