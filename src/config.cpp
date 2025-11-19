@@ -19,8 +19,10 @@ const libMesh::LibMeshInit* external_libmesh_init {nullptr};
 const libMesh::Parallel::Communicator* external_libmesh_comm {nullptr};
 } // namespace config
 
-// Custom cleanup function that will be called at program exit
-// This ensures LibMeshInit is destroyed after all other global destructors
+// libMesh expects to be able to clean up some static objects upon destruction
+// of LibMeshInit. If they are already cleaned up by the compiler at program exit,
+// libMesh can attempt to double-free them. To avoid this, we register a cleanup
+// function to be called at exit before those objects are deleted by libMesh.
 static void cleanup_libmesh_at_exit() {
   if (config::xdg_libmesh_init) {
     config::xdg_libmesh_init.reset();
