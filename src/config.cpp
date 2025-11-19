@@ -56,8 +56,11 @@ void XDGConfig::initialize() {
     #endif
   }
   // register for cleanup at program exit
-  // TODO: explore cleaner options that ensure this occurs after
-  // destruction of all other libMesh objects more elegantly
+
+  // libMesh expects to be able to clean some static objects up at exit if they
+  // aren't present, so we register this cleanup function to be called at exit
+  // before those objects are deleted by libMesh. Otherwise, a double-free can
+  // occur.
   std::atexit(cleanup_libmesh_at_exit);
 #endif
 
