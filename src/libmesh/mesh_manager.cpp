@@ -87,8 +87,6 @@ MeshID LibMeshManager::adjacent_element(MeshID element, int face) const {
 }
 
 MeshID LibMeshManager::create_volume() {
-  std::unique_ptr<libMesh::Mesh> submesh_ =
-      std::make_unique<libMesh::Mesh>(mesh_->comm(), 3);
   MeshID next_volume_id = *std::max_element(volumes_.begin(), volumes_.end()) + 1;
   return next_volume_id;
 }
