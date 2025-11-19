@@ -115,7 +115,7 @@ int main(int argc, char** argv) {
   const auto& mm = xdg->mesh_manager();
   mm->load_file(args.get<std::string>("filename"));
   mm->init();
-  mm->parse_metadata();
+  // mm->parse_metadata();
 
   // Generate a set of random rays
   size_t N = args.get<uint64_t>("--num-rays");
@@ -132,6 +132,9 @@ int main(int argc, char** argv) {
 
   std::vector<double> hitDistances(N, -1.0);
   std::vector<MeshID> hitElements(N, ID_NONE);
+
+  std::cout << "Volume ID: " << volume << " with: " << mm->num_volume_faces(volume)  
+            << " faces" << std::endl;
 
   std::cout << "Starting ray fire benchmark with " << N << " rays"  << " using " 
             << rt_str << ": \n" << std::endl;
