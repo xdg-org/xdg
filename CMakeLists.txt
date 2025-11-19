@@ -108,7 +108,7 @@ endif()
 set(GPRT_BUILD_SHARED ON  CACHE BOOL "Build GPRT as a shared library" FORCE)
 if (XDG_ENABLE_GPRT)
   add_subdirectory(vendor/GPRT)
-endif() 
+endif()
 
 list(APPEND xdg_sources
 src/geometry/measure.cpp
@@ -276,6 +276,8 @@ if(XDG_ENABLE_LIBMESH)
   target_link_libraries(xdg PkgConfig::LIBMESH)
 endif()
 
+# this provides the ability to link MPI when needed for compatibility with other
+# libraries (e.g., libMesh)
 if (XDG_LINK_MPI)
   find_package(MPI REQUIRED)
   target_link_libraries(xdg MPI::MPI_CXX)
