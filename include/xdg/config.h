@@ -90,14 +90,14 @@ public:
   void reset_libmesh_init()
   {
   // function is a null-op if libmesh not enabled
-  #ifdef XDG_ENABLE_LIBMESH
+#ifdef XDG_ENABLE_LIBMESH
     if (config::xdg_libmesh_init) {
       config::xdg_libmesh_init.reset();
     }
     // reset external pointers if set
     config::external_libmesh_init = nullptr;
     config::external_libmesh_comm = nullptr;
-  #endif
+#endif
   }
 
 private:
