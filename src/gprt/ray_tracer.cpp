@@ -164,8 +164,11 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
     geom_data->normals = gprtBufferGetDevicePointer(normal_buffer);
     geom_data->primitive_refs = gprtBufferGetDevicePointer(primitive_refs_buffer);
     geom_data->num_faces = num_faces;
-    
-    gprtComputeLaunch(aabbPopulationProgram_, {num_faces, 1, 1}, {1, 1, 1}, *geom_data);
+
+    constexpr uint32_t threadsPerGroup = 64; // must match [numthreads(64,1,1)]
+    uint32_t numGroupsX = (num_faces + threadsPerGroup - 1) / threadsPerGroup;
+
+    gprtComputeLaunch(aabbPopulationProgram_, {numGroupsX, 1, 1}, {threadsPerGroup, 1, 1}, *geom_data);
 
     GPRTAccel blas = gprtAABBAccelCreate(context_, triangleGeom, buildParams_.buildMode);
 

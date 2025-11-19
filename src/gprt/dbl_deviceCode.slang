@@ -104,10 +104,15 @@ void point_in_volume(uniform dblRayGenData record, uniform DPTriangleGeomData me
 // ------------------------------------------------- Compute Shaders -------------------------------------------------
 /* A shader to compute and store AABB min/maxes in single precision using double precision coords*/
 [shader("compute")]
-[numthreads(1, 1, 1)]
+[numthreads(64, 1, 1)]
 void
 populate_aabbs(uint3 DispatchThreadID: SV_DispatchThreadID, uniform DPTriangleGeomData record) {
     int primID = DispatchThreadID.x;
+
+    // guard against more threads than primitives
+    if (primID >= record.num_faces)
+        return;
+
     int3 indices = record.index[primID];
     double3 A = record.vertex[indices[0]];
     double3 B = record.vertex[indices[1]];
