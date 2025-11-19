@@ -77,10 +77,13 @@ void XDGConfig::set_n_threads(int n_threads) {
   if (n_threads <= 0)
     warning("Number of threads must be positive. Using 1 thread.");
 
+  #ifdef XDG_ENABLE_LIBMESH
   if (config::xdg_libmesh_init != nullptr || config::external_libmesh_init != nullptr) {
     warning("Changing number of threads after LibMesh initialization has no effect.\n"
       "       Please set number of threads before accessing any LibMesh functionality on this class.");
   }
+  #endif
+
   n_threads_ = std::max(n_threads, 1);
 }
 

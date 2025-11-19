@@ -39,12 +39,7 @@ public:
   void reset() {
     initialized_ = false;
     n_threads_ = -1;
-    if (config::xdg_libmesh_init) {
-      config::xdg_libmesh_init.reset();
-    }
-    // reset external pointers if set
-    config::external_libmesh_init = nullptr;
-    config::external_libmesh_comm = nullptr;
+    reset_libmesh_init();
   }
 
 private:
@@ -91,6 +86,19 @@ public:
     config::external_libmesh_comm = &(libmesh_init->comm());
   }
   #endif
+
+  void reset_libmesh_init()
+  {
+  // function is a null-op if libmesh not enabled
+  #ifdef XDG_ENABLE_LIBMESH
+    if (config::xdg_libmesh_init) {
+      config::xdg_libmesh_init.reset();
+    }
+    // reset external pointers if set
+    config::external_libmesh_init = nullptr;
+    config::external_libmesh_comm = nullptr;
+  #endif
+  }
 
 private:
   // Data members
