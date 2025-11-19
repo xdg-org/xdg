@@ -79,8 +79,7 @@ void XDGConfig::set_n_threads(int n_threads) {
     warning("Changing number of threads after LibMesh initialization has no effect.\n"
       "       Please set number of threads before accessing any LibMesh functionality on this class.");
   }
-  n_threads = std::max(n_threads, 1);
-  n_threads_ = n_threads;
+  n_threads_ = std::max(n_threads, 1);
 }
 
 #ifdef XDG_ENABLE_LIBMESH
