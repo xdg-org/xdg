@@ -71,6 +71,10 @@ void XDGConfig::set_n_threads(int n_threads) {
   if (n_threads <= 0)
     warning("Number of threads must be positive. Using 1 thread.");
 
+  if (xdg_libmesh_init != nullptr || external_libmesh_init != nullptr) {
+    warning("Changing number of threads after LibMesh initialization has no effect.\n"
+      "       Please set number of threads before accessing any LibMesh functionality on this class.");
+  }
   n_threads = std::max(n_threads, 1);
   n_threads_ = n_threads;
 }
@@ -95,8 +99,6 @@ XDGConfig::libmesh_comm() {
   return &(libmesh_init()->comm());
 }
 #endif
-
-
 
 bool XDGConfig::ray_tracer_enabled(RTLibrary rt_lib) const {
   #ifdef XDG_ENABLE_EMBREE

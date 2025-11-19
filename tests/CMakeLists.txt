@@ -4,6 +4,7 @@ set(
 TEST_NAMES
 test_bbox
 test_bvh
+test_config
 test_closest
 test_find_element
 test_mesh_internal
@@ -41,8 +42,8 @@ endif()
 foreach(test ${TEST_NAMES})
     add_executable(${test} ${test}.cpp)
     target_link_libraries(${test} xdg Catch2::Catch2WithMain)
-    add_test(NAME ${test} 
-             COMMAND ${test} --allow-running-no-tests 
+    add_test(NAME ${test}
+             COMMAND ${test} --allow-running-no-tests
              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endforeach()
 

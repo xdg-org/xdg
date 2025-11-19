@@ -7,6 +7,7 @@
 #include <unordered_map>
 
 #include "xdg/constants.h"
+#include "xdg/error.h"
 
 #ifdef XDG_ENABLE_LIBMESH
 #include "libmesh/libmesh.h"
@@ -16,6 +17,8 @@ namespace xdg {
 
 #ifdef XDG_ENABLE_LIBMESH
 extern std::unique_ptr<libMesh::LibMeshInit> xdg_libmesh_init;
+extern const libMesh::LibMeshInit* external_libmesh_init;
+extern const libMesh::Parallel::Communicator* external_libmesh_comm;
 #endif
 class XDGConfig {
 public:
@@ -28,6 +31,17 @@ public:
   // Delete copy constructor and assignment operator
   XDGConfig(const XDGConfig&) = delete;
   XDGConfig& operator=(const XDGConfig&) = delete;
+
+  void reset() {
+    initialized_ = false;
+    n_threads_ = -1;
+    if (xdg_libmesh_init) {
+      xdg_libmesh_init.reset();
+    }
+    // reset external pointers if set
+    external_libmesh_init = nullptr;
+    external_libmesh_comm = nullptr;
+  }
 
 private:
   // Private constructor
@@ -54,6 +68,24 @@ public:
   #ifdef XDG_ENABLE_LIBMESH
   const libMesh::LibMeshInit* libmesh_init();
   const libMesh::Parallel::Communicator* libmesh_comm();
+
+  void set_libmesh_external_init(
+    const std::unique_ptr<libMesh::LibMeshInit>& libmesh_init
+  )
+  {
+    set_libmesh_external_init(libmesh_init.get());
+  }
+
+  void set_libmesh_external_init(
+    libMesh::LibMeshInit* libmesh_init
+  )
+  {
+    if (external_libmesh_init != nullptr) {
+      fatal_error("LibMesh external initialization has already been set. Overwriting.");
+    }
+    external_libmesh_init = libmesh_init;
+    external_libmesh_comm = &(libmesh_init->comm());
+  }
   #endif
 
 private:
