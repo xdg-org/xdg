@@ -133,15 +133,31 @@ int main(int argc, char** argv) {
   std::vector<double> hitDistances(N, -1.0);
   std::vector<MeshID> hitElements(N, ID_NONE);
 
-
   if (rt_lib == RTLibrary::GPRT) {
-    // GPRT backend supports batch ray fire
+    // GPRT backend supports batch ray fire (timer placed around raygen launch)
     xdg->ray_fire(volume, origins.data(), directions.data(), N, hitDistances.data(), hitElements.data());
   } else {
+    std::cout << "Volume ID: " << volume << " with: " << mm->num_volume_faces(volume)  
+          << " faces" << std::endl;
+
+    std::cout << "Starting ray fire benchmark with " << N << " rays"  << " using " 
+              << rt_str << ": \n" << std::endl;
+    auto start = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < N; ++i) {
       auto result = xdg->ray_fire(volume, origin, directions[i]);
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    double rays_per_second = static_cast<double>(N) / elapsed.count();
+
+    std::cout << "----------------------------------------" << std::endl;
+    std::cout << "Completed " << N << " rays in " << elapsed.count() << " seconds." << std::endl;
+    std::cout << "Ray tracing throughput: " << rays_per_second << " rays/second." << std::endl;
+    std::cout << "---------------------------------------- \n" << std::endl;
   }
-  
+
+
+
+
   return 0;
 }

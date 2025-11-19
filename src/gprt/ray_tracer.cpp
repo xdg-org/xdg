@@ -438,7 +438,7 @@ void GPRTRayTracer::ray_fire(TreeID tree,
   gprtBufferUnmap(rayHitBuffers_.ray); // required to sync buffer back on GPU?
     
   std::cout << "Starting ray fire benchmark with " << num_rays << " rays"  << " using " 
-            << "GPRT" << ": \n" << std::endl;
+            << "GPRT (FP64)" << ": \n" << std::endl;
   auto start = std::chrono::high_resolution_clock::now();
 
   // Launch the ray generation shader with push constants and buffer bindings
