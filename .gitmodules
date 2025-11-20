@@ -4,7 +4,7 @@
 	branch = 5a40b2275caa05cf809bf04df848764a9d7df2e2
 [submodule "tests/test_files"]
 	path = tests/test_files
-	url = https://github.com/pshriwise/xdg_test_files
+	url = https://github.com/xdg-org/xdg_test_files
 [submodule "fmt"]
 	path = vendor/fmt
 	url = https://github.com/fmtlib/fmt.git
