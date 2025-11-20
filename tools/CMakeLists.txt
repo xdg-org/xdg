@@ -1,9 +1,12 @@
 set(TOOL_NAMES
 particle_sim
 ray_fire
+batch_ray_fire
 find_volume
 point_in_volume
+batch_point_in_volume
 overlap_check
+ray-benchmark
 )
 
 foreach(tool ${TOOL_NAMES})
