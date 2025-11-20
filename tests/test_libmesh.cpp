@@ -7,9 +7,10 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 // xdg includes
+#include "xdg/config.h"
 #include "xdg/error.h"
 #include "xdg/mesh_manager_interface.h"
-#include "xdg/libmesh/mesh_manager.h"
+#include "xdg/mesh_managers.h"
 #include "xdg/xdg.h"
 #include "xdg/embree/ray_tracer.h"
 
