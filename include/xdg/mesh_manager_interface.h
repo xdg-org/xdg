@@ -14,6 +14,8 @@ namespace xdg {
 class MeshManager {
 public:
 
+  MeshManager();
+
   // Abstract Methods
   virtual ~MeshManager() = default;
 
