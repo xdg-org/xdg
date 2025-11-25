@@ -58,10 +58,10 @@ void ray_fire(uniform dblRayGenData record, uniform DPTriangleGeomData mesh) {
     RayDesc rayDesc;
     rayDesc.Origin = float3(record.ray[rayID].origin);
     rayDesc.Direction = normalize(float3(record.ray[rayID].direction));
-    rayDesc.TMin = float(record.ray[rayID].tMin); 
-    rayDesc.TMax = float(record.ray[rayID].tMax); 
+    rayDesc.TMin = float(PC.tMin); 
+    rayDesc.TMax = float(PC.tMax); 
 
-    SurfaceAccelerationStructure world = record.ray[rayID].volume_accel;
+    SurfaceAccelerationStructure world = PC.volume_accel;
 
     // Pass the ray's origin and direction to the payload
     payload.distance = -1.0f;
@@ -85,10 +85,10 @@ void point_in_volume(uniform dblRayGenData record, uniform DPTriangleGeomData me
     RayDesc rayDesc;
     rayDesc.Origin = float3(record.ray[rayID].origin);
     rayDesc.Direction = float3(normalize(record.ray[rayID].direction));
-    rayDesc.TMin = float(record.ray[rayID].tMin); 
-    rayDesc.TMax = float(record.ray[rayID].tMax); 
+    rayDesc.TMin = float(PC.tMin); 
+    rayDesc.TMax = float(PC.tMax); 
 
-    SurfaceAccelerationStructure world = record.ray[rayID].volume_accel;
+    SurfaceAccelerationStructure world = PC.volume_accel;
 
     // Pass the ray's origin and direction to the payload
     payload.surf_id = -1;
@@ -105,8 +105,7 @@ void point_in_volume(uniform dblRayGenData record, uniform DPTriangleGeomData me
 /* A shader to compute and store AABB min/maxes in single precision using double precision coords*/
 [shader("compute")]
 [numthreads(64, 1, 1)]
-void
-populate_aabbs(uint3 DispatchThreadID: SV_DispatchThreadID, uniform DPTriangleGeomData record) {
+void populate_aabbs(uint3 DispatchThreadID: SV_DispatchThreadID, uniform DPTriangleGeomData record) {
     int primID = DispatchThreadID.x;
 
     // guard against more threads than primitives
@@ -163,8 +162,8 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     double3 origin = record.ray[rayID].origin;
     double3 direction = record.ray[rayID].direction;
 
-    double tMin = record.ray[rayID].tMin;
-    double tMax = record.ray[rayID].tMax;
+    double tMin = PC.tMin;
+    double tMax = PC.tMax;
 
     const double3 raya = direction;
     const double3 rayb = cross(direction, origin);
@@ -234,7 +233,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     double3 norm = record.normals[primID]; // recover double precision normal. TODO - Should we calculate from vertices instead?
 
     // sense adjustment of normal
-    if (record.ray[rayID].volume_tree == record.reverse_tree)
+    if (PC.volume_tree == record.reverse_tree)
     {
         norm = -norm;
     }
@@ -243,7 +242,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     uint hit_kind = norm_dot_dir < 0 ? HIT_KIND_TRIANGLE_FRONT_FACE
                                      : HIT_KIND_TRIANGLE_BACK_FACE;
 
-    xdg::HitOrientation hitOrientation = record.ray[rayID].hitOrientation;
+    xdg::HitOrientation hitOrientation = PC.hitOrientation;
 
     if (orientation_cull(direction, norm, hitOrientation))
     {

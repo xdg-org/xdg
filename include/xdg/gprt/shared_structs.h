@@ -11,13 +11,8 @@ struct dblRay
 {
   double3 origin;
   double3 direction;
-  double tMin; // Minimum distance for ray intersection
-  double tMax; // Maximum distance for ray intersection
   int32_t* exclude_primitives; // Optional for excluding primitives
   int32_t exclude_count;           // Number of excluded primitives
-  xdg::HitOrientation hitOrientation;
-  int volume_tree; // TreeID of the volume being queried
-  SurfaceAccelerationStructure volume_accel; // The volume accel 
 };
 
 struct dblHit 
@@ -57,4 +52,7 @@ struct dblRayGenData {
 struct dblRayFirePushConstants {
   double tMax;
   double tMin;
+  SurfaceAccelerationStructure volume_accel; 
+  int volume_tree;
+  xdg::HitOrientation hitOrientation;
 };

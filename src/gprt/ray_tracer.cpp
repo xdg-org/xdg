@@ -240,13 +240,8 @@ bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree,
 
   gprtBufferMap(rayHitBuffers_.ray); // Update the ray input buffer
   dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
-  ray[0].volume_accel = gprtAccelGetDeviceAddress(volume); 
   ray[0].origin = {point.x, point.y, point.z};
   ray[0].direction = {directionUsed.x, directionUsed.y, directionUsed.z};
-  ray[0].tMax = INFTY; // Set a large distance limit
-  ray[0].tMin = 0.0;
-  ray[0].volume_tree = tree; // Set the TreeID of the volume being queried
-  ray[0].hitOrientation = HitOrientation::ANY; // No orientation culling for point-in-volume check
 
   if (exclude_primitives) {
     if (!exclude_primitives->empty()) gprtBufferResize(context_, excludePrimitivesBuffer_, exclude_primitives->size(), false);
@@ -264,7 +259,14 @@ bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree,
   }
   gprtBufferUnmap(rayHitBuffers_.ray); // required to sync buffer back on GPU?
 
-  gprtRayGenLaunch1D(context_, rayGen, 1); // Launch raygen shader (entry point to RT pipeline)
+  dblRayFirePushConstants pushConstants;
+  pushConstants.hitOrientation = HitOrientation::ANY;
+  pushConstants.tMax = INFTY;
+  pushConstants.tMin = 0.0;
+  pushConstants.volume_accel = gprtAccelGetDeviceAddress(volume);
+  pushConstants.volume_tree = tree;
+
+  gprtRayGenLaunch1D(context_, rayGen, 1, pushConstants); // Launch raygen shader (entry point to RT pipeline)
   gprtGraphicsSynchronize(context_); // Ensure all GPU operations are complete before returning control flow to CPU
 
   // Retrieve the hit from the dblHit buffer
@@ -297,13 +299,8 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
   
   gprtBufferMap(rayHitBuffers_.ray); // Update the ray input buffer
   dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
-  ray[0].volume_accel = gprtAccelGetDeviceAddress(volume);
   ray[0].origin = {origin.x, origin.y, origin.z};
   ray[0].direction = {direction.x, direction.y, direction.z};
-  ray[0].tMax = dist_limit;
-  ray[0].tMin = 0.0;
-  ray[0].hitOrientation = orientation; // Set orientation for the ray
-  ray[0].volume_tree = tree; // Set the TreeID of the volume being queried
 
   if (exclude_primitives) {
     if (!exclude_primitives->empty()) gprtBufferResize(context_, excludePrimitivesBuffer_, exclude_primitives->size(), false);
@@ -321,7 +318,15 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
   }
   gprtBufferUnmap(rayHitBuffers_.ray); // required to sync buffer back on GPU?
   
-  gprtRayGenLaunch1D(context_, rayGen, 1); // Launch raygen shader (entry point to RT pipeline)
+  // Set push constants (same for every ray)
+  dblRayFirePushConstants pushConstants;
+  pushConstants.hitOrientation = orientation;
+  pushConstants.tMax = dist_limit;
+  pushConstants.tMin = 0.0;
+  pushConstants.volume_accel = gprtAccelGetDeviceAddress(volume);
+  pushConstants.volume_tree = tree;
+
+  gprtRayGenLaunch1D(context_, rayGen, 1, pushConstants); // Launch raygen shader (entry point to RT pipeline)
   gprtGraphicsSynchronize(context_); // Ensure all GPU operations are complete before returning control flow to CPU
                                                   
   // Retrieve the hit from the dblHit buffer
@@ -361,16 +366,10 @@ void GPRTRayTracer::point_in_volume(TreeID tree,
   // Map the region start
   gprtBufferMap(rayHitBuffers_.ray); 
   dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
-  const auto volumeAddr = gprtAccelGetDeviceAddress(volume);
 
   // Common ray params 
   for (size_t i = 0; i < num_points; ++i) {
-    ray[i].volume_accel = volumeAddr;
     ray[i].origin = {points[i].x, points[i].y, points[i].z};
-    ray[i].tMax = INFTY;
-    ray[i].tMin = 0.0;
-    ray[i].volume_tree = tree;
-    ray[i].hitOrientation = HitOrientation::ANY;
     ray[i].exclude_primitives = nullptr;
   }
 
@@ -385,7 +384,15 @@ void GPRTRayTracer::point_in_volume(TreeID tree,
 
   gprtBufferUnmap(rayHitBuffers_.ray); // required to sync buffer back on GPU?
   
-  gprtRayGenLaunch1D(context_, rayGen, num_points);
+  // Set push constants (same for every ray)
+  dblRayFirePushConstants pushConstants;
+  pushConstants.hitOrientation = HitOrientation::ANY;
+  pushConstants.tMax = INFTY;
+  pushConstants.tMin = 0.0;
+  pushConstants.volume_accel = gprtAccelGetDeviceAddress(volume);
+  pushConstants.volume_tree = tree;
+  
+  gprtRayGenLaunch1D(context_, rayGen, num_points, pushConstants);
   gprtGraphicsSynchronize(context_);
 
   // Retrieve the output from the ray output buffer
@@ -420,37 +427,36 @@ void GPRTRayTracer::ray_fire(TreeID tree,
     
   gprtBufferMap(rayHitBuffers_.ray); 
   dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
-  const auto volAddr = gprtAccelGetDeviceAddress(volume);
+  // Set per ray values
   for (size_t i = 0; i < num_rays; ++i) {
     const auto& origin = origins[i];
     const auto& direction = directions[i];
 
-    ray[i].volume_accel = volAddr;
     ray[i].origin = {origin.x, origin.y, origin.z};
     ray[i].direction = {direction.x, direction.y, direction.z};
-    ray[i].tMax = dist_limit;
-    ray[i].tMin = 0.0;
-    ray[i].hitOrientation = orientation; // Set orientation for the ray
-    ray[i].volume_tree = tree; // Set the TreeID of the volume being queried
     ray[i].exclude_primitives = nullptr; // Not currently supported in batch version
   }
 
   gprtBufferUnmap(rayHitBuffers_.ray); // required to sync buffer back on GPU?
-    
+
+  // Set push constants (same for every ray)
+  dblRayFirePushConstants pushConstants;
+  pushConstants.hitOrientation = orientation;
+  pushConstants.tMax = dist_limit;
+  pushConstants.tMin = 0.0;
+  pushConstants.volume_accel = gprtAccelGetDeviceAddress(volume);
+  pushConstants.volume_tree = tree;
+
   std::cout << "Starting ray fire benchmark with " << num_rays << " rays"  << " using " 
             << "GPRT (FP64)" << ": \n" << std::endl;
   auto start = std::chrono::high_resolution_clock::now();
 
   // Launch the ray generation shader with push constants and buffer bindings
-  gprtRayGenLaunch1D(context_, rayGen, num_rays);
+  gprtRayGenLaunch1D(context_, rayGen, num_rays, pushConstants);
   gprtGraphicsSynchronize(context_);
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
   double rays_per_second = static_cast<double>(num_rays) / elapsed.count();
-
-  // Launch the ray generation shader with push constants and buffer bindings
-  gprtRayGenLaunch1D(context_, rayGen, num_rays);
-  gprtGraphicsSynchronize(context_);
                                                   
   // Retrieve the output from the ray output buffer
   gprtBufferMap(rayHitBuffers_.hit);
