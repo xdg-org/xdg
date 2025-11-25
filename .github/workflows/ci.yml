@@ -41,7 +41,7 @@ jobs:
                               libnetcdf-dev \
                               libhdf5-dev \
                               libeigen3-dev \
-                              cmake 
+                              cmake
       - name: Update CMake
         uses: ssrobins/install-cmake@v1
         with:
@@ -156,7 +156,7 @@ jobs:
             fi
             CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}$HOME/MOAB"
           fi
-          cmake .. -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" -DCMAKE_INSTALL_PREFIX=$HOME/opt -DXDG_ENABLE_MOAB=${{ matrix.moab && 'ON' || 'OFF' }} -DXDG_ENABLE_LIBMESH=${{ matrix.libmesh && 'ON' || 'OFF' }} -DXDG_ENABLE_GPRT=ON
+          cmake .. -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" -DCMAKE_INSTALL_PREFIX=$HOME/opt -DXDG_ENABLE_MOAB=${{ matrix.moab && 'ON' || 'OFF' }} -DXDG_ENABLE_LIBMESH=${{ matrix.libmesh && 'ON' || 'OFF' }}
           make -j4 install
 
       - name: Test
