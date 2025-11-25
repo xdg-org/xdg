@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 
+#include "xdg/error.h"
 #include "xdg/constants.h"
 #include "xdg/embree_interface.h"
 #include "xdg/mesh_manager_interface.h"
@@ -116,55 +117,6 @@ public:
                                      std::vector<MeshID>* const exclude_primitives = nullptr) = 0;
 
   /**
-   * @brief Array based version of point_in_volume query
-   *
-   * This method performs a set of point_in_volume queries on a batch of rays defined by their origins and directions.
-   * It computes whether or not a point lies in a given volume for each point in the batch. With GPRT ray tracing
-   * this launches the RT pipeline with the number of rays provided.
-   * 
-   * @param[in] tree The TreeID of the volume we are querying against
-   * @param[in] points An array of points to query
-   * @param[in] num_points The number of points to be processed in the batch
-   * @param[out] results An output array to store the computed results for each point (1 if inside volume, 0 if outside)
-   * @param[in] directions (optional) array of directions to launch rays in explicit directions per point - these must be non-zero length
-   * @param[in] exclude_primitives (optional) vector of surface element MeshIDs to exclude from intersection tests
-   * @return Void. Outputs stored in results array
-   */  
-  virtual void point_in_volume(TreeID tree,
-                               const Position* points,
-                               const size_t num_points,
-                               uint8_t* results,
-                               const Direction* directions = nullptr,
-                               std::vector<MeshID>* exclude_primitives = nullptr) = 0;
-  /**
-   * @brief Array based version of ray_fire query
-   *
-   * This method performs a set of ray fire queries on a batch of rays defined by their origins and directions.
-   * It computes the intersection distances and surface IDs for each ray in the batch. With GPRT ray tracing
-   * this launches the RT pipeline with the number of rays provided.
-   *
-   * @param[in] tree The TreeID of the volume we are querying against
-   * @param[in] origins An array of Position objects representing the starting points of the rays
-   * @param[in] directions An array of Direction objects representing the directions of the rays
-   * @param[in] num_rays The number of rays to be processed in the batch
-   * @param[out] hitDistances An output array to store the computed intersection distances for each ray
-   * @param[out] surfaceIDs An output array to store the MeshIDs of the surfaces hit by each ray
-   * @param[in] dist_limit (optional) maximum distance to consider for intersections
-   * @param[in] orientation (optional) flag to consider whether Entering/Exiting hits should be rejected. Defaults to EXITING
-   * @param[in] exclude_primitives (optional) vector of surface element MeshIDs to exclude from intersection tests
-   * @return Void. Outputs stored in hitDistances and surfaceIDs arrays
-   */  
-  virtual void ray_fire(TreeID tree,
-                        const Position* origins,
-                        const Direction* directions,
-                        const size_t num_rays,
-                        double* hitDistances,
-                        MeshID* surfaceIDs,
-                        const double dist_limit = INFTY,
-                        HitOrientation orientation = HitOrientation::EXITING,
-                        std::vector<MeshID>* const exclude_primitives = nullptr) = 0;
-
-  /**
    * @brief Finds the element containing a given point using the global element tree.
    *
    * This method searches for the element that contains the specified point using
@@ -194,6 +146,93 @@ public:
                 double& dist) const = 0;
 
   virtual RTLibrary library() const = 0;
+
+
+  // Generic Accessors
+  int num_registered_trees() const { return surface_trees_.size() + element_trees_.size(); };
+  int num_registered_surface_trees() const { return surface_trees_.size(); };
+  int num_registered_element_trees() const { return element_trees_.size(); };
+
+
+  // GPU Ray Tracing Support
+
+
+  /**
+   * @brief Array based version of point_in_volume query
+   *
+   * This method performs a set of point_in_volume queries on a batch of rays defined by their origins and directions.
+   * It computes whether or not a point lies in a given volume for each point in the batch. With GPRT ray tracing
+   * this launches the RT pipeline with the number of rays provided.
+   * 
+   * @param[in] tree The TreeID of the volume we are querying against
+   * @param[in] points An array of points to query
+   * @param[in] num_points The number of points to be processed in the batch
+   * @param[out] results An output array to store the computed results for each point (1 if inside volume, 0 if outside)
+   * @param[in] directions (optional) array of directions to launch rays in explicit directions per point - these must be non-zero length
+   * @param[in] exclude_primitives (optional) vector of surface element MeshIDs to exclude from intersection tests
+   * @return Void. Outputs stored in results array
+   */  
+  virtual void point_in_volume(TreeID tree,
+                               const Position* points,
+                               const size_t num_points,
+                               uint8_t* results,
+                               const Direction* directions = nullptr,
+                               std::vector<MeshID>* exclude_primitives = nullptr) 
+  {
+    fatal_error("GPU ray tracing not supported with this RayTracer backend");
+  }
+  /**
+   * @brief Array based version of ray_fire query
+   *
+   * This method performs a set of ray fire queries on a batch of rays defined by their origins and directions.
+   * It computes the intersection distances and surface IDs for each ray in the batch. With GPRT ray tracing
+   * this launches the RT pipeline with the number of rays provided.
+   *
+   * @param[in] tree The TreeID of the volume we are querying against
+   * @param[in] origins An array of Position objects representing the starting points of the rays
+   * @param[in] directions An array of Direction objects representing the directions of the rays
+   * @param[in] num_rays The number of rays to be processed in the batch
+   * @param[out] hitDistances An output array to store the computed intersection distances for each ray
+   * @param[out] surfaceIDs An output array to store the MeshIDs of the surfaces hit by each ray
+   * @param[in] dist_limit (optional) maximum distance to consider for intersections
+   * @param[in] orientation (optional) flag to consider whether Entering/Exiting hits should be rejected. Defaults to EXITING
+   * @param[in] exclude_primitives (optional) vector of surface element MeshIDs to exclude from intersection tests
+   * @return Void. Outputs stored in hitDistances and surfaceIDs arrays
+   */  
+  virtual void ray_fire(TreeID tree,
+                        const Position* origins,
+                        const Direction* directions,
+                        const size_t num_rays,
+                        double* hitDistances,
+                        MeshID* surfaceIDs,
+                        const double dist_limit = INFTY,
+                        HitOrientation orientation = HitOrientation::EXITING,
+                        std::vector<MeshID>* const exclude_primitives = nullptr)
+  {
+    fatal_error("GPU ray tracing not supported with this RayTracer backend");
+  }
+  /**
+   * @brief Finds the element containing a given point using the global element tree.
+   *
+   * This method searches for the element that contains the specified point using
+   * the global element tree. It is a convenience wrapper around the tree-specific
+   * find_element method.
+   *
+   * @param point The Position to search for
+   * @return The MeshID of the containing element, or ID_NONE if no element contains the point
+   */
+  virtual MeshID find_element(const Position& point) const = 0;
+
+  /**
+   * @brief Finds the element containing a given point using a specific tree.
+   *
+   * This method searches for the element that contains the specified point using
+   * the provided tree. It is a more specific version of the global find_element
+   * method.
+   */
+  virtual void check_rayhit_buffer_capacity(const size_t num_rays) {
+    fatal_error("GPU ray tracing not supported with this RayTracer backend");
+  }
 
 
   // Generic Accessors

@@ -47,16 +47,6 @@ public:
                       const Direction* direction = nullptr,
                       const std::vector<MeshID>* exclude_primitives = nullptr) const override;
 
-  // Array version of point_in_volume
-  void point_in_volume(TreeID tree,
-                                     const Position* points,
-                                     const size_t num_points,
-                                     uint8_t* results,
-                                     const Direction* directions = nullptr, 
-                                     std::vector<MeshID>* exclude_primitives = nullptr) override
-  {
-    fatal_error("Batch point_in_volume not yet implemented for EmbreeRayTracer");
-  };
 
   std::pair<double, MeshID> ray_fire(TreeID scene,
                                      const Position& origin,
@@ -64,20 +54,6 @@ public:
                                      const double dist_limit = INFTY,
                                      HitOrientation orientation = HitOrientation::EXITING,
                                      std::vector<MeshID>* const exclude_primitives = nullptr) override;
-
-  // Array version of ray_fire
-  void ray_fire(TreeID tree,
-                const Position* origins,
-                const Direction* directions,
-                const size_t num_rays,
-                double* hitDistances,
-                MeshID* surfaceIDs,
-                const double dist_limit = INFTY,
-                HitOrientation orientation = HitOrientation::EXITING,
-                std::vector<MeshID>* const exclude_primitives = nullptr) override
-  {
-    fatal_error("Batch ray_fire not yet implemented for EmbreeRayTracer");
-  };
 
   std::pair<double, MeshID> closest(TreeID scene,
                                     const Position& origin) override;
