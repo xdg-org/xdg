@@ -154,6 +154,11 @@ void ray_fire(MeshID volume,
               HitOrientation orientation = HitOrientation::EXITING,
               std::vector<MeshID>* const exclude_primitives = nullptr);
 
+void ray_fire_packed(MeshID volume,
+                     const size_t num_rays,
+                     const double dist_limit = INFTY,
+                     HitOrientation orientation = HitOrientation::EXITING);
+
 std::pair<double, MeshID> closest(MeshID volume,
                                   const Position& origin) const;
 
@@ -184,6 +189,15 @@ Direction surface_normal(MeshID surface,
     ray_tracing_interface_ = ray_tracing_interface;
   }
 
+  RayTracer::DeviceRayHitBuffers get_device_rayhit_buffers(const size_t requiredCapacity)
+  {
+    return ray_tracing_interface()->get_device_rayhit_buffers(requiredCapacity);
+  }
+
+  void pack_external_rays(void* origins_device_ptr,
+                          void* directions_device_ptr,
+                          size_t num_rays);
+
 // Accessors
   const std::shared_ptr<RayTracer>& ray_tracing_interface() const {
     return ray_tracing_interface_;
@@ -192,6 +206,7 @@ Direction surface_normal(MeshID surface,
   const std::shared_ptr<MeshManager>& mesh_manager() const {
     return mesh_manager_;
   }
+
 // Private methods
 private:
   double _triangle_volume_contribution(const PrimitiveRef& triangle) const;

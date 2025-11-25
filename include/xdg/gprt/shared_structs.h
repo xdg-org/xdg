@@ -56,3 +56,11 @@ struct dblRayFirePushConstants {
   int volume_tree;
   xdg::HitOrientation hitOrientation;
 };
+
+struct ExternalRayParams {
+  dblRay* xdgRays;
+  double3* origins;
+  double3* directions;
+  uint32_t num_rays;
+  uint32_t total_threads;
+};

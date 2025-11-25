@@ -95,7 +95,6 @@ class GPRTRayTracer : public RayTracer {
                                       const double dist_limit = INFTY,
                                       HitOrientation orientation = HitOrientation::EXITING,
                                       std::vector<MeshID>* const exclude_primitives = nullptr) override;
-
     void ray_fire(TreeID tree,
                   const Position* origins,
                   const Direction* directions,
@@ -105,6 +104,11 @@ class GPRTRayTracer : public RayTracer {
                   const double dist_limit = INFTY,
                   HitOrientation orientation = HitOrientation::EXITING,
                   std::vector<MeshID>* const exclude_primitives = nullptr) override;
+
+    void ray_fire_packed(TreeID tree,
+                         const size_t num_rays,
+                         const double dist_limit = INFTY,
+                         HitOrientation orientation = HitOrientation::EXITING) override;
 
     std::pair<double, MeshID> closest(TreeID scene,
                                       const Position& origin) override {};
@@ -116,9 +120,23 @@ class GPRTRayTracer : public RayTracer {
       fatal_error("Occlusion queries are not currently supported with GPRT ray tracer");
       return false;
     }
-    
+
+    // Check to see if buffers large enough and resize if not
+    void check_rayhit_buffer_capacity(const size_t N) override;
+
+    // Method to expose device ray and hit buffers for external population
+    DeviceRayHitBuffers get_device_rayhit_buffers(const size_t N) override;
+
+    void pack_external_rays(void* origins_device_ptr, 
+                            void* directions_device_ptr,
+                            size_t num_rays) override;
+
+    GPRTContext context()
+    {
+      return context_;
+    }
+
   private:
-    void check_ray_buffer_capacity(const size_t N);
 
     // GPRT objects 
     GPRTContext context_;
@@ -132,6 +150,7 @@ class GPRTRayTracer : public RayTracer {
 
     GPRTMissOf<void> missProgram_; 
     GPRTComputeOf<DPTriangleGeomData> aabbPopulationProgram_; //<! AABB population program for double precision rays
+    GPRTComputeOf<ExternalRayParams> packRaysProgam_; //<! A compute shader to pack raydata defined externally directly into gpu buffers (on device)
     
     // Buffers 
     gprtRayHit rayHitBuffers_;

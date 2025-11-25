@@ -212,33 +212,56 @@ public:
     fatal_error("GPU ray tracing not supported with this RayTracer backend");
   }
   /**
-   * @brief Finds the element containing a given point using the global element tree.
+   * @brief Array based version of ray_fire query which assumes ray buffers are already populated on device
    *
-   * This method searches for the element that contains the specified point using
-   * the global element tree. It is a convenience wrapper around the tree-specific
-   * find_element method.
+   * This method assumes that ray buffers have been externally populated and simply calls the ray tracing pipeline
+   * to perform a set of ray fire queries on a batch of rays defined by their origins and directions.
+   * It computes the intersection distances and surface IDs for each ray in the batch. With GPRT ray tracing
+   * this launches the RT pipeline with the number of rays provided. The results are stored in the output arrays on device.
    *
-   * @param point The Position to search for
-   * @return The MeshID of the containing element, or ID_NONE if no element contains the point
-   */
-  virtual MeshID find_element(const Position& point) const = 0;
+   * @param[in] tree The TreeID of the volume we are querying against
+   * @param[in] num_rays The number of rays to be processed in the batch
+   * @param[in] dist_limit (optional) maximum distance to consider for intersections
+   * @param[in] orientation (optional) flag to consider whether Entering/Exiting hits should be rejected. Defaults to EXITING
+   * @return Void. Outputs stored in dblHit buffer on device
+   */  
+  virtual void ray_fire_packed(TreeID tree,
+                               const size_t num_rays,
+                               const double dist_limit = INFTY,
+                               HitOrientation orientation = HitOrientation::EXITING) 
+  {
+    fatal_error("GPU ray tracing not supported with this RayTracer backend");
+  }  
+  struct DeviceRayHitBuffers {
+    void* rays; // device pointer to ray buffers
+    void* hits; // device pointer to hit buffers
+    size_t capacity = 0;
+    bool valid() const { return rays && hits && capacity > 0; }
+  };
 
   /**
-   * @brief Finds the element containing a given point using a specific tree.
-   *
-   * This method searches for the element that contains the specified point using
-   * the provided tree. It is a more specific version of the global find_element
-   * method.
+   * @brief Check whether the current ray buffer capacity is sufficient for the number of rays requested
+   * @param[in] num_rays The number of rays to be processed
    */
   virtual void check_rayhit_buffer_capacity(const size_t num_rays) {
     fatal_error("GPU ray tracing not supported with this RayTracer backend");
   }
 
+  /**
+   * @brief return device pointers to ray and hit buffers for GPU ray tracing
+   * @return DeviceRayHitBuffers struct containing device pointers to ray and hit buffers
+   */
+  virtual DeviceRayHitBuffers get_device_rayhit_buffers(const size_t num_rays) {
+    fatal_error("GPU ray tracing not supported with this RayTracer backend");
+    return {};
+  }
 
-  // Generic Accessors
-  int num_registered_trees() const { return surface_trees_.size() + element_trees_.size(); };
-  int num_registered_surface_trees() const { return surface_trees_.size(); };
-  int num_registered_element_trees() const { return element_trees_.size(); };
+  virtual void pack_external_rays(void* origins_device_ptr,
+                                  void* directions_device_ptr,
+                                  size_t num_rays) {
+    fatal_error("GPU ray tracing not supported with this RayTracer backend");
+    return;
+  }
 
 protected:
   // Common functions across RayTracers

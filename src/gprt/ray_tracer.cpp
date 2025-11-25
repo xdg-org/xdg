@@ -77,6 +77,7 @@ void GPRTRayTracer::setup_shaders()
 
   missProgram_ = gprtMissCreate<void>(context_, module_, "ray_fire_miss");
   aabbPopulationProgram_ = gprtComputeCreate<DPTriangleGeomData>(context_, module_, "populate_aabbs");
+  packRaysProgam_ = gprtComputeCreate<ExternalRayParams>(context_, module_, "pack_external_rays");
 
   // Create a "triangle" geometry type and set its closest-hit program
   trianglesGeomType_ = gprtGeomTypeCreate<DPTriangleGeomData>(context_, GPRT_AABBS);
@@ -356,7 +357,7 @@ void GPRTRayTracer::point_in_volume(TreeID tree,
   GPRTAccel volume = surface_volume_tree_to_accel_map.at(tree);
   auto rayGen = rayGenPrograms_.at(RayGenType::POINT_IN_VOLUME);
   dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGen);
-  check_ray_buffer_capacity(num_points);
+  check_rayhit_buffer_capacity(num_points);
 
   // TODO - handle exclude_primitives for batch version
 
@@ -423,7 +424,7 @@ void GPRTRayTracer::ray_fire(TreeID tree,
   GPRTAccel volume = surface_volume_tree_to_accel_map.at(tree);
   auto rayGen = rayGenPrograms_.at(RayGenType::RAY_FIRE);
   dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGen);
-  check_ray_buffer_capacity(num_rays);
+  check_rayhit_buffer_capacity(num_rays);
     
   gprtBufferMap(rayHitBuffers_.ray); 
   dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
@@ -485,6 +486,31 @@ void GPRTRayTracer::ray_fire(TreeID tree,
   return;
 }
 
+void 
+GPRTRayTracer::ray_fire_packed(TreeID tree,
+                               const size_t num_rays,
+                               const double dist_limit,
+                               HitOrientation orientation)
+{
+  if (num_rays == 0) return; // no work to do. Early exit
+
+  check_rayhit_buffer_capacity(num_rays); 
+
+  GPRTAccel volume = surface_volume_tree_to_accel_map.at(tree);
+  auto rayGen = rayGenPrograms_.at(RayGenType::RAY_FIRE);
+
+  dblRayFirePushConstants pushConstants;
+  pushConstants.volume_accel = gprtAccelGetDeviceAddress(volume);
+  pushConstants.tMax = dist_limit;
+  pushConstants.tMin = 0.0;
+  pushConstants.hitOrientation = orientation; // Set orientation for the ray
+  pushConstants.volume_tree = tree; // Set the TreeID of the volume being queried
+  
+  gprtRayGenLaunch1D(context_, rayGen, num_rays, pushConstants);
+  gprtGraphicsSynchronize(context_);
+  return;
+}
+
 void GPRTRayTracer::create_global_surface_tree()
 {
   // Create a TLAS (Top-Level Acceleration Structure) for all the volumes
@@ -499,7 +525,7 @@ void GPRTRayTracer::create_global_surface_tree()
   global_surface_accel_ = global_accel; 
 }
 
-void GPRTRayTracer::check_ray_buffer_capacity(const size_t N)
+void GPRTRayTracer::check_rayhit_buffer_capacity(const size_t N)
 {
   if (N <= rayHitBuffers_.capacity) return; // current capacity is sufficient
 
@@ -526,4 +552,42 @@ void GPRTRayTracer::check_ray_buffer_capacity(const size_t N)
   gprtBuildShaderBindingTable(context_, static_cast<GPRTBuildSBTFlags>(GPRT_SBT_GEOM | GPRT_SBT_RAYGEN));
 }
 
+RayTracer::DeviceRayHitBuffers GPRTRayTracer::get_device_rayhit_buffers(const size_t N)
+{
+  check_rayhit_buffer_capacity(N);
+  DeviceRayHitBuffers buffers;
+  buffers.rays = rayHitBuffers_.devRayAddr;
+  buffers.hits = rayHitBuffers_.devHitAddr;
+  buffers.capacity = rayHitBuffers_.capacity;
+  return buffers;
+}
+
+void GPRTRayTracer::pack_external_rays(void* origins_device_ptr,
+                                       void* directions_device_ptr,
+                                       size_t num_rays)
+{
+  if (num_rays == 0) return;
+
+  check_rayhit_buffer_capacity(num_rays);
+  ExternalRayParams params = {};
+  params.num_rays = num_rays;
+
+  // Workgroup setup 
+  constexpr int threadsPerGroup = 256;
+  const int neededGroups = (params.num_rays + threadsPerGroup - 1) / threadsPerGroup;
+  const int groups = std::min(neededGroups, WORKGROUP_LIMIT);
+
+  params.xdgRays = rayHitBuffers_.devRayAddr; // dblRay*
+  params.origins = static_cast<double3*>(origins_device_ptr);
+  params.directions = static_cast<double3*>(directions_device_ptr);
+  params.total_threads = groups * threadsPerGroup;
+
+  gprtComputeLaunch(packRaysProgam_,
+                    { groups, 1, 1 },
+                    { threadsPerGroup, 1, 1 },
+                    params);
+  gprtComputeSynchronize(context_);
+}
+
 } // namespace xdg
+
