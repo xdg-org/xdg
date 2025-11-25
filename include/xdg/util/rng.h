@@ -7,11 +7,11 @@ namespace xdg {
 
 static std::random_device rd;
 static std::mt19937 gen(rd());
+static std::uniform_real_distribution<double> dis(0.0, 1.0);
 
-inline double rand_double(double min, double max)
+inline double rand_double(double min=0.0, double max=1.0)
 {
-  std::uniform_real_distribution<double> dis(min, max);
-  return dis(gen);
+  return min + (max - min) * dis(gen);
 }
 
 } // namespace xdg

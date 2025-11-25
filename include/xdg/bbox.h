@@ -111,7 +111,7 @@ static BoundingBox from_points(const T& points) {
 }
 
 Position sample_location() const {
-  return lower_left() + width() * Vec3da(rand_double(0.0, 1.0), rand_double(0.0, 1.0), rand_double(0.0, 1.0));
+  return lower_left() + width() * Vec3da(rand_double(), rand_double(), rand_double());
 }
 
 };
