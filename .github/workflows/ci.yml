@@ -85,10 +85,15 @@ jobs:
           cd libmesh
           git checkout v1.7.0
 
-      - name: Environment Variables
+      - name: OpenMP Environment Variables
+        run: |
+          echo "OMP_NUM_THREADS=1" >> $GITHUB_ENV
+
+      - name: MOAB Environment Variables
         if: ${{ matrix.moab }}
         run: |
           echo "MOAB_SHA"=$(cd ~/moab && git rev-parse HEAD) >> $GITHUB_ENV
+
       - name: libMesh Environment Variables
         if: ${{ matrix.libmesh }}
         run: |
