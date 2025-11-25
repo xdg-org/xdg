@@ -12,27 +12,44 @@
 #include "xdg/moab/mesh_manager.h"
 #include "xdg/vec3da.h"
 #include "xdg/xdg.h"
+#include "xdg/ray_tracers.h"
 
 #include "argparse/argparse.hpp"
 
-using namespace xdg;
+// GPRT includes
+#include "gprt/gprt.h"
+#include "ray_benchmark_shared.h"
 
-inline Direction random_unit_dir(std::mt19937_64 &rng) {
-  std::uniform_real_distribution<double> U(-1.0, 1.0);
+using namespace xdg;
+extern GPRTProgram ray_benchmark_deviceCode;
+
+inline double rand01(uint32_t &state)
+{
+    state = state * 1664525u + 1013904223u;
+    return double(state) * (1.0 / 4294967296.0);
+}
+
+inline Direction random_unit_dir_lcg(uint32_t &state)
+{
   double x1, x2, s;
   do {
-    x1 = U(rng);
-    x2 = U(rng);
-    s  = x1*x1 + x2*x2;
+      x1 = rand01(state) * 2.0 - 1.0;
+      x2 = rand01(state) * 2.0 - 1.0;
+      s  = x1 * x1 + x2 * x2;
   } while (s <= 0.0 || s >= 1.0);
-  const double t = 2.0 * std::sqrt(1.0 - s);
-  return { x1 * t, x2 * t, 1.0 - 2.0 * s }; // already unit length
+
+  double t = 2.0 * std::sqrt(1.0 - s);
+  return { x1 * t, x2 * t, 1.0 - 2.0 * s };
 }
 
-inline void generate_dirs(std::vector<Direction> &out, uint64_t seed = 12345) {
-  std::mt19937_64 rng(seed);
-  for (auto &d : out) d = random_unit_dir(rng);
+inline void generate_dirs(std::vector<Direction> &out, uint32_t seed)
+{
+  for (uint32_t i = 0; i < out.size(); ++i) {
+    uint32_t state = seed ^ i;
+    out[i] = random_unit_dir_lcg(state);
+  }
 }
+
 
 int main(int argc, char** argv) {
 
@@ -46,14 +63,14 @@ int main(int argc, char** argv) {
     .scan<'i', int>();
 
   args.add_argument("-n", "--num-rays")
-    .default_value<std::size_t>(10'000'000)
+    .default_value<uint32_t>(10'000'000)
     .help("Number of rays to be cast for the benchmark (default - 10 million)")
-    .scan<'u', std::size_t>();
+    .scan<'u', uint32_t>();
 
   args.add_argument("-s", "--seed")
-    .default_value<uint64_t>(12345)
+    .default_value<uint32_t>(12345)
     .help("Seed for random number generator (default - 12345)")
-    .scan<'u', uint64_t>();
+    .scan<'u', uint32_t>();
 
   args.add_argument("-o", "-p", "--origin", "--position")
     .default_value(std::vector<double>{0.0, 0.0, 0.0})
@@ -115,11 +132,10 @@ int main(int argc, char** argv) {
   const auto& mm = xdg->mesh_manager();
   mm->load_file(args.get<std::string>("filename"));
   mm->init();
-  // mm->parse_metadata();
 
   // Generate a set of random rays
-  size_t N = args.get<uint64_t>("--num-rays");
-  uint64_t seed = args.get<uint64_t>("--seed");
+  std::size_t N = args.get<uint32_t>("--num-rays");
+  uint32_t seed = args.get<uint32_t>("--seed");
   Position origin = args.get<std::vector<double>>("--origin");
   std::vector<Position> origins(N, origin);
   std::vector<Direction> directions(N);
@@ -134,8 +150,36 @@ int main(int argc, char** argv) {
   std::vector<MeshID> hitElements(N, ID_NONE);
 
   if (rt_lib == RTLibrary::GPRT) {
-    // GPRT backend supports batch ray fire (timer placed around raygen launch)
-    xdg->ray_fire(volume, origins.data(), directions.data(), N, hitDistances.data(), hitElements.data());
+    // Create GPRT context for compute shader that generates rays
+    auto gprt_rti = std::dynamic_pointer_cast<xdg::GPRTRayTracer>(rti);
+    GPRTContext context = gprt_rti->context();
+    GPRTModule module = gprtModuleCreate(context, ray_benchmark_deviceCode); 
+    auto genRandomRays = gprtComputeCreate<GenerateRandomRayParams>(context, module, "generate_random_rays");
+    
+    /* 
+    TODO - this exposes rayhitbuffers from the GPRT/vulkan context avaiable within XDG. But in this miniapp we define a new context
+    We might need to expose the same vulkan/GPRT context if we want to reference pointers to it? 
+    auto rayHitBuffers = xdg->get_device_rayhit_buffers(N); 
+    */
+
+    // Create device buffers for our origins and directions
+    GPRTBufferOf<double3> originsBuf = gprtDeviceBufferCreate<double3>(context, N); 
+    GPRTBufferOf<double3> directionsBuf = gprtDeviceBufferCreate<double3>(context, N);
+
+    Rays rays = {};
+    rays.origins = gprtBufferGetDevicePointer(originsBuf);
+    rays.directions = gprtBufferGetDevicePointer(directionsBuf);
+
+    GenerateRandomRayParams randomRayParams = {};
+    randomRayParams.rays = rays;
+    randomRayParams.numRays = N;
+    randomRayParams.origin = {origin.x, origin.y, origin.z};
+    randomRayParams.seed = seed;
+
+    gprtComputeLaunch(genRandomRays, {1, 1, 1}, {64, 1, 1}, randomRayParams);
+
+    xdg->pack_external_rays(rays.origins, rays.directions, N);
+    xdg->ray_fire_packed(volume, N);
   } else {
     std::cout << "Volume ID: " << volume << " with: " << mm->num_volume_faces(volume)  
           << " faces" << std::endl;
@@ -155,9 +199,6 @@ int main(int argc, char** argv) {
     std::cout << "Ray tracing throughput: " << rays_per_second << " rays/second." << std::endl;
     std::cout << "---------------------------------------- \n" << std::endl;
   }
-
-
-
 
   return 0;
 }

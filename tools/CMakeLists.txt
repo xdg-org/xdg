@@ -40,6 +40,7 @@ endforeach()
 if (XDG_ENABLE_GPRT)
   set(GPRT_TOOLS
     xdg_gprt_render_tool
+    ray_benchmark
   )
 
   foreach(tool ${GPRT_TOOLS})
