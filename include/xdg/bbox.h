@@ -33,6 +33,15 @@ bool operator ==(const BoundingBox& other) {
          max_z == other.max_z;
 }
 
+void update(const double* v) {
+  min_x = std::min(min_x, v[0]);
+  min_y = std::min(min_y, v[1]);
+  min_z = std::min(min_z, v[2]);
+  max_x = std::max(max_x, v[0]);
+  max_y = std::max(max_y, v[1]);
+  max_z = std::max(max_z, v[2]);
+}
+
 void update(const Vertex& v) {
   min_x = std::min(min_x, v.x);
   min_y = std::min(min_y, v.y);

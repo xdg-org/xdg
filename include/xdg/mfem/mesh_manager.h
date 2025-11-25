@@ -63,7 +63,19 @@ public:
   }
 
   BoundingBox element_bounding_box(MeshID element) const override {
-    mesh_.Get
+    auto elem = mesh_->GetElement(element);
+    if (!elem) {
+      fatal_error(fmt::format("MfemMeshManager::element_bounding_box(): invalid element ID {}", element));
+    }
+    auto bbox = BoundingBox {
+      INFTY, INFTY, INFTY,
+      -INFTY, -INFTY, -INFTY
+    };
+    for(int i = 0; i < elem->GetNVertices(); i++) {
+      const mfem::real_t* v = mesh_->GetVertex(*(i + elem->GetVertices()));
+      bbox.update(v);
+    }
+    return bbox;
   }
 
   // Data members
