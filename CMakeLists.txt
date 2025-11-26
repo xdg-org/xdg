@@ -107,32 +107,32 @@ endif()
 set(GPRT_BUILD_SHARED ON  CACHE BOOL "Build GPRT as a shared library" FORCE)
 if (XDG_ENABLE_GPRT)
   add_subdirectory(vendor/GPRT)
-endif() 
+endif()
 
 list(APPEND xdg_sources
-src/geometry/measure.cpp
-src/geometry/plucker.cpp
-src/geometry/closest.cpp
-src/error.cpp
-src/mesh_manager_interface.cpp
-src/ray_tracing_interface.cpp
-src/util/str_utils.cpp
-src/overlap_check/overlap.cpp
-src/element_face_accessor.cpp
-src/xdg.cpp
+  src/geometry/measure.cpp
+  src/geometry/plucker.cpp
+  src/geometry/closest.cpp
+  src/error.cpp
+  src/mesh_manager_interface.cpp
+  src/ray_tracing_interface.cpp
+  src/util/str_utils.cpp
+  src/overlap_check/overlap.cpp
+  src/element_face_accessor.cpp
+  src/xdg.cpp
 )
 
 if (XDG_ENABLE_EMBREE)
 list(APPEND xdg_sources
-src/embree/ray_tracer.cpp
-src/embree/triangle_intersect.cpp
-src/embree/tetrahedron_contain.cpp
+  src/embree/ray_tracer.cpp
+  src/embree/triangle_intersect.cpp
+  src/embree/tetrahedron_contain.cpp
 )
 endif()
 
 if (XDG_ENABLE_GPRT)
 list(APPEND xdg_sources
-src/gprt/ray_tracer.cpp
+  src/gprt/ray_tracer.cpp
 )
 list(APPEND xdg_device_codes
 dbl_deviceCode
@@ -142,16 +142,15 @@ endif()
 
 if (XDG_ENABLE_LIBMESH)
 list(APPEND xdg_sources
-src/libmesh/mesh_manager.cpp
+  src/libmesh/mesh_manager.cpp
 )
 endif()
 
 if (XDG_ENABLE_MOAB)
 list(APPEND xdg_sources
-# MOAB
-src/moab/mesh_manager.cpp
-src/moab/direct_access.cpp
-src/moab/metadata.cpp
+  src/moab/mesh_manager.cpp
+  src/moab/direct_access.cpp
+  src/moab/metadata.cpp
 )
 endif()
 
