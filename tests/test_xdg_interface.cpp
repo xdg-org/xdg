@@ -4,6 +4,8 @@
 
 // xdg includes
 #include "xdg/mesh_managers.h"
+#include "xdg/ray_tracers.h"
+#include "xdg/xdg.h"
 #include "util.h"
 
 using namespace xdg;
