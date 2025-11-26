@@ -1,8 +1,8 @@
 #include "xdg/constants.h"
 #include "xdg/ray_tracing_interface.h"
+#include "xdg/embree/geometry_data.h"
 #include "xdg/embree/ray.h"
 #include "xdg/vec3da.h"
-
 #include "xdg/util/linalg.h"
 
 namespace xdg
