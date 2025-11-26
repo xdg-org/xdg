@@ -28,17 +28,17 @@ TEST_CASE("Test Mesh Mock")
   Position origin {0.0, 0.0, 0.0};
   double nearest_distance {0.0};
 
-  xdg->closest(volume, origin, nearest_distance);
+  nearest_distance = xdg->closest_distance(volume, origin);
   REQUIRE_THAT(nearest_distance, Catch::Matchers::WithinAbs(2.0, 1e-6));
 
   // move the point closer to the positive x surface
   origin = {4.0, 0.0, 0.0};
-  xdg->closest(volume, origin, nearest_distance);
+  nearest_distance = xdg->closest_distance(volume, origin);
   REQUIRE_THAT(nearest_distance, Catch::Matchers::WithinAbs(1.0, 1e-6));
 
   // move the point outside of the volume, the same should apply
   origin = {10.0, 0.0, 0.0};
-  xdg->closest(volume, origin, nearest_distance);
+  nearest_distance = xdg->closest_distance(volume, origin);
   REQUIRE_THAT(nearest_distance, Catch::Matchers::WithinAbs(5.0, 1e-6));
 
   BoundingBox volume_box = mm->volume_bounding_box(volume);
@@ -48,7 +48,7 @@ TEST_CASE("Test Mesh Mock")
   Position p = box_center;
   for (int i = 0; i < samples; ++i) {
     p[0] = rand_double(-10.0, 10.0);
-    xdg->closest(volume, p, nearest_distance);
+    nearest_distance = xdg->closest_distance(volume, p);
     if (p[0] < box_center[0]) {
       REQUIRE_THAT(nearest_distance, Catch::Matchers::WithinAbs(abs(p[0] - volume_box[0]), 1e-6));
     } else {

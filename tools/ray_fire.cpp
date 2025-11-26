@@ -95,6 +95,7 @@ else
 
   MeshID volume = args.get<int>("volume");
   xdg->prepare_volume_for_raytracing(volume);
+  rti->init(); // Typically called during XDG::prepare_raytracer(). Required to build SBT after volume registration.
 
   Position origin = args.get<std::vector<double>>("--origin");
   Direction direction = args.get<std::vector<double>>("--direction");

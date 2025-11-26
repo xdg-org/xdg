@@ -9,6 +9,10 @@
 using namespace xdg;
 
 
+// Expected values for the cube mesh without geometry
+constexpr int32_t N_FACE_ELEMENTS = 1408;
+constexpr int32_t N_VOLUME_ELEMENTS = 8814;
+
 TEST_CASE("Test Mesh Without Geometry")
 {
   auto mesh_backend = GENERATE(MeshLibrary::MOAB, MeshLibrary::LIBMESH);
@@ -24,12 +28,16 @@ TEST_CASE("Test Mesh Without Geometry")
 
     mesh_manager->load_file(file);
     mesh_manager->init();
-
     // there will be two volumes: one for the cube and one for the implicit complement
     REQUIRE(mesh_manager->num_volumes() == 2);
     // one surface (the boundary of the mesh) separates the two volumes
     REQUIRE(mesh_manager->num_surfaces() == 1);
 
-    REQUIRE(mesh_manager->num_volume_elements() == 8814);
+    REQUIRE(mesh_manager->num_volume_elements(mesh_manager->implicit_complement()) == 0);
+    REQUIRE(mesh_manager->num_volume_elements(1) == N_VOLUME_ELEMENTS);
+
+    auto volume_surfaces = mesh_manager->get_volume_surfaces(1);
+    REQUIRE(volume_surfaces.size() == 1);
+    REQUIRE(mesh_manager->num_surface_faces(volume_surfaces[0]) == N_FACE_ELEMENTS);
   }
 }

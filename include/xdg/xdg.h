@@ -75,14 +75,11 @@ std::pair<double, MeshID> ray_fire(MeshID volume,
                                    HitOrientation orientation = HitOrientation::EXITING,
                                    std::vector<MeshID>* const exclude_primitives = nullptr) const;
 
-void closest(MeshID volume,
-              const Position& origin,
-              double& dist,
-              MeshID& triangle) const;
+std::pair<double, MeshID> closest(MeshID volume,
+                                  const Position& origin) const;
 
-void closest(MeshID volume,
-              const Position& origin,
-              double& dist) const;
+double closest_distance(MeshID volume,
+                        const Position& origin) const;
 
 bool occluded(MeshID volume,
               const Position& origin,

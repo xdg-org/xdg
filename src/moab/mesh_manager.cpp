@@ -62,10 +62,16 @@ void MOABMeshManager::init() {
   if (num_volumes() == 0){
     if (num_volume_elements() == 0) {
       fatal_error("No volumes or volume elements found in MOAB mesh");
-   }
+    }
 
-   // create a single volume from all volume elements
-   auto volume = create_volume();
+    // create a single volume from all volume elements
+    auto volume = create_volume();
+
+    // place all volume elements in the volume set
+    moab::Range all_elems;
+    this->moab_interface()->get_entities_by_dimension(this->root_set(), 3, all_elems);
+    moab::EntityHandle volume_set = volume_id_map_.at(volume);
+    this->moab_interface()->add_entities(volume_set, all_elems);
 
     // create a boundary surface from all volume elements
     auto surface = create_boundary_surface();
@@ -145,6 +151,7 @@ MeshID MOABMeshManager::create_volume() {
   // set category tag
   this->moab_interface()->tag_set_data(category_tag_, &volume_set, 1, VOLUME_CATEGORY_VALUE);
 
+  volumes_.push_back(volume_id);
   volume_id_map_[volume_id] = volume_set;
 
   return volume_id;
@@ -155,7 +162,11 @@ MeshID MOABMeshManager::create_boundary_surface() {
   moab::Range elements;
   moab::Range boundary_faces;
   this->moab_interface()->get_entities_by_dimension(this->root_set(), 3, elements);
-  skinner.find_skin(0, elements, 3, boundary_faces);
+  skinner.find_skin(this->moab_interface()->get_root_set(), elements, 2, boundary_faces, false, true);
+  // it's possible that the skinning operation changed the mesh
+  // update the direct access manager to account for any new
+  // faces
+  this->mb_direct()->update();
 
   MeshID next_surf_id = next_surface_id();
 
@@ -170,10 +181,12 @@ MeshID MOABMeshManager::create_boundary_surface() {
 
   this->moab_interface()->tag_set_data(category_tag_, &surface_set, 1, SURFACE_CATEGORY_VALUE);
 
-  surface_id_map_[next_surf_id] = surface_set;
-
-  // set the boundary faces to the surface set
+  // add the boundary faces to the new surface set
   this->moab_interface()->add_entities(surface_set, boundary_faces);
+
+  // update internal maps and vectors
+  surface_id_map_[next_surf_id] = surface_set;
+  this->surfaces().push_back(next_surf_id);
 
   return next_surf_id;
 }

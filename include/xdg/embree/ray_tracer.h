@@ -56,14 +56,8 @@ public:
                                      HitOrientation orientation = HitOrientation::EXITING,
                                      std::vector<MeshID>* const exclude_primitives = nullptr) override;
 
-  void closest(TreeID scene,
-               const Position& origin,
-               double& dist,
-               MeshID& triangle) override;
-
-  void closest(TreeID scene,
-               const Position& origin,
-               double& dist) override;
+  std::pair<double, MeshID> closest(TreeID scene,
+                                    const Position& origin) override;
 
   bool occluded(TreeID scene,
                 const Position& origin,

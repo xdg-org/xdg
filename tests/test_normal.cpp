@@ -26,12 +26,9 @@ TEST_CASE("Test Get Normal")
   MeshID volume = mm->volumes()[0];
 
   Position origin {0.0, 0.0, 0.0};
-  double nearest_distance {0.0};
-
   // move the point closer to the positive x surface
   origin = {4.0, 0.0, 0.0};
-  MeshID triangle;
-  xdg->closest(volume, origin, nearest_distance, triangle);
+  auto [nearest_distance, triangle] = xdg->closest(volume, origin);
   REQUIRE_THAT(nearest_distance, Catch::Matchers::WithinAbs(1.0, 1e-6));
 
   MeshID surface {mm->surfaces()[3]};

@@ -15,6 +15,25 @@
 extern GPRTProgram dbl_deviceCode;
 namespace xdg {
 
+enum class RayGenType {
+  RAY_FIRE,
+  POINT_IN_VOLUME,
+  OCCLUDED,
+  CLOSEST
+};
+
+struct gprtRayHit {
+  size_t capacity = 1; // Max number of rays allocated 
+  size_t size = 0;     // Current number of active rays 
+
+  GPRTBufferOf<dblRay> ray = nullptr;
+  GPRTBufferOf<dblHit> hit = nullptr;
+  dblRay* devRayAddr = nullptr;
+  dblHit* devHitAddr = nullptr;
+
+  bool is_valid() const { return capacity > 0 && ray && hit && devRayAddr && devHitAddr; }
+};
+
 class GPRTRayTracer : public RayTracer {
   public:
     GPRTRayTracer();
@@ -68,13 +87,8 @@ class GPRTRayTracer : public RayTracer {
                                       HitOrientation orientation = HitOrientation::EXITING,
                                       std::vector<MeshID>* const exclude_primitives = nullptr) override;
 
-    void closest(TreeID scene,
-                const Position& origin,
-                double& dist,
-                MeshID& triangle) override {};
-    void closest(TreeID scene,
-                const Position& origin,
-                double& dist) override {};
+    std::pair<double, MeshID> closest(TreeID scene,
+                                      const Position& origin) override {};
 
     bool occluded(TreeID scene,
                   const Position& origin,
@@ -85,6 +99,8 @@ class GPRTRayTracer : public RayTracer {
     }
     
   private:
+    void check_ray_buffer_capacity(size_t N);
+
     // GPRT objects 
     GPRTContext context_;
     GPRTProgram deviceCode_; // device code for float precision shaders
@@ -93,14 +109,13 @@ class GPRTRayTracer : public RayTracer {
     GPRTBuildParams buildParams_; //<! Build parameters for acceleration structures
 
     // Shader programs
-    GPRTRayGenOf<dblRayGenData> rayGenProgram_; 
-    GPRTRayGenOf<dblRayGenData> rayGenPointInVolProgram_;
+    std::map<RayGenType, GPRTRayGenOf<dblRayGenData>> rayGenPrograms_;
+
     GPRTMissOf<void> missProgram_; 
     GPRTComputeOf<DPTriangleGeomData> aabbPopulationProgram_; //<! AABB population program for double precision rays
     
     // Buffers 
-    GPRTBufferOf<dblRayInput> rayInputBuffer_; //<! Ray buffer for ray generation
-    GPRTBufferOf<dblRayOutput> rayOutputBuffer_; //<! Ray output buffer for ray generation
+    gprtRayHit rayHitBuffers_;
     GPRTBufferOf<int32_t> excludePrimitivesBuffer_; //<! Buffer for excluded primitives
     
     // Geometry Type and Instances
@@ -108,7 +123,6 @@ class GPRTRayTracer : public RayTracer {
     GPRTGeomTypeOf<DPTriangleGeomData> trianglesGeomType_; //<! Geometry type for triangles
 
     // Ray Generation parameters
-    size_t numRays = 1; //<! Number of rays to be cast
     uint32_t numRayTypes_ = 1; // <! Number of ray types. Allows multiple shaders to be set to the same geometery
     
     // Mesh-to-Scene maps 
@@ -121,7 +135,7 @@ class GPRTRayTracer : public RayTracer {
     // Global Tree IDs
     GPRTAccel global_surface_accel_ {nullptr};
     GPRTAccel global_element_accel_ {nullptr}; 
-  
+
   };
 
 } // namespace xdg

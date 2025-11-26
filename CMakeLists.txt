@@ -4,6 +4,7 @@ project(openmc C CXX)
 option(XDG_ENABLE_MOAB    "Enable support for the MOAB mesh library"          ON)
 option(XDG_ENABLE_MFEM    "Enable support for the MFEM mesh library"         OFF)
 option(XDG_ENABLE_LIBMESH "Enable support for the libMesh mesh library"      OFF)
+option(XDG_LINK_MPI       "Link with MPI (for dependency compatibility)"     OFF)
 option(XDG_ENABLE_EMBREE  "Enable support for the Embree ray tracing library" ON)
 option(XDG_ENABLE_GPRT    "Enable support for the GPRT ray tracing library"  OFF)
 option(XDG_BUILD_TESTS    "Enable C++ unit testing"                           ON)
@@ -201,6 +202,15 @@ if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
   target_compile_definitions(xdg PUBLIC XDG_DEBUG)
 endif()
 
+target_link_libraries(xdg embree fmt::fmt)
+
+# attempt to find OpenMP and include it if found
+find_package(OpenMP)
+if (OpenMP_CXX_FOUND)
+  target_link_libraries(xdg OpenMP::OpenMP_CXX)
+  target_compile_definitions(xdg PUBLIC XDG_HAVE_OPENMP)
+endif()
+
 if (XDG_BUILD_TESTS)
   add_subdirectory("tests")
 endif()
@@ -262,6 +272,13 @@ endif()
 # ===================
 if(XDG_ENABLE_LIBMESH)
   target_link_libraries(xdg PkgConfig::LIBMESH)
+endif()
+
+# this provides the ability to link MPI when needed for compatibility with other
+# libraries (e.g., libMesh)
+if (XDG_LINK_MPI)
+  find_package(MPI REQUIRED)
+  target_link_libraries(xdg MPI::MPI_CXX)
 endif()
 
 if (XDG_ENABLE_MOAB)

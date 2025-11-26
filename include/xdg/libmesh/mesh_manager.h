@@ -55,9 +55,6 @@ public:
   //! This is used for re-entrant particles if needed.
   void create_boundary_sideset();
 
-  //! Initialize libMesh library
-  void initialize_libmesh();
-
   // Interface methods
   MeshLibrary mesh_library() const override { return MeshLibrary::LIBMESH; }
 
@@ -86,11 +83,15 @@ public:
   int num_volume_elements() const override;
 
   int num_volume_faces(MeshID volume) const override {
-    return mesh()->n_elem();
+    int count = 0;
+    for (auto s : this->get_volume_surfaces(volume)) {
+      count += surface_map_.at(s).size();
+    }
+    return count;
   }
 
   int num_surface_faces(MeshID surface) const override {
-    return mesh()->n_elem();
+    return surface_map_.at(surface).size();
   }
 
   std::vector<MeshID> get_volume_elements(MeshID volume) const;
@@ -301,10 +302,6 @@ public:
 
   // Attributes
   protected:
-  // TODO: make this global so it isn't owned by a single mesh manager
-  std::unique_ptr<libMesh::LibMeshInit> libmesh_init {nullptr};
-
-  // THIS MUST COME AFTER libmesh_init SO THAT IT IS DESTROYED LAST
   std::unique_ptr<libMesh::Mesh> mesh_ {nullptr};
 
   // Ugh, double mapping

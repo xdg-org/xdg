@@ -8,6 +8,7 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 // xdg includes
+#include "xdg/config.h"
 #include "xdg/error.h"
 #include "xdg/mesh_managers.h"
 #include "xdg/ray_tracers.h"

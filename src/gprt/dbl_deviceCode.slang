@@ -26,7 +26,7 @@ void ray_fire_hit(uniform DPTriangleGeomData record, inout RayFirePayload payloa
     uint rayID = DispatchRaysIndex().x;
 
     // There is some logic for handling next volumes inside the h5m-reader which I could make use of too
-    // TODO : Should the rayOutput struct return the next volume ID for the ray back to the host
+    // TODO : Should the dblHit struct return the next volume ID for the ray back to the host
 
     payload.piv = (hit_kind == HIT_KIND_TRIANGLE_FRONT_FACE) 
     ? xdg::PointInVolume::OUTSIDE
@@ -71,9 +71,9 @@ void ray_fire(uniform dblRayGenData record, uniform DPTriangleGeomData mesh) {
     TraceRay(world, RAY_FLAG_NONE, 0xff, 0, 1, rayDesc, payload);
 
     // Store the distance to the hit point and the surface ID in buffers for CPU
-    record.out[rayID].distance = payload.distance;
-    record.out[rayID].surf_id = payload.surf_id;
-    record.out[rayID].primitive_id = payload.primitive_id;
+    record.hit[rayID].distance = payload.distance;
+    record.hit[rayID].surf_id = payload.surf_id;
+    record.hit[rayID].primitive_id = payload.primitive_id;
 }
 
 [shader("raygeneration")]
@@ -97,8 +97,8 @@ void point_in_volume(uniform dblRayGenData record, uniform DPTriangleGeomData me
     
     TraceRay(world, RAY_FLAG_NONE, 0xff, 0, 1, rayDesc, payload);
 
-    record.out.surf_id = payload.surf_id;
-    record.out[rayID].piv = payload.piv; // Point in volume check result
+    record.hit[rayID].surf_id = payload.surf_id;
+    record.hit[rayID].piv = payload.piv; // Point in volume check result
 }
 
 // ------------------------------------------------- Compute Shaders -------------------------------------------------
@@ -155,12 +155,11 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     double3 v1 = record.vertex[indices[1]];
     double3 v2 = record.vertex[indices[2]];
 
-    double3 origin = record.rayIn[rayID].origin;
-    double3 direction = record.rayIn[rayID].direction;
+    double3 origin = record.ray[rayID].origin;
+    double3 direction = record.ray[rayID].direction;
 
-    // double tMin = record.rayIn[rayID].tMin;
-    double tMin = record.rayIn[rayID].tMin;
-    double tMax = record.rayIn[rayID].tMax;
+    double tMin = record.ray[rayID].tMin;
+    double tMax = record.ray[rayID].tMax;
 
     const double3 raya = direction;
     const double3 rayb = cross(direction, origin);
@@ -230,7 +229,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     double3 norm = record.normals[primID]; // recover double precision normal. TODO - Should we calculate from vertices instead?
 
     // sense adjustment of normal
-    if (record.rayIn[rayID].volume_tree == record.reverse_tree)
+    if (record.ray[rayID].volume_tree == record.reverse_tree)
     {
         norm = -norm;
     }
@@ -239,16 +238,16 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     uint hit_kind = norm_dot_dir < 0 ? HIT_KIND_TRIANGLE_FRONT_FACE
                                      : HIT_KIND_TRIANGLE_BACK_FACE;
 
-    xdg::HitOrientation hitOrientation = record.rayIn[rayID].hitOrientation;
+    xdg::HitOrientation hitOrientation = record.ray[rayID].hitOrientation;
 
     if (orientation_cull(direction, norm, hitOrientation))
     {
         return;
     }
 
-    for (int i = 0; i < record.rayIn[rayID].exclude_count; ++i)
+    for (int i = 0; i < record.ray[rayID].exclude_count; ++i)
     {
-        if (record.rayIn[rayID].exclude_primitives[i] == global_prim_id) {
+        if (record.ray[rayID].exclude_primitives[i] == global_prim_id) {
             return;
         }
     }

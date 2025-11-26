@@ -325,10 +325,8 @@ EmbreeRayTracer::ray_fire(SurfaceTreeID tree,
     return {rayhit.ray.dtfar, rayhit.hit.surface};
 }
 
-void EmbreeRayTracer::closest(SurfaceTreeID tree,
-                        const Position& point,
-                        double& distance,
-                        MeshID& triangle)
+std::pair<double, MeshID> EmbreeRayTracer::closest(SurfaceTreeID tree,
+                                                   const Position& point)
 {
   RTCScene scene = surface_volume_tree_to_scene_map_.at(tree);
   RTCDPointQuery query;
@@ -340,20 +338,10 @@ void EmbreeRayTracer::closest(SurfaceTreeID tree,
   rtcPointQuery(scene, &query, &context, (RTCPointQueryFunction)&TriangleClosestFunc, &scene);
 
   if (query.geomID == RTC_INVALID_GEOMETRY_ID) {
-    distance = INFTY;
-    return;
+    return {INFTY, ID_NONE};
   }
 
-  distance = query.dradius;
-  triangle = query.primitive_ref->primitive_id;
-}
-
-void EmbreeRayTracer::closest(SurfaceTreeID scene,
-                        const Position& point,
-                        double& distance)
-{
-  MeshID triangle;
-  closest(scene, point, distance, triangle);
+  return {query.dradius, query.primitive_ref->primitive_id};
 }
 
 bool EmbreeRayTracer::occluded(SurfaceTreeID tree,
