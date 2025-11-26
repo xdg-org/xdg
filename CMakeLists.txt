@@ -120,6 +120,7 @@ list(APPEND xdg_sources
   src/util/str_utils.cpp
   src/overlap_check/overlap.cpp
   src/element_face_accessor.cpp
+  src/config.cpp
   src/xdg.cpp
 )
 
