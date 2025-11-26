@@ -21,6 +21,7 @@ class EmbreeRayTracer : public RayTracer {
 public:
   EmbreeRayTracer();
   ~EmbreeRayTracer();
+
   RTLibrary library() const override { return RTLibrary::EMBREE; }
 
   void init() override;

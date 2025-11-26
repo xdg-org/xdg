@@ -4,14 +4,17 @@
 
 // testing includes
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 // xdg includes
 #include "xdg/error.h"
-#include "xdg/mesh_manager_interface.h"
-#include "xdg/libmesh/mesh_manager.h"
+#include "xdg/mesh_managers.h"
+#include "xdg/ray_tracers.h"
 #include "xdg/xdg.h"
-#include "xdg/embree/ray_tracer.h"
+
+// testing includes
+#include "util.h"
 
 using namespace xdg;
 
@@ -52,7 +55,8 @@ TEST_CASE("Test BVH Build Brick")
   REQUIRE(mesh_manager->num_volumes() == 2);
   REQUIRE(mesh_manager->num_surfaces() == 1);
 
-  std::unique_ptr<RayTracer> ray_tracing_interface = std::make_unique<EmbreeRayTracer>();
+  check_ray_tracer_supported(RTLibrary::EMBREE);
+  auto ray_tracing_interface = create_raytracer(RTLibrary::EMBREE);
   for (auto volume : mesh_manager->volumes()) {
     ray_tracing_interface->register_volume(mesh_manager, volume);
   }
@@ -70,7 +74,8 @@ TEST_CASE("Test BVH Build Brick w/ Sidesets")
   REQUIRE(mesh_manager->num_volumes() == 2);
   REQUIRE(mesh_manager->num_surfaces() == 6);
 
-  std::unique_ptr<RayTracer> ray_tracing_interface = std::make_unique<EmbreeRayTracer>();
+  check_ray_tracer_supported(RTLibrary::EMBREE);
+  auto ray_tracing_interface = create_raytracer(RTLibrary::EMBREE);
 
   for (auto volume : mesh_manager->volumes()) {
     ray_tracing_interface->register_volume(mesh_manager, volume);
@@ -81,6 +86,8 @@ TEST_CASE("Test BVH Build Brick w/ Sidesets")
 
 TEST_CASE("Test Ray Fire Brick")
 {
+  // skip this test if Embree is not enabled for now
+  check_ray_tracer_supported(RTLibrary::EMBREE);
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
   xdg->mesh_manager()->mesh_library();
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
@@ -151,6 +158,8 @@ TEST_CASE("Test Cylinder-Brick Initialization")
 
 TEST_CASE("Test Ray Fire Cylinder-Brick")
 {
+  // skip this test if Embree is not enabled for now
+  check_ray_tracer_supported(RTLibrary::EMBREE);
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
   xdg->mesh_manager()->mesh_library();
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
@@ -202,6 +211,8 @@ TEST_CASE("Test Ray Fire Cylinder-Brick")
 
 TEST_CASE("Test Ray Fire Jezebel")
 {
+  // skip this test if Embree is not enabled for now
+  check_ray_tracer_supported(RTLibrary::EMBREE);
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
   xdg->mesh_manager()->mesh_library();
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
@@ -233,23 +244,28 @@ TEST_CASE("Test Ray Fire Jezebel")
 
 TEST_CASE("Test Volume Element Count Jezebel")
 {
-  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
-  xdg->mesh_manager()->mesh_library();
-  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
-  const auto& mesh_manager = xdg->mesh_manager();
-  mesh_manager->load_file("jezebel.exo");
-  mesh_manager->init();
-  xdg->prepare_raytracer();
+  auto rt_library = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
+  DYNAMIC_SECTION(fmt::format("Backend = {}", rt_library)) {
+    check_ray_tracer_supported(rt_library);
+    std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH, rt_library);
+    xdg->mesh_manager()->mesh_library();
+    REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
+    const auto& mesh_manager = xdg->mesh_manager();
+    mesh_manager->load_file("jezebel.exo");
+    mesh_manager->init();
 
-  MeshID volume = 1;
+    MeshID volume = 1;
 
-  auto elements = mesh_manager->get_volume_elements(volume);
-  REQUIRE(elements.size() == 10333);
-  REQUIRE(mesh_manager->num_volume_elements() == 10333);
+    auto elements = mesh_manager->get_volume_elements(volume);
+    REQUIRE(elements.size() == 10333);
+    REQUIRE(mesh_manager->num_volume_elements() == 10333);
+  }
 }
 
 TEST_CASE("Test Point Location Jezebel")
 {
+  // skip this test if Embree is not enabled for now
+  check_ray_tracer_supported(RTLibrary::EMBREE);
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
   xdg->mesh_manager()->mesh_library();
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
@@ -276,6 +292,8 @@ TEST_CASE("Test Point Location Jezebel")
 
 TEST_CASE("Test Point Location Cylinder-Brick")
 {
+  // skip this test if Embree is not enabled for now
+  check_ray_tracer_supported(RTLibrary::EMBREE);
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
   xdg->mesh_manager()->mesh_library();
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
@@ -310,25 +328,31 @@ TEST_CASE("Test Point Location Cylinder-Brick")
 
 TEST_CASE("Test Volume Element Count Cylinder-Brick")
 {
-  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
-  xdg->mesh_manager()->mesh_library();
-  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
-  const auto& mesh_manager = xdg->mesh_manager();
-  mesh_manager->load_file("cyl-brick.exo");
-  mesh_manager->init();
-  xdg->prepare_raytracer();
+  auto rt_library = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
+  check_ray_tracer_supported(rt_library);
+  DYNAMIC_SECTION(fmt::format("Backend = {}", rt_library)) {
+    std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH, rt_library);
+    xdg->mesh_manager()->mesh_library();
+    REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
+    const auto& mesh_manager = xdg->mesh_manager();
+    mesh_manager->load_file("cyl-brick.exo");
+    mesh_manager->init();
 
-  MeshID volume = 1;
-  auto elements = mesh_manager->get_volume_elements(volume);
-  REQUIRE(elements.size() == 7587);
+    MeshID volume = 1;
 
-  volume = 2;
-  elements = mesh_manager->get_volume_elements(volume);
-  REQUIRE(elements.size() == 9037);
+    auto elements = mesh_manager->get_volume_elements(volume);
+    REQUIRE(elements.size() == 7587);
+
+    volume = 2;
+    elements = mesh_manager->get_volume_elements(volume);
+    REQUIRE(elements.size() == 9037);
+  }
 }
 
 TEST_CASE("Test Find Element Brick")
 {
+  // skip this test if Embree is not enabled for now
+  check_ray_tracer_supported(RTLibrary::EMBREE);
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
   xdg->mesh_manager()->mesh_library();
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
@@ -350,6 +374,8 @@ TEST_CASE("Test Find Element Brick")
 
 TEST_CASE("Test Track Exiting Mesh Brick")
 {
+  // skip this test if Embree is not enabled for now
+  check_ray_tracer_supported(RTLibrary::EMBREE);
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
   xdg->mesh_manager()->mesh_library();
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);

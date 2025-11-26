@@ -14,6 +14,8 @@ using namespace xdg;
 
 TEST_CASE("Test Occluded")
 {
+  // skip if Embree is not enabled for now
+  check_ray_tracer_supported(RTLibrary::EMBREE);
   std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
   mm->init(); // this should do nothing, just good practice to call it
    // Generate one test run per enabled backend
@@ -21,7 +23,7 @@ TEST_CASE("Test Occluded")
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
- 
+
     std::shared_ptr<XDG> xdg = std::make_shared<XDG>(mm, rt_backend);
     xdg->prepare_raytracer();
     auto rti = xdg->ray_tracing_interface();

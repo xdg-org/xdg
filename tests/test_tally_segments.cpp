@@ -9,10 +9,13 @@
 #include "xdg/xdg.h"
 
 #include "mesh_mock.h"
+#include "util.h"
 
 using namespace xdg;
 
 TEST_CASE("Test Walk Elements") {
+  // skip this test if Embree is not enabled
+  check_ray_tracer_supported(RTLibrary::EMBREE);
   std::shared_ptr<MeshMock> mm = std::make_shared<MeshMock>();
   mm->init(); // this should do nothing
   std::shared_ptr<XDG> xdg = std::make_shared<XDG>(mm);

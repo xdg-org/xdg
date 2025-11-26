@@ -33,8 +33,16 @@ TEST_CASE("Test Mesh BVH")
       volume_to_scene_map[volume]= volume_tree;
     }
 
-    REQUIRE(rti->num_registered_trees() == 2);
-    REQUIRE(rti->num_registered_surface_trees() == 1);
-    REQUIRE(rti->num_registered_element_trees() == 1);
+    // Different expectations for number of registered trees based on backend
+    // until GPRT supports volumetric element trees
+    if (rt_backend == RTLibrary::EMBREE) {
+      REQUIRE(rti->num_registered_trees() == 2);
+      REQUIRE(rti->num_registered_surface_trees() == 1);
+      REQUIRE(rti->num_registered_element_trees() == 1);
+    }
+    else if (rt_backend == RTLibrary::GPRT) {
+      REQUIRE(rti->num_registered_trees() == 1);
+      REQUIRE(rti->num_registered_surface_trees() == 1);
+    }
   }
 }

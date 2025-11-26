@@ -14,6 +14,9 @@ using namespace xdg;
 
 TEST_CASE("Test Get Normal")
 {
+  // skip this test if Embree is not enabled for now
+  check_ray_tracer_supported(RTLibrary::EMBREE);
+
   std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
   mm->init(); // this should do nothing, but its good practice to call it
 

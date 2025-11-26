@@ -13,6 +13,8 @@ using namespace xdg;
 
 TEST_CASE("Test Find Volumetric Element")
 {
+  // skip if Embree is not enabled
+  check_ray_tracer_supported(RTLibrary::EMBREE);
   // create a mock mesh manager without volumetric elements
   std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
   mm->init(); // this should do nothing
