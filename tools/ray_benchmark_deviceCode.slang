@@ -7,18 +7,18 @@ ray buffers. The idea is that the downstream application generates rays (origins
 [shader("compute")]
 [numthreads(64, 1, 1)]
 void generate_random_rays(uint3 DispatchThreadID: SV_DispatchThreadID, uniform GenerateRandomRayParams params) {
-    uint rayID = DispatchThreadID.x;
-    uint nRays = params.numRays;
+    uint globalThreadID = DispatchThreadID.x;
+    uint stride = params.total_threads;
+    uint nRays  = params.numRays;
 
-    if (rayID >= nRays) {
-        return;
+    for (uint idx = globalThreadID; idx < nRays; idx += stride)
+    {
+        uint state = params.seed ^ idx;
+        params.rays[idx].direction = random_unit_dir(state);
+        params.rays[idx].origin = params.origin;
+        params.rays[idx].exclude_primitives = nullptr;
+        params.rays[idx].exclude_count = 0;
     }
-
-    uint state = params.seed ^ rayID; // same as cpu: state = seed ^ i
-    double3 dir = random_unit_dir(state);
-
-    params.rays.directions[rayID] = dir;
-    params.rays.origins[rayID] = params.origin; 
 }
 
 // Helpers 
@@ -27,7 +27,7 @@ void generate_random_rays(uint3 DispatchThreadID: SV_DispatchThreadID, uniform G
 double rand01(inout uint state)
 {
     state = state * 1664525u + 1013904223u;
-    return double(state) * (1.0 / 4294967296.0);
+    return double(state) * double(1.0 / 4294967296.0);
 }
 
 // return random unit dir

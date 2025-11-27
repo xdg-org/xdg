@@ -149,6 +149,10 @@ int main(int argc, char** argv) {
   std::vector<double> hitDistances(N, -1.0);
   std::vector<MeshID> hitElements(N, ID_NONE);
 
+  auto start = std::chrono::high_resolution_clock::now();
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+
   if (rt_lib == RTLibrary::GPRT) {
     // Create GPRT context for compute shader that generates rays
     auto gprt_rti = std::dynamic_pointer_cast<xdg::GPRTRayTracer>(rti);
@@ -156,41 +160,52 @@ int main(int argc, char** argv) {
     GPRTModule module = gprtModuleCreate(context, ray_benchmark_deviceCode); 
     auto genRandomRays = gprtComputeCreate<GenerateRandomRayParams>(context, module, "generate_random_rays");
     
-    /* 
-    TODO - this exposes rayhitbuffers from the GPRT/vulkan context avaiable within XDG. But in this miniapp we define a new context
-    We might need to expose the same vulkan/GPRT context if we want to reference pointers to it? 
-    auto rayHitBuffers = xdg->get_device_rayhit_buffers(N); 
-    */
+    // this exposes rayhit buffers from the GPRT/vulkan context avaiable within XDG
+    auto rayHitBuffers = gprt_rti->get_device_rayhit_buffers(N);
 
-    // Create device buffers for our origins and directions
-    GPRTBufferOf<double3> originsBuf = gprtDeviceBufferCreate<double3>(context, N); 
-    GPRTBufferOf<double3> directionsBuf = gprtDeviceBufferCreate<double3>(context, N);
 
-    Rays rays = {};
-    rays.origins = gprtBufferGetDevicePointer(originsBuf);
-    rays.directions = gprtBufferGetDevicePointer(directionsBuf);
+    constexpr int threadsPerGroup = 64;
+    const int neededGroups = (N + threadsPerGroup - 1) / threadsPerGroup;
+    const int groups = std::min(neededGroups, WORKGROUP_LIMIT);
 
     GenerateRandomRayParams randomRayParams = {};
-    randomRayParams.rays = rays;
+    randomRayParams.rays = rayHitBuffers.rayDevPtr; // assign xdg ray buffer pointer for compute shader
     randomRayParams.numRays = N;
     randomRayParams.origin = {origin.x, origin.y, origin.z};
     randomRayParams.seed = seed;
+    randomRayParams.total_threads = groups * threadsPerGroup;
 
-    gprtComputeLaunch(genRandomRays, {1, 1, 1}, {64, 1, 1}, randomRayParams);
+    gprtComputeLaunch(genRandomRays, {groups, 1, 1}, {threadsPerGroup, 1, 1}, randomRayParams);
+    gprtComputeSynchronize(context);
 
-    xdg->pack_external_rays(rays.origins, rays.directions, N);
-    xdg->ray_fire_packed(volume, N);
+    std::cout << "Volume ID: " << volume << " with: " << mm->num_volume_faces(volume)  
+          << " faces" << std::endl;
+
+    std::cout << "Starting ray fire benchmark with " << N << " rays"  << " using " 
+              << rt_str << ": \n" << std::endl;
+    start = std::chrono::high_resolution_clock::now();
+
+    xdg->ray_fire_packed(volume, N); // ray_fire against pre-packed rays on device
+
+    end = std::chrono::high_resolution_clock::now();
+    elapsed = end - start;
+    double rays_per_second = static_cast<double>(N) / elapsed.count();
+
+    std::cout << "----------------------------------------" << std::endl;
+    std::cout << "Completed " << N << " rays in " << elapsed.count() << " seconds." << std::endl;
+    std::cout << "Ray tracing throughput: " << rays_per_second << " rays/second." << std::endl;
+    std::cout << "---------------------------------------- \n" << std::endl;
   } else {
     std::cout << "Volume ID: " << volume << " with: " << mm->num_volume_faces(volume)  
           << " faces" << std::endl;
 
     std::cout << "Starting ray fire benchmark with " << N << " rays"  << " using " 
               << rt_str << ": \n" << std::endl;
-    auto start = std::chrono::high_resolution_clock::now();
+    start = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < N; ++i) {
       auto result = xdg->ray_fire(volume, origin, directions[i]);
     }
-    auto end = std::chrono::high_resolution_clock::now();
+    end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
     double rays_per_second = static_cast<double>(N) / elapsed.count();
 
