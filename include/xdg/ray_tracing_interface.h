@@ -11,9 +11,13 @@
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/primitive_ref.h"
 #include "xdg/geometry_data.h"
+#include "xdg/gprt/ray.h"
+
 
 namespace xdg
 {
+
+struct DeviceRayHitBuffers; // forward declaration
 
 class RayTracer {
 public:
@@ -232,12 +236,6 @@ public:
   {
     fatal_error("GPU ray tracing not supported with this RayTracer backend");
   }  
-  struct DeviceRayHitBuffers {
-    void* rays; // device pointer to ray buffers
-    void* hits; // device pointer to hit buffers
-    size_t capacity = 0;
-    bool valid() const { return rays && hits && capacity > 0; }
-  };
 
   /**
    * @brief Check whether the current ray buffer capacity is sufficient for the number of rays requested

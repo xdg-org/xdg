@@ -1,7 +1,5 @@
 #include "xdg/gprt/ray_tracer.h"
 #include "gprt/gprt.h"
-
-#include <chrono>
 namespace xdg {
 
 GPRTRayTracer::GPRTRayTracer()
@@ -10,11 +8,11 @@ GPRTRayTracer::GPRTRayTracer()
   context_ = gprtContextCreate();
   module_ = gprtModuleCreate(context_, dbl_deviceCode);
 
-  rayHitBuffers_.capacity = 1; // Preallocate space for 1 ray
-  rayHitBuffers_.ray = gprtDeviceBufferCreate<dblRay>(context_, rayHitBuffers_.capacity);
-  rayHitBuffers_.hit = gprtDeviceBufferCreate<dblHit>(context_, rayHitBuffers_.capacity);
-  rayHitBuffers_.devRayAddr = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
-  rayHitBuffers_.devHitAddr = gprtBufferGetDevicePointer(rayHitBuffers_.hit);
+  rayHitBuffers_.view.capacity = 1; // Preallocate space for 1 ray
+  rayHitBuffers_.ray = gprtDeviceBufferCreate<dblRay>(context_, rayHitBuffers_.view.capacity);
+  rayHitBuffers_.hit = gprtDeviceBufferCreate<dblHit>(context_, rayHitBuffers_.view.capacity);
+  rayHitBuffers_.view.rayDevPtr = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
+  rayHitBuffers_.view.hitDevPtr = gprtBufferGetDevicePointer(rayHitBuffers_.hit);
 
   excludePrimitivesBuffer_ = gprtDeviceBufferCreate<int32_t>(context_); // initialise buffer of size 1
 
@@ -448,16 +446,9 @@ void GPRTRayTracer::ray_fire(TreeID tree,
   pushConstants.volume_accel = gprtAccelGetDeviceAddress(volume);
   pushConstants.volume_tree = tree;
 
-  std::cout << "Starting ray fire benchmark with " << num_rays << " rays"  << " using " 
-            << "GPRT (FP64)" << ": \n" << std::endl;
-  auto start = std::chrono::high_resolution_clock::now();
-
   // Launch the ray generation shader with push constants and buffer bindings
   gprtRayGenLaunch1D(context_, rayGen, num_rays, pushConstants);
   gprtGraphicsSynchronize(context_);
-  auto end = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> elapsed = end - start;
-  double rays_per_second = static_cast<double>(num_rays) / elapsed.count();
                                                   
   // Retrieve the output from the ray output buffer
   gprtBufferMap(rayHitBuffers_.hit);
@@ -476,13 +467,6 @@ void GPRTRayTracer::ray_fire(TreeID tree,
     }
   }
   gprtBufferUnmap(rayHitBuffers_.hit); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
-
-  std::cout << "----------------------------------------" << std::endl;
-  std::cout << "Completed " << num_rays << " rays in " << elapsed.count() << " seconds." << std::endl;
-  std::cout << "Ray tracing throughput: " << rays_per_second << " rays/second." << std::endl;
-  std::cout << "---------------------------------------- \n" << std::endl;
-
-
   return;
 }
 
@@ -527,14 +511,18 @@ void GPRTRayTracer::create_global_surface_tree()
 
 void GPRTRayTracer::check_rayhit_buffer_capacity(const size_t N)
 {
-  if (N <= rayHitBuffers_.capacity) return; // current capacity is sufficient
+  if (N <= rayHitBuffers_.view.capacity) return; // current capacity is sufficient
 
-  // Resize buffers to accommodate N rays
-  size_t newCapacity = std::max(N, rayHitBuffers_.capacity * 2); // double the capacity or set to N, whichever is larger
+  // Resize buffers to accommodate N rays - double the capacity or set to N, whichever is larger
+  size_t newCapacity = std::max(uint(N), rayHitBuffers_.view.capacity * 2); 
 
   gprtBufferResize(context_, rayHitBuffers_.ray, newCapacity, false);
   gprtBufferResize(context_, rayHitBuffers_.hit, newCapacity, false);
-  rayHitBuffers_.capacity = newCapacity;
+  rayHitBuffers_.view.capacity = newCapacity;
+
+  // Get fresh device pointers after resize
+  rayHitBuffers_.view.rayDevPtr = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
+  rayHitBuffers_.view.hitDevPtr = gprtBufferGetDevicePointer(rayHitBuffers_.hit);
 
   // Since we have resized the ray buffers, we need to update the geom_data->rayIn pointers in all geometries too 
   for (auto const& [surf, geom] : surface_to_geometry_map_) {
@@ -552,14 +540,10 @@ void GPRTRayTracer::check_rayhit_buffer_capacity(const size_t N)
   gprtBuildShaderBindingTable(context_, static_cast<GPRTBuildSBTFlags>(GPRT_SBT_GEOM | GPRT_SBT_RAYGEN));
 }
 
-RayTracer::DeviceRayHitBuffers GPRTRayTracer::get_device_rayhit_buffers(const size_t N)
+DeviceRayHitBuffers GPRTRayTracer::get_device_rayhit_buffers(const size_t N)
 {
   check_rayhit_buffer_capacity(N);
-  DeviceRayHitBuffers buffers;
-  buffers.rays = rayHitBuffers_.devRayAddr;
-  buffers.hits = rayHitBuffers_.devHitAddr;
-  buffers.capacity = rayHitBuffers_.capacity;
-  return buffers;
+  return rayHitBuffers_.view;
 }
 
 void GPRTRayTracer::pack_external_rays(void* origins_device_ptr,
@@ -577,7 +561,7 @@ void GPRTRayTracer::pack_external_rays(void* origins_device_ptr,
   const int neededGroups = (params.num_rays + threadsPerGroup - 1) / threadsPerGroup;
   const int groups = std::min(neededGroups, WORKGROUP_LIMIT);
 
-  params.xdgRays = rayHitBuffers_.devRayAddr; // dblRay*
+  params.xdgRays = rayHitBuffers_.view.rayDevPtr; // dblRay*
   params.origins = static_cast<double3*>(origins_device_ptr);
   params.directions = static_cast<double3*>(directions_device_ptr);
   params.total_threads = groups * threadsPerGroup;
@@ -587,7 +571,9 @@ void GPRTRayTracer::pack_external_rays(void* origins_device_ptr,
                     { threadsPerGroup, 1, 1 },
                     params);
   gprtComputeSynchronize(context_);
+
 }
+
 
 } // namespace xdg
 

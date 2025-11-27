@@ -26,15 +26,15 @@ enum class RayGenType {
 };
 
 struct gprtRayHit {
-  size_t capacity = 1; // Max number of rays allocated 
-  size_t size = 0;     // Current number of active rays 
+  DeviceRayHitBuffers view; // external facing POD for rayhit buffers
+  size_t size = 0; // Current number of active rays 
 
   GPRTBufferOf<dblRay> ray = nullptr;
   GPRTBufferOf<dblHit> hit = nullptr;
-  dblRay* devRayAddr = nullptr;
-  dblHit* devHitAddr = nullptr;
 
-  bool is_valid() const { return capacity > 0 && ray && hit && devRayAddr && devHitAddr; }
+  bool is_valid() const { 
+    return view.capacity > 0 && ray && hit && view.rayDevPtr && view.hitDevPtr; 
+  }
 };
 class GPRTRayTracer : public RayTracer {
   public:

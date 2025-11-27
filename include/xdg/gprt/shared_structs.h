@@ -3,6 +3,7 @@
 
 #include "gprt.h"
 #include "../shared_enums.h"
+#include "ray.h"
 
 struct GPRTPrimitiveRef
 {
@@ -10,21 +11,6 @@ struct GPRTPrimitiveRef
   int sense;
 };
 
-struct dblRay 
-{
-  double3 origin;
-  double3 direction;
-  int32_t* exclude_primitives; // Optional for excluding primitives
-  int32_t exclude_count;           // Number of excluded primitives
-};
-
-struct dblHit 
-{
-  double distance;
-  int surf_id;
-  int primitive_id;
-  xdg::PointInVolume piv; // Point in volume check result (0 for outside, 1 for inside)
-};
 
 /* variables for double precision triangle mesh geometry */
 struct DPTriangleGeomData {
@@ -36,7 +22,7 @@ struct DPTriangleGeomData {
   int2 vols;
   int forward_vol;
   int reverse_vol;
-  dblRay *ray; // double precision rays
+  xdg::dblRay *ray; // double precision rays
   xdg::HitOrientation hitOrientation;
   int forward_tree; // TreeID of the forward volume
   int reverse_tree; // TreeID of the reverse volume
@@ -45,8 +31,8 @@ struct DPTriangleGeomData {
 };
 
 struct dblRayGenData {
-  dblRay *ray;
-  dblHit *hit;
+  xdg::dblRay *ray;
+  xdg::dblHit *hit;
 };
 
 /* A small structure of constants that can change every frame without rebuilding the
@@ -60,8 +46,9 @@ struct dblRayFirePushConstants {
   xdg::HitOrientation hitOrientation;
 };
 
+// TODO - Drop this in favour of exposing buffers directly
 struct ExternalRayParams {
-  dblRay* xdgRays;
+  xdg::dblRay* xdgRays;
   double3* origins;
   double3* directions;
   uint32_t num_rays;

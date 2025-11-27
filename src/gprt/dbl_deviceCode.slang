@@ -125,7 +125,7 @@ void populate_aabbs(uint3 DispatchThreadID: SV_DispatchThreadID, uniform DPTrian
     record.aabbs[2 * primID + 1] = fpaabbmax;
 }
 
-// TODO - does threads per work group matter at all?
+// TODO - consider dropping this in favour of having external application fill buffers directly
 [shader("compute")]
 [numthreads(256, 1, 1)] 
 void pack_external_rays(uint3 DispatchThreadID: SV_DispatchThreadID, uniform ExternalRayParams extParams) {
@@ -135,13 +135,13 @@ void pack_external_rays(uint3 DispatchThreadID: SV_DispatchThreadID, uniform Ext
     //     return;
 
     // Global thread index (we only use the x-dimension)
-    uint idx = DispatchThreadID.x;
+    uint globalThreadID = DispatchThreadID.x;
     uint stride = extParams.total_threads; // Groups * 256
 
     // Grid-stride loop: each thread handles ray idx, idx+stride, idx+2*stride, ...
-    for (; idx < extParams.num_rays; idx += stride)
+    for (uint idx = globalThreadID; idx < extParams.num_rays; idx += stride)
     {
-        dblRay r;
+        xdg::dblRay r;
         r.origin = extParams.origins[idx];
         r.direction = extParams.directions[idx];
         r.exclude_primitives = nullptr;
