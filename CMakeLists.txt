@@ -124,6 +124,7 @@ src/config.cpp
 src/xdg.cpp
 src/overlap_check/overlap.cpp
 src/element_face_accessor.cpp
+src/timer.cpp
 src/xdg.cpp
 )
 
