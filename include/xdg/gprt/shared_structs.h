@@ -1,3 +1,6 @@
+#ifndef XDG_GPRT_SHARED_STRUCTS_H
+#define XDG_GPRT_SHARED_STRUCTS_H
+
 #include "gprt.h"
 #include "../shared_enums.h"
 
@@ -64,3 +67,5 @@ struct ExternalRayParams {
   uint32_t num_rays;
   uint32_t total_threads;
 };
+
+#endif
