@@ -122,6 +122,7 @@ list(APPEND xdg_sources
   src/overlap_check/overlap.cpp
   src/element_face_accessor.cpp
   src/config.cpp
+  src/timer.cpp
   src/xdg.cpp
 )
 

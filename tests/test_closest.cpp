@@ -7,6 +7,7 @@
 
 #include "xdg/geometry/closest.h"
 #include "xdg/xdg.h"
+#include "xdg/util/rng.h"
 
 // xdg test includes
 #include "mesh_mock.h"
