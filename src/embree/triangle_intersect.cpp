@@ -1,7 +1,7 @@
 #include <algorithm> // for find
 
 #include "xdg/bbox.h"
-#include "xdg/mesh_managers.h
+#include "xdg/mesh_managers.h"
 #include "xdg/geometry/closest.h"
 #include "xdg/geometry/plucker.h"
 
