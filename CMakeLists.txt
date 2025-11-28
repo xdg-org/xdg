@@ -112,8 +112,9 @@ endif()
 
 list(APPEND xdg_sources
   src/geometry/measure.cpp
-  src/geometry/plucker.cpp
   src/geometry/closest.cpp
+  src/geometry/contain.cpp
+  src/geometry/plucker.cpp
   src/error.cpp
   src/mesh_manager_interface.cpp
   src/ray_tracing_interface.cpp
@@ -203,7 +204,7 @@ if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
   target_compile_definitions(xdg PUBLIC XDG_DEBUG)
 endif()
 
-target_link_libraries(xdg embree fmt::fmt)
+target_link_libraries(xdg fmt::fmt)
 
 # attempt to find OpenMP and include it if found
 find_package(OpenMP)
