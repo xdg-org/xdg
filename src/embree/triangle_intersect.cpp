@@ -1,9 +1,12 @@
 #include <algorithm> // for find
 
+#include "xdg/bbox.h"
+#include "xdg/mesh_managers.h
 #include "xdg/geometry/closest.h"
+#include "xdg/geometry/plucker.h"
+
 #include "xdg/embree/primitive_ref.h"
 #include "xdg/embree/geometry_data.h"
-#include "xdg/geometry/plucker.h"
 #include "xdg/embree/ray.h"
 
 namespace xdg
@@ -77,7 +80,7 @@ void TriangleIntersectionFunc(RTCIntersectFunctionNArguments* args) {
   // Check if ray is entering or exiting the volume it was fired against
   // if this is a normal ray fire, flip the normal as needed
   if (ray.volume_tree == user_data->reverse_vol && rayhit->ray.rf_type != RayFireType::FIND_VOLUME)
-  {  
+  {
     normal = -normal;
   }
 
