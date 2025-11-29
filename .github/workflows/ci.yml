@@ -10,7 +10,7 @@ on:
 jobs:
   main:
     name: |
-      libMesh=${{ matrix.libmesh }}-MOAB=${{ matrix.moab }}
+      libMesh=${{ matrix.libmesh }};MOAB=${{ matrix.moab }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
