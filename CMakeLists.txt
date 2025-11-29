@@ -95,6 +95,14 @@ add_subdirectory(vendor/argparse)
 set(INDICATORS_INSTALL ON CACHE STRING "Ensure indicators targets are provided")
 add_subdirectory(vendor/indicators)
 
+# Ensure at least one mesh backend is enabled
+if (NOT XDG_ENABLE_MOAB AND NOT XDG_ENABLE_LIBMESH)
+  message(FATAL_ERROR
+    "No mesh backend enabled. Enable at least one of:\n"
+    "  -DXDG_ENABLE_MOAB=ON\n"
+    "  -DXDG_ENABLE_LIBMESH=ON")
+endif()
+
 # Ensure at least one ray tracing backend is enabled
 if (NOT XDG_ENABLE_EMBREE AND NOT XDG_ENABLE_GPRT)
   message(FATAL_ERROR
@@ -102,7 +110,6 @@ if (NOT XDG_ENABLE_EMBREE AND NOT XDG_ENABLE_GPRT)
     "  -DXDG_ENABLE_EMBREE=ON\n"
     "  -DXDG_ENABLE_GPRT=ON")
 endif()
-
 
 # GPRT
 set(GPRT_BUILD_SHARED ON  CACHE BOOL "Build GPRT as a shared library" FORCE)
