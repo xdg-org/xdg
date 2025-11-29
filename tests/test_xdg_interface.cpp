@@ -3,13 +3,9 @@
 #include <catch2/generators/catch_generators.hpp>
 
 // xdg includes
+#include "xdg/mesh_managers.h"
+#include "xdg/ray_tracers.h"
 #include "xdg/xdg.h"
-#include "xdg/moab/mesh_manager.h"
-
-#ifdef XDG_ENABLE_LIBMESH
-#include "xdg/libmesh/mesh_manager.h"
-#endif
-
 #include "util.h"
 
 using namespace xdg;
@@ -31,7 +27,7 @@ TEST_CASE("XDG Factory Creation") {
     check_ray_tracer_supported(rt_backend);     // skip if rt backend not enabled at configuration
 
     std::shared_ptr<XDG> xdg = XDG::create(mesh_backend, rt_backend);
-    
+
     // Check that the factory method creates interface pointers
     REQUIRE(xdg->ray_tracing_interface() != nullptr);
     REQUIRE(xdg->mesh_manager() != nullptr);
@@ -50,14 +46,14 @@ TEST_CASE("XDG Factory Creation") {
         break;
       #endif
     }
-    
+
     // Check that the factory method creates MeshManager interface pointers of the right types
     switch (mesh_backend) {
       #ifdef XDG_ENABLE_MOAB
       case MeshLibrary::MOAB:
         REQUIRE(std::dynamic_pointer_cast<MOABMeshManager>(xdg->mesh_manager()) != nullptr);
         break;
-      #endif 
+      #endif
 
       #ifdef XDG_ENABLE_LIBMESH
       case MeshLibrary::LIBMESH:
@@ -94,14 +90,14 @@ TEST_CASE("XDG Constructor") {
         break;
       #endif
     }
-    
+
     // Check that the constructor creates MeshManager interface pointers of the right types
     switch (mesh_backend) {
       #ifdef XDG_ENABLE_MOAB
       case MeshLibrary::MOAB:
         REQUIRE(std::dynamic_pointer_cast<MOABMeshManager>(xdg->mesh_manager()) != nullptr);
         break;
-      #endif 
+      #endif
 
       #ifdef XDG_ENABLE_LIBMESH
       case MeshLibrary::LIBMESH:

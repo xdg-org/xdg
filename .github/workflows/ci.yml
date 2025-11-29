@@ -9,7 +9,17 @@ on:
 
 jobs:
   main:
+    name: |
+      libMesh=${{ matrix.libmesh }};MOAB=${{ matrix.moab }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        libmesh: [true, false]
+        moab: [true, false]
+        exclude:
+          - moab: false
+            libmesh: false
 
     steps:
       - name: Checkout
@@ -27,7 +37,7 @@ jobs:
                               libnetcdf-dev \
                               libhdf5-dev \
                               libeigen3-dev \
-                              cmake 
+                              cmake
       - name: Update CMake
         uses: ssrobins/install-cmake@v1
         with:
@@ -54,6 +64,7 @@ jobs:
           cache: true
 
       - name: MOAB Clone
+        if: ${{ matrix.moab }}
         shell: bash
         run: |
           cd ~
@@ -62,6 +73,7 @@ jobs:
           git checkout 5.3.1
 
       - name: libMesh Clone
+        if: ${{ matrix.libmesh }}
         shell: bash
         run: |
           cd ~
@@ -69,14 +81,24 @@ jobs:
           cd libmesh
           git checkout v1.7.0
 
-      - name: Environment Variables
+      - name: OpenMP Environment Variables
+        run: |
+          echo "OMP_NUM_THREADS=1" >> $GITHUB_ENV
+
+      - name: MOAB Environment Variables
+        if: ${{ matrix.moab }}
         run: |
           echo "MOAB_SHA"=$(cd ~/moab && git rev-parse HEAD) >> $GITHUB_ENV
+
+      - name: libMesh Environment Variables
+        if: ${{ matrix.libmesh }}
+        run: |
           echo "LIBMESH_SHA"=$(cd ~/libmesh && git rev-parse HEAD) >> $GITHUB_ENV
           # Enforce that we're using the debug build of libMesh
           echo "METHOD=dbg" >> $GITHUB_ENV
 
       - name: MOAB Cache
+        if: ${{ matrix.moab }}
         id: moab-cache
         uses: actions/cache@v3
         env:
@@ -86,6 +108,7 @@ jobs:
           key: moab-${{ runner.os }}-${{ env.cache-name }}-${{ env.MOAB_SHA }}
 
       - name: libMesh Cache
+        if: ${{ matrix.libmesh }}
         id: libmesh-cache
         uses: actions/cache@v3
         env:
@@ -94,7 +117,7 @@ jobs:
           path: ~/LIBMESH
           key: libmesh-${{ runner.os }}-${{ env.cache-name }}-${{ env.LIBMESH_SHA }}
 
-      - if: ${{ steps.moab-cache.outputs.cache-hit != 'true' }}
+      - if: ${{ matrix.moab && steps.moab-cache.outputs.cache-hit != 'true' }}
         name: Build MOAB
         run: |
           cd ~/moab
@@ -104,7 +127,7 @@ jobs:
           make -j4
           make install
 
-      - if: ${{ steps.libmesh-cache.outputs.cache-hit != 'true' }}
+      - if: ${{ matrix.libmesh && steps.libmesh-cache.outputs.cache-hit != 'true' }}
         name: Build libMesh
         shell: bash
         run: |
@@ -124,7 +147,17 @@ jobs:
           export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH
           mkdir build
           cd build
-          cmake .. -DCMAKE_PREFIX_PATH="$HOME/LIBMESH;$HOME/MOAB" -DCMAKE_INSTALL_PREFIX=$HOME/opt -DXDG_ENABLE_MOAB=ON -DXDG_ENABLE_LIBMESH=ON -DXDG_ENABLE_GPRT=ON
+          CMAKE_PREFIX_PATH=""
+          if [ "${{ matrix.libmesh }}" = 'true' ]; then
+            CMAKE_PREFIX_PATH="$HOME/LIBMESH"
+          fi
+          if [ "${{ matrix.moab }}" = 'true' ]; then
+            if [ -n "$CMAKE_PREFIX_PATH" ]; then
+              CMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH;"
+            fi
+            CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}$HOME/MOAB"
+          fi
+          cmake .. -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" -DCMAKE_INSTALL_PREFIX=$HOME/opt -DXDG_ENABLE_MOAB=${{ matrix.moab && 'ON' || 'OFF' }} -DXDG_ENABLE_LIBMESH=${{ matrix.libmesh && 'ON' || 'OFF' }}
           make -j4 install
 
       - name: Test
