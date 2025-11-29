@@ -16,6 +16,8 @@ jobs:
       matrix:
         libmesh: [true, false]
         moab: [true, false]
+        name: |
+          libMesh=${{ matrix.libmesh }}-MOAB=${{ matrix.moab }}
         exclude:
           - moab: false
             libmesh: false
