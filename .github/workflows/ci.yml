@@ -14,16 +14,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: MOAB only
-            moab: true
+        libmesh: [true, false]
+        moab: [true, false]
+        exclude:
+          - moab: false
             libmesh: false
-          - name: libMesh only
-            moab: false
-            libmesh: true
-          - name: MOAB + libMesh
-            moab: true
-            libmesh: true
 
     steps:
       - name: Checkout
