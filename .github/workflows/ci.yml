@@ -9,15 +9,14 @@ on:
 
 jobs:
   main:
-    name: ${{ matrix.name }}
+    name: |
+      libMesh=${{ matrix.libmesh }}-MOAB=${{ matrix.moab }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         libmesh: [true, false]
         moab: [true, false]
-        name: |
-          libMesh=${{ matrix.libmesh }}-MOAB=${{ matrix.moab }}
         exclude:
           - moab: false
             libmesh: false
