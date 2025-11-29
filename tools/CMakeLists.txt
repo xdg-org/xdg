@@ -1,8 +1,10 @@
 set(TOOL_NAMES
 particle_sim
 ray_fire
+batch_ray_fire
 find_volume
 point_in_volume
+batch_point_in_volume
 overlap_check
 walk_elements
 tally_segments
@@ -37,6 +39,7 @@ endforeach()
 if (XDG_ENABLE_GPRT)
   set(GPRT_TOOLS
     xdg_gprt_render_tool
+    ray_benchmark
   )
 
   foreach(tool ${GPRT_TOOLS})

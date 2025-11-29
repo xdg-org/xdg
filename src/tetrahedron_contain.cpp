@@ -13,7 +13,9 @@ bool plucker_tet_containment_test(const Position& point,
                                   const Position& v1,
                                   const Position& v2,
                                   const Position& v3) {
-    using namespace linalg::aliases;
+    using linalg::aliases::double3x3;
+    using linalg::aliases::double3;
+    using linalg::aliases::double4;
     // Create matrix T = [v1 - v0, v2 - v0, v3 - v0]
     Vec3da e0 = v1 - v0;
     Vec3da e1 = v2 - v0;
