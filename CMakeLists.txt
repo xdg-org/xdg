@@ -118,32 +118,32 @@ if (XDG_ENABLE_GPRT)
 endif()
 
 list(APPEND xdg_sources
-src/geometry/measure.cpp
-src/geometry/plucker.cpp
-src/geometry/closest.cpp
-src/error.cpp
-src/mesh_manager_interface.cpp
-src/ray_tracing_interface.cpp
-src/triangle_intersect.cpp
-src/util/str_utils.cpp
-src/tetrahedron_contain.cpp
-src/config.cpp
-src/xdg.cpp
-src/overlap_check/overlap.cpp
-src/element_face_accessor.cpp
-src/timer.cpp
-src/xdg.cpp
+  src/geometry/measure.cpp
+  src/geometry/closest.cpp
+  src/geometry/contain.cpp
+  src/geometry/plucker.cpp
+  src/error.cpp
+  src/mesh_manager_interface.cpp
+  src/ray_tracing_interface.cpp
+  src/util/str_utils.cpp
+  src/overlap_check/overlap.cpp
+  src/element_face_accessor.cpp
+  src/config.cpp
+  src/timer.cpp
+  src/xdg.cpp
 )
 
 if (XDG_ENABLE_EMBREE)
 list(APPEND xdg_sources
-src/embree/ray_tracer.cpp
+  src/embree/ray_tracer.cpp
+  src/embree/triangle_intersect.cpp
+  src/embree/tetrahedron_contain.cpp
 )
 endif()
 
 if (XDG_ENABLE_GPRT)
 list(APPEND xdg_sources
-src/gprt/ray_tracer.cpp
+  src/gprt/ray_tracer.cpp
 )
 list(APPEND xdg_device_codes
 dbl_deviceCode
@@ -153,16 +153,15 @@ endif()
 
 if (XDG_ENABLE_LIBMESH)
 list(APPEND xdg_sources
-src/libmesh/mesh_manager.cpp
+  src/libmesh/mesh_manager.cpp
 )
 endif()
 
 if (XDG_ENABLE_MOAB)
 list(APPEND xdg_sources
-# MOAB
-src/moab/mesh_manager.cpp
-src/moab/direct_access.cpp
-src/moab/metadata.cpp
+  src/moab/mesh_manager.cpp
+  src/moab/direct_access.cpp
+  src/moab/metadata.cpp
 )
 endif()
 
@@ -198,6 +197,7 @@ endif()
 add_library(xdg SHARED ${xdg_sources})
 
 target_link_libraries(xdg indicators::indicators)
+target_link_libraries(xdg fmt::fmt)
 
 if(XDG_ENABLE_EMBREE)
   # pass precompile definition depending on embree version
@@ -212,7 +212,7 @@ if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
   target_compile_definitions(xdg PUBLIC XDG_DEBUG)
 endif()
 
-target_link_libraries(xdg embree fmt::fmt)
+target_link_libraries(xdg fmt::fmt)
 
 # attempt to find OpenMP and include it if found
 find_package(OpenMP)
@@ -258,7 +258,7 @@ endif()
 # ==========================
 
 if (XDG_ENABLE_EMBREE)
-  target_link_libraries(xdg embree fmt::fmt)
+  target_link_libraries(xdg embree)
 endif()
 
 if (XDG_ENABLE_GPRT)

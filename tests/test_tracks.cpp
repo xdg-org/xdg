@@ -10,10 +10,13 @@
 #include "xdg/constants.h"
 
 #include "mesh_mock.h"
+#include "util.h"
 
 
 TEST_CASE("Test Internal Tracks")
 {
+  // skip this test if Embree is not enabled
+  check_ray_tracer_supported(RTLibrary::EMBREE);
   std::shared_ptr<MeshMock> mm = std::make_shared<MeshMock>();
   mm->init(); // this should do nothing
   std::shared_ptr<XDG> xdg = std::make_shared<XDG>(mm);
@@ -40,6 +43,8 @@ TEST_CASE("Test Internal Tracks")
 
 TEST_CASE("Test Intersecting Tracks")
 {
+  // skip this test if Embree is not enabled
+  check_ray_tracer_supported(RTLibrary::EMBREE);
   std::shared_ptr<MeshMock> mm = std::make_shared<MeshMock>();
   mm->init(); // this should do nothing
   mm->create_implicit_complement(); // create the implicit complement
@@ -70,6 +75,8 @@ TEST_CASE("Test Intersecting Tracks")
 
 TEST_CASE("Test Random Internal Tracks")
 {
+  // skip this test if Embree is not enabled
+  check_ray_tracer_supported(RTLibrary::EMBREE);
   std::shared_ptr<MeshMock> mm = std::make_shared<MeshMock>();
   mm->init(); // this should do nothing
   std::shared_ptr<XDG> xdg = std::make_shared<XDG>(mm);

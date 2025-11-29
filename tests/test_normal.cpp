@@ -1,19 +1,22 @@
 // for testing
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
+#include <catch2/generators/catch_generators.hpp>
 
 // xdg includes
 #include "xdg/mesh_manager_interface.h"
-#include "xdg/primitive_ref.h"
 #include "xdg/xdg.h"
 
 #include "mesh_mock.h"
-#include "xdg/embree/ray_tracer.h"
+#include "util.h"
 
 using namespace xdg;
 
 TEST_CASE("Test Get Normal")
 {
+  // skip this test if Embree is not enabled for now
+  check_ray_tracer_supported(RTLibrary::EMBREE);
+
   std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
   mm->init(); // this should do nothing, but its good practice to call it
 

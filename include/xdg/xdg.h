@@ -115,8 +115,6 @@ Direction surface_normal(MeshID surface,
   }
 // Private methods
 private:
-  double _triangle_volume_contribution(const PrimitiveRef& triangle) const;
-  double _triangle_area_contribution(const PrimitiveRef& triangle) const;
 
 // Data members
   std::shared_ptr<RayTracer> ray_tracing_interface_ {nullptr};

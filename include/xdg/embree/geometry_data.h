@@ -6,7 +6,7 @@
 namespace xdg
 {
 
-struct MeshManager; // Forward declaration
+class MeshManager; // Forward declaration
 struct PrimitiveRef; // Forward declaration
 
 struct SurfaceUserData {

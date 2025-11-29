@@ -14,13 +14,18 @@ test_point_in_volume
 test_normal
 test_measure
 test_no_geom
-test_ray_duals
 test_xdg_interface
 test_tet_containment
-test_tracks
 test_tet_intersection
+test_tracks
 test_tally_segments
 )
+
+if (XDG_ENABLE_EMBREE)
+    list (APPEND TEST_NAMES
+            test_ray_duals
+         )
+endif()
 
 if (XDG_ENABLE_MOAB)
     list(APPEND TEST_NAMES test_moab)

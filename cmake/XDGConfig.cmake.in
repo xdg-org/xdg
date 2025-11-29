@@ -1,7 +1,10 @@
 get_filename_component(XDG_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
 
 find_package(fmt REQUIRED HINTS ${XDG_CMAKE_DIR}/../fmt)
-find_package(embree @EMBREE_VERSION@ REQUIRED HINTS @EMBREE_ROOT_DIR@)
+
+if (@XDG_ENABLE_EMBREE@)
+  find_package(embree @EMBREE_VERSION@ REQUIRED HINTS @EMBREE_ROOT_DIR@)
+endif()
 
 if(@XDG_ENABLE_MOAB@)
   find_package(MOAB REQUIRED HINTS @MOAB_DIR@)

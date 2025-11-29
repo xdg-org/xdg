@@ -7,16 +7,18 @@
 
 #include "xdg/geometry/closest.h"
 #include "xdg/xdg.h"
+#include "xdg/util/rng.h"
 
 // xdg test includes
 #include "mesh_mock.h"
-#include "xdg/util/rng.h"
-#include "xdg/embree/ray_tracer.h"
+#include "util.h"
 
 using namespace xdg;
 
 TEST_CASE("Test Mesh Mock")
 {
+  // skip this test if Embree is not enabled
+  check_ray_tracer_supported(RTLibrary::EMBREE);
   std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
   mm->init(); // this should do nothing, but its good practice to call it
   std::shared_ptr<XDG> xdg = std::make_shared<XDG>(mm);
@@ -178,7 +180,4 @@ TEST_CASE("Closest Point Unit Test")
   closest = closest_location_on_triangle(triangle, p);
   REQUIRE(closest.approx_eq(midpoint));
   REQUIRE_THAT((closest - p).length(), Catch::Matchers::WithinAbs(dist, 1e-6));
-
-
-
 }

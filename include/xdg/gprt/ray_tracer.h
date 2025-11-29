@@ -7,10 +7,7 @@
 
 #include "xdg/constants.h"
 #include "xdg/mesh_manager_interface.h"
-#include "xdg/primitive_ref.h"
-#include "xdg/geometry_data.h"
 #include "xdg/ray_tracing_interface.h"
-#include "xdg/ray.h"
 #include "xdg/error.h"
 #include "gprt/gprt.h"
 #include "shared_structs.h"
