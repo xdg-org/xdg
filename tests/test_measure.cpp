@@ -6,17 +6,19 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include "xdg/xdg.h"
+#include "xdg/geometry/measure.h"
 
 // xdg test includes
 #include "mesh_mock.h"
 #include "xdg/embree/ray_tracer.h"
+
 
 using namespace xdg;
 
 TEST_CASE("Test Mesh Mock")
 {
   std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
-  mm->init(); // this should do nothing, but it's good practice to call it
+  mm->init();
 
   XDG xdg{mm, RTLibrary::EMBREE};
 
@@ -33,4 +35,15 @@ TEST_CASE("Test Mesh Mock")
     REQUIRE_THAT(area, Catch::Matchers::WithinAbs(surface_areas[i], 1e-6));
   }
 
+}
+
+TEST_CASE("Test Mesh Mock Element Volume") {
+  std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
+  mm->init();
+
+  // Test the element_volume method
+  for (MeshID elem_id : mm->get_volume_elements(mm->volumes()[0])) {
+    double vol = mm->element_volume(elem_id);
+    REQUIRE_THAT(vol, Catch::Matchers::WithinAbs(57.75, 1e-6)); // Each tet has volume 57.75
+  }
 }
