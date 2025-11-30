@@ -370,3 +370,93 @@ TEST_CASE("Test Track Exiting Mesh Brick")
 
   REQUIRE_THAT(length, Catch::Matchers::WithinAbs(10.0, 1e-6));
 }
+
+TEST_CASE("Test libMesh Measure Functions")
+{
+  // Testing using a simple cube mesh
+  {
+    std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
+    const auto& mesh_manager = xdg->mesh_manager();
+    mesh_manager->load_file("brick.exo");
+    mesh_manager->init();
+
+    auto bbox = mesh_manager->global_bounding_box();
+    REQUIRE_THAT(bbox.min_x, Catch::Matchers::WithinAbs(-5.0, 1e-6));
+    REQUIRE_THAT(bbox.min_y, Catch::Matchers::WithinAbs(-5.0, 1e-6));
+    REQUIRE_THAT(bbox.min_z, Catch::Matchers::WithinAbs(-5.0, 1e-6));
+    REQUIRE_THAT(bbox.max_x, Catch::Matchers::WithinAbs(5.0, 1e-6));
+    REQUIRE_THAT(bbox.max_y, Catch::Matchers::WithinAbs(5.0, 1e-6));
+    REQUIRE_THAT(bbox.max_z, Catch::Matchers::WithinAbs(5.0, 1e-6));
+
+    double exp_volume = bbox.width()[0] * bbox.width()[1] * bbox.width()[2];
+    double exp_area = 2.0 * (bbox.width()[0] * bbox.width()[1] +
+                            bbox.width()[1] * bbox.width()[2] +
+                            bbox.width()[0] * bbox.width()[2]);
+
+    // Measure the surface area of the cube
+    double total_surface_area = 0.0;
+    for (const auto surface : mesh_manager->surfaces()) {
+      double area = xdg->measure_surface_area(surface);
+      total_surface_area += area;
+    }
+    std::cout << "Total Surface Area: " << total_surface_area << ", Expected Surface Area: " << exp_area << std::endl;
+    REQUIRE_THAT(total_surface_area, Catch::Matchers::WithinAbs(exp_area, 1e-6));
+
+    // Measure the volume of the cube
+    MeshID volume = 1;
+    double total_volume = xdg->measure_volume(volume);
+    std::cout << "Total Volume: " << total_volume << ", Expected Volume: " << exp_volume << std::endl;
+    REQUIRE_THAT(total_volume, Catch::Matchers::WithinAbs(exp_volume, 1e-6));
+
+    // Measure the volume of the cube by summing element volumes
+    double sum_element_volumes = 0.0;
+    for (const auto element : mesh_manager->get_volume_elements(volume)) {
+      double elem_volume = mesh_manager->element_volume(element);
+      sum_element_volumes += elem_volume;
+    }
+    std::cout << "Sum of Element Volumes: " << sum_element_volumes << ", Expected Volume: " << exp_volume << std::endl;
+    REQUIRE_THAT(sum_element_volumes, Catch::Matchers::WithinAbs(exp_volume, 1e-6));
+  }
+
+  // Testing using a spherical volumetric mesh, jezebel
+  {
+    std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
+    const auto& mesh_manager = xdg->mesh_manager();
+    mesh_manager->load_file("jezebel.exo");
+    mesh_manager->init();
+
+    // Determine model radius based on the width of the bounding box
+    auto bbox = mesh_manager->global_bounding_box();
+    double model_radius = 0.5 * bbox.width()[0];
+
+    double exp_area = 4.0 * M_PI * std::pow(model_radius, 2);
+    double exp_volume = (4.0 / 3.0) * M_PI * std::pow(model_radius, 3);
+
+    // Measure the surface area of the sphere
+    double total_surface_area = 0.0;
+    for (const auto surface : mesh_manager->surfaces()) {
+      double area = xdg->measure_surface_area(surface);
+      total_surface_area += area;
+    }
+    std::cout << "Total Surface Area: " << total_surface_area << ", Expected Surface Area: " << exp_area << std::endl;
+    // high tolerance due to coarse mesh
+    REQUIRE_THAT(total_surface_area, Catch::Matchers::WithinAbs(exp_area, 1.0));
+
+    // Measure the volume of the sphere
+    MeshID volume = 1;
+    double total_volume = xdg->measure_volume(volume);
+    std::cout << "Total Volume: " << total_volume << ", Expected Volume: " << exp_volume << std::endl;
+    // high tolerance due to coarse mesh
+    REQUIRE_THAT(total_volume, Catch::Matchers::WithinAbs(exp_volume, 10.0));
+
+    // Measure the volume of the sphere by summing element volumes
+    double sum_element_volumes = 0.0;
+    for (const auto element : mesh_manager->get_volume_elements(volume)) {
+      double elem_volume = mesh_manager->element_volume(element);
+      sum_element_volumes += elem_volume;
+    }
+    std::cout << "Sum of Element Volumes: " << sum_element_volumes << ", Total Volume: " << total_volume << std::endl;
+    // these should match closely since we're summing element volumes that fill the surface mesh volume
+    REQUIRE_THAT(sum_element_volumes, Catch::Matchers::WithinAbs(total_volume, 1e-6));
+  }
+}
