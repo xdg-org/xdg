@@ -50,17 +50,46 @@ TEST_CASE("Test Mesh Mock Element Volume") {
   }
 }
 
-TEST_CASE("Test Area and Volume Cube Mesh") {
+TEST_CASE("Test Area and Volume Surface Mesh")
+{
+  // skip if backend not enabled at configuration time
+  check_mesh_library_supported(MeshLibrary::MOAB);
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("cube.h5m");
 
+  mesh_manager->init();
+  xdg->prepare_raytracer();
+
+  auto bbox = mesh_manager->global_bounding_box();
+  double model_length = bbox.width()[0];
+  double model_width = bbox.width()[1];
+  double model_height = bbox.width()[2];
+
+  double exp_area = 2.0 * (model_length * model_width +
+                           model_width * model_height +
+                           model_length * model_height);
+
+  for (const auto surface : mesh_manager->surfaces()) {
+    double area = xdg->measure_surface_area(surface);
+    std::cout << "Surface " << surface << " Area: " << area << ", Expected Area: " << exp_area / mesh_manager->num_surfaces() << std::endl;
+    REQUIRE_THAT(area, Catch::Matchers::WithinAbs(exp_area / mesh_manager->num_surfaces(), 1e-6));
+  }
+}
+
+TEST_CASE("Test Area and Volume Cube Mesh")
+{
   auto test_pair = GENERATE(
-    std::make_pair(MeshLibrary::MOAB, "cube.h5m"),
-    std::make_pair(MeshLibrary::LIBMESH, "brick.exo")
+    std::make_pair(MeshLibrary::MOAB, "cube-mesh-no-geom.h5m"),
+    std::make_pair(MeshLibrary::LIBMESH, "cube-mesh-no-geom.exo")
   );
 
   DYNAMIC_SECTION(fmt::format("Backend = {}, File = {}", test_pair.first, test_pair.second)) {
     MeshLibrary mesh_library = test_pair.first;
     std::string file = test_pair.second;
-    check_mesh_library_supported(mesh_library); // skip if backend not enabled at configuration time
+    // skip if backend not enabled at configuration time
+    check_mesh_library_supported(mesh_library);
     std::shared_ptr<XDG> xdg = XDG::create(mesh_library);
     REQUIRE(xdg->mesh_manager()->mesh_library() == mesh_library);
     const auto& mesh_manager = xdg->mesh_manager();
@@ -94,9 +123,6 @@ TEST_CASE("Test Area and Volume Cube Mesh") {
     std::cout << "Total Volume: " << total_volume << ", Expected Volume: " << exp_volume << std::endl;
     REQUIRE_THAT(total_volume, Catch::Matchers::WithinAbs(exp_volume, 1e-6));
 
-    // the MOAB mesh does not contain volumetric elements
-    if (mesh_library == MeshLibrary::MOAB) return;
-
     // Measure the volume of the cube by summing element volumes
     double sum_element_volumes = 0.0;
     for (const auto element : mesh_manager->get_volume_elements(volume)) {
@@ -119,7 +145,8 @@ TEST_CASE("Test Area and Volume Spherical Mesh") {
   DYNAMIC_SECTION(fmt::format("Backend = {}, File = {}", test_pair.first, test_pair.second)) {
     MeshLibrary mesh_library = test_pair.first;
     std::string file = test_pair.second;
-    check_mesh_library_supported(mesh_library); // skip if backend not enabled at configuration time
+    // skip if backend not enabled at configuration time
+    check_mesh_library_supported(mesh_library);
     std::shared_ptr<XDG> xdg = XDG::create(mesh_library);
     REQUIRE(xdg->mesh_manager()->mesh_library() == mesh_library);
     const auto& mesh_manager = xdg->mesh_manager();
