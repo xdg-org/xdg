@@ -77,7 +77,7 @@ TEST_CASE("Test BVH Build")
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
     auto rti = create_raytracer(rt_backend);
-
+    
     for (const auto& volume : mesh_manager->volumes()) {
       rti->register_volume(mesh_manager, volume);
     }
@@ -86,7 +86,7 @@ TEST_CASE("Test BVH Build")
 }
 
 
-TEST_CASE("Test Ray Fire MOAB (all built backends)", "[ray_tracer][moab]")
+TEST_CASE("Test Ray Fire MOAB (all built backends)", "[ray_tracer][moab]") 
 {
   // Generate one test run per enabled backend
   auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
@@ -140,7 +140,7 @@ TEST_CASE("MOAB Get Surface Mesh")
 {
   // Generate one test run per enabled backend
   auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
-
+  
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
     std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB, rt_backend);
@@ -243,7 +243,7 @@ TEST_CASE("TEST MOAB Find Element Method")
   auto rt_backend = GENERATE(RTLibrary::EMBREE); // TODO add GPRT once find element is implemented with GPRT
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
-    check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
+    check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time  
     std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB, RTLibrary::EMBREE);
     REQUIRE(xdg->ray_tracing_interface()->library() == RTLibrary::EMBREE);
     REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
@@ -279,4 +279,3 @@ TEST_CASE("TEST MOAB Find Element Method")
     }
   }
 }
-
