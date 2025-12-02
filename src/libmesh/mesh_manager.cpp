@@ -86,6 +86,15 @@ MeshID LibMeshManager::adjacent_element(MeshID element, int face) const {
   return neighbor->id();
 }
 
+double
+LibMeshManager::element_volume(MeshID element) const {
+  const auto elem_ptr = mesh()->elem_ptr(element);
+  if (!elem_ptr) {
+    fatal_error("Invalid element ID in element_volume");
+  }
+  return elem_ptr->volume();
+}
+
 MeshID LibMeshManager::create_volume() {
   MeshID next_volume_id = *std::max_element(volumes_.begin(), volumes_.end()) + 1;
   return next_volume_id;

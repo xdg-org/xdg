@@ -20,4 +20,9 @@ namespace xdg {
   {
     return 0.5 * (v1-v0).cross(v2-v0).length();
   }
+
+  double tetrahedron_volume(const std::array<Vertex, 4>& vertices)
+  {
+    return std::abs(((vertices[1] - vertices[0]).cross(vertices[2] - vertices[0])).dot(vertices[3] - vertices[0])) / 6.0;
+  }
 }

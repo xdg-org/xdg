@@ -9,6 +9,7 @@
 #include "xdg/element_face_accessor.h"
 #include "xdg/geometry/plucker.h"
 #include "xdg/geometry/face_common.h"
+#include "xdg/geometry/measure.h"
 #include "xdg/moab/tag_conventions.h"
 #include "xdg/util/str_utils.h"
 #include "xdg/vec3da.h"
@@ -430,6 +431,15 @@ MOABMeshManager::adjacent_element(MeshID element, int face) const
   moab::EntityHandle next_element = this->mb_direct()->get_adjacent_element(element_handle, face);
   if (next_element == ID_NONE) return ID_NONE;
   return this->moab_interface()->id_from_handle(next_element);
+}
+
+double
+MOABMeshManager::element_volume(MeshID element) const
+{
+  moab::EntityHandle element_handle;
+  this->moab_interface()->handle_from_id(moab::MBTET, element, element_handle);
+  std::array<xdg::Vertex, 4> verts = this->mb_direct()->get_element_coords(element_handle);
+  return tetrahedron_volume(verts);
 }
 
 void

@@ -9,7 +9,7 @@
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/element_face_accessor.h"
 
-
+#include "xdg/geometry/measure.h"
 #include "xdg/geometry/plucker.h"
 
 using namespace xdg;
@@ -210,6 +210,17 @@ public:
 
   virtual MeshID adjacent_element(MeshID element, int face) const override {
     return element_adjacencies_.at(element)[face];
+  }
+
+    virtual double element_volume(MeshID element) const override {
+    const auto& conn = tetrahedron_connectivity()[element];
+    std::array<Vertex, 4> verts = {
+      vertices()[conn[0]],
+      vertices()[conn[1]],
+      vertices()[conn[2]],
+      vertices()[conn[3]]
+    };
+    return tetrahedron_volume(verts);
   }
 
   // Other

@@ -99,6 +99,11 @@ public:
   //! \return The ID of the adjacent element, or ID_NONE if the face is on a boundary
   virtual MeshID adjacent_element(MeshID element, int face) const = 0;
 
+  //! \brief Get the volume of a given element
+  //! \param element The element ID
+  //! \return The volume of the element
+  virtual double element_volume(MeshID element) const = 0;
+
   BoundingBox element_bounding_box(MeshID element) const;
 
   BoundingBox face_bounding_box(MeshID element) const;
