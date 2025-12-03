@@ -24,7 +24,7 @@ constexpr double INFTY {std::numeric_limits<double>::max()};
   constexpr double INFTYF {std::numeric_limits<float>::max()};
 #endif
 
-constexpr double DILATION_FACTOR {std::pow(10, -std::numeric_limits<float>::digits10)};
+inline const double DILATION_FACTOR {std::pow(10, -std::numeric_limits<float>::digits10)};
 
 // TODO : Consider this as an option for managing missed hits?
 constexpr double PLUCKER_ZERO_TOL {20 * std::numeric_limits<double>::epsilon()};
