@@ -8,4 +8,5 @@ struct GenerateRandomRayParams {
     double3 origin; // single origin provided for benchmark case
     uint seed; // seed for random direction generation
     uint total_threads;
+    double source_radius; // 0.0 = point volume, >0.0 = spherical cloud
 };

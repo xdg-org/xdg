@@ -43,6 +43,20 @@ inline Direction random_unit_dir_lcg(uint32_t &state)
   return { x1 * t, x2 * t, 1.0 - 2.0 * s };
 }
 
+// Generates a random point cloud with radius (--source-radius) 
+inline std::pair<Position,Direction> random_spherical_source(const Position& origin, std::uint32_t state, double source_radius)
+{
+  // Always generate random direction
+  Direction dir = random_unit_dir_lcg(state);
+  Position pos = origin;
+  if (source_radius > 0.0) {
+    // random origins (spherical source)
+    double r = source_radius * std::cbrt(rand01(state)); // uniform in ball
+    pos += dir * r;
+  } 
+  return {pos, dir};
+}
+
 int main(int argc, char** argv) {
 
   argparse::ArgumentParser args("XDG Ray Tracing throughput benchmarking tool", "1.0", argparse::default_arguments::help);
@@ -145,7 +159,6 @@ int main(int argc, char** argv) {
 
   MeshID volume = args.get<int>("volume");
   xdg->prepare_raytracer();
-  xdg->prepare_volume_for_raytracing(volume);
   auto rti = xdg->ray_tracing_interface();
 
   setup_timer.stop();
@@ -193,10 +206,11 @@ int main(int argc, char** argv) {
     const int groups       = std::min(neededGroups, WORKGROUP_LIMIT);
 
     GenerateRandomRayParams randomRayParams = {};
-    randomRayParams.rays          = rayHitBuffers.rayDevPtr; // xdg::dblRay* on device
-    randomRayParams.numRays       = (uint32_t)N;
-    randomRayParams.origin        = { origin.x, origin.y, origin.z };
-    randomRayParams.seed          = seed;
+    randomRayParams.rays = rayHitBuffers.rayDevPtr; // xdg::dblRay* on device
+    randomRayParams.numRays = (uint32_t)N;
+    randomRayParams.source_radius = source_radius;
+    randomRayParams.origin = { origin.x, origin.y, origin.z };
+    randomRayParams.seed = seed;
     randomRayParams.total_threads = (uint32_t)(groups * threadsPerGroup);
 
     gprtComputeLaunch(genRandomRays,
@@ -223,21 +237,11 @@ int main(int argc, char** argv) {
     std::vector<Position> origins(N);
 
     #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < N; ++i) {
-      // Always generate random directions
+    for (uint32_t i = 0; i < N; ++i) {
       uint32_t state = seed ^ i;
-      directions[i] = random_unit_dir_lcg(state);
-      if (source_radius > 0.0) {
-
-        // random origins (spherical source)
-        double r = source_radius * std::cbrt(rand01(state)); // uniform in ball
-        double dx = directions[i].x * r;
-        double dy = directions[i].y * r;
-        double dz = directions[i].z * r;
-        origins[i] = {origin.x + dx, origin.y + dy, origin.z + dz};
-      } else {
-        origins[i] = origin;
-      }
+      auto [pos,dir] = random_spherical_source(origin, state, source_radius);
+      origins[i] = pos;
+      directions[i] = dir;
     }
     gen_timer.stop();
 
@@ -287,24 +291,3 @@ int main(int argc, char** argv) {
   std::cout << "---------------------------------------- \n" << std::endl;
   return 0;
 }
-
-// Generates a random point cloud with radius (--source-radius) 
-// std::pair<Origin,Direction> point_source(std::size_t N, std::uint32_t seed)
-// {
-//   // Always generate random directions
-//   uint32_t state = seed ^ i;
-//   directions[i] = random_unit_dir_lcg(state);
-//   if (source_radius > 0.0) {
-
-//     // random origins (spherical source)
-//     double r = source_radius * std::cbrt(rand01(state)); // uniform in ball
-//     double dx = directions[i].x * r;
-//     double dy = directions[i].y * r;
-//     double dz = directions[i].z * r;
-//     origins[i] = {origin.x + dx, origin.y + dy, origin.z + dz};
-//   } else {
-//     origins[i] = origin;
-//   }
-//
-//   return {origin, direction};
-// }

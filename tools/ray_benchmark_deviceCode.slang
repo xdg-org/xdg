@@ -1,24 +1,36 @@
 #include "ray_benchmark_shared.h"
 
-/* 
+/*
 For this simple benchmark case we are mocking what a downstream application would do in terms of populating
 ray buffers. The idea is that the downstream application generates rays (origins + directions).
 */
 [shader("compute")]
 [numthreads(64, 1, 1)]
-void generate_random_rays(uint3 DispatchThreadID: SV_DispatchThreadID, uniform GenerateRandomRayParams params) {
-    uint globalThreadID = DispatchThreadID.x;
-    uint stride = params.total_threads;
-    uint nRays  = params.numRays;
+void generate_random_rays(uint3 DispatchThreadID: SV_DispatchThreadID,
+                          uniform GenerateRandomRayParams params)
+{
+  uint globalThreadID = DispatchThreadID.x;
+  uint stride = params.total_threads;
+  uint nRays = params.numRays;
 
-    for (uint idx = globalThreadID; idx < nRays; idx += stride)
+  for (uint idx = globalThreadID; idx < nRays; idx += stride)
     {
-        uint state = params.seed ^ idx;
-        params.rays[idx].direction = random_unit_dir(state);
-        params.rays[idx].origin = params.origin;
-        params.rays[idx].exclude_primitives = nullptr;
-        params.rays[idx].exclude_count = 0;
+    uint state = params.seed ^ idx;
+
+    double3 dir = random_unit_dir_lcg(state);
+
+    double3 pos = params.origin;
+    if (params.source_radius > 0.0) {
+      double u = float(rand01(state));
+      float r = float(params.source_radius) * pow(float(u), 1.0f / 3.0f);   // cbrt(u)
+      pos += dir * double(r);
     }
+
+    params.rays[idx].origin = pos;
+    params.rays[idx].direction = dir;
+    params.rays[idx].exclude_primitives = nullptr;
+    params.rays[idx].exclude_count = 0;
+  }
 }
 
 // Helpers 
@@ -31,7 +43,7 @@ double rand01(inout uint state)
 }
 
 // return random unit dir
-double3 random_unit_dir(inout uint state)
+double3 random_unit_dir_lcg(inout uint state)
 {
     double x1, x2, s;
     do {
