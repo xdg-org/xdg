@@ -19,6 +19,8 @@
 #include "gprt/gprt.h"
 #include "ray_benchmark_shared.h"
 
+#include <omp.h>
+
 using namespace xdg;
 extern GPRTProgram ray_benchmark_deviceCode;
 
@@ -39,14 +41,6 @@ inline Direction random_unit_dir_lcg(uint32_t &state)
 
   double t = 2.0 * std::sqrt(1.0 - s);
   return { x1 * t, x2 * t, 1.0 - 2.0 * s };
-}
-
-inline void generate_dirs(std::vector<Direction> &out, uint32_t seed)
-{
-  for (uint32_t i = 0; i < out.size(); ++i) {
-    uint32_t state = seed ^ i;
-    out[i] = random_unit_dir_lcg(state);
-  }
 }
 
 int main(int argc, char** argv) {
@@ -158,6 +152,11 @@ int main(int argc, char** argv) {
   std::cout << "Volume ID: " << volume << " with: "
             << mm->num_volume_faces(volume) << " faces" << std::endl;
 
+
+  if (rt_lib == RTLibrary::EMBREE) {
+    int num_threads = omp_get_max_threads(); 
+    rt_str += " (" + std::to_string(num_threads) + " CPU threads)";
+  }
   std::cout << "Starting ray fire benchmark with " << N << " rays"
             << " using " << rt_str << ": \n" << std::endl;
 
@@ -215,16 +214,23 @@ int main(int argc, char** argv) {
     // ---- Random ray generation on host ----
     gen_timer.start();
     std::vector<Direction> directions(N);
-    generate_dirs(directions, seed);
+
+    #pragma omp parallel for schedule(static)
+    for (std::size_t i = 0; i < N; ++i)
+    {
+      uint32_t state = seed ^ i;
+      directions[i] = random_unit_dir_lcg(state);
+    }
     gen_timer.stop();
+
     std::cout << "Random ray generation Time = "
               << gen_timer.elapsed() << "s" << std::endl;
 
     // ---- Ray tracing on host ----
     trace_timer.start();
+    #pragma omp parallel for schedule(static)
     for (std::size_t i = 0; i < N; ++i) {
       auto result = xdg->ray_fire(volume, origin, directions[i]);
-      (void)result; // suppress unused warning
     }
     trace_timer.stop();
   }
