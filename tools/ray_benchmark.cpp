@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
     .help("Mesh library to use. One of (MOAB, LIBMESH)")
     .default_value("MOAB");
 
-  args.add_argument("-r", "--rt-library")
+  args.add_argument("-rt", "--rt-library")
     .help("Ray tracing library to use. One of (EMBREE, GPRT)")
     .default_value("EMBREE");
 
@@ -81,6 +81,11 @@ int main(int argc, char** argv) {
     .default_value(false)
     .implicit_value(true)
     .help("List all volumes in the file and exit");
+
+  args.add_argument("-sr", "--source-radius")
+  .default_value(0.0)
+  .help("Radius of a scattered source blob around the origin (0.0 = point source)")
+  .scan<'g', double>();
 
   args.add_description(
     "This tool supports can be used to benchmark XDG ray tracing throughput on a given mesh against"
@@ -148,6 +153,7 @@ int main(int argc, char** argv) {
   std::size_t N = args.get<uint32_t>("--num-rays");
   uint32_t seed = args.get<uint32_t>("--seed");
   Position origin = args.get<std::vector<double>>("--origin");
+  double source_radius = args.get<double>("--source-radius");
 
   std::cout << "Volume ID: " << volume << " with: "
             << mm->num_volume_faces(volume) << " faces" << std::endl;
@@ -214,12 +220,24 @@ int main(int argc, char** argv) {
     // ---- Random ray generation on host ----
     gen_timer.start();
     std::vector<Direction> directions(N);
+    std::vector<Position> origins(N);
 
     #pragma omp parallel for schedule(static)
-    for (std::size_t i = 0; i < N; ++i)
-    {
+    for (std::size_t i = 0; i < N; ++i) {
+      // Always generate random directions
       uint32_t state = seed ^ i;
       directions[i] = random_unit_dir_lcg(state);
+      if (source_radius > 0.0) {
+
+        // random origins (spherical source)
+        double r = source_radius * std::cbrt(rand01(state)); // uniform in ball
+        double dx = directions[i].x * r;
+        double dy = directions[i].y * r;
+        double dz = directions[i].z * r;
+        origins[i] = {origin.x + dx, origin.y + dy, origin.z + dz};
+      } else {
+        origins[i] = origin;
+      }
     }
     gen_timer.stop();
 
@@ -230,7 +248,7 @@ int main(int argc, char** argv) {
     trace_timer.start();
     #pragma omp parallel for schedule(static)
     for (std::size_t i = 0; i < N; ++i) {
-      auto result = xdg->ray_fire(volume, origin, directions[i]);
+      auto result = xdg->ray_fire(volume, origins[i], directions[i]);
     }
     trace_timer.stop();
   }
@@ -269,3 +287,24 @@ int main(int argc, char** argv) {
   std::cout << "---------------------------------------- \n" << std::endl;
   return 0;
 }
+
+// Generates a random point cloud with radius (--source-radius) 
+// std::pair<Origin,Direction> point_source(std::size_t N, std::uint32_t seed)
+// {
+//   // Always generate random directions
+//   uint32_t state = seed ^ i;
+//   directions[i] = random_unit_dir_lcg(state);
+//   if (source_radius > 0.0) {
+
+//     // random origins (spherical source)
+//     double r = source_radius * std::cbrt(rand01(state)); // uniform in ball
+//     double dx = directions[i].x * r;
+//     double dy = directions[i].y * r;
+//     double dz = directions[i].z * r;
+//     origins[i] = {origin.x + dx, origin.y + dy, origin.z + dz};
+//   } else {
+//     origins[i] = origin;
+//   }
+//
+//   return {origin, direction};
+// }
