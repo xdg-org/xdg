@@ -123,6 +123,18 @@ public:
 
   double element_volume(MeshID element) const override;
 
+    inline MeshID element_id(size_t element_idx) const override {
+    // libMesh element IDs start at zero and , under normal circumstances,
+    // are contiguous, so we can just return the index as the ID
+    return element_idx;
+  }
+
+  inline int element_index(MeshID element) const override {
+    // libMesh element IDs start at zero and , under normal circumstances,
+    // are contiguous, so we can just return the ID as the index
+    return element;
+  }
+
   MeshID create_volume() override;
 
   void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override;

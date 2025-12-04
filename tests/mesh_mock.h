@@ -223,6 +223,14 @@ public:
     return tetrahedron_volume(verts);
   }
 
+  inline int element_index(MeshID element) const override {
+    return element;
+  }
+
+  inline MeshID element_id(size_t element_idx) const override {
+    return static_cast<MeshID>(element_idx);
+  }
+
   // Other
   virtual MeshLibrary mesh_library() const override { return MeshLibrary::MOCK; }
 

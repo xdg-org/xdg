@@ -80,6 +80,20 @@ public:
 
   double element_volume(MeshID element) const override;
 
+  inline MeshID element_id(size_t element_idx) const override {
+    // MOAB element IDs start at one and may not be contiguous,
+    // so we need to map from index to ID
+    return tag_data<MeshID>(global_id_tag_, mb_direct()->element_handle(element_idx));
+  }
+
+  inline int element_index(MeshID element) const override {
+    // MOAB element IDs start at one and may not be contiguous,
+    // so we need to map from ID to index
+    moab::EntityHandle element_handle;
+    moab_interface()->handle_from_id(moab::MBTET, element, element_handle);
+    return mb_direct()->element_index(element_handle);
+  }
+
   // Topology
   std::pair<MeshID, MeshID> surface_senses(MeshID surface) const override;
 
