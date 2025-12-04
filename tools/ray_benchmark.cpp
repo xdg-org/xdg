@@ -159,6 +159,7 @@ int main(int argc, char** argv) {
 
   MeshID volume = args.get<int>("volume");
   xdg->prepare_raytracer();
+  xdg->prepare_volume_for_raytracing(volume);
   auto rti = xdg->ray_tracing_interface();
 
   setup_timer.stop();
