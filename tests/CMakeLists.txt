@@ -1,5 +1,3 @@
-
-
 set(
 TEST_NAMES
 test_bbox
@@ -42,10 +40,12 @@ endif()
 foreach(test ${TEST_NAMES})
     add_executable(${test} ${test}.cpp)
     target_link_libraries(${test} xdg Catch2::Catch2WithMain)
-    add_test(NAME ${test}
-             COMMAND ${test} --allow-running-no-tests
-             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    catch_discover_tests(${test}
+        PROPERTIES
+        SKIP_RETURN_CODE 4
+    )
 endforeach()
+
 
 set(
 TEST_FILES

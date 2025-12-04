@@ -1,4 +1,5 @@
 #include <random>
+#include <type_traits>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -6,6 +7,16 @@
 #include "xdg/ray_tracers.h"
 #include "xdg/mesh_managers.h"
 #include "vulkan_probe.h"
+
+namespace xdg::test {
+
+using MOAB_Interface = std::integral_constant<MeshLibrary, MeshLibrary::MOAB>;
+using LibMesh_Interface = std::integral_constant<MeshLibrary, MeshLibrary::LIBMESH>;
+
+using Embree_Raytracer = std::integral_constant<RTLibrary, RTLibrary::EMBREE>;
+using GPRT_Raytracer = std::integral_constant<RTLibrary, RTLibrary::GPRT>;
+
+} // namespace xdg::test
 
 // Library availability checks
 
@@ -54,6 +65,8 @@ create_mesh_manager(xdg::MeshLibrary mesh) {
   if (mesh == xdg::MeshLibrary::LIBMESH)
     return std::make_unique<xdg::LibMeshManager>();
   #endif
+
+  return nullptr;
 }
 
 inline std::shared_ptr<xdg::RayTracer>
@@ -67,4 +80,6 @@ create_raytracer(xdg::RTLibrary rt) {
   if (rt == xdg::RTLibrary::GPRT)
     return std::make_shared<xdg::GPRTRayTracer>();
   #endif
+
+  return nullptr;
 }
