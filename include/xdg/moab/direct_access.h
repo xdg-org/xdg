@@ -45,6 +45,39 @@ public:
     return true;
   }
 
+  //! \brief Determine the index of an element in the managed data
+  inline size_t element_index(EntityHandle element) {
+    size_t element_index = 0;
+    auto fe = element_data_.first_elements.begin();
+    while(true) {
+      if (element - fe->first < fe->second) { break; }
+      element_index += fe->second;
+      fe++;
+      if (fe == element_data_.first_elements.end()) {
+        throw std::runtime_error("Element not found in MBDirectAccess::element_index");
+      }
+    }
+    element_index += element - fe->first;
+    return element_index;
+  }
+
+  //! \brief Determine the element handle of an element based on its index in
+  //! the managed data
+  inline EntityHandle element_handle(size_t index) {
+    size_t running_index = 0;
+    auto fe = element_data_.first_elements.begin();
+    while(true) {
+      if (index < running_index + fe->second) {
+        return fe->first + (index - running_index);
+      }
+      running_index += fe->second;
+      fe++;
+      if (fe == element_data_.first_elements.end()) {
+        throw std::runtime_error("Index out of range in MBDirectAccess::element_handle");
+      }
+    }
+  }
+
   //! \brief Get the coordinates of a triangle as XDG Vertices
   inline std::array<xdg::Vertex, 3> get_mb_coords(const EntityHandle& tri) {
     auto [i0, i1, i2] = face_data_.get_connectivity_indices<3>(tri);
@@ -88,12 +121,10 @@ public:
 private:
   Interface* mbi {nullptr}; //!< MOAB instance for the managed data
 
-
   struct AdjacencyData {
     EntityType entity_type {MBTET}; //!< Type of entity stored in this manager
     int num_entities {-1}; //!< Number of elements in the manager
     std::unordered_map<EntityHandle, std::vector<EntityHandle>> adj_info_;
-
 
     void setup(Interface* mbi) {
       ErrorCode rval;

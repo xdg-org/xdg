@@ -93,6 +93,16 @@ public:
 
   virtual SurfaceElementType get_surface_element_type(MeshID element) const = 0;
 
+  //! \brief Convert an element's ID to its index in the mesh
+  //! \param element_idx The index of the element in the mesh
+  //! \return The element ID
+  virtual MeshID element_id(size_t element_idx) const = 0;
+
+  //! \brief Convert an element's index in the mesh to its ID
+  //! \param element The element ID
+  //! \return The index of the element in the mesh
+  virtual int element_index(MeshID element) const = 0;
+
   //! \brief Get the adjacent element across a given face
   //! \param element The current element ID
   //! \param face The local face index (0-3 for tetrahedra)
