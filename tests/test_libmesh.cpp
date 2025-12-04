@@ -370,3 +370,21 @@ TEST_CASE("Test Track Exiting Mesh Brick")
 
   REQUIRE_THAT(length, Catch::Matchers::WithinAbs(10.0, 1e-6));
 }
+
+TEST_CASE("LibMesh Element ID and Index Mapping")
+{
+  std::unique_ptr<MeshManager> mesh_manager  {std::make_unique<LibMeshManager>()};
+  REQUIRE(mesh_manager->mesh_library() == MeshLibrary::LIBMESH);
+  mesh_manager->load_file("jezebel.exo");
+  mesh_manager->init();
+  REQUIRE(mesh_manager->num_volume_elements() == 10333);
+
+
+  size_t num_elements = mesh_manager->num_volume_elements();
+  for (size_t i = 0; i < num_elements; i++) {
+    MeshID element_id = mesh_manager->element_id(i);
+    int element_index = mesh_manager->element_index(element_id);
+    // libMesh element IDs are the same as their indices in this case
+    REQUIRE(element_index == static_cast<int>(i));
+  }
+}

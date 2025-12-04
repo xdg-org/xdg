@@ -89,7 +89,9 @@ public:
   inline int element_index(MeshID element) const override {
     // MOAB element IDs start at one and may not be contiguous,
     // so we need to map from ID to index
-    return mb_direct()->element_index(element);
+    moab::EntityHandle element_handle;
+    moab_interface()->handle_from_id(moab::MBTET, element, element_handle);
+    return mb_direct()->element_index(element_handle);
   }
 
   // Topology
