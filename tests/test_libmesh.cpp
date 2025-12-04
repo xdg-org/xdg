@@ -379,12 +379,11 @@ TEST_CASE("LibMesh Element ID and Index Mapping")
   mesh_manager->init();
   REQUIRE(mesh_manager->num_volume_elements() == 10333);
 
-
   size_t num_elements = mesh_manager->num_volume_elements();
   for (size_t i = 0; i < num_elements; i++) {
     MeshID element_id = mesh_manager->element_id(i);
     int element_index = mesh_manager->element_index(element_id);
-    // libMesh element IDs are the same as their indices in this case
+    // libMesh element IDs are the same as their indices
     REQUIRE(element_index == static_cast<int>(i));
   }
 }
