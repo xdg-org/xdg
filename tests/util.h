@@ -1,5 +1,6 @@
 #include <random>
 #include <type_traits>
+#include <utility>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -10,6 +11,12 @@
 
 namespace xdg::test {
 
+// template<MeshLibrary Mesh>
+// using MeshBackend = std::integral_constant<MeshLibrary, Mesh>;
+
+// template<RTLibrary Tracer>
+// using RayTracingBackend = std::integral_constant<RTLibrary, Tracer>;
+
 using MOAB_Interface = std::integral_constant<MeshLibrary, MeshLibrary::MOAB>;
 using LibMesh_Interface = std::integral_constant<MeshLibrary, MeshLibrary::LIBMESH>;
 
@@ -17,6 +24,18 @@ using Embree_Raytracer = std::integral_constant<RTLibrary, RTLibrary::EMBREE>;
 using GPRT_Raytracer = std::integral_constant<RTLibrary, RTLibrary::GPRT>;
 
 } // namespace xdg::test
+
+namespace Catch {
+
+template<typename MeshTag, typename RayTag>
+struct StringMaker<std::pair<MeshTag, RayTag>> {
+  static std::string convert(std::pair<MeshTag, RayTag>) {
+    return fmt::format("{}/{}", xdg::MESH_LIB_TO_STR.at(MeshTag::value),
+                       xdg::RT_LIB_TO_STR.at(RayTag::value));
+  }
+};
+
+} // namespace Catch
 
 // Library availability checks
 

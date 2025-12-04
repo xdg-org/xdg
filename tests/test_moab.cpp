@@ -3,9 +3,9 @@
 #include <numeric>
 
 // testing includes
+#include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include <catch2/generators/catch_generators.hpp>
 
 // xdg includes
 #include "xdg/error.h"
@@ -15,6 +15,7 @@
 #include "util.h"
 
 using namespace xdg;
+using namespace xdg::test;
 
 TEST_CASE("Test MOAB Initialization")
 {
@@ -60,7 +61,9 @@ TEST_CASE("Test MOAB Initialization")
   }
 }
 
-TEST_CASE("Test BVH Build")
+TEMPLATE_TEST_CASE("Test BVH Build", "[moab][bvh]",
+                   Embree_Raytracer,
+                   GPRT_Raytracer)
 {
   std::shared_ptr<MeshManager> mesh_manager = std::make_shared<MOABMeshManager>();
 
@@ -70,26 +73,25 @@ TEST_CASE("Test BVH Build")
   REQUIRE(mesh_manager->num_volumes() == 2);
   REQUIRE(mesh_manager->num_surfaces() == 6);
 
-  // Generate one test run per enabled backend
-  auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
+  constexpr auto rt_backend = TestType::value;
 
-  // Actual testing logic
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
     auto rti = create_raytracer(rt_backend);
-    
+
     for (const auto& volume : mesh_manager->volumes()) {
       rti->register_volume(mesh_manager, volume);
     }
-      REQUIRE(rti->num_registered_trees() == 2);
-    }
+    REQUIRE(rti->num_registered_trees() == 2);
+  }
 }
 
 
-TEST_CASE("Test Ray Fire MOAB (all built backends)", "[ray_tracer][moab]") 
+TEMPLATE_TEST_CASE("Test Ray Fire MOAB (all built backends)", "[ray_tracer][moab]",
+                   Embree_Raytracer,
+                   GPRT_Raytracer) 
 {
-  // Generate one test run per enabled backend
-  auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
+  constexpr auto rt_backend = TestType::value;
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
@@ -136,11 +138,12 @@ TEST_CASE("MOAB Element Types")
   }
 }
 
-TEST_CASE("MOAB Get Surface Mesh")
+TEMPLATE_TEST_CASE("MOAB Get Surface Mesh", "[moab][surface]",
+                   Embree_Raytracer,
+                   GPRT_Raytracer)
 {
-  // Generate one test run per enabled backend
-  auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
-  
+  constexpr auto rt_backend = TestType::value;
+
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
     std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB, rt_backend);
@@ -237,23 +240,23 @@ TEST_CASE("MOAB Get Surface Mesh")
   }
 }
 
-TEST_CASE("TEST MOAB Find Element Method")
+TEMPLATE_TEST_CASE("TEST MOAB Find Element Method", "[moab][elements]",
+                   Embree_Raytracer)
 {
-  // Generate one test run per enabled backend
-  auto rt_backend = GENERATE(RTLibrary::EMBREE); // TODO add GPRT once find element is implemented with GPRT
+  constexpr auto rt_backend = TestType::value;
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
-    check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time  
-    std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB, RTLibrary::EMBREE);
-    REQUIRE(xdg->ray_tracing_interface()->library() == RTLibrary::EMBREE);
+    check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
+    std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB, rt_backend);
+    REQUIRE(xdg->ray_tracing_interface()->library() == rt_backend);
     REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
     const auto& mesh_manager = xdg->mesh_manager();
     mesh_manager->load_file("jezebel.h5m");
     mesh_manager->init();
     xdg->prepare_raytracer();
 
-  MeshID volume = 1;
-  REQUIRE(mesh_manager->num_volume_elements(1) == 10333);
+    MeshID volume = 1;
+    REQUIRE(mesh_manager->num_volume_elements(1) == 10333);
 
     MeshID element = xdg->find_element(volume, {0.0, 0.0, 100.0});
     REQUIRE(element == ID_NONE); // should not find an element since the point is outside the volume
