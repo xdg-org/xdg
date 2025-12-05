@@ -1,6 +1,6 @@
 // for testing
+#include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators.hpp>
 
 
 // xdg includes
@@ -10,13 +10,15 @@
 #include "mesh_mock.h"
 
 using namespace xdg;
+using namespace xdg::test;
 
 // ---------- single test, sections per backend --------------------------------
 
-TEST_CASE("Point-in-volume on MeshMock", "[piv][mock]") 
+TEMPLATE_TEST_CASE("Point-in-volume on MeshMock", "[piv][mock]",
+                   Embree_Raytracer,
+                   GPRT_Raytracer) 
 {
-  // Generate one test run per enabled backend
-  auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
+  constexpr auto rt_backend = TestType::value;
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time

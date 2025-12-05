@@ -76,6 +76,7 @@ if (XDG_BUILD_TESTS)
     add_subdirectory("vendor/catch2")
   endif()
   include(CTest)
+  include(Catch)
 endif()
 
 

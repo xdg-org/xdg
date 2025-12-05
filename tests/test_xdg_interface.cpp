@@ -1,6 +1,7 @@
 #include <memory>
+#include <utility>
+#include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <catch2/generators/catch_generators.hpp>
 
 // xdg includes
 #include "xdg/mesh_managers.h"
@@ -9,6 +10,7 @@
 #include "util.h"
 
 using namespace xdg;
+using namespace xdg::test;
 
 TEST_CASE("XDG Interface") {
   std::shared_ptr<XDG> xdg = std::make_shared<XDG>();
@@ -16,11 +18,16 @@ TEST_CASE("XDG Interface") {
   REQUIRE(xdg->mesh_manager() == nullptr);
 }
 
-TEST_CASE("XDG Factory Creation") {
-  // Create xdg instances using the factory method
-
-  auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
-  auto mesh_backend = GENERATE(MeshLibrary::MOAB, MeshLibrary::LIBMESH);
+TEMPLATE_PRODUCT_TEST_CASE("XDG Factory Creation", "[xdg][factory]",
+                           (std::pair),
+                           ((MOAB_Interface, Embree_Raytracer),
+                            (MOAB_Interface, GPRT_Raytracer),
+                            (LibMesh_Interface, Embree_Raytracer),
+                            (LibMesh_Interface, GPRT_Raytracer))) {
+  using MeshTag = typename TestType::first_type;
+  using RayTag = typename TestType::second_type;
+  constexpr auto mesh_backend = MeshTag::value;
+  constexpr auto rt_backend = RayTag::value;
 
   DYNAMIC_SECTION(fmt::format("Mesh Backend = {}, RT Backend = {}", mesh_backend, rt_backend)) {
     check_mesh_library_supported(mesh_backend); // skip if mesh backend not enabled at configuration time
@@ -64,10 +71,16 @@ TEST_CASE("XDG Factory Creation") {
   }
 }
 
-TEST_CASE("XDG Constructor") {
-
-  auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
-  auto mesh_backend = GENERATE(MeshLibrary::MOAB, MeshLibrary::LIBMESH);
+TEMPLATE_PRODUCT_TEST_CASE("XDG Constructor", "[xdg][constructor]",
+                           (std::pair),
+                           ((MOAB_Interface, Embree_Raytracer),
+                            (MOAB_Interface, GPRT_Raytracer),
+                            (LibMesh_Interface, Embree_Raytracer),
+                            (LibMesh_Interface, GPRT_Raytracer))) {
+  using MeshTag = typename TestType::first_type;
+  using RayTag = typename TestType::second_type;
+  constexpr auto mesh_backend = MeshTag::value;
+  constexpr auto rt_backend = RayTag::value;
 
   DYNAMIC_SECTION(fmt::format("Mesh Backend = {}, RT Backend = {}", mesh_backend, rt_backend)) {
     check_mesh_library_supported(mesh_backend); // skip if mesh backend not enabled at configuration time
