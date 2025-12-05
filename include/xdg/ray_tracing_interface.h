@@ -11,13 +11,23 @@
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/primitive_ref.h"
 #include "xdg/geometry_data.h"
-#include "xdg/gprt/ray.h"
-
 
 namespace xdg
 {
 
-struct DeviceRayHitBuffers; // forward declaration
+struct dblRay; // forward declaration
+struct dblHit; // forward declaration
+struct DeviceRayHitBuffers {
+  dblRay* rayDevPtr; // device pointer to ray buffers
+  dblHit* hitDevPtr; // device pointer to hit buffers
+  uint capacity = 0;
+  
+  // TODO - Renable once I figure out a way to make this slang safe 
+  // bool valid() 
+  // {
+  //   return (rays != 0) && (hits != 0) && (capacity > 0);
+  // }
+};
 
 class RayTracer {
 public:

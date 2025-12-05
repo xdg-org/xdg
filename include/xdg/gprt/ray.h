@@ -23,18 +23,6 @@ struct dblHit
 };
 
 // TODO - Move this to its own header
-struct DeviceRayHitBuffers {
-  dblRay* rayDevPtr; // device pointer to ray buffers
-  dblHit* hitDevPtr; // device pointer to hit buffers
-  uint capacity = 0;
-  
-  // TODO - Renable once I figure out a way to make this slang safe 
-  // bool valid() 
-  // {
-  //   return (rays != 0) && (hits != 0) && (capacity > 0);
-  // }
-};
-
 
 }
 
