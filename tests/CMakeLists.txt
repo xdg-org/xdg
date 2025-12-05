@@ -45,7 +45,7 @@ foreach(test ${TEST_NAMES})
     catch_discover_tests(${test}
         PROPERTIES
         SKIP_RETURN_CODE 4
-    )
+        TEST_PREFIX "${test}::")
 endforeach()
 
 
