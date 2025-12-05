@@ -110,6 +110,17 @@ bool XDG::point_in_volume(MeshID volume,
   return ray_tracing_interface()->point_in_volume(tree, point, direction, exclude_primitives);
 }
 
+void XDG::point_in_volume(MeshID volume,
+                                   const Position* points,
+                                   const size_t num_points,
+                                   uint8_t* results,
+                                   const Direction* directions,
+                                   std::vector<MeshID>* exclude_primitives) const
+{
+  TreeID tree = volume_to_surface_tree_map_.at(volume);
+  ray_tracing_interface()->point_in_volume(tree, points, num_points, results, directions, exclude_primitives);
+}
+
 MeshID XDG::find_volume(const Position& point,
                                                    const Direction& direction) const
 {
@@ -235,8 +246,34 @@ XDG::ray_fire(MeshID volume,
               HitOrientation orientation,
               std::vector<MeshID>* const exclude_primitives) const
 {
-  TreeID scene = volume_to_surface_tree_map_.at(volume);
-  return ray_tracing_interface()->ray_fire(scene, origin, direction, dist_limit, orientation, exclude_primitives);
+  TreeID tree = volume_to_surface_tree_map_.at(volume);
+  return ray_tracing_interface()->ray_fire(tree, origin, direction, dist_limit, orientation, exclude_primitives);
+}
+
+// Array version of ray_fire
+void 
+XDG::ray_fire(MeshID volume,
+              const Position* origins,
+              const Direction* directions,
+              const size_t num_rays,
+              double* hitDistances,
+              MeshID* surfaceIDs,
+              const double dist_limit,
+              HitOrientation orientation,
+              std::vector<MeshID>* const exclude_primitives)
+{
+  TreeID tree = volume_to_surface_tree_map_.at(volume);
+  return ray_tracing_interface()->ray_fire(tree, origins, directions, num_rays, hitDistances, surfaceIDs, dist_limit, orientation, exclude_primitives);
+}
+
+void 
+XDG::ray_fire_packed(MeshID volume,
+                     const size_t num_rays,
+                     const double dist_limit,
+                     HitOrientation orientation) 
+{
+  TreeID tree = volume_to_surface_tree_map_.at(volume);
+  return ray_tracing_interface()->ray_fire_packed(tree, num_rays, dist_limit, orientation);
 }
 
 std::pair<double, MeshID> XDG::closest(MeshID volume,
@@ -324,5 +361,12 @@ double XDG::measure_volume_area(MeshID volume) const
   }
   return area;
 }
+
+void XDG::pack_external_rays(void* origins_device_ptr,
+                             void* directions_device_ptr,
+                             size_t num_rays) 
+  {
+    return ray_tracing_interface()->pack_external_rays(origins_device_ptr, directions_device_ptr, num_rays);
+  }
 
 } // namespace xdg
