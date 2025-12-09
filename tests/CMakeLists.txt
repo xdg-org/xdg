@@ -44,7 +44,7 @@ foreach(test ${TEST_NAMES})
                                   BUILD_RPATH "$<TARGET_FILE_DIR:xdg>")
     catch_discover_tests(${test}
         PROPERTIES
-        SKIP_RETURN_CODE 4
+        SKIP_RETURN_CODE 4 # registers skipped tests with CTest correctly
         TEST_PREFIX "${test}::")
 endforeach()
 
