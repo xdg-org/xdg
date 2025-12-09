@@ -11,12 +11,6 @@
 
 namespace xdg::test {
 
-// template<MeshLibrary Mesh>
-// using MeshBackend = std::integral_constant<MeshLibrary, Mesh>;
-
-// template<RTLibrary Tracer>
-// using RayTracingBackend = std::integral_constant<RTLibrary, Tracer>;
-
 using MOAB_Interface = std::integral_constant<MeshLibrary, MeshLibrary::MOAB>;
 using LibMesh_Interface = std::integral_constant<MeshLibrary, MeshLibrary::LIBMESH>;
 
