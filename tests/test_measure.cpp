@@ -2,9 +2,9 @@
 #include <vector>
 
 // for testing
+#include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include <catch2/generators/catch_generators.hpp>
 
 #include "xdg/xdg.h"
 #include "xdg/geometry/measure.h"
@@ -16,6 +16,7 @@
 
 
 using namespace xdg;
+using namespace xdg::test;
 
 TEST_CASE("Test Mesh Mock")
 {
@@ -78,16 +79,15 @@ TEST_CASE("Test Area and Volume Surface Mesh")
   }
 }
 
-TEST_CASE("Test Area and Volume Cube Mesh")
+TEMPLATE_TEST_CASE("Test Area and Volume Cube Mesh", "[measure][cube]",
+                   MOAB_Interface,
+                   LibMesh_Interface)
 {
-  auto test_pair = GENERATE(
-    std::make_pair(MeshLibrary::MOAB, "cube-mesh-no-geom.h5m"),
-    std::make_pair(MeshLibrary::LIBMESH, "cube-mesh-no-geom.exo")
-  );
+  constexpr auto mesh_library = TestType::value;
+  const std::string file = mesh_library == MeshLibrary::MOAB ? "cube-mesh-no-geom.h5m"
+                                                            : "cube-mesh-no-geom.exo";
 
-  DYNAMIC_SECTION(fmt::format("Backend = {}, File = {}", test_pair.first, test_pair.second)) {
-    MeshLibrary mesh_library = test_pair.first;
-    std::string file = test_pair.second;
+  DYNAMIC_SECTION(fmt::format("Backend = {}, File = {}", mesh_library, file)) {
     // skip if backend not enabled at configuration time
     check_mesh_library_supported(mesh_library);
     std::shared_ptr<XDG> xdg = XDG::create(mesh_library);
@@ -135,16 +135,14 @@ TEST_CASE("Test Area and Volume Cube Mesh")
   }
 }
 
-TEST_CASE("Test Area and Volume Spherical Mesh") {
+TEMPLATE_TEST_CASE("Test Area and Volume Spherical Mesh", "[measure][sphere]",
+                   MOAB_Interface,
+                   LibMesh_Interface) {
+  constexpr auto mesh_library = TestType::value;
+  const std::string file = mesh_library == MeshLibrary::MOAB ? "jezebel.h5m"
+                                                            : "jezebel.exo";
 
-  auto test_pair = GENERATE(
-    std::make_pair(MeshLibrary::MOAB, "jezebel.h5m"),
-    std::make_pair(MeshLibrary::LIBMESH, "jezebel.exo")
-  );
-
-  DYNAMIC_SECTION(fmt::format("Backend = {}, File = {}", test_pair.first, test_pair.second)) {
-    MeshLibrary mesh_library = test_pair.first;
-    std::string file = test_pair.second;
+  DYNAMIC_SECTION(fmt::format("Backend = {}, File = {}", mesh_library, file)) {
     // skip if backend not enabled at configuration time
     check_mesh_library_supported(mesh_library);
     std::shared_ptr<XDG> xdg = XDG::create(mesh_library);
@@ -188,4 +186,3 @@ TEST_CASE("Test Area and Volume Spherical Mesh") {
     REQUIRE_THAT(sum_element_volumes, Catch::Matchers::WithinAbs(total_volume, 1e-6));
   }
 }
-

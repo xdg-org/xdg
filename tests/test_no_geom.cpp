@@ -1,21 +1,23 @@
 // testing includes
+#include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include <catch2/generators/catch_generators.hpp>
 
 // xdg includes
 #include "util.h"
 
 using namespace xdg;
+using namespace xdg::test;
 
 
 // Expected values for the cube mesh without geometry
 constexpr int32_t N_FACE_ELEMENTS = 1408;
 constexpr int32_t N_VOLUME_ELEMENTS = 8814;
 
-TEST_CASE("Test Mesh Without Geometry")
+TEMPLATE_TEST_CASE("Test Mesh Without Geometry", "[mesh]",
+                   MOAB_Interface,
+                   LibMesh_Interface)
 {
-  auto mesh_backend = GENERATE(MeshLibrary::MOAB, MeshLibrary::LIBMESH);
+  constexpr auto mesh_backend = TestType::value;
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", mesh_backend))
   {
@@ -24,7 +26,7 @@ TEST_CASE("Test Mesh Without Geometry")
     REQUIRE(mesh_manager);
 
     const std::string file = std::string("cube-mesh-no-geom.") +
-                         (mesh_backend == MeshLibrary::MOAB ? "h5m" : "exo");
+      (mesh_backend == MeshLibrary::MOAB ? "h5m" : "exo");
 
     mesh_manager->load_file(file);
     mesh_manager->init();

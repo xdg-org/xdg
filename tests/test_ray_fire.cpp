@@ -1,5 +1,6 @@
 // for testing
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_template_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
@@ -11,15 +12,20 @@
 #include "util.h"
 
 using namespace xdg;
+using namespace xdg::test;
 
 // ------- single test, multiple sections (one per built backend) --------------
 
-TEST_CASE("Ray Fire on MeshMock (per-backend sections)", "[rayfire][mock]") {
+TEMPLATE_TEST_CASE("Ray Fire on MeshMock (per-backend sections)", "[rayfire][mock]",
+                   Embree_Raytracer,
+                   GPRT_Raytracer)
+{
   // Generate one test run per enabled backend
-  auto rt_backend = GENERATE(RTLibrary::EMBREE, RTLibrary::GPRT);
+  constexpr auto rt_backend = TestType::value;
+  check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
 
-  DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
-    check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
+  DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend))
+  {
     auto rti = create_raytracer(rt_backend);
     REQUIRE(rti);
 
