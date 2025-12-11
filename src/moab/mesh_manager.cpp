@@ -551,6 +551,8 @@ void
 MOABMeshManager::graveyard_check()
 {
   for (auto volume : this->volumes()) {
+    if (!volume_has_property(volume, PropertyType::MATERIAL))
+      continue;
     auto prop = MeshManager::get_volume_property(volume, PropertyType::MATERIAL);
     // set the boundary condition to vacuum for all surfaces on volumes using a graveyard material
     if (to_lower(prop.value) == "graveyard") {
