@@ -30,6 +30,10 @@ TEMPLATE_TEST_CASE("Test Mesh Without Geometry", "[mesh]",
 
     mesh_manager->load_file(file);
     mesh_manager->init();
+
+    // we should be able to successfully parse metadata even without geometry
+    mesh_manager->parse_metadata();
+
     // there will be two volumes: one for the cube and one for the implicit complement
     REQUIRE(mesh_manager->num_volumes() == 2);
     // one surface (the boundary of the mesh) separates the two volumes
