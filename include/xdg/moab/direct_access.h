@@ -101,6 +101,36 @@ public:
     return vertices;
   }
 
+  int vertex_index(EntityHandle vertex) {
+    int vertex_index = 0;
+    auto fe = vertex_data_.first_vertices.begin();
+    while(true) {
+      if (vertex - fe->first < fe->second) { break; }
+      vertex_index += fe->second;
+      fe++;
+      if (fe == vertex_data_.first_vertices.end()) {
+        throw std::runtime_error("Vertex not found in MBDirectAccess::vertex_index");
+      }
+    }
+    vertex_index += vertex - fe->first;
+    return vertex_index;
+  }
+
+  EntityHandle vertex_handle(int vertex_index) {
+    int running_index = 0;
+    auto fe = vertex_data_.first_vertices.begin();
+    while(true) {
+      if (vertex_index < running_index + fe->second) {
+        return fe->first + (vertex_index - running_index);
+      }
+      running_index += fe->second;
+      fe++;
+      if (fe == vertex_data_.first_vertices.end()) {
+        throw std::runtime_error("Index out of range in MBDirectAccess::vertex_handle");
+      }
+    }
+  }
+
   //! \brief Get the adjacent element
   inline EntityHandle get_adjacent_element(const EntityHandle& element, int face_number) {
     return element_adjacency_data_.get_adjacent_element(element, face_number);

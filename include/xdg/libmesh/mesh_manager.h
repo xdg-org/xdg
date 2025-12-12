@@ -29,6 +29,9 @@ public:
 
   // Backend methods
 
+  //! \brief Map ID spaces into indices for ordered access by downstream applications
+  void map_id_spaces();
+
   //! Discover element faces on sudbomain interfaces,
   //! create surfaces and topology accordingly,
   //! and assign transmission boundary conditions for these interfacdes.
@@ -130,6 +133,14 @@ public:
 
   inline int element_index(MeshID element) const override {
     return volume_element_id_map_.id_to_index(element);
+  }
+
+  inline MeshID vertex_id(size_t vertex_idx) const {
+    return vertex_id_map_.index_to_id(vertex_idx);
+  }
+
+  inline int vertex_index(MeshID vertex) const {
+    return vertex_id_map_.id_to_index(vertex);
   }
 
   MeshID create_volume() override;
@@ -339,6 +350,9 @@ public:
 
   //! Block ID mapping from element IDs to contiguous index space
   BlockMapping<MeshID> volume_element_id_map_;
+
+  //! Block ID mapping from vertex IDs to contiguous index space
+  BlockMapping<MeshID> vertex_id_map_;
 
   int32_t num_elements_ {-1};
 

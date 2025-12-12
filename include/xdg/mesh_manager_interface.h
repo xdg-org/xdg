@@ -88,6 +88,12 @@ public:
 
   virtual std::vector<Vertex> get_surface_vertices(MeshID surface) const = 0;
 
+  //! \brief Return a vertex ID given its index in the mesh
+  virtual MeshID vertex_id(size_t vertex_idx) const = 0;
+
+  //! \brief Return the index of a vertex given its ID in the mesh
+  virtual int vertex_index(MeshID vertex) const = 0;
+
   // Return a pair of {vertices, connectivity} for a given surface in the mesh
   virtual std::pair<std::vector<Vertex>, std::vector<int>> get_surface_mesh(MeshID surface) const = 0;
 

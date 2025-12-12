@@ -76,6 +76,8 @@ void LibMeshManager::init() {
 
   // libMesh initialization
   mesh()->prepare_for_use();
+
+  map_id_spaces();
 }
 
 MeshID LibMeshManager::adjacent_element(MeshID element, int face) const {
@@ -160,14 +162,29 @@ bool contains_set(const std::set<T>& set1, const std::set<T>& set2) {
   return true;
 }
 
+void LibMeshManager::map_id_spaces() {
+  // build the BlockMapping for volume elements
+  std::vector<MeshID> volume_element_ids;
+  volume_element_ids.reserve(mesh()->n_active_elem());
+  for (const auto *elem : mesh()->active_element_ptr_range()) {
+    volume_element_ids.push_back(elem->id());
+  }
+  volume_element_id_map_ = BlockMapping<MeshID>(volume_element_ids);
+
+  // build the BlockMapping for vertex IDs
+  std::vector<MeshID> vertex_ids;
+  vertex_ids.reserve(mesh()->n_nodes());
+  for (const auto *node : mesh()->node_ptr_range()) {
+    vertex_ids.push_back(node->id());
+  }
+  vertex_id_map_ = BlockMapping<MeshID>(vertex_ids);
+}
+
 void LibMeshManager::discover_surface_elements() {
   // as part of this process, we will also build a vector of all
   // volumetric element IDs
   std::vector<MeshID> volume_element_ids;
   volume_element_ids.reserve(mesh()->n_active_elem());
-
-
-
 
   subdomain_interface_map_.clear();
   // for any active local elements, identify element faces

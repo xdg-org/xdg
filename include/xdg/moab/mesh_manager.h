@@ -94,6 +94,17 @@ public:
     return mb_direct()->element_index(element_handle);
   }
 
+  inline MeshID vertex_id(size_t vertex_idx) const override {
+    moab::EntityHandle vertex_handle = mb_direct()->vertex_handle(vertex_idx);
+    return tag_data<MeshID>(global_id_tag_, vertex_handle);
+  }
+
+  inline int vertex_index(MeshID vertex) const override {
+    moab::EntityHandle vertex_handle;
+    moab_interface()->handle_from_id(moab::MBVERTEX, vertex, vertex_handle);
+    return mb_direct()->vertex_index(vertex_handle);
+  }
+
   // Topology
   std::pair<MeshID, MeshID> surface_senses(MeshID surface) const override;
 

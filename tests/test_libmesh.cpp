@@ -373,48 +373,104 @@ TEST_CASE("Test Track Exiting Mesh Brick")
 
 TEST_CASE("LibMesh Element ID and Index Mapping")
 {
-  std::unique_ptr<MeshManager> mesh_manager  {std::make_unique<LibMeshManager>()};
-  REQUIRE(mesh_manager->mesh_library() == MeshLibrary::LIBMESH);
-  mesh_manager->load_file("jezebel.exo");
-  mesh_manager->init();
-  REQUIRE(mesh_manager->num_volume_elements() == 10333);
+  // test mapping for contiguous IDs
+  {
+    std::unique_ptr<MeshManager> mesh_manager  {std::make_unique<LibMeshManager>()};
+    REQUIRE(mesh_manager->mesh_library() == MeshLibrary::LIBMESH);
+    mesh_manager->load_file("jezebel.exo");
+    mesh_manager->init();
+    REQUIRE(mesh_manager->num_volume_elements() == 10333);
 
-  size_t num_elements = mesh_manager->num_volume_elements();
-  for (size_t i = 0; i < num_elements; i++) {
-    MeshID element_id = mesh_manager->element_id(i);
-    int element_index = mesh_manager->element_index(element_id);
-    REQUIRE(element_index == static_cast<int>(i));
-  }
-
-  // now create a new mesh manager
-  std::unique_ptr<LibMeshManager> mesh_manager2  {std::make_unique<LibMeshManager>()};
-  mesh_manager2->load_file("jezebel.exo");
-
-  // tweak some of the element IDs to create gaps
-  auto* mesh = mesh_manager2->mesh();
-  int next_id = 0;
-  for (auto* elem : mesh->active_element_ptr_range()) {
-    // create a gap every 10 elements
-    if (elem->id() % 10 == 0) {
-      next_id += 5;
-    } else {
-      next_id++;
+    size_t num_elements = mesh_manager->num_volume_elements();
+    for (size_t i = 0; i < num_elements; i++) {
+      MeshID element_id = mesh_manager->element_id(i);
+      int element_index = mesh_manager->element_index(element_id);
+      REQUIRE(element_index == static_cast<int>(i));
     }
-    elem->set_id() = next_id; // create a gap every 10 elements
-    REQUIRE(elem->id() == next_id);
+
+    size_t num_vertices = static_cast<LibMeshManager*>(mesh_manager.get())->mesh()->n_nodes();
+    for (size_t i = 0; i < num_vertices; i++) {
+      MeshID vertex_id = mesh_manager->vertex_id(i);
+      int vertex_index = mesh_manager->vertex_index(vertex_id);
+      REQUIRE(vertex_index == static_cast<int>(i));
+    }
   }
-  mesh->allow_renumbering(false);
 
-  // now initialize the mesh manager
-  mesh_manager2->init();
-  REQUIRE(mesh_manager2->num_volume_elements() == 10333);
+  // test mapping for non-contiguous IDs via manual modification
+  {
+    // now create a new mesh manager
+    std::unique_ptr<LibMeshManager> mesh_manager2  {std::make_unique<LibMeshManager>()};
+    mesh_manager2->load_file("jezebel.exo");
 
-  num_elements = mesh_manager2->num_volume_elements();
-  int expected_index = 0;
-  for (const auto* elem : mesh_manager2->mesh()->active_element_ptr_range()) {
-    MeshID element_id = elem->id();
-    int element_index = mesh_manager2->element_index(element_id);
-    REQUIRE(element_index == expected_index);
-    expected_index++;
+    // tweak some of the element IDs to create gaps
+    auto* mesh = mesh_manager2->mesh();
+    int next_id = 0;
+    std::vector<MeshID> modified_element_ids;
+    for (auto* elem : mesh->active_element_ptr_range()) {
+      // create a gap every 10 elements
+      if (elem->id() % 10 == 0) {
+        next_id += 5;
+      } else {
+        next_id++;
+      }
+      elem->set_id() = next_id; // create a gap every 10 elements
+      modified_element_ids.push_back(next_id);
+      REQUIRE(elem->id() == next_id);
+    }
+
+    next_id = 0;
+    std::vector<MeshID> modified_vertex_ids;
+    for (auto* node : mesh->node_ptr_range()) {
+      // create a gap every 15 vertices
+      if (node->id() % 15 == 0) {
+        next_id += 3;
+      } else {
+        next_id++;
+      }
+      node->set_id() = next_id;
+      modified_vertex_ids.push_back(next_id);
+      REQUIRE(node->id() == next_id);
+    }
+
+    // keep libMesh from renumbering the elements when initializing the mesh
+    // manager
+    mesh->allow_renumbering(false);
+
+    // now initialize the mesh manager
+    mesh_manager2->init();
+    REQUIRE(mesh_manager2->num_volume_elements() == 10333);
+
+      // check element ID to index mapping
+    int expected_index = 0;
+    for (const auto* elem : mesh_manager2->mesh()->active_element_ptr_range()) {
+      MeshID element_id = elem->id();
+      int element_index = mesh_manager2->element_index(element_id);
+      REQUIRE(element_index == expected_index);
+      expected_index++;
+    }
+
+    // check node ID to index mapping
+    expected_index = 0;
+    for (const auto* node : mesh_manager2->mesh()->node_ptr_range()) {
+      MeshID vertex_id = node->id();
+      int vertex_index = mesh_manager2->vertex_index(vertex_id);
+      REQUIRE(vertex_index == expected_index);
+      expected_index++;
+    }
+
+    // check index to element ID mapping
+    size_t num_elements = mesh_manager2->num_volume_elements();
+    for (size_t i = 0; i < num_elements; i++) {
+      MeshID element_id = mesh_manager2->element_id(i);
+      REQUIRE(element_id == modified_element_ids[i]);
+    }
+
+    // check index to vertex ID mapping
+    size_t num_vertices = mesh_manager2->mesh()->n_nodes();
+    for (size_t i = 0; i < num_vertices; i++) {
+      MeshID vertex_id = mesh_manager2->vertex_id(i);
+      REQUIRE(vertex_id == modified_vertex_ids[i]);
+    }
   }
 }
+
