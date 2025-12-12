@@ -72,9 +72,11 @@ static const std::map<RTLibrary, std::string> RT_LIB_TO_STR =
 
 // Mesh identifer type
 using MeshID = int32_t;
+using MeshIndex  = int32_t;
 
 // Null mesh ID
 constexpr MeshID ID_NONE {-1};
+constexpr MeshIndex INDEX_NONE {-1};
 
 // Scene/Tree ID
 using TreeID = int32_t;

@@ -172,7 +172,7 @@ void LibMeshManager::discover_surface_elements() {
   subdomain_interface_map_.clear();
   // for any active local elements, identify element faces
   // where the subdomain IDs are different on either side
-  for (const auto *elem : mesh()->active_local_element_ptr_range()) {
+  for (const auto *elem : mesh()->active_element_ptr_range()) {
     volume_element_ids.push_back(elem->id());
     MeshID subdomain_id = elem->subdomain_id();
     for (int i = 0; i < elem->n_sides(); i++) {

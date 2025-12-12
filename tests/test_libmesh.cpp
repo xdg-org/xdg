@@ -383,7 +383,38 @@ TEST_CASE("LibMesh Element ID and Index Mapping")
   for (size_t i = 0; i < num_elements; i++) {
     MeshID element_id = mesh_manager->element_id(i);
     int element_index = mesh_manager->element_index(element_id);
-    // libMesh element IDs are the same as their indices
     REQUIRE(element_index == static_cast<int>(i));
+  }
+
+  // now create a new mesh manager
+  std::unique_ptr<LibMeshManager> mesh_manager2  {std::make_unique<LibMeshManager>()};
+  mesh_manager2->load_file("jezebel.exo");
+
+  // tweak some of the element IDs to create gaps
+  auto* mesh = mesh_manager2->mesh();
+  int next_id = 0;
+  for (auto* elem : mesh->active_element_ptr_range()) {
+    // create a gap every 10 elements
+    if (elem->id() % 10 == 0) {
+      next_id += 5;
+    } else {
+      next_id++;
+    }
+    elem->set_id() = next_id; // create a gap every 10 elements
+    REQUIRE(elem->id() == next_id);
+  }
+  mesh->allow_renumbering(false);
+
+  // now initialize the mesh manager
+  mesh_manager2->init();
+  REQUIRE(mesh_manager2->num_volume_elements() == 10333);
+
+  num_elements = mesh_manager2->num_volume_elements();
+  int expected_index = 0;
+  for (const auto* elem : mesh_manager2->mesh()->active_element_ptr_range()) {
+    MeshID element_id = elem->id();
+    int element_index = mesh_manager2->element_index(element_id);
+    REQUIRE(element_index == expected_index);
+    expected_index++;
   }
 }
