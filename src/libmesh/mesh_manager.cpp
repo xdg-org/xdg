@@ -161,10 +161,19 @@ bool contains_set(const std::set<T>& set1, const std::set<T>& set2) {
 }
 
 void LibMeshManager::discover_surface_elements() {
+  // as part of this process, we will also build a vector of all
+  // volumetric element IDs
+  std::vector<MeshID> volume_element_ids;
+  volume_element_ids.reserve(mesh()->n_active_elem());
+
+
+
+
   subdomain_interface_map_.clear();
   // for any active local elements, identify element faces
   // where the subdomain IDs are different on either side
   for (const auto *elem : mesh()->active_local_element_ptr_range()) {
+    volume_element_ids.push_back(elem->id());
     MeshID subdomain_id = elem->subdomain_id();
     for (int i = 0; i < elem->n_sides(); i++) {
       auto neighbor = elem->neighbor_ptr(i);
@@ -181,6 +190,9 @@ void LibMeshManager::discover_surface_elements() {
       }
     }
   }
+
+  // build the BlockMapping for volume elements
+  volume_element_id_map_ = BlockMapping<MeshID>(volume_element_ids);
 }
 
 void LibMeshManager::merge_sidesets_into_interfaces() {
