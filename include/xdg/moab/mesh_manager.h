@@ -54,6 +54,10 @@ public:
   void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override;
 
   // Mesh
+  int num_vertices() const override {
+    return this->mb_direct()->n_vertices();
+  }
+
   int num_volume_elements(MeshID volume) const override;
 
   int num_volume_elements() const override;
@@ -83,7 +87,7 @@ public:
   inline MeshID element_id(size_t element_idx) const override {
     // MOAB element IDs start at one and may not be contiguous,
     // so we need to map from index to ID
-    return tag_data<MeshID>(global_id_tag_, mb_direct()->element_handle(element_idx));
+    return moab_interface()->id_from_handle(mb_direct()->element_handle(element_idx));
   }
 
   inline int element_index(MeshID element) const override {
@@ -96,7 +100,7 @@ public:
 
   inline MeshID vertex_id(size_t vertex_idx) const override {
     moab::EntityHandle vertex_handle = mb_direct()->vertex_handle(vertex_idx);
-    return tag_data<MeshID>(global_id_tag_, vertex_handle);
+    return moab_interface()->id_from_handle(vertex_handle);
   }
 
   inline int vertex_index(MeshID vertex) const override {

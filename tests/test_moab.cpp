@@ -282,20 +282,95 @@ TEST_CASE("TEST MOAB Find Element Method")
 
 TEST_CASE("MOAB Element ID and Index Mapping")
 {
-  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
-  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
-  const auto& mesh_manager = xdg->mesh_manager();
-  mesh_manager->load_file("jezebel.h5m");
-  mesh_manager->init();
+  // test mapping for contiguous MOAB IDs using jezebel model
+  {
+    std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
+    REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
+    const auto& mesh_manager = xdg->mesh_manager();
+    mesh_manager->load_file("jezebel.h5m");
+    mesh_manager->init();
 
-  size_t num_elements = mesh_manager->num_volume_elements();
-  REQUIRE(num_elements == 10333);
+    size_t num_elements = mesh_manager->num_volume_elements();
+    REQUIRE(num_elements == 10333);
 
-  for (size_t idx = 0; idx < num_elements; ++idx) {
-    MeshID element_id = mesh_manager->element_id(idx);
-    // MOAB element IDs start at 1 and, for this model, are contiguous
-    REQUIRE(element_id == idx + 1);
-    int mapped_idx = mesh_manager->element_index(element_id);
-    REQUIRE(mapped_idx == static_cast<int>(idx));
+    for (size_t idx = 0; idx < num_elements; ++idx) {
+      MeshID element_id = mesh_manager->element_id(idx);
+      // MOAB element IDs start at 1 and, for this model, are contiguous
+      REQUIRE(element_id == idx + 1);
+      int mapped_idx = mesh_manager->element_index(element_id);
+      REQUIRE(mapped_idx == static_cast<int>(idx));
+    }
+
+    size_t num_vertices = mesh_manager->num_vertices();
+    REQUIRE(num_vertices == 2067);
+    for (size_t idx = 0; idx < num_vertices; ++idx) {
+      MeshID vertex_id = mesh_manager->vertex_id(idx);
+      // MOAB vertex IDs start at 1 and, for this model, are contiguous
+      REQUIRE(vertex_id == idx + 1);
+      int mapped_idx = mesh_manager->vertex_index(vertex_id);
+      REQUIRE(mapped_idx == static_cast<int>(idx));
+    }
+  }
+
+  // test mapping for non-contiguous MOAB IDs via modification
+  {
+    std::shared_ptr<MOABMeshManager> mesh_manager = std::make_shared<MOABMeshManager>();
+    mesh_manager->load_file("jezebel.h5m");
+
+    moab::Interface* mbi = mesh_manager->moab_interface();
+
+    // create gaps in the intrinsic ID space by deleteing some elements
+    moab::Range elem_range;
+    mbi->get_entities_by_type(0, moab::MBTET, elem_range);
+    int next_id = 0;
+    std::vector<MeshID> modified_ids;
+    for (const auto& elem : elem_range) {
+      if (next_id % 100 == 0) {
+        mbi->delete_entities(&elem, 1);
+        next_id++;
+        continue;
+      }
+      next_id ++;
+      modified_ids.push_back(mbi->id_from_handle(elem));
+    }
+
+    mesh_manager->init();
+
+    size_t num_elements = mesh_manager->num_volume_elements();
+    REQUIRE(num_elements == modified_ids.size());
+    for (size_t idx = 0; idx < num_elements; ++idx) {
+      MeshID expected_id = modified_ids[idx];
+      MeshID element_id = mesh_manager->element_id(idx);
+      REQUIRE(element_id == expected_id);
+      int mapped_idx = mesh_manager->element_index(element_id);
+      REQUIRE(mapped_idx == static_cast<int>(idx));
+    }
+
+    //     // modify the vertex global IDs to be non-contiguous
+    // next_id = 0;
+    // std::vector<MeshID> modified_vertex_ids;
+    // moab::Range vertex_range;
+    // mbi->get_entities_by_type(0, moab::MBVERTEX, vertex_range);
+    // for (const auto& vertex : vertex_range) {
+    //   if (next_id % 50 == 0) {
+    //     mbi->delete_entities(&vertex, 1);
+    //     next_id++;
+    //     continue;
+    //   }
+    //   next_id++;
+    // }
+
+    // // reset the direct access manager to update vertex data
+    // mesh_manager->mb_direct()->update();
+
+    // size_t num_vertices = mesh_manager->num_vertices();
+    // REQUIRE(num_vertices == modified_vertex_ids.size());
+    // for (size_t idx = 0; idx < num_vertices; ++idx) {
+    //   MeshID expected_id = modified_vertex_ids[idx];
+    //   MeshID vertex_id = mesh_manager->vertex_id(idx);
+    //   REQUIRE(vertex_id == expected_id);
+    //   int mapped_idx = mesh_manager->vertex_index(vertex_id);
+    //   REQUIRE(mapped_idx == static_cast<int>(idx));
+    // }
   }
 }

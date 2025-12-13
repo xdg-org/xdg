@@ -80,6 +80,10 @@ public:
     }
   }
 
+  int num_vertices() const override {
+    return mesh()->n_nodes();
+  }
+
   int num_volume_elements(MeshID volume) const override {
     return get_volume_elements(volume).size();
   }

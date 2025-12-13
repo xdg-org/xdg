@@ -67,6 +67,8 @@ public:
                const Position& u) const;
 
   // Mesh
+  virtual int num_vertices() const = 0;
+
   virtual int num_volume_elements(MeshID volume) const = 0;
 
   virtual int num_volume_elements() const;

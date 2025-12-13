@@ -47,35 +47,13 @@ public:
 
   //! \brief Determine the index of an element in the managed data
   inline size_t element_index(EntityHandle element) {
-    size_t element_index = 0;
-    auto fe = element_data_.first_elements.begin();
-    while(true) {
-      if (element - fe->first < fe->second) { break; }
-      element_index += fe->second;
-      fe++;
-      if (fe == element_data_.first_elements.end()) {
-        throw std::runtime_error("Element not found in MBDirectAccess::element_index");
-      }
-    }
-    element_index += element - fe->first;
-    return element_index;
+    return element_data_.entity_range.index(element);
   }
 
   //! \brief Determine the element handle of an element based on its index in
   //! the managed data
   inline EntityHandle element_handle(size_t index) {
-    size_t running_index = 0;
-    auto fe = element_data_.first_elements.begin();
-    while(true) {
-      if (index < running_index + fe->second) {
-        return fe->first + (index - running_index);
-      }
-      running_index += fe->second;
-      fe++;
-      if (fe == element_data_.first_elements.end()) {
-        throw std::runtime_error("Index out of range in MBDirectAccess::element_handle");
-      }
-    }
+    return element_data_.entity_range[index];
   }
 
   //! \brief Get the coordinates of a triangle as XDG Vertices
@@ -102,33 +80,11 @@ public:
   }
 
   int vertex_index(EntityHandle vertex) {
-    int vertex_index = 0;
-    auto fe = vertex_data_.first_vertices.begin();
-    while(true) {
-      if (vertex - fe->first < fe->second) { break; }
-      vertex_index += fe->second;
-      fe++;
-      if (fe == vertex_data_.first_vertices.end()) {
-        throw std::runtime_error("Vertex not found in MBDirectAccess::vertex_index");
-      }
-    }
-    vertex_index += vertex - fe->first;
-    return vertex_index;
+    return vertex_data_.vertex_range.index(vertex);
   }
 
   EntityHandle vertex_handle(int vertex_index) {
-    int running_index = 0;
-    auto fe = vertex_data_.first_vertices.begin();
-    while(true) {
-      if (vertex_index < running_index + fe->second) {
-        return fe->first + (vertex_index - running_index);
-      }
-      running_index += fe->second;
-      fe++;
-      if (fe == vertex_data_.first_vertices.end()) {
-        throw std::runtime_error("Index out of range in MBDirectAccess::vertex_handle");
-      }
-    }
+    return vertex_data_.vertex_range[vertex_index];
   }
 
   //! \brief Get the adjacent element
@@ -233,33 +189,33 @@ private:
     int element_stride {-1}; //!< Number of vertices used by each element
     std::vector<std::pair<EntityHandle, size_t>> first_elements; //!< Pairs of first element and length pairs for contiguous blocks of memory
     std::vector<const EntityHandle*> vconn; //!< Storage array(s) for the connectivity array
+    moab::Range entity_range; //!< Range of entities managed
 
     void setup(Interface * mbi) {
       ErrorCode rval;
 
       // setup face connectivity data
-      Range faces;
-      rval = mbi->get_entities_by_type(0, entity_type, faces, true);
-      MB_CHK_SET_ERR_CONT(rval, "Failed to get all elements of dimension 2 (faces)");
-      num_entities = faces.size();
+      rval = mbi->get_entities_by_type(0, entity_type, entity_range, true);
+      MB_CHK_SET_ERR_CONT(rval, "Failed to get all elements for the given entity type");
+      num_entities = entity_range.size();
 
       // only supporting triangle elements for now
-      if (!faces.all_of_type(entity_type)) { throw std::runtime_error("Not all 2D elements are triangles"); }
+      if (!entity_range.all_of_type(entity_type)) { throw std::runtime_error("Not all 2D elements are triangles"); }
 
-      moab::Range::iterator faces_it = faces.begin();
-      while(faces_it != faces.end()) {
+      moab::Range::iterator entity_it = entity_range.begin();
+      while(entity_it != entity_range.end()) {
         // set connectivity pointer, element stride and the number of elements
         EntityHandle* conntmp;
         int n_elements;
-        rval = mbi->connect_iterate(faces_it, faces.end(), conntmp, element_stride, n_elements);
+        rval = mbi->connect_iterate(entity_it, entity_range.end(), conntmp, element_stride, n_elements);
         MB_CHK_SET_ERR_CONT(rval, "Failed to get direct access to triangle elements");
 
         // set const pointers for the connectivity array and add first element/length pair to the set of first elements
         vconn.push_back(conntmp);
-        first_elements.push_back({*faces_it, n_elements});
+        first_elements.push_back({*entity_it, n_elements});
 
         // move iterator forward by the number of triangles in this contiguous memory block
-        faces_it += n_elements;
+        entity_it += n_elements;
       }
     }
 
@@ -295,19 +251,18 @@ private:
     void setup(Interface* mbi) {
       ErrorCode rval;
       // setup vertices
-      Range verts;
-      rval = mbi->get_entities_by_dimension(0, 0, verts, true);
+      rval = mbi->get_entities_by_dimension(0, 0, vertex_range, true);
       MB_CHK_SET_ERR_CONT(rval, "Failed to get all elements of dimension 0 (vertices)");
-      num_vertices = verts.size();
+      num_vertices = vertex_range.size();
 
-      moab::Range::iterator verts_it = verts.begin();
-      while (verts_it != verts.end()) {
+      moab::Range::iterator verts_it = vertex_range.begin();
+      while (verts_it != vertex_range.end()) {
         // set vertex coordinate pointers
         double* xtmp;
         double* ytmp;
         double* ztmp;
         int n_vertices;
-        rval = mbi->coords_iterate(verts_it, verts.end(), xtmp, ytmp, ztmp, n_vertices);
+        rval = mbi->coords_iterate(verts_it, vertex_range.end(), xtmp, ytmp, ztmp, n_vertices);
         MB_CHK_SET_ERR_CONT(rval, "Failed to get direct access to vertex elements");
 
         // add the vertex coordinate arrays to their corresponding vector of array pointers
@@ -351,6 +306,7 @@ private:
     std::vector<const double*> ty; //!< Storage array(s) for vertex y coordinates
     std::vector<const double*> tz; //!< Storage array(s) for vertex z coordinates
     std::vector<std::pair<EntityHandle, size_t>> first_vertices; //!< Pairs of first vertex and length pairs for contiguous blocks of memory
+    moab::Range vertex_range; //!< Range of entities managed
   };
 
   ConnectivityData face_data_;
