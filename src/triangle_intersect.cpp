@@ -104,9 +104,15 @@ void TriangleIntersectionFunc(RTCIntersectFunctionNArguments* args) {
 }
 
 bool TriangleClosestFunc(RTCPointQueryFunctionArguments* args) {
-  RTCGeometry g = rtcGetGeometry(*(RTCScene*)args->userPtr, args->geomID);
-  // get the array of DblTri's stored on the geometry
-  const SurfaceUserData* user_data = (const SurfaceUserData*) rtcGetGeometryUserData(g);
+  // TLAS we passed as userPtr to rtcPointQuery(...)
+  RTCScene tlas = *(RTCScene*)args->userPtr;
+
+  const unsigned stackSize = args->context->instStackSize;
+
+  // top of instance stack is the current instance geomID in the TLAS
+  unsigned instGeomID = args->context->instID[stackSize - 1];
+  RTCGeometry instGeom = rtcGetGeometry(tlas, instGeomID);
+  const SurfaceUserData* user_data = (const SurfaceUserData*) rtcGetGeometryUserData(instGeom);
 
   const MeshManager* mesh_manager = user_data->mesh_manager;
 
