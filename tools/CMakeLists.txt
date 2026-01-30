@@ -1,8 +1,10 @@
 set(TOOL_NAMES
 particle_sim
 ray_fire
+batch_ray_fire
 find_volume
 point_in_volume
+batch_point_in_volume
 overlap_check
 walk_elements
 tally_segments
@@ -31,3 +33,5 @@ foreach(tool ${TOOL_NAMES})
     endif()
     install(TARGETS ${tool_exec} DESTINATION ${CMAKE_INSTALL_BINDIR}/tools)
 endforeach()
+
+add_subdirectory(ray_benchmark)
