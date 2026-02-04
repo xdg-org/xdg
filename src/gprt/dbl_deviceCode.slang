@@ -53,22 +53,27 @@ void ray_fire_miss(inout RayFirePayload payload) {
 void ray_fire(uniform dblRayGenData record, uniform DPTriangleGeomData mesh) {
     RayFirePayload payload;
     uint rayID = DispatchRaysIndex().x;
+    xdg::dblRay ray = record.ray[rayID]; // recover ray from buffer
 
     // Trace the ray into the scene
     RayDesc rayDesc;
-    rayDesc.Origin = float3(record.ray[rayID].origin);
-    rayDesc.Direction = normalize(float3(record.ray[rayID].direction));
-    rayDesc.TMin = float(record.ray[rayID].tMin); 
-    rayDesc.TMax = float(record.ray[rayID].tMax); 
+    rayDesc.Origin = float3(ray.origin);
+    rayDesc.Direction = normalize(float3(ray.direction));
+    rayDesc.TMin = float(PC.tMin); 
+    rayDesc.TMax = float(PC.tMax); 
 
-    SurfaceAccelerationStructure world = record.ray[rayID].volume_accel;
+    int mesh_id = ray.volume_mesh_id;
+    // Recover the TLAS we are tracing against for this ray
+    SurfaceAccelerationStructure world = record.meshid_to_accel_address[mesh_id];
 
-    // Pass the ray's origin and direction to the payload
+    // Set payload default values
     payload.distance = -1.0f;
     payload.surf_id = -1;
     payload.tlas = world;
 
-    TraceRay(world, RAY_FLAG_NONE, 0xff, 0, 1, rayDesc, payload);
+    if (ray.enabled == 1u) {
+        TraceRay(world, RAY_FLAG_NONE, 0xff, 0, 1, rayDesc, payload);
+    }
 
     // Store the distance to the hit point and the surface ID in buffers for CPU
     record.hit[rayID].distance = payload.distance;
@@ -80,22 +85,26 @@ void ray_fire(uniform dblRayGenData record, uniform DPTriangleGeomData mesh) {
 void point_in_volume(uniform dblRayGenData record, uniform DPTriangleGeomData mesh) {
     RayFirePayload payload;
     uint rayID = DispatchRaysIndex().x;
+    xdg::dblRay ray = record.ray[rayID]; // recover ray from buffer
 
     // Trace the ray into the scene
     RayDesc rayDesc;
-    rayDesc.Origin = float3(record.ray[rayID].origin);
-    rayDesc.Direction = float3(normalize(record.ray[rayID].direction));
-    rayDesc.TMin = float(record.ray[rayID].tMin); 
-    rayDesc.TMax = float(record.ray[rayID].tMax); 
+    rayDesc.Origin = float3(ray.origin);
+    rayDesc.Direction = float3(normalize(ray.direction));
+    rayDesc.TMin = float(PC.tMin); 
+    rayDesc.TMax = float(PC.tMax); 
 
-    SurfaceAccelerationStructure world = record.ray[rayID].volume_accel;
-
+    int mesh_id = ray.volume_mesh_id;
+    // Recover the TLAS we are tracing against for this ray
+    SurfaceAccelerationStructure world = record.meshid_to_accel_address[mesh_id];
     // Pass the ray's origin and direction to the payload
     payload.surf_id = -1;
     payload.tlas = world;
     payload.piv = xdg::PointInVolume::OUTSIDE; // Initialize point in volume check result to outside (0)
     
-    TraceRay(world, RAY_FLAG_NONE, 0xff, 0, 1, rayDesc, payload);
+    if (ray.enabled == 1u) { // skip RT pipeline for rays that are marked as disabled 
+        TraceRay(world, RAY_FLAG_NONE, 0xff, 0, 1, rayDesc, payload);
+    }
 
     record.hit[rayID].surf_id = payload.surf_id;
     record.hit[rayID].piv = payload.piv; // Point in volume check result
@@ -104,10 +113,14 @@ void point_in_volume(uniform dblRayGenData record, uniform DPTriangleGeomData me
 // ------------------------------------------------- Compute Shaders -------------------------------------------------
 /* A shader to compute and store AABB min/maxes in single precision using double precision coords*/
 [shader("compute")]
-[numthreads(1, 1, 1)]
-void
-populate_aabbs(uint3 DispatchThreadID: SV_DispatchThreadID, uniform DPTriangleGeomData record) {
+[numthreads(64, 1, 1)]
+void populate_aabbs(uint3 DispatchThreadID: SV_DispatchThreadID, uniform DPTriangleGeomData record) {
     int primID = DispatchThreadID.x;
+
+    // guard against more threads than primitives
+    if (primID >= record.num_faces)
+        return;
+
     int3 indices = record.index[primID];
     double3 A = record.vertex[indices[0]];
     double3 B = record.vertex[indices[1]];
@@ -123,7 +136,6 @@ populate_aabbs(uint3 DispatchThreadID: SV_DispatchThreadID, uniform DPTriangleGe
 
 // ------------------------------------------------ CUSTOM INTERSECTION SHADERS ------------------------------------------------
 
-
 /* 1D ray generation intersection with a double precision triangle using the Plucker intersection algorithm*/
 [shader("intersection")]
 void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
@@ -134,6 +146,7 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     uint rayID = DispatchRaysIndex().x;
     uint nRays = DispatchRaysDimensions().x;
     uint flags = RayFlags();
+    xdg::dblRay ray = record.ray[rayID]; // recover ray from buffer
 
     if (rayID >= nRays) {
         return;
@@ -155,11 +168,11 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     double3 v1 = record.vertex[indices[1]];
     double3 v2 = record.vertex[indices[2]];
 
-    double3 origin = record.ray[rayID].origin;
-    double3 direction = record.ray[rayID].direction;
+    double3 origin = ray.origin;
+    double3 direction = ray.direction;
 
-    double tMin = record.ray[rayID].tMin;
-    double tMax = record.ray[rayID].tMax;
+    double tMin = PC.tMin;
+    double tMax = PC.tMax;
 
     const double3 raya = direction;
     const double3 rayb = cross(direction, origin);
@@ -228,8 +241,9 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
 
     double3 norm = record.normals[primID]; // recover double precision normal. TODO - Should we calculate from vertices instead?
 
-    // sense adjustment of normal
-    if (record.ray[rayID].volume_tree == record.reverse_tree)
+    // sense adjustment of normal (per MeshID)
+    int mesh_sense = record.meshid_to_sense[ray.volume_mesh_id]; // +1 forward, -1 reverse
+    if (mesh_sense < 0)
     {
         norm = -norm;
     }
@@ -238,16 +252,16 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     uint hit_kind = norm_dot_dir < 0 ? HIT_KIND_TRIANGLE_FRONT_FACE
                                      : HIT_KIND_TRIANGLE_BACK_FACE;
 
-    xdg::HitOrientation hitOrientation = record.ray[rayID].hitOrientation;
+    xdg::HitOrientation hitOrientation = PC.hitOrientation;
 
     if (orientation_cull(direction, norm, hitOrientation))
     {
         return;
     }
 
-    for (int i = 0; i < record.ray[rayID].exclude_count; ++i)
+    for (int i = 0; i < ray.exclude_count; ++i)
     {
-        if (record.ray[rayID].exclude_primitives[i] == global_prim_id) {
+        if (ray.exclude_primitives[i] == global_prim_id) {
             return;
         }
     }

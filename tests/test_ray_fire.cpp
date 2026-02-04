@@ -4,12 +4,13 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
-
 // xdg includes
 #include "xdg/constants.h"
 #include "xdg/mesh_manager_interface.h"
 #include "mesh_mock.h"
 #include "util.h"
+
+#include <chrono>
 
 using namespace xdg;
 using namespace xdg::test;
@@ -108,5 +109,82 @@ TEMPLATE_TEST_CASE("Ray Fire on MeshMock (per-backend sections)", "[rayfire][moc
 
     intersection = rti->ray_fire(volume_tree, origin, direction, INFTY, HitOrientation::EXITING, &exclude_primitives);
     REQUIRE(intersection.second == ID_NONE);
+  }
+}
+
+TEMPLATE_TEST_CASE("Batch API Ray Fire on MeshMock", "[rayfire][mock][batch]", 
+                   Embree_Raytracer,
+                   GPRT_Raytracer) 
+{
+  constexpr auto rt_backend = TestType::value;
+
+  DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
+    check_ray_tracer_supported(rt_backend);
+    if (rt_backend == RTLibrary::EMBREE) {
+      SKIP("Skipping batch query mechanics test for Embree: batch API not implemented.");
+    }
+
+    auto rti = create_raytracer(rt_backend);
+    REQUIRE(rti);
+
+    auto mm = std::make_shared<MeshMock>(false);
+    mm->init();
+    REQUIRE(mm->mesh_library() == MeshLibrary::MOCK);
+
+    auto [volume_tree, element_tree] = rti->register_volume(mm, mm->volumes()[0]);
+    REQUIRE(volume_tree != ID_NONE);
+    REQUIRE(element_tree == ID_NONE);
+
+    rti->init();
+
+    std::vector<Position> origins;
+    std::vector<Direction> directions;
+    size_t N; 
+
+    // ---- N = 0 ----
+    SECTION("N=0 no-op") {
+      rti->ray_fire(volume_tree, nullptr, nullptr, 0, nullptr, nullptr,
+                    INFTY, HitOrientation::EXITING, nullptr);
+      SUCCEED("N=0 completed without error");
+    }
+
+    // ---- N = 1 ----
+    SECTION("N=1 equals scalar") {
+      N = 1;
+      make_rays(N, origins, directions);
+
+      auto [dist_scalar, id_scalar] = rti->ray_fire(volume_tree, origins[0], directions[0], INFTY, HitOrientation::EXITING);
+
+      double dist_batch = -1.0;
+      MeshID id_batch = ID_NONE;
+      rti->ray_fire(volume_tree, origins.data(), directions.data(), 1,
+                    &dist_batch, &id_batch, INFTY, HitOrientation::EXITING, nullptr);
+
+      REQUIRE(id_batch == id_scalar);
+      REQUIRE_THAT(dist_batch, Catch::Matchers::WithinAbs(dist_scalar, 1e-6));
+    }
+
+    // ---- N = 64 ----
+    SECTION("N=64 matches scalar for all") {
+      N = 64;
+      make_rays(N, origins, directions);
+
+      std::vector<double> dist_scalar(64, INFTY);
+      std::vector<MeshID> id_scalar(64, ID_NONE);
+      for (size_t i = 0; i < 64; ++i) {
+        auto [d, id] = rti->ray_fire(volume_tree, origins[i], directions[i], INFTY, HitOrientation::EXITING);
+        dist_scalar[i] = d; id_scalar[i] = id;
+      }
+
+      std::vector<double> dist_batch(64, -1.0);
+      std::vector<MeshID> id_batch(64, ID_NONE);
+      rti->ray_fire(volume_tree, origins.data(), directions.data(), origins.size(),
+                    dist_batch.data(), id_batch.data(), INFTY, HitOrientation::EXITING, nullptr);
+
+      for (size_t i = 0; i < 64; ++i) {
+        REQUIRE(id_batch[i] == id_scalar[i]);
+        REQUIRE_THAT(dist_batch[i], Catch::Matchers::WithinAbs(dist_scalar[i], 1e-6));
+      }
+    }
   }
 }

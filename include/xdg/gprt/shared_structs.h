@@ -1,32 +1,15 @@
+#ifndef XDG_GPRT_SHARED_STRUCTS_H
+#define XDG_GPRT_SHARED_STRUCTS_H
+
 #include "gprt.h"
 #include "../shared_enums.h"
+#include "ray.h"
 
 struct GPRTPrimitiveRef
 {
   int id; // ID of the primitive
-  int sense;
 };
 
-struct dblRay 
-{
-  double3 origin;
-  double3 direction;
-  double tMin; // Minimum distance for ray intersection
-  double tMax; // Maximum distance for ray intersection
-  int32_t* exclude_primitives; // Optional for excluding primitives
-  int32_t exclude_count;           // Number of excluded primitives
-  xdg::HitOrientation hitOrientation;
-  int volume_tree; // TreeID of the volume being queried
-  SurfaceAccelerationStructure volume_accel; // The volume accel 
-};
-
-struct dblHit 
-{
-  double distance;
-  int surf_id;
-  int primitive_id;
-  xdg::PointInVolume piv; // Point in volume check result (0 for outside, 1 for inside)
-};
 
 /* variables for double precision triangle mesh geometry */
 struct DPTriangleGeomData {
@@ -35,20 +18,17 @@ struct DPTriangleGeomData {
   uint3 *index;  // index buffer
   double3 *normals; // normals buffer
   int surf_id;
-  int2 vols;
-  int forward_vol;
-  int reverse_vol;
-  dblRay *ray; // double precision rays
+  int* meshid_to_sense; // MeshID -> sense (+1 forward, -1 reverse)
+  xdg::dblRay *ray; // double precision rays
   xdg::HitOrientation hitOrientation;
-  int forward_tree; // TreeID of the forward volume
-  int reverse_tree; // TreeID of the reverse volume
   GPRTPrimitiveRef* primitive_refs;
   int num_faces; // Number of faces in the geometry
 };
 
 struct dblRayGenData {
-  dblRay *ray;
-  dblHit *hit;
+  xdg::dblRay *ray;
+  xdg::dblHit *hit;
+  SurfaceAccelerationStructure* meshid_to_accel_address; // MeshID->TLAS address table to recover volume to trace against
 };
 
 /* A small structure of constants that can change every frame without rebuilding the
@@ -57,4 +37,7 @@ struct dblRayGenData {
 struct dblRayFirePushConstants {
   double tMax;
   double tMin;
+  xdg::HitOrientation hitOrientation;
 };
+
+#endif

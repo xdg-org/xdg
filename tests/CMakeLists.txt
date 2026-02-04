@@ -48,7 +48,6 @@ foreach(test ${TEST_NAMES})
         TEST_PREFIX "${test}::")
 endforeach()
 
-
 set(
 TEST_FILES
 pwr_pincell.h5m
