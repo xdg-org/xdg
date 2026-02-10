@@ -101,36 +101,88 @@ public:
     fatal_error("MockMesh does not support get_surface_vertices()");
   }
 
-  std::pair<std::vector<Vertex>, std::vector<int>> get_surface_mesh(MeshID surface) const override
+  std::vector<int> get_surface_connectivity(MeshID surface) const override
   {
     // Get the faces for the given surface
     auto faces = get_surface_faces(surface);
 
     // Collect all unique vertices for the surface
     std::unordered_map<int, int> handle_to_index;
-    std::vector<Vertex> vertices;
     int local_index = 0;
 
     for (const auto& face : faces) {
-        const auto& conn = triangle_connectivity()[face];
-        for (const auto& global_index : conn) {
-            if (handle_to_index.find(global_index) == handle_to_index.end()) {
-                handle_to_index[global_index] = local_index++;
-                vertices.push_back(this->vertices()[global_index]);
-            }
+      const auto& conn = triangle_connectivity()[face];
+      for (const auto& global_index : conn) {
+        if (handle_to_index.find(global_index) == handle_to_index.end()) {
+          handle_to_index[global_index] = local_index++;
         }
+      }
     }
 
     // Build the connectivity array using local indices
     std::vector<int> connectivity;
+    connectivity.reserve(faces.size() * 3);
     for (const auto& face : faces) {
-        const auto& conn = triangle_connectivity()[face];
-        for (const auto& global_index : conn) {
-            connectivity.push_back(handle_to_index[global_index]);
-        }
+      const auto& conn = triangle_connectivity()[face];
+      for (const auto& global_index : conn) {
+        connectivity.push_back(handle_to_index[global_index]);
+      }
     }
 
-    return {vertices, connectivity};
+    return connectivity;
+  }
+
+  std::vector<Vertex> get_volume_vertices(MeshID volume) const override
+  {
+    if (!volumetric_elements_) return {};
+
+    auto elements = get_volume_elements(volume);
+
+    std::unordered_map<int, int> handle_to_index;
+    std::vector<Vertex> vertices;
+    int local_index = 0;
+
+    for (const auto& element : elements) {
+      const auto& conn = tetrahedron_connectivity()[element];
+      for (const auto& global_index : conn) {
+        if (handle_to_index.find(global_index) == handle_to_index.end()) {
+          handle_to_index[global_index] = local_index++;
+          vertices.push_back(this->vertices()[global_index]);
+        }
+      }
+    }
+
+    return vertices;
+  }
+
+  std::vector<int> get_volume_connectivity(MeshID volume) const override
+  {
+    if (!volumetric_elements_) return {};
+
+    auto elements = get_volume_elements(volume);
+
+    std::unordered_map<int, int> handle_to_index;
+    int local_index = 0;
+
+    for (const auto& element : elements) {
+      const auto& conn = tetrahedron_connectivity()[element];
+      for (const auto& global_index : conn) {
+        if (handle_to_index.find(global_index) == handle_to_index.end()) {
+          handle_to_index[global_index] = local_index++;
+        }
+      }
+    }
+
+    std::vector<int> connectivity;
+    connectivity.reserve(elements.size() * 4);
+    for (const auto& element : elements) {
+      const auto& conn = tetrahedron_connectivity()[element];
+      for (const auto& global_index : conn) {
+        connectivity.push_back(handle_to_index[global_index]);
+      }
+    }
+
+    return connectivity;
   }
 
   // Topology

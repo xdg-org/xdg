@@ -250,6 +250,15 @@ MOABMeshManager::_surface_faces(MeshID surface) const
   return elements;
 }
 
+moab::Range
+MOABMeshManager::_volume_elements(MeshID volume) const
+{
+  moab::EntityHandle vol_handle = volume_id_map_.at(volume);
+  moab::Range elements;
+  this->moab_interface()->get_entities_by_type(vol_handle, moab::MBTET, elements);
+  return elements;
+}
+
 // Get the coordinates of vertices for a given set of vertex EntityHandles
 std::vector<Vertex> MOABMeshManager::_get_coords(moab::Range& verts) const
 {
@@ -313,6 +322,47 @@ MOABMeshManager::get_volume_elements(MeshID volume) const
     element_ids[i] = this->moab_interface()->id_from_handle(elements[i]);
   }
   return element_ids;
+}
+
+std::vector<Vertex>
+MOABMeshManager::get_volume_vertices(MeshID volume) const
+{
+  moab::Range elements = _volume_elements(volume); // MBTET
+  moab::Range verts;
+  this->moab_interface()->get_adjacencies(elements, 0, false, verts, moab::Interface::UNION);
+  return _get_coords(verts);
+}
+
+std::vector<int>
+MOABMeshManager::get_volume_connectivity(MeshID volume) const
+{
+  moab::Range elements = _volume_elements(volume); // MBTET
+  moab::Range verts;
+  this->moab_interface()->get_adjacencies(elements, 0, false, verts, moab::Interface::UNION);
+
+  // Create a mapping from global vertex handles to local volume indices
+  std::unordered_map<moab::EntityHandle, int> handle_to_index;
+  int local_index = 0;
+  for (auto vert : verts) {
+    handle_to_index[vert] = local_index++;
+  }
+
+  std::vector<moab::EntityHandle> conn;
+  auto first_element = *elements.begin();
+  this->moab_interface()->get_connectivity(&first_element, 1, conn); // global indices
+  if (conn.size() != 4) fatal_error("Expected linear tet elements to return in get_volume mesh()");
+
+  std::vector<int> connectivity;
+  for (auto element : elements) {
+    this->moab_interface()->get_connectivity(&element, 1, conn); // global indices
+
+    // Remap global indices to local indices on the volume
+    connectivity.push_back(handle_to_index[conn[0]]);
+    connectivity.push_back(handle_to_index[conn[1]]);
+    connectivity.push_back(handle_to_index[conn[2]]);
+    connectivity.push_back(handle_to_index[conn[3]]);
+  }
+  return connectivity;
 }
 
 std::vector<MeshID>
@@ -408,8 +458,8 @@ MOABMeshManager::get_surface_vertices(MeshID surface) const
   return _get_coords(verts);
 }
 
-std::pair<std::vector<Vertex>, std::vector<int>>
-MOABMeshManager::get_surface_mesh(MeshID surface) const
+std::vector<int>
+MOABMeshManager::get_surface_connectivity(MeshID surface) const
 {
   moab::Range faces = _surface_faces(surface);
   moab::Range verts;
@@ -432,7 +482,7 @@ MOABMeshManager::get_surface_mesh(MeshID surface) const
     connectivity.push_back(handle_to_index[conn[1]]);
     connectivity.push_back(handle_to_index[conn[2]]);
   }
-  return {_get_coords(verts), connectivity};
+  return connectivity;
 }
 
 SurfaceElementType

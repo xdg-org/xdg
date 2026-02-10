@@ -1,4 +1,5 @@
 // stl includes
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <numeric>
@@ -17,16 +18,6 @@
 
 using namespace xdg;
 using namespace xdg::test;
-
-static bool contains_vertex(const std::vector<Vertex>& vertices, const Vertex& v, double tol)
-{
-  return std::any_of(vertices.begin(), vertices.end(),
-                     [&](const Vertex& candidate) {
-                       return std::fabs(candidate.x - v.x) <= tol &&
-                              std::fabs(candidate.y - v.y) <= tol &&
-                              std::fabs(candidate.z - v.z) <= tol;
-                     });
-}
 
 TEST_CASE("Test MOAB Initialization")
 {
@@ -149,51 +140,71 @@ TEST_CASE("MOAB Element Types")
   }
 }
 
-TEST_CASE("MOAB Get Surface Mesh", "[moab][surface]")
+TEST_CASE("MOAB Get Surface Connectivity", "[moab][surface]")
 {
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
   const auto& mesh_manager = xdg->mesh_manager();
-  mesh_manager->load_file("tets.h5m");
+  mesh_manager->load_file("small-tet-mesh.h5m");
   mesh_manager->init();
 
+  REQUIRE(mesh_manager->num_volumes() == 2);
+  REQUIRE(mesh_manager->num_surfaces() == 4);
+  REQUIRE(mesh_manager->num_surface_faces(1) == 4);
+  REQUIRE(mesh_manager->num_surface_faces(2) == 4);
+  REQUIRE(mesh_manager->num_surface_faces(3) == 4);
+  REQUIRE(mesh_manager->num_surface_faces(4) == 4);
+
   std::vector<std::vector<int>> expected_connectivity = {
-    {3, 5, 0, 5, 4, 1, 4, 3, 2, 3, 4, 5}, // Surface 1
-    {4, 3, 2, 3, 5, 1, 5, 4, 0, 4, 5, 3}, // Surface 2
-    {4, 3, 1, 3, 5, 2, 5, 4, 0, 4, 5, 3}, // Surface 3
-    {4, 3, 2, 3, 5, 1, 5, 4, 0, 4, 5, 3}  // Surface 4
+    {3, 5, 0, 5, 4, 1, 4, 3, 2, 3, 4, 5}, /* Surface 0 (id 1) */
+    {4, 3, 1, 3, 5, 0, 5, 4, 2, 4, 5, 3}, /* Surface 1 (id 2) */
+    {4, 3, 0, 3, 5, 1, 5, 4, 2, 4, 5, 3}, /* Surface 2 (id 3) */
+    {4, 3, 1, 3, 5, 0, 5, 4, 2, 4, 5, 3}  /* Surface 3 (id 4) */
   };
 
   size_t surface_index = 0;
   for (const auto surface : mesh_manager->surfaces()) {
-    const auto surfaceMesh = mesh_manager->get_surface_mesh(surface);
-    const auto& vertices = surfaceMesh.first;
-    const auto& connectivity = surfaceMesh.second;
-    const auto& faces = mesh_manager->get_surface_faces(surface);
-
-    REQUIRE(surface_index < expected_connectivity.size());
+    auto connectivity = mesh_manager->get_surface_connectivity(surface);
     REQUIRE(connectivity.size() == expected_connectivity[surface_index].size());
     for (size_t i = 0; i < connectivity.size(); ++i) {
       REQUIRE(connectivity[i] == expected_connectivity[surface_index][i]);
-    }
-
-    // Each surface in tets.h5m should have four triangles (12 indices) and 6 unique vertices.
-    REQUIRE(connectivity.size() == 12);
-    REQUIRE(vertices.size() == 6);
-    REQUIRE(faces.size() == 4);
-
-    // Compare vertices returned by get_surface_mesh to the vertices from face_vertices.
-    for (const auto face : faces) {
-      const auto tri_vertices = mesh_manager->face_vertices(face);
-      REQUIRE(contains_vertex(vertices, tri_vertices[0], fpTol));
-      REQUIRE(contains_vertex(vertices, tri_vertices[1], fpTol));
-      REQUIRE(contains_vertex(vertices, tri_vertices[2], fpTol));
     }
 
     ++surface_index;
   }
 }
 
+TEST_CASE("MOAB Get Volume Connectivity", "[moab][volume]")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("small-tet-mesh.h5m");
+  mesh_manager->init();
+
+  REQUIRE(mesh_manager->num_volumes() == 2);
+  REQUIRE(mesh_manager->num_surfaces() == 4);
+  REQUIRE(mesh_manager->num_volume_elements(1) == 8);
+  REQUIRE(mesh_manager->num_volume_elements(mesh_manager->implicit_complement()) == 0);
+
+  std::vector<int> expected_connectivity = {
+    0, 1, 2, 3,
+    1, 4, 5, 6,
+    2, 5, 7, 8,
+    3, 6, 8, 9,
+    8, 3, 2, 1,
+    8, 2, 5, 1,
+    8, 5, 6, 1,
+    8, 6, 3, 1
+  };
+
+  REQUIRE(mesh_manager->volumes().size() == 2);
+  auto connectivity = mesh_manager->get_volume_connectivity(mesh_manager->volumes()[0]);
+  REQUIRE(connectivity.size() == expected_connectivity.size());
+  for (size_t i = 0; i < connectivity.size(); ++i) {
+    REQUIRE(connectivity[i] == expected_connectivity[i]);
+  }
+}
 
 TEMPLATE_TEST_CASE("TEST MOAB Find Element Method", "[moab][elements]",
                    Embree_Raytracer)

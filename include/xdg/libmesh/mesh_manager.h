@@ -101,6 +101,16 @@ public:
 
   std::vector<MeshID> get_volume_elements(MeshID volume) const;
 
+  std::vector<int> get_volume_connectivity(MeshID volume) const override
+  {
+    fatal_error("LibMeshManager::get_volume_connectivity() not implemented yet");
+  }
+
+  std::vector<Vertex> get_volume_vertices(MeshID volume) const override
+  {
+    fatal_error("LibMeshManager::get_volume_vertices() not implemented yet");
+  }
+
   std::vector<MeshID> get_surface_faces(MeshID surface) const override;
 
   std::vector<Vertex> element_vertices(MeshID element) const override;
@@ -118,9 +128,9 @@ public:
     fatal_error("LibMeshManager::get_surface_vertices() not implemented yet");
   }
 
-  std::pair<std::vector<Vertex>, std::vector<int>> get_surface_mesh(MeshID surface) const override
+  std::vector<int> get_surface_connectivity(MeshID surface) const override
   {
-    fatal_error("LibMeshManager::get_surface_mesh not implemented yet");
+    fatal_error("LibMeshManager::get_surface_connectivity not implemented yet");
   }
 
   SurfaceElementType get_surface_element_type(MeshID surface) const override
@@ -145,7 +155,6 @@ public:
   libMesh::Mesh* mesh() { return mesh_.get(); }
 
   private:
-
   //! Helper struct for unique identification of an element face
   struct SidePair {
     SidePair() = default;

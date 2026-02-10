@@ -66,6 +66,9 @@ public:
 
   std::vector<MeshID> get_volume_elements(MeshID volume) const override;
 
+  std::vector<int> get_volume_connectivity(MeshID volume) const override;
+  std::vector<Vertex> get_volume_vertices(MeshID volume) const override;
+
   std::vector<MeshID> get_surface_faces(MeshID surface) const override;
 
   std::vector<MeshID> element_connectivity(MeshID element) const override;
@@ -76,7 +79,7 @@ public:
 
   std::array<Vertex, 3> face_vertices(MeshID element) const override;
 
-  std::pair<std::vector<Vertex>, std::vector<int>> get_surface_mesh(MeshID surface) const override;
+  std::vector<int> get_surface_connectivity(MeshID surface) const override;
 
   std::vector<Vertex> get_surface_vertices(MeshID surface) const override;
 
@@ -134,6 +137,7 @@ private:
 
   std::vector<moab::EntityHandle> _ents_of_dim(int dim) const;
   moab::Range _surface_faces(MeshID surface) const;
+  moab::Range _volume_elements(MeshID volume) const;
   std::vector<Vertex> _get_coords(moab::Range& verts) const;
   std::string get_volume_property(const std::string& property, MeshID vol) const;
 
@@ -239,4 +243,3 @@ struct MOABElementFaceAccessor : public ElementFaceAccessor {
 } // namespace xdg
 
 #endif
-
