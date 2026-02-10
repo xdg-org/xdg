@@ -122,7 +122,8 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
     geom_data = gprtGeomGetParameters(triangleGeom); // pointer to assign data to
 
     // Get storage for vertices
-    auto [vertices, indices] = mesh_manager->get_surface_mesh(surf);
+    auto vertices = mesh_manager->get_surface_vertices(surf);
+    auto indices = mesh_manager->get_surface_connectivity(surf);
     std::vector<double3> dbl3Vertices;
     dbl3Vertices.reserve(vertices.size());    
     for (const auto &vertex : vertices) {
