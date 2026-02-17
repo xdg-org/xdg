@@ -235,8 +235,22 @@ XDG::ray_fire(MeshID volume,
               HitOrientation orientation,
               std::vector<MeshID>* const exclude_primitives) const
 {
-  TreeID scene = volume_to_surface_tree_map_.at(volume);
-  return ray_tracing_interface()->ray_fire(scene, origin, direction, dist_limit, orientation, exclude_primitives);
+  TreeID tree = volume_to_surface_tree_map_.at(volume);
+  return ray_tracing_interface()->ray_fire(tree, origin, direction, dist_limit, orientation, exclude_primitives);
+}
+
+void 
+XDG::ray_fire_prepared(const size_t num_rays,
+                       const double dist_limit,
+                       HitOrientation orientation) 
+{
+  return ray_tracing_interface()->ray_fire_prepared(num_rays, dist_limit, orientation);
+}
+
+void 
+XDG::point_in_volume_prepared(const size_t num_points) 
+{
+  return ray_tracing_interface()->point_in_volume_prepared(num_points);
 }
 
 std::pair<double, MeshID> XDG::closest(MeshID volume,

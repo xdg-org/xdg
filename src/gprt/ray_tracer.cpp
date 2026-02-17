@@ -1,25 +1,29 @@
 #include "xdg/gprt/ray_tracer.h"
 #include "gprt/gprt.h"
-
 namespace xdg {
 
 GPRTRayTracer::GPRTRayTracer()
 {
+  
   gprtRequestRayTypeCount(numRayTypes_); // Set the number of shaders which can be set to the same geometry
   context_ = gprtContextCreate();
   module_ = gprtModuleCreate(context_, dbl_deviceCode);
 
-  rayHitBuffers_.capacity = 1; // Preallocate space for 1 ray
-  rayHitBuffers_.ray = gprtDeviceBufferCreate<dblRay>(context_, rayHitBuffers_.capacity);
-  rayHitBuffers_.hit = gprtDeviceBufferCreate<dblHit>(context_, rayHitBuffers_.capacity);
-  rayHitBuffers_.devRayAddr = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
-  rayHitBuffers_.devHitAddr = gprtBufferGetDevicePointer(rayHitBuffers_.hit);
+  // Buffer setup
+  rayHitBuffers_.view.capacity = 1e6; // Preallocate space for 1m rays
+  rayHitBuffers_.ray = gprtDeviceBufferCreate<dblRay>(context_, rayHitBuffers_.view.capacity);
+  rayHitBuffers_.hit = gprtDeviceBufferCreate<dblHit>(context_, rayHitBuffers_.view.capacity);
+  rayHitBuffers_.view.rayDevPtr = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
+  rayHitBuffers_.view.hitDevPtr = gprtBufferGetDevicePointer(rayHitBuffers_.hit);
+  rayHitBuffers_.view.rayStride = sizeof(dblRay);
+  rayHitBuffers_.view.hitStride = sizeof(dblHit);
 
   excludePrimitivesBuffer_ = gprtDeviceBufferCreate<int32_t>(context_); // initialise buffer of size 1
 
+  tlas_handle_buffer_ = gprtDeviceBufferCreate<SurfaceAccelerationStructure>(context_); // initialise buffer of size 1
+
   setup_shaders();
 
-  
   // Bind the buffers to the RayGenData structure
   dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGenPrograms_.at(RayGenType::RAY_FIRE));
   rayGenData->ray = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
@@ -40,15 +44,9 @@ GPRTRayTracer::~GPRTRayTracer()
   gprtGraphicsSynchronize(context_); 
   gprtComputeSynchronize(context_);
 
-
   // Destroy TLAS structures
   for (const auto& [tree, accel] : surface_volume_tree_to_accel_map) {
     gprtAccelDestroy(accel);
-  }
-
-  // Destroy BLAS structures
-  for (const auto& blas : blas_handles_) {
-    gprtAccelDestroy(blas);
   }
 
   // Destroy Geoms and Types
@@ -61,6 +59,7 @@ GPRTRayTracer::~GPRTRayTracer()
   gprtBufferDestroy(rayHitBuffers_.ray);
   gprtBufferDestroy(rayHitBuffers_.hit);
   gprtBufferDestroy(excludePrimitivesBuffer_);
+  gprtBufferDestroy(tlas_handle_buffer_);
 
   // Destroy module and context
   gprtModuleDestroy(module_);
@@ -85,9 +84,13 @@ void GPRTRayTracer::setup_shaders()
 
 void GPRTRayTracer::init() 
 {
+  update_tlas_table_();
+
   // Build the shader binding table (SBT) after all shader programs and acceleration structures are set up
   gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
   // Note that should we need to update any shaders or acceleration structures, we must rebuild the SBT  
+
+  initialized_ = true;
 }
 
 std::pair<TreeID,TreeID>
@@ -165,13 +168,14 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
     geom_data->normals = gprtBufferGetDevicePointer(normal_buffer);
     geom_data->primitive_refs = gprtBufferGetDevicePointer(primitive_refs_buffer);
     geom_data->num_faces = num_faces;
-    
-    gprtComputeLaunch(aabbPopulationProgram_, {num_faces, 1, 1}, {1, 1, 1}, *geom_data);
+    // meshid_to_sense pointer is set after meshid_to_sense_buffer_ is created
+
+    constexpr uint32_t threadsPerGroup = 64; // must match [numthreads(64,1,1)]
+    uint32_t numGroupsX = (num_faces + threadsPerGroup - 1) / threadsPerGroup;
+    gprtComputeLaunch(aabbPopulationProgram_, {numGroupsX, 1, 1}, {threadsPerGroup, 1, 1}, *geom_data);
 
     GPRTAccel blas = gprtAABBAccelCreate(context_, triangleGeom, buildParams_.buildMode);
-
     gprtAccelBuild(context_, blas, buildParams_);
-
     gprt::Instance instance;
     instance = gprtAccelGetInstance(blas); // create instance of BLAS to be added to TLAS
     instance.mask = 0xff; // mask can be used to filter instances during ray traversal. 0xff ensures no filtering
@@ -185,14 +189,15 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
     surfaceBlasInstances.push_back(instance);
     globalBlasInstances_.push_back(instance);
     
-    // Always update per-volume info
+    // Ensure MeshID->sense lookup has an entry for this volume and record its
+    // orientation sign (+1 forward, -1 reverse) for normal flipping in shader.
     auto [forward_parent, reverse_parent] = mesh_manager->get_parent_volumes(surf);
     if (volume_id == forward_parent) {
-      geom_data->forward_vol = forward_parent;
-      geom_data->forward_tree = tree;
+      meshid_to_sense_.resize(static_cast<size_t>(forward_parent) + 1, 1);
+      meshid_to_sense_[forward_parent] = 1;
     } else if (volume_id == reverse_parent) {
-      geom_data->reverse_vol = reverse_parent;
-      geom_data->reverse_tree = tree;
+      meshid_to_sense_.resize(static_cast<size_t>(reverse_parent) + 1, 1);
+      meshid_to_sense_[reverse_parent] = -1;
     } else {
       fatal_error("Volume {} is not a parent of surface {}", volume_id, surf);
     }
@@ -203,7 +208,19 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
   GPRTAccel volume_tlas = gprtInstanceAccelCreate(context_, surfaceBlasInstances.size(), instanceBuffer);
   gprtAccelBuild(context_, volume_tlas, buildParams_);
   surface_volume_tree_to_accel_map[tree] = volume_tlas;
-  
+  surface_tree_to_volume_map_[tree] = volume_id;
+  if (volume_id >= tlas_handles_.size()) {
+    tlas_handles_.resize(volume_id + 1, SurfaceAccelerationStructure{});
+  }
+  tlas_handles_[volume_id] = gprtAccelGetDeviceAddress(volume_tlas);
+
+  update_meshid_to_sense_();
+
+  if (initialized_) {
+    update_tlas_table_();
+    gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
+  }
+
   return tree;
 }
 
@@ -219,23 +236,23 @@ bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree,
                                     const Direction* direction,
                                     const std::vector<MeshID>* exclude_primitives) const
 {
-  GPRTAccel volume = surface_volume_tree_to_accel_map.at(tree);
+  MeshID volume = surface_tree_to_volume_map_.at(tree); // recover MeshID of volume to return GPRTAccel on device
   auto rayGen = rayGenPrograms_.at(RayGenType::POINT_IN_VOLUME);
   dblRayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGen);
 
+  const Direction defaultDir = Direction{1. / std::sqrt(2.0), 1. / std::sqrt(2.0), 0.0};
+
   // Use provided direction or if Direction == nulptr use default direction
   Direction directionUsed = (direction != nullptr) ? Direction{direction->x, direction->y, direction->z} 
-                            : Direction{1. / std::sqrt(2.0), 1. / std::sqrt(2.0), 0.0};
+                            : defaultDir;
 
-  gprtBufferMap(rayHitBuffers_.ray); // Update the ray input buffer
+  // Host -> Device buffer mapping/population of raydata for raygen shader
+  gprtBufferMap(rayHitBuffers_.ray);
   dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
-  ray[0].volume_accel = gprtAccelGetDeviceAddress(volume); 
   ray[0].origin = {point.x, point.y, point.z};
   ray[0].direction = {directionUsed.x, directionUsed.y, directionUsed.z};
-  ray[0].tMax = INFTY; // Set a large distance limit
-  ray[0].tMin = 0.0;
-  ray[0].volume_tree = tree; // Set the TreeID of the volume being queried
-  ray[0].hitOrientation = HitOrientation::ANY; // No orientation culling for point-in-volume check
+  ray[0].volume_mesh_id = volume;
+  ray[0].enabled = 1; // Ensure the ray is enabled 
 
   if (exclude_primitives) {
     if (!exclude_primitives->empty()) gprtBufferResize(context_, excludePrimitivesBuffer_, exclude_primitives->size(), false);
@@ -253,10 +270,15 @@ bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree,
   }
   gprtBufferUnmap(rayHitBuffers_.ray); // required to sync buffer back on GPU?
 
-  gprtRayGenLaunch1D(context_, rayGen, 1); // Launch raygen shader (entry point to RT pipeline)
+  dblPushConstants pushConstants;
+  pushConstants.hitOrientation = HitOrientation::ANY;
+  pushConstants.tMax = INFTY;
+  pushConstants.tMin = 0.0;
+
+  gprtRayGenLaunch1D(context_, rayGen, 1, pushConstants); // Launch raygen shader (entry point to RT pipeline)
   gprtGraphicsSynchronize(context_); // Ensure all GPU operations are complete before returning control flow to CPU
 
-  // Retrieve the hit from the dblHit buffer
+  // Device -> Host buffer mapping to retrieve hit result
   gprtBufferMap(rayHitBuffers_.hit);
   dblHit* hit = gprtBufferGetHostPointer(rayHitBuffers_.hit);
   auto surface = hit[0].surf_id;
@@ -280,19 +302,17 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
                                                   HitOrientation orientation,
                                                   std::vector<MeshID>* const exclude_primitives) 
 {
-  GPRTAccel volume = surface_volume_tree_to_accel_map.at(tree);
+  MeshID volume = surface_tree_to_volume_map_.at(tree); // recover MeshID of volume to return GPRTAccel on device
   auto rayGen = rayGenPrograms_.at(RayGenType::RAY_FIRE);
   dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGen);
-  
-  gprtBufferMap(rayHitBuffers_.ray); // Update the ray input buffer
+
+  // Host -> Device buffer mapping/population of raydata for raygen shader
+  gprtBufferMap(rayHitBuffers_.ray);
   dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
-  ray[0].volume_accel = gprtAccelGetDeviceAddress(volume);
   ray[0].origin = {origin.x, origin.y, origin.z};
   ray[0].direction = {direction.x, direction.y, direction.z};
-  ray[0].tMax = dist_limit;
-  ray[0].tMin = 0.0;
-  ray[0].hitOrientation = orientation; // Set orientation for the ray
-  ray[0].volume_tree = tree; // Set the TreeID of the volume being queried
+  ray[0].volume_mesh_id = volume;
+  ray[0].enabled = 1; // Ensure the ray is enabled
 
   if (exclude_primitives) {
     if (!exclude_primitives->empty()) gprtBufferResize(context_, excludePrimitivesBuffer_, exclude_primitives->size(), false);
@@ -310,10 +330,16 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
   }
   gprtBufferUnmap(rayHitBuffers_.ray); // required to sync buffer back on GPU?
   
-  gprtRayGenLaunch1D(context_, rayGen, 1); // Launch raygen shader (entry point to RT pipeline)
+  // Set push constants (same for every ray)
+  dblPushConstants pushConstants;
+  pushConstants.hitOrientation = orientation;
+  pushConstants.tMax = dist_limit;
+  pushConstants.tMin = 0.0;
+
+  gprtRayGenLaunch1D(context_, rayGen, 1, pushConstants); // Launch raygen shader (entry point to RT pipeline)
   gprtGraphicsSynchronize(context_); // Ensure all GPU operations are complete before returning control flow to CPU
                                                   
-  // Retrieve the hit from the dblHit buffer
+  // Device -> Host buffer mapping to retrieve hit result
   gprtBufferMap(rayHitBuffers_.hit);
   dblHit* hit = gprtBufferGetHostPointer(rayHitBuffers_.hit);
   auto distance = hit[0].distance;
@@ -327,7 +353,46 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
     if (exclude_primitives) exclude_primitives->push_back(primitive_id);
   return {distance, surface};
 }
-                
+  
+void 
+GPRTRayTracer::ray_fire_prepared(const size_t num_rays,
+                                 const double dist_limit,
+                                 HitOrientation orientation)
+{
+  if (num_rays == 0) return; // no work to do. Early exit
+
+  check_rayhit_buffer_capacity(num_rays); 
+
+  auto rayGen = rayGenPrograms_.at(RayGenType::RAY_FIRE);
+
+  dblPushConstants pushConstants;
+  pushConstants.tMax = dist_limit;
+  pushConstants.tMin = 0.0;
+  pushConstants.hitOrientation = orientation; // Set orientation for the ray
+  
+  gprtRayGenLaunch1D(context_, rayGen, num_rays, pushConstants);
+  gprtGraphicsSynchronize(context_);
+  return;
+}
+
+void 
+GPRTRayTracer::point_in_volume_prepared(const size_t num_points)
+{
+  if (num_points == 0) return; // no work to do. Early exit
+
+  check_rayhit_buffer_capacity(num_points); 
+  auto rayGen = rayGenPrograms_.at(RayGenType::POINT_IN_VOLUME);
+
+  dblPushConstants pushConstants;
+  pushConstants.tMax = INFTY;
+  pushConstants.tMin = 0.0;
+  pushConstants.hitOrientation = HitOrientation::ANY; // Set orientation for the ray
+  
+  gprtRayGenLaunch1D(context_, rayGen, num_points, pushConstants);
+  gprtGraphicsSynchronize(context_);
+  return;
+}
+
 void GPRTRayTracer::create_global_surface_tree()
 {
   // Create a TLAS (Top-Level Acceleration Structure) for all the volumes
@@ -342,16 +407,22 @@ void GPRTRayTracer::create_global_surface_tree()
   global_surface_accel_ = global_accel; 
 }
 
-void GPRTRayTracer::check_ray_buffer_capacity(size_t N)
+void GPRTRayTracer::check_rayhit_buffer_capacity(const size_t N)
 {
-  if (N <= rayHitBuffers_.capacity) return; // current capacity is sufficient
+  if (N <= rayHitBuffers_.view.capacity) return; // current capacity is sufficient
 
-  // Resize buffers to accommodate N rays
-  size_t newCapacity = std::max(N, rayHitBuffers_.capacity * 2); // double the capacity or set to N, whichever is larger
+  // Resize buffers to accommodate N rays - double the capacity or set to N, whichever is larger
+  size_t newCapacity = std::max(N, rayHitBuffers_.view.capacity * 2); 
 
   gprtBufferResize(context_, rayHitBuffers_.ray, newCapacity, false);
   gprtBufferResize(context_, rayHitBuffers_.hit, newCapacity, false);
-  rayHitBuffers_.capacity = newCapacity;
+  rayHitBuffers_.view.capacity = newCapacity;
+
+  // Get fresh device pointers after resize
+  rayHitBuffers_.view.rayDevPtr = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
+  rayHitBuffers_.view.hitDevPtr = gprtBufferGetDevicePointer(rayHitBuffers_.hit);
+  rayHitBuffers_.view.rayStride = sizeof(dblRay);
+  rayHitBuffers_.view.hitStride = sizeof(dblHit);
 
   // Since we have resized the ray buffers, we need to update the geom_data->rayIn pointers in all geometries too 
   for (auto const& [surf, geom] : surface_to_geometry_map_) {
@@ -364,9 +435,75 @@ void GPRTRayTracer::check_ray_buffer_capacity(size_t N)
     dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGen);
     rayGenData->ray = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
     rayGenData->hit = gprtBufferGetDevicePointer(rayHitBuffers_.hit);
+    rayGenData->meshid_to_accel_address = gprtBufferGetDevicePointer(tlas_handle_buffer_);
   }
 
   gprtBuildShaderBindingTable(context_, static_cast<GPRTBuildSBTFlags>(GPRT_SBT_GEOM | GPRT_SBT_RAYGEN));
+}
+
+// Update the TLAS table (MeshID -> SurfaceAccelerationStructure) buffer on the device
+void GPRTRayTracer::update_tlas_table_()
+{
+  upload_device_buffer_(tlas_handle_buffer_, tlas_handles_);
+
+  for (auto type : {RayGenType::RAY_FIRE, RayGenType::POINT_IN_VOLUME}) {
+    auto* raygendata = gprtRayGenGetParameters(rayGenPrograms_.at(type));
+    raygendata->meshid_to_accel_address = gprtBufferGetDevicePointer(tlas_handle_buffer_);
+  }
+}
+
+void GPRTRayTracer::update_meshid_to_sense_()
+{
+  upload_device_buffer_(meshid_to_sense_buffer_, meshid_to_sense_);
+
+  for (auto const& [surf, geom] : surface_to_geometry_map_) {
+    DPTriangleGeomData* geom_data = gprtGeomGetParameters(geom);
+    geom_data->meshid_to_sense = gprtBufferGetDevicePointer(meshid_to_sense_buffer_);
+  }
+}
+
+
+DeviceRayHitBuffers GPRTRayTracer::get_device_rayhit_buffers(const size_t N)
+{
+  check_rayhit_buffer_capacity(N);
+  return rayHitBuffers_.view;
+}
+
+void GPRTRayTracer::populate_rays_external(size_t numRays,
+                                           const RayPopulationCallback& callback)
+{
+  if (numRays == 0) { 
+    warning("Warning number of rays passed to populate_rays_external is 0. No work to be done.");
+    return;
+  }
+
+  // Ensure device buffers are large enough
+  check_rayhit_buffer_capacity(numRays);
+
+  // Use the user callback to populate the rays directly on the device
+  callback(rayHitBuffers_.view, numRays);
+
+  // After callback returns, we assume the ray buffer is populated and ready to trace
+  // Note: The callback is responsible for synchronization if using an async API
+}
+
+void GPRTRayTracer::transfer_hits_buffer_to_host(const size_t num_rays,
+                                                 std::vector<dblHit>& hits)
+{
+  hits.clear(); // Ensure hits vector is empty before populating
+  if (num_rays == 0) {
+    warning("Warning number of rays passed to transfer_hits_buffer_to_host is 0. No work to be done.");
+    return;
+  }
+  if (num_rays > rayHitBuffers_.view.capacity) {
+    fatal_error("Requested {} hits, but hit buffer capacity is {}", num_rays, rayHitBuffers_.view.capacity);
+  }
+
+  hits.resize(num_rays);
+  gprtBufferMap(rayHitBuffers_.hit);
+  dblHit* hit = gprtBufferGetHostPointer(rayHitBuffers_.hit);
+  std::copy(hit, hit + num_rays, hits.begin());
+  gprtBufferUnmap(rayHitBuffers_.hit);
 }
 
 } // namespace xdg

@@ -4,15 +4,60 @@
 #include <memory>
 #include <vector>
 #include <unordered_map>
+#include <functional>
 
+#include "xdg/error.h"
 #include "xdg/constants.h"
 #include "xdg/embree_interface.h"
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/primitive_ref.h"
 #include "xdg/geometry_data.h"
 
+
 namespace xdg
 {
+
+struct dblHit; // forward declaration for dblHit
+
+/**
+ * @brief Device ray/hit buffer descriptor
+ *
+ * This structure provides access to device-allocated ray and hit buffers
+ * in a backend-agnostic way. The buffers contain XDG's standard ray and hit
+ * data structures (dblRay and dblHit), regardless of which compute backend
+ * is being used.
+ *
+ * Key design principle:
+ * - Device pointers are opaque (void*)
+ * - The data layout is always the XDG types dblRay and dblHit
+ * - Downstream code can write to these buffers (hopefully) using any compute API
+ *
+ * For type-safe access in downstream code:
+ * - Cast rayDevPtr to (dblRay*) when using C++ or kernels
+ * - Cast hitDevPtr to (dblHit*) when reading hit results
+ */
+struct DeviceRayHitBuffers {
+  void* rayDevPtr;
+  void* hitDevPtr;
+  size_t capacity; // Number of rays the buffer can hold
+  size_t rayStride; // Bytes between ray elements - currently set to sizeof(dblRay) but in theory allows for future flexibility
+  size_t hitStride; // Bytes between hit elements - currently set to sizeof(dblHit) but in theory allows for future flexibility
+};
+
+/**
+ * @brief Callback alias for external ray population
+ *
+ * Allows downstream applications to populate ray buffers using their own compute backend
+ * (GPRT, CUDA, OpenMP) without XDG needing to know the specifics.
+ *
+ * The callback receives opaque device pointers and should interpret them according to
+ * the buffer metadata (stride information). Alternatively, users can rely on the standard
+ * dblRay/dblHit layouts if they don't need custom padding/alignment.
+ *
+ * @param buffer Device ray buffer descriptor with opaque pointers and metadata
+ * @param numRays Number of rays to generate/populate
+ */
+using RayPopulationCallback = std::function<void(const DeviceRayHitBuffers& buffer, size_t numRays)>;
 
 class RayTracer {
 public:
@@ -73,12 +118,41 @@ public:
    */
   virtual void create_global_element_tree() = 0;
 
-  // Query Methods
+  /**
+   * @brief Check whether a point lies in a specified volume
+   *
+   * This method performs a check to see whether a given point is inside a volume provided.
+   * It computes this by firing a ray from the point and checking whether or not the ray is Entering or Exiting
+   * the volume boundary. If no direction is provided, a default direction will be used.
+   * Note - zero length direction vectors are not explicitly checked for internally and should be avoided to avoid causing undefined behavior.
+   * 
+   * @param[in] tree The TreeID of the volume we are querying against
+   * @param[in] point The point to be queried
+   * @param[in] direction (optional) direction to launch a ray in a specified direction - must be non-zero length
+   * @param[in] exclude_primitives (optional) vector of surface element MeshIDs to exclude from intersection tests
+   * @return Boolean result of point in volume check
+   */ 
   virtual bool point_in_volume(TreeID tree,
                        const Position& point,
                        const Direction* direction = nullptr,
                        const std::vector<MeshID>* exclude_primitives = nullptr) const = 0;
-
+                      
+  /**
+   * @brief Fire a ray against a given volume and return the first hit
+   *
+   * This method fires a ray from a given origin in a specified direction against the surfaces of a volume.
+   * It returns the distance to the closest hit and the MeshID of the surface hit. The user can specify
+   * a distance limit and whether Entering/Exiting hits should be rejected.
+   * Note - zero length direction vectors are not explicitly checked for internally and should be avoided to avoid causing undefined behavior.
+   *
+   * @param[in] tree The TreeID of the volume we are querying against
+   * @param[in] origin An array of Position objects representing the starting points of the rays
+   * @param[in] direction (optional) Direction object to launch a ray in a specified direction
+   * @param[in] dist_limit (optional) maximum distance to consider for intersections
+   * @param[in] orientation (optional) flag to consider whether Entering/Exiting hits should be rejected. Defaults to EXITING
+   * @param[in] exclude_primitives (optional) vector of surface element MeshIDs to exclude from intersection tests
+   * @return A pair containing the distance to the closest hit and the MeshID of the surface hit
+   */ 
   virtual std::pair<double, MeshID> ray_fire(TreeID tree,
                                      const Position& origin,
                                      const Direction& direction,
@@ -123,6 +197,61 @@ public:
   int num_registered_surface_trees() const { return surface_trees_.size(); };
   int num_registered_element_trees() const { return element_trees_.size(); };
 
+
+  // GPU Ray Tracing Support
+
+  virtual void ray_fire_prepared(const size_t num_rays,
+                                 const double dist_limit = INFTY,
+                                 HitOrientation orientation = HitOrientation::EXITING) 
+  {
+    fatal_error("GPU ray tracing not supported with this RayTracer backend");
+  }  
+
+  virtual void point_in_volume_prepared(const size_t num_points) 
+  {
+    fatal_error("GPU ray tracing not supported with this RayTracer backend");
+  }
+
+  /**
+   * @brief Check whether the current ray buffer capacity is sufficient for the number of rays requested
+   * @param[in] num_rays The number of rays to be processed
+   */
+  virtual void check_rayhit_buffer_capacity(const size_t num_rays) {
+    fatal_error("GPU ray tracing not supported with this RayTracer backend");
+  }
+
+  /**
+   * @brief return device pointers to ray and hit buffers for GPU ray tracing
+   * @return DeviceRayHitBuffers struct containing device pointers to ray and hit buffers
+   */
+  virtual DeviceRayHitBuffers get_device_rayhit_buffers(const size_t num_rays) {
+    fatal_error("GPU ray tracing not supported with this RayTracer backend");
+    return {};
+  }
+
+  /**
+   * @brief Allocate device ray buffers and populate them via a user-provided callback
+   *
+   * This method allows downstream applications to populate ray buffers using any compute
+   * backend (GPRT, CUDA, HIP, OpenCL, etc.) without coupling them to XDG's internals.
+   *
+   * The workflow:
+   * 1. XDG allocates device memory for rays (if not already large enough)
+   * 2. XDG passes device pointers to the callback
+   * 3. User's callback populates the buffers using their preferred compute kernel/shader
+   * 4. User's callback returns (XDG assumes buffers are now populated)
+   *
+   * This avoids unnecessary host-device transfers by allowing users to write directly
+   * to XDG's device buffers without any host-side transfers.
+   *
+   * @param numRays Number of rays to allocate space for
+   * @param callback Function that will populate the ray buffer. Receives the allocated buffer and ray count.
+   */
+  virtual void populate_rays_external(size_t numRays,
+                                      const RayPopulationCallback& callback) {
+    fatal_error("GPU ray tracing not supported with this RayTracer backend");
+  }
+  
 protected:
   // Common functions across RayTracers
   const double bounding_box_bump(const std::shared_ptr<MeshManager> mesh_manager, MeshID volume_id); // return a bump value based on the size of a bounding box (minimum 1e-3). Should this be a part of mesh_manager?
@@ -146,8 +275,6 @@ protected:
   ElementTreeID next_element_tree_id_ {0};
   double numerical_precision_ {1e-3};
 };
-
 } // namespace xdg
-
 
 #endif // include guard

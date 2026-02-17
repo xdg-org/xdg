@@ -4,7 +4,6 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
-
 // xdg includes
 #include "xdg/constants.h"
 #include "xdg/mesh_manager_interface.h"

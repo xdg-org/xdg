@@ -10,6 +10,8 @@
 
 namespace xdg {
 
+struct DeviceRayHitBuffers; // forward declaration
+struct dblHit; // forward declaration
 class XDG {
 
 public:
@@ -63,17 +65,73 @@ next_element(MeshID current_element,
                   const Position& r,
                   const Direction& u) const;
 
+/**
+ * @brief Check whether a point lies in a specified volume
+ *
+ * This method performs a check to see whether a given point is inside a volume provided.
+ * It computes this by firing a ray from the point and checking whether or not the ray is Entering or Exiting
+ * the volume boundary. If no direction is provided, a default direction will be used.
+ * Note - zero length direction vectors are not explicitly checked for internally and should be avoided to avoid causing undefined behavior.
+ * 
+ * @param[in] tree The TreeID of the volume we are querying against
+ * @param[in] point The point to be queried
+ * @param[in] direction (optional) direction to launch a ray in a specified direction - must be non-zero length
+ * @param[in] exclude_primitives (optional) vector of surface element MeshIDs to exclude from intersection tests
+ * @return Boolean result of point in volume check
+ */ 
 bool point_in_volume(MeshID volume,
       const Position point,
       const Direction* direction = nullptr,
       const std::vector<MeshID>* exclude_primitives = nullptr) const;
 
+/**
+ * @brief Fire a ray against a given volume and return the first hit
+ *
+ * This method fires a ray from a given origin in a specified direction against the surfaces of a volume.
+ * It returns the distance to the closest hit and the MeshID of the surface hit. The user can specify
+ * a distance limit and whether Entering/Exiting hits should be rejected.
+ * 
+ * @param[in] volume The MeshID of the volume we are querying against
+ * @param[in] origin Origin of the ray to be fired
+ * @param[in] direction (optional) Direction object to launch a ray in a specified direction
+ * @param[in] dist_limit (optional) maximum distance to consider for intersections
+ * @param[in] orientation (optional) flag to consider whether Entering/Exiting hits should be rejected. Defaults to EXITING
+ * @param[in] exclude_primitives (optional) vector of surface element MeshIDs to exclude from intersection tests
+ * @return A pair containing the distance to the closest hit and the MeshID of the surface hit
+ */ 
 std::pair<double, MeshID> ray_fire(MeshID volume,
                                    const Position& origin,
                                    const Direction& direction,
                                    const double dist_limit = INFTY,
                                    HitOrientation orientation = HitOrientation::EXITING,
                                    std::vector<MeshID>* const exclude_primitives = nullptr) const;
+
+
+/**
+ * @brief Call ray fire on pre-populated ray buffers
+ *
+ * This method performs a set of ray fire queries on a set of rays that have already been populated on device
+ * via the external ray population callback method. With GPRT ray tracing this launches the RT pipeline with the number of rays provided.
+ *
+ * @param[in] num_rays The number of rays to be processed in the batch
+ * @param[in] dist_limit (optional) maximum distance to consider for intersections
+ * @param[in] orientation (optional) flag to consider whether Entering/Exiting hits should be rejected. Defaults to EXITING
+ * @return Void. Outputs stored in dblHit buffer on device.
+ */ 
+void ray_fire_prepared(const size_t num_rays,
+                       const double dist_limit = INFTY,
+                       HitOrientation orientation = HitOrientation::EXITING);
+
+/**
+ * @brief Call point_in_volume on pre-populated ray buffers
+ *
+ * This method performs a set of point_in_volume queries on a set of points that have already been populated on device
+ * via the external ray population callback method. With GPRT ray tracing this launches the RT pipeline with the number of points provided.
+ *
+ * @param[in] num_points The number of points to be processed in the batch
+ * @return Void. Outputs stored in dblHit buffer on device. 
+ */ 
+void point_in_volume_prepared(const size_t num_points);
 
 std::pair<double, MeshID> closest(MeshID volume,
                                   const Position& origin) const;
@@ -105,6 +163,18 @@ Direction surface_normal(MeshID surface,
     ray_tracing_interface_ = ray_tracing_interface;
   }
 
+  // Resize buffers (if necessary) and return device pointers for ray and hit data
+  DeviceRayHitBuffers get_device_rayhit_buffers(const size_t requiredCapacity)
+  {
+    return ray_tracing_interface()->get_device_rayhit_buffers(requiredCapacity);
+  }
+
+  void populate_rays_external(size_t numRays,
+                              const RayPopulationCallback& callback)
+  {
+    return ray_tracing_interface()->populate_rays_external(numRays, callback);
+  }
+
 // Accessors
   const std::shared_ptr<RayTracer>& ray_tracing_interface() const {
     return ray_tracing_interface_;
@@ -113,6 +183,7 @@ Direction surface_normal(MeshID surface,
   const std::shared_ptr<MeshManager>& mesh_manager() const {
     return mesh_manager_;
   }
+
 // Private methods
 private:
   double _triangle_volume_contribution(const PrimitiveRef& triangle) const;
