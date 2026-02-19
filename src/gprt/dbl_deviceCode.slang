@@ -153,10 +153,10 @@ void DPTrianglePluckerIntersection(uniform DPTriangleGeomData record)
     dp::vec3 vertices[3] = { v0, v1, v2 };
 
     // Load rays
-    dp::vec3 origin = record.rayIn[rayID].origin;
-    dp::vec3 direction = record.rayIn[rayID].direction;
-    double tMin = record.rayIn[rayID].tMin;
-    double tMax = record.rayIn[rayID].tMax;
+    dp::vec3 origin = record.ray[rayID].origin;
+    dp::vec3 direction = record.ray[rayID].direction;
+    double tMin = record.ray[rayID].tMin;
+    double tMax = record.ray[rayID].tMax;
 
     bool useOrientation = false;
     int orientation = 0;
