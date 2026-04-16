@@ -79,10 +79,6 @@ public:
     fatal_error("MfemMeshManager::face_vertices() not implemented yet");
   }
 
-  virtual std::vector<Vertex> get_surface_vertices(MeshID surface) const override {
-    fatal_error("MfemMeshManager::get_surface_vertices() not implemented yet");
-  }
-
   virtual MeshID adjacent_element(MeshID element, int face) const override {
     fatal_error("MfemMeshManager::adjacent_element() not implemented yet");
   }
@@ -91,33 +87,49 @@ public:
     fatal_error("MfemMeshManager::surface_sense() not implemented yet");
   }
 
-  virtual std::pair<std::vector<Vertex>, std::vector<int>> get_surface_mesh(MeshID surface) const override {
-    fatal_error("MfemMeshManager::get_surface_mesh() not implemented yet");
-  }
-
   virtual SurfaceElementType get_surface_element_type(MeshID element) const override {
     fatal_error("MfemMeshManager::get_surface_element_type() not implemented yet");
   }
 
-  BoundingBox _mfem_element_bounding_box(mfem::Element* elem) const {
-    auto bbox = BoundingBox {
-      INFTY, INFTY, INFTY,
-      -INFTY, -INFTY, -INFTY
-    };
-    for(int i = 0; i < elem->GetNVertices(); i++) {
-      const mfem::real_t* v = mesh_->GetVertex(*(i + elem->GetVertices()));
-      bbox.update(v);
-    }
-    return bbox;
+  virtual int num_vertices() const override {
+    fatal_error("MfemMeshManager::num_vertices() not implemented yet");
   }
 
-  BoundingBox element_bounding_box(MeshID element) const override {
-    auto elem = mesh_->GetElement(element);
-    if (!elem) {
-      fatal_error(fmt::format("MfemMeshManager::element_bounding_box(): invalid element ID {}", element));
-    }
-    return _mfem_element_bounding_box(elem);
+  virtual double element_volume(MeshID element) const override {
+    fatal_error("MfemMeshManager::element_volume() not implemented yet");
   }
+
+  virtual Vertex vertex_coordinates(MeshID vertex_id) const override {
+    fatal_error("MfemMeshManager::vertex_coordinates() not implemented yet");
+  }
+
+  virtual std::vector<MeshID> element_connectivity(MeshID element) const override {
+    fatal_error("MfemMeshManager::element_connectivity() not implemented yet");
+  }
+
+  virtual std::vector<MeshID> face_connectivity(MeshID face) const override {
+    fatal_error("MfemMeshManager::face_connectivity() not implemented yet");
+  }
+
+  // BoundingBox _mfem_element_bounding_box(mfem::Element* elem) const {
+  //   auto bbox = BoundingBox {
+  //     INFTY, INFTY, INFTY,
+  //     -INFTY, -INFTY, -INFTY
+  //   };
+  //   for(int i = 0; i < elem->GetNVertices(); i++) {
+  //     const mfem::real_t* v = mesh_->GetVertex(*(i + elem->GetVertices()));
+  //     bbox.update(v);
+  //   }
+  //   return bbox;
+  // }
+
+  // BoundingBox element_bounding_box(MeshID element) const {
+  //   auto elem = mesh_->GetElement(element);
+  //   if (!elem) {
+  //     fatal_error(fmt::format("MfemMeshManager::element_bounding_box(): invalid element ID {}", element));
+  //   }
+  //   return _mfem_element_bounding_box(elem);
+  // }
 
   // Topology
   std::vector<MeshID> get_volume_surfaces(MeshID volume) const override {
