@@ -9,6 +9,7 @@ option(XDG_ENABLE_EMBREE  "Enable support for the Embree ray tracing library" ON
 option(XDG_ENABLE_GPRT    "Enable support for the GPRT ray tracing library"  OFF)
 option(XDG_BUILD_TESTS    "Enable C++ unit testing"                           ON)
 option(XDG_BUILD_TOOLS    "Enable tools and miniapps"                         ON)
+option(XDG_BUILD_EXAMPLES "Enable C++ examples"                               ON)
 
 # Set version numbers
 set(XDG_VERSION_MAJOR 0)
@@ -25,6 +26,13 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Set module path
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
+
+#============================================================================
+# If we want to build examples
+#============================================================================
+if(XDG_BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif ()
 
 #===============================================================================
 # libMesh
