@@ -11,7 +11,7 @@ An API for interacting with surface discretizations of CAD geometry for particle
 Currently limited to facet-based geometry composed of triangles or tetrahedra.
 
 XDG stands on the shoulders of the [Direct Accelerated Geometry Monte Carlo
-(DAGMC)](https://svalinn.github.io/DAGMC/index.html>) toolkit and it's
+(DAGMC)](https://svalinn.github.io/DAGMC/index.html) toolkit and it's
 development team, from which it draws significant guidance and inspiration. The
 intent of this library is to provide expanded DAGMC functionality across
 multiple mesh libraries and formats. Various members of the DAGMC development
