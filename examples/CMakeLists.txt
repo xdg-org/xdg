@@ -16,3 +16,4 @@ function(xdg_add_examples name source)
 endfunction()
 
 
+xdg_add_examples(ray_segments_example ray_segments.cpp)
