@@ -12,6 +12,7 @@ function(xdg_add_examples name source)
         target_link_libraries(${name} PRIVATE $<BUILD_INTERFACE:gprt>)
     endif()
     if (XDG_ENABLE_MOAB)
+        target_include_directories(${name} PRIVATE $<TARGET_PROPERTY:MOAB,INTERFACE_INCLUDE_DIRECTORIES>)
         target_link_libraries(${name} PRIVATE MOAB)
     endif()
     set_target_properties(${name} PROPERTIES
