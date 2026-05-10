@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 
         // xdg returns MeshID (or the element ID) of the elements it has intersected and
         // ray segments associated with element.
-        std::vector<std::pair<MeshID, double>> track_segments = xdg_instance->segments(start, end);
+        std::vector<std::pair<xdg::MeshID, double>> track_segments = xdg_instance->segments(start, end);
 
         double total_length = std::accumulate(track_segments.begin(), track_segments.end(), 0.0,
                                               [](double sum, const std::pair<xdg::MeshID, double>& seg) {

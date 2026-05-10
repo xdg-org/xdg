@@ -27,12 +27,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # Set module path
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
-#============================================================================
-# If we want to build examples
-#============================================================================
-if(XDG_BUILD_EXAMPLES)
-  add_subdirectory(examples)
-endif ()
 
 #===============================================================================
 # libMesh
@@ -76,6 +70,13 @@ if (XDG_ENABLE_EMBREE)
 
   message(STATUS "Found Embree ${EMBREE_VERSION} at ${EMBREE_ROOT_DIR}")
 endif()
+
+#============================================================================
+# If we want to build examples
+#============================================================================
+if(XDG_BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif ()
 
 #===============================================================================
 # Update git submodules as needed (borrowed from OpenMC)
