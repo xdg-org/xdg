@@ -4,6 +4,7 @@
 namespace xdg {
 
   enum PointInVolume : int { 
+    UNSET = -1,
     OUTSIDE = 0, 
     INSIDE = 1 
   };

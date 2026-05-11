@@ -25,7 +25,7 @@ struct PluckerIntersectionResult {
   double t = 0.0;      // Distance along the ray to the intersection point
 };
 
-constexpr PluckerIntersectionResult EXIT_EARLY = {false, 0.0};
+static const PluckerIntersectionResult EXIT_EARLY = {false, 0.0};
 
 /* Function to return the vertex with the lowest coordinates. To force the same
   ray-edge computation, the Plücker test needs to use consistent edge
@@ -56,7 +56,7 @@ inline double plucker_edge_test(dp::vec3 vertexa, dp::vec3 vertexb,
     pip = dp::dot(ray, edge_normal) + dp::dot(ray_normal, edge);
     pip = -pip;
   }
-  if (dp::DBL_ZERO_TOL > dp::abs(pip))  // <-- absd
+  if (dp::PLUCKER_ZERO_TOL > dp::abs(pip))  // <-- absd
     pip = 0.0;
   return pip;
 }
@@ -158,6 +158,37 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(dp::vec3 vertices[3],
   if (dist_out < tMin || dist_out > tMax) return EXIT_EARLY;
 
   return {true, dist_out};
+}
+
+// Plücker containment test for tetrahedra. Returns true if the point is inside the tetrahedron defined by vertices v0, v1, v2, v3.
+inline bool plucker_tet_containment_test(const dp::vec3 point,
+                                  const dp::vec3 v0,
+                                  const dp::vec3 v1,
+                                  const dp::vec3 v2,
+                                  const dp::vec3 v3) {
+
+  // TODO - I've decided to use Cramer's rule here instead of matrix inversion to make it easier to implement a cross-compilable version of this function
+  // Not sure if that is necessarily the best choice however. 
+  const dp::vec3 e0 = v1 - v0;
+  const dp::vec3 e1 = v2 - v0;
+  const dp::vec3 e2 = v3 - v0;
+  const dp::vec3 rhs = point - v0; 
+  const double det = dp::dot(e0, dp::cross(e1, e2)); // scalar triple product of matrix [e0 e1 e2]
+
+  const double inv_det = 1.0 / det;
+  const double lambda1 = dp::dot(rhs, dp::cross(e1, e2)) * inv_det;
+  const double lambda2 = dp::dot(e0, dp::cross(rhs, e2)) * inv_det;
+  const double lambda3 = dp::dot(e0, dp::cross(e1, rhs)) * inv_det;
+  const double lambda0 = 1.0 - (lambda1 + lambda2 + lambda3);
+
+  const double barycentric_min = -dp::PLUCKER_ZERO_TOL;
+  const double barycentric_max = 1.0 + dp::PLUCKER_ZERO_TOL;
+
+  // Check all λ_i in [0, 1] 
+  return (lambda0 >= barycentric_min && lambda0 <= barycentric_max) &&
+         (lambda1 >= barycentric_min && lambda1 <= barycentric_max) &&
+         (lambda2 >= barycentric_min && lambda2 <= barycentric_max) &&
+         (lambda3 >= barycentric_min && lambda3 <= barycentric_max);
 }
 
 } // namespace xdg

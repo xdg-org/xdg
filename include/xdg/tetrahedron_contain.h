@@ -3,6 +3,7 @@
 
 
 #include "xdg/vec3da.h"
+#include "xdg/geometry/plucker.h"
 
 namespace xdg
 {
@@ -30,11 +31,6 @@ namespace xdg
  * @return `true` if the point is inside or on the boundary of the tetrahedron,
  * `false` otherwise.
  */
-bool plucker_tet_containment_test(const Position& point,
-                                  const Vertex& v0,
-                                  const Vertex& v1,
-                                  const Vertex& v2,
-                                  const Vertex& v3);
 
 // Embree call back functions for element search
 void VolumeElementBoundsFunc(RTCBoundsFunctionArguments* args);

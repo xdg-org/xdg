@@ -5,7 +5,7 @@ namespace xdg {
 
 GPRTRayTracer::GPRTRayTracer()
 {
-  gprtRequestRayTypeCount(numRayTypes_); // Set the number of shaders which can be set to the same geometry
+  gprtRequestRayTypeCount(RT_NUM_RAY_TYPES); 
   context_ = gprtContextCreate();
   module_ = gprtModuleCreate(context_, dbl_deviceCode);
 
@@ -30,6 +30,10 @@ GPRTRayTracer::GPRTRayTracer()
   rayGenPIVData->ray = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
   rayGenPIVData->hit = gprtBufferGetDevicePointer(rayHitBuffers_.hit);
 
+  dblRayGenData* rayGenFindElementData = gprtRayGenGetParameters(rayGenPrograms_.at(RayGenType::FIND_ELEMENT));
+  rayGenFindElementData->ray = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
+  rayGenFindElementData->hit = gprtBufferGetDevicePointer(rayHitBuffers_.hit);
+
   // Set up build parameters for acceleration structures
   buildParams_.buildMode = GPRT_BUILD_MODE_FAST_BUILD_NO_UPDATE;
 }
@@ -41,8 +45,13 @@ GPRTRayTracer::~GPRTRayTracer()
   gprtComputeSynchronize(context_);
 
 
-  // Destroy TLAS structures
+  // Destroy TLAS structures for surface trees
   for (const auto& [tree, accel] : surface_volume_tree_to_accel_map) {
+    gprtAccelDestroy(accel);
+  }
+
+  // Destroy TLAS structures for element trees
+  for (const auto& [tree, accel] : element_volume_tree_to_accel_map) {
     gprtAccelDestroy(accel);
   }
 
@@ -56,6 +65,7 @@ GPRTRayTracer::~GPRTRayTracer()
     gprtGeomDestroy(geom);
   }
   gprtGeomTypeDestroy(trianglesGeomType_);
+  gprtGeomTypeDestroy(tetrahedraGeomType_);
 
   // Destroy Buffers
   gprtBufferDestroy(rayHitBuffers_.ray);
@@ -72,15 +82,24 @@ void GPRTRayTracer::setup_shaders()
   // Set up ray generation and miss programs
   rayGenPrograms_[RayGenType::RAY_FIRE] = gprtRayGenCreate<dblRayGenData>(context_, module_, "ray_fire");
   rayGenPrograms_[RayGenType::POINT_IN_VOLUME] = gprtRayGenCreate<dblRayGenData>(context_, module_, "point_in_volume");
+  rayGenPrograms_[RayGenType::FIND_ELEMENT] = gprtRayGenCreate<dblRayGenData>(context_, module_, "find_element");
   // TODO: Add Occluded and closest raygen entry points
 
-  missProgram_ = gprtMissCreate<void>(context_, module_, "ray_fire_miss");
-  aabbPopulationProgram_ = gprtComputeCreate<DPTriangleGeomData>(context_, module_, "populate_aabbs");
+  triangleMissProgram_ = gprtMissCreate<void>(context_, module_, "ray_fire_miss");
+  tetMissProgram_ = gprtMissCreate<void>(context_, module_, "tet_miss");
+
+  aabbTriPopulationProgram_ = gprtComputeCreate<DPTriangleGeomData>(context_, module_, "populate_tri_aabbs");
+  aabbTetPopulationProgram_ = gprtComputeCreate<DPTetrahedronGeomData>(context_, module_, "populate_tet_aabbs");
 
   // Create a "triangle" geometry type and set its closest-hit program
   trianglesGeomType_ = gprtGeomTypeCreate<DPTriangleGeomData>(context_, GPRT_AABBS);
-  gprtGeomTypeSetClosestHitProg(trianglesGeomType_, 0, module_, "ray_fire_hit"); // closesthit for ray queries
-  gprtGeomTypeSetIntersectionProg(trianglesGeomType_, 0, module_, "DPTrianglePluckerIntersection"); // set intersection program for double precision rays
+  gprtGeomTypeSetClosestHitProg(trianglesGeomType_, RT_SURFACE_RAY_INDEX, module_, "ray_fire_hit"); // closesthit for ray queries
+  gprtGeomTypeSetIntersectionProg(trianglesGeomType_, RT_SURFACE_RAY_INDEX, module_, "DPTrianglePluckerIntersection"); // set intersection program for double precision rays against triangles
+
+  // Create a "tetrahedron" geometry type and set its closest-hit program
+  tetrahedraGeomType_ = gprtGeomTypeCreate<DPTetrahedronGeomData>(context_, GPRT_AABBS);
+  gprtGeomTypeSetClosestHitProg(tetrahedraGeomType_, RT_VOLUME_RAY_INDEX, module_, "tet_contain_hit"); // closesthit for point-in-volume queries
+  gprtGeomTypeSetIntersectionProg(tetrahedraGeomType_, RT_VOLUME_RAY_INDEX, module_, "DPTetrahedronPluckerIntersection"); // set intersection program for double precision rays against tetrahedra
 }
 
 void GPRTRayTracer::init() 
@@ -109,45 +128,39 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
   std::vector<gprt::Instance> surfaceBlasInstances; // BLAS for each (surface) geometry in this volume
 
   for (const auto &surf : volume_surfaces) {
-    auto num_faces = mesh_manager->num_surface_faces(surf);
-
-    // get the sense of this surface with respect to the volume
-    Sense triangle_sense {Sense::UNSET};
-    auto surf_to_vol_senses = mesh_manager->get_parent_volumes(surf);
-    if (volume_id == surf_to_vol_senses.first) triangle_sense = Sense::FORWARD;
-    else if (volume_id == surf_to_vol_senses.second) triangle_sense = Sense::REVERSE;
-    
     DPTriangleGeomData* geom_data = nullptr;
     auto triangleGeom = gprtGeomCreate<DPTriangleGeomData>(context_, trianglesGeomType_);
     geom_data = gprtGeomGetParameters(triangleGeom); // pointer to assign data to
 
-    // Get storage for vertices
+    // Get storage for vertices and indices
     auto vertices = mesh_manager->get_surface_vertices(surf);
     auto indices = mesh_manager->get_surface_connectivity(surf);
-    std::vector<double3> dbl3Vertices;
-    dbl3Vertices.reserve(vertices.size());    
-    for (const auto &vertex : vertices) {
-      dbl3Vertices.push_back({vertex.x, vertex.y, vertex.z});
+    if (indices.size() % 3 != 0) {
+      fatal_error("Surface {} connectivity size ({}) is not divisible by 3 for triangles", surf, indices.size());
+    }
+    std::vector<double3> dbl3Vertices(vertices.size());
+    for (size_t i = 0; i < vertices.size(); ++i) {
+      const auto& vertex = vertices[i];
+      dbl3Vertices[i] = {vertex.x, vertex.y, vertex.z};
     }
 
     // Get storage for indices
-    std::vector<uint3> ui3Indices;
-    ui3Indices.reserve(indices.size() / 3);
-    for (size_t i = 0; i < indices.size(); i += 3) {
-      ui3Indices.emplace_back(indices[i], indices[i + 1], indices[i + 2]);
+    std::vector<uint3> ui3Indices(indices.size() / 3);
+    for (size_t i = 0, triIdx = 0; i < indices.size(); i += 3, ++triIdx) {
+      ui3Indices[triIdx] = uint3(indices[i], indices[i + 1], indices[i + 2]);
     }
 
     // Get storage for normals
-    std::vector<double3> normals;
-    std::vector<GPRTPrimitiveRef> primitive_refs;
-    primitive_refs.reserve(num_faces);
-    normals.reserve(num_faces);
-    for (const auto &face : mesh_manager->get_surface_faces(surf)) {
+    auto surface_faces = mesh_manager->get_surface_faces(surf);
+    const size_t num_faces = surface_faces.size();
+
+    std::vector<double3> normals(surface_faces.size());
+    std::vector<GPRTPrimitiveRef> primitive_refs(surface_faces.size());
+    for (size_t i = 0; i < surface_faces.size(); ++i) {
+      const auto face = surface_faces[i];
       auto norm = mesh_manager->face_normal(face);
-      normals.push_back({norm.x, norm.y, norm.z});
-      GPRTPrimitiveRef prim_ref;
-      prim_ref.id = face;
-      primitive_refs.push_back(prim_ref);
+      normals[i] = {norm.x, norm.y, norm.z};
+      primitive_refs[i].id = face;
     }
 
     auto vertex_buffer = gprtDeviceBufferCreate<double3>(context_, dbl3Vertices.size(), dbl3Vertices.data());
@@ -166,22 +179,18 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
     geom_data->primitive_refs = gprtBufferGetDevicePointer(primitive_refs_buffer);
     geom_data->num_faces = num_faces;
     
-    gprtComputeLaunch(aabbPopulationProgram_, {num_faces, 1, 1}, {1, 1, 1}, *geom_data);
+    gprtComputeLaunch(aabbTriPopulationProgram_, {num_faces, 1, 1}, {1, 1, 1}, *geom_data);
 
     GPRTAccel blas = gprtAABBAccelCreate(context_, triangleGeom, buildParams_.buildMode);
 
     gprtAccelBuild(context_, blas, buildParams_);
 
-    gprt::Instance instance;
-    instance = gprtAccelGetInstance(blas); // create instance of BLAS to be added to TLAS
+    gprt::Instance instance = gprtAccelGetInstance(blas); // create instance of BLAS to be added to TLAS
     instance.mask = 0xff; // mask can be used to filter instances during ray traversal. 0xff ensures no filtering
 
     // Store in maps
     surface_to_geometry_map_[surf] = triangleGeom;
 
-    geom_data = gprtGeomGetParameters(triangleGeom);
-    instance = gprtAccelGetInstance(blas);
-    instance.mask = 0xff;
     surfaceBlasInstances.push_back(instance);
     globalBlasInstances_.push_back(instance);
     
@@ -210,8 +219,65 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
 ElementTreeID
 GPRTRayTracer::create_element_tree(const std::shared_ptr<MeshManager>& mesh_manager, MeshID volume_id)
 {
-  warning("Element trees not currently supported with GPRT ray tracer");
-  return TREE_NONE;
+  auto volume_elements = mesh_manager->get_volume_elements(volume_id);
+  if (volume_elements.empty()) return TREE_NONE; // No elements in this volume, so no tree to create
+
+  ElementTreeID tree = next_element_tree_id();
+  element_trees_.push_back(tree);
+
+  DPTetrahedronGeomData* geom_data = nullptr;
+  auto tetrahedraGeom = gprtGeomCreate<DPTetrahedronGeomData>(context_, tetrahedraGeomType_);
+  geom_data = gprtGeomGetParameters(tetrahedraGeom); // pointer to assign data to
+
+  auto vertices = mesh_manager->get_volume_vertices(volume_id);
+  auto indices = mesh_manager->get_volume_connectivity(volume_id);
+
+  std::vector<double3> dbl3Vertices(vertices.size());
+  for (size_t i = 0; i < vertices.size(); ++i) {
+    const auto& vertex = vertices[i];
+    dbl3Vertices[i] = {vertex.x, vertex.y, vertex.z};
+  }
+
+  // Get storage for indices
+  std::vector<uint4> ui4Indices(indices.size() / 4);
+  for (size_t i = 0, tetIdx = 0; i < indices.size(); i += 4, ++tetIdx) {
+    ui4Indices[tetIdx] = uint4(indices[i], indices[i + 1], indices[i + 2], indices[i + 3]);
+  }
+
+  // Get storage for prim IDs
+  std::vector<GPRTPrimitiveRef> primitive_refs(volume_elements.size());
+  for (size_t i = 0; i < volume_elements.size(); ++i) {
+    primitive_refs[i].id = volume_elements[i];
+  }
+
+  auto vertex_buffer = gprtDeviceBufferCreate<double3>(context_, dbl3Vertices.size(), dbl3Vertices.data());
+  auto connectivity_buffer = gprtDeviceBufferCreate<uint4>(context_, ui4Indices.size(), ui4Indices.data());
+  auto primitive_refs_buffer = gprtDeviceBufferCreate<GPRTPrimitiveRef>(context_, primitive_refs.size(), primitive_refs.data());
+  auto aabb_buffer = gprtDeviceBufferCreate<float3>(context_, 2*volume_elements.size(), 0); // AABBs for each tetrahedron
+  gprtAABBsSetPositions(tetrahedraGeom, aabb_buffer, volume_elements.size(), 2*sizeof(float3), 0);
+  
+  geom_data->aabbs = gprtBufferGetDevicePointer(aabb_buffer);
+  geom_data->vertex = gprtBufferGetDevicePointer(vertex_buffer);
+  geom_data->index = gprtBufferGetDevicePointer(connectivity_buffer);
+  geom_data->num_tets = volume_elements.size();
+  geom_data->vol_id = volume_id;
+  geom_data->ray = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
+  geom_data->primitive_refs = gprtBufferGetDevicePointer(primitive_refs_buffer);
+
+  gprtComputeLaunch(aabbTetPopulationProgram_, {volume_elements.size(), 1, 1}, {1, 1, 1}, *geom_data);
+
+  GPRTAccel blas = gprtAABBAccelCreate(context_, tetrahedraGeom, buildParams_.buildMode);
+  gprtAccelBuild(context_, blas, buildParams_);
+  gprt::Instance instance = gprtAccelGetInstance(blas); // create instance of BLAS to be added to TLAS
+  instance.mask = 0xff; // mask can be used to filter instances during ray traversal. 0xff ensures no filtering
+
+  auto instanceBuffer = gprtDeviceBufferCreate<gprt::Instance>(context_, 1, &instance);
+  GPRTAccel volume_tlas = gprtInstanceAccelCreate(context_, 1, instanceBuffer);
+  gprtAccelBuild(context_, volume_tlas, buildParams_);
+
+  element_volume_tree_to_accel_map[tree] = volume_tlas;
+
+  return tree;
 };
 
 bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree, 
@@ -229,7 +295,7 @@ bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree,
 
   gprtBufferMap(rayHitBuffers_.ray); // Update the ray input buffer
   dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
-  ray[0].volume_accel = gprtAccelGetDeviceAddress(volume); 
+  ray[0].volume_accel_surf = gprtAccelGetDeviceAddress(volume); 
   ray[0].origin = {point.x, point.y, point.z};
   ray[0].direction = {directionUsed.x, directionUsed.y, directionUsed.z};
   ray[0].tMax = INFTY; // Set a large distance limit
@@ -286,7 +352,7 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
   
   gprtBufferMap(rayHitBuffers_.ray); // Update the ray input buffer
   dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
-  ray[0].volume_accel = gprtAccelGetDeviceAddress(volume);
+  ray[0].volume_accel_surf = gprtAccelGetDeviceAddress(volume);
   ray[0].origin = {origin.x, origin.y, origin.z};
   ray[0].direction = {direction.x, direction.y, direction.z};
   ray[0].tMax = dist_limit;
@@ -367,6 +433,38 @@ void GPRTRayTracer::check_ray_buffer_capacity(size_t N)
   }
 
   gprtBuildShaderBindingTable(context_, static_cast<GPRTBuildSBTFlags>(GPRT_SBT_GEOM | GPRT_SBT_RAYGEN));
+}
+
+MeshID GPRTRayTracer::find_element(const Position& point) const
+{
+  return find_element(global_element_tree_, point);
+}
+
+MeshID GPRTRayTracer::find_element(TreeID tree, const Position& point) const
+{
+
+  GPRTAccel volume = element_volume_tree_to_accel_map.at(tree);
+  auto rayGen = rayGenPrograms_.at(RayGenType::FIND_ELEMENT);
+  dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGen);
+  
+  gprtBufferMap(rayHitBuffers_.ray); // Update the ray input buffer
+  dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
+  ray[0].volume_accel_solid = gprtAccelGetDeviceAddress(volume);
+  ray[0].origin = {point.x, point.y, point.z};
+  ray[0].volume_tree = tree; // Set the TreeID of the volume being queried
+
+  gprtBufferUnmap(rayHitBuffers_.ray); // required to sync buffer back on GPU?
+  
+  gprtRayGenLaunch1D(context_, rayGen, 1); // Launch raygen shader (entry point to RT pipeline)
+  gprtGraphicsSynchronize(context_); // Ensure all GPU operations are complete before returning control flow to CPU
+                                                  
+  // Retrieve the hit from the dblHit buffer
+  gprtBufferMap(rayHitBuffers_.hit);
+  dblHit* hit = gprtBufferGetHostPointer(rayHitBuffers_.hit);
+  auto primitive_id = hit[0].primitive_id;
+  gprtBufferUnmap(rayHitBuffers_.hit); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
+  
+  return primitive_id;
 }
 
 } // namespace xdg

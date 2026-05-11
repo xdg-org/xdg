@@ -1,0 +1,79 @@
+#ifndef XDG_GPRT_RT_COMMON_SLANGH
+#define XDG_GPRT_RT_COMMON_SLANGH
+
+#include "shared_structs.h"
+#include "../geometry/dp_math.h" // dp math shared between C++ and slang
+#include "../geometry/plucker.h" // Plücker ray-edge intersection test
+
+// Shared types for both Triangle and Tetrahedron ray tracing pipelines.
+[[vk::push_constant]]
+dblRayFirePushConstants PC;
+
+static const int32_t ID_NONE = -1; // slang copy of the C++ constant for invalid IDs
+struct DPAttribute
+{
+  double f64t; // double precision hit distance
+  int global_prim_id;
+};
+
+// ------------------------------------------------- Helper functions -------------------------------------------------
+
+// Templated/generic function to compute AABBs in double precision and fill the float AABB buffer. Generic to handle triangles, tets and future primitives with different numbers of vertices
+__generic<int N>
+inline void populate_aabb(uint primID, double3 *vertex, float3 *aabb, uint indices[N])
+{
+    double3 dpAabbMin = vertex[indices[0]];
+    double3 dpAabbMax = dpAabbMin;
+
+    // unroll the loop since N is known to be small(ish) at compile time to keep performance
+    [unroll] 
+    for (uint i = 1; i < N; ++i)
+    {
+        double3 vert = vertex[indices[i]];
+        dpAabbMin = min(dpAabbMin, vert);
+        dpAabbMax = max(dpAabbMax, vert);
+    }
+
+    float3 fpAabbMin = float3(dpAabbMin - double3(FLT_EPSILON, FLT_EPSILON, FLT_EPSILON));
+    float3 fpAabbMax = float3(dpAabbMax + double3(FLT_EPSILON, FLT_EPSILON, FLT_EPSILON));
+
+    aabb[2 * primID] = fpAabbMin;
+    aabb[2 * primID + 1] = fpAabbMax;
+}
+
+
+bool orientation_cull(in double3 ray, in double3 normal, in xdg::HitOrientation orientation) {
+    if (orientation == xdg::HitOrientation::ANY) return false; // No culling
+    double dot_product = dot(ray, normal);
+    if (orientation == xdg::HitOrientation::EXITING) return dot_product < 0.0; // Cull exiting rays
+    if (orientation == xdg::HitOrientation::ENTERING) return dot_product > 0.0; // Cull entering rays
+    return false;                      // Default case, no culling
+}
+
+
+/* Function to return the vertex with the lowest coordinates. To force the same
+    ray-edge computation, the Plücker test needs to use consistent edge
+    representation. This would be more simple with MOAB handles instead of
+    coordinates... */
+inline bool first(in double3 a, in double3 b)
+{
+    if (a[0] < b[0]) return true;
+
+    if (a[0] == b[0] && a[1] < b[1]) return true;
+
+    if (a[1] == b[1] && a[2] < b[2]) return true;
+
+    return false;
+}
+
+float next_after(float a) {
+    uint a_ = asuint(a);
+    if (a < 0) {
+        a_--;
+    } else {
+        a_++;
+    }
+    return asfloat(a_);
+}
+
+#endif // XDG_GPRT_RT_COMMON_SLANGH

@@ -218,7 +218,14 @@ src/gprt/ray_tracer.cpp
 list(APPEND xdg_device_codes
 dbl_deviceCode
 )
-
+list(APPEND xdg_slang_headers
+src/gprt/triangle_rt_shaders.slang
+src/gprt/tetrahedron_rt_shaders.slang
+include/xdg/gprt/shared_structs.h
+include/xdg/gprt/rt_common.slangh
+include/xdg/shared_enums.h
+include/xdg/geometry/dp_math.h
+)
 endif()
 
 if (XDG_ENABLE_LIBMESH)
@@ -336,9 +343,7 @@ if (XDG_ENABLE_GPRT)
     OUTPUT_TARGET
     ${device_code}
     HEADERS
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/xdg/gprt/shared_structs.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/xdg/shared_enums.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/xdg/geometry/dp_math.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/${xdg_slang_headers}
     SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/gprt/${device_code}.slang
     )
