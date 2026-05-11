@@ -9,21 +9,21 @@
 
 int main(int argc, char* argv[])
 {
-    // Not sure if this is the best way but based on CI matrix in the event
-    // where MOAB and LibMesh both defined we are gonna end up using MOAB mesh manager
-#if defined(XDG_ENABLE_MOAB)
-    auto mesh_manager = std::make_shared<xdg::MOABMeshManager>();
-    mesh_manager->load_file("cube.h5m"); // Provide the path to your mesh file.
-#elif defined(XDG_ENABLE_LIBMESH)
-    auto mesh_manager = std::make_shared<xdg::LibMeshManager>();
-    mesh_manager->load_file("brick.exo"); // Provide the path to your mesh file.
-#endif
+// Read in your mesh file  
+// Do whatever logic you need to decide whether you want to use xdg with MOAB or libmesh 
+// Use xdg factory method XDG::create() - if no libraries specified it defaults to MOAB + embree
+if (use_moab) {
+   std::shared_ptr<XDG> xdg = XDG::create(xdg::MeshLibrary::MOAB, xdg::RTLibrary::EMBREE);
+else {
+   std::shared_ptr<XDG> xdg = XDG::create(xdg::MeshLibrary::LIBMESH, xdg::RTLibrary::EMBREE);
+}
 
-    mesh_manager->init();
+// Then we can recover the mesh manager object abstractly without needing to specify the derived mesh manager classes (and thus removing the need for the pre-compile guards)
+const auto& mesh_manager = xdg->mesh_manager();
+mesh_manager->load_file(filename);
+mesh_manager->init();
 
-    // by default, we are using Embree as a ray tracer
-    auto xdg_instance = std::make_shared<xdg::XDG>(mesh_manager);
-    xdg_instance->prepare_raytracer();
+xdg->prepare_raytracer();
 
     xdg::BoundingBox bbox = mesh_manager->global_bounding_box();
 
