@@ -6,24 +6,60 @@
 #include "xdg/xdg.h"
 #include "xdg/constants.h"
 #include "xdg/mesh_managers.h"
+#include "argparse/argparse.hpp"
+#include "xdg/error.h"
 
 int main(int argc, char* argv[])
 {
-// Read in your mesh file  
-// Do whatever logic you need to decide whether you want to use xdg with MOAB or libmesh 
-// Use xdg factory method XDG::create() - if no libraries specified it defaults to MOAB + embree
-if (use_moab) {
-   std::shared_ptr<XDG> xdg = XDG::create(xdg::MeshLibrary::MOAB, xdg::RTLibrary::EMBREE);
-else {
-   std::shared_ptr<XDG> xdg = XDG::create(xdg::MeshLibrary::LIBMESH, xdg::RTLibrary::EMBREE);
-}
 
-// Then we can recover the mesh manager object abstractly without needing to specify the derived mesh manager classes (and thus removing the need for the pre-compile guards)
-const auto& mesh_manager = xdg->mesh_manager();
-mesh_manager->load_file(filename);
-mesh_manager->init();
+    argparse::ArgumentParser args("An example of how to setup XDG's C++ API  to calculate "
+                                  "Ray segments in a mesh ", "1.0", argparse::default_arguments::help);
 
-xdg->prepare_raytracer();
+    args.add_argument("-f","filename").help("Path to the mesh file");
+    args.add_argument("-m", "--mesh-library").help("Mesh library to use. One of (MOAB, LIBMESH)").default_value("MOAB");
+    args.add_argument("-r", "--rt-library").help("Ray tracing library to use. One of (EMBREE, GPRT)").default_value("EMBREE");
+
+    try {
+        args.parse_args(argc, argv);
+    }
+    catch (const std::runtime_error& err) {
+        std::cout << err.what() << std::endl;
+        std::cout << args;
+        exit(0);
+    }
+
+
+    const std::string mesh_lib_name = args.get<std::string>("--mesh-library");
+    const std::string rt_lib_name = args.get<std::string>("--rt-library");
+    const std::string mesh_file = args.get<std::string>("filename");
+
+    xdg::RTLibrary rt_lib;
+    if (rt_lib_name == "EMBREE")
+        rt_lib = RTLibrary::EMBREE;
+    else if (rt_lib_name == "GPRT")
+        rt_lib = RTLibrary::GPRT;
+    else
+        xdg::fatal_error("Invalid ray tracing library '{}' specified", rt_str);
+
+    xdg::MeshLibrary mesh_lib;
+    if (mesh_lib_name == "MOAB")
+        mesh_lib = MeshLibrary::MOAB;
+    else if (mesh_lib_name == "LIBMESH") {
+        mesh_lib = MeshLibrary::LIBMESH;
+        if (rt_lib == RTLibrary::GPRT)
+            xdg::fatal_error("LibMesh is not currently supported with GPRT");
+    }
+    else
+        xdg::fatal_error("Invalid mesh library '{}' specified", mesh_lib_name);
+
+
+    std::shared_ptr<XDG> xdg = XDG::create(mesh_lib, rt_lib );
+    const auto& mesh_manager = xdg->mesh_manager();
+
+    mesh_manager->load_file(mesh_file);
+    mesh_manager->init();
+
+    xdg->prepare_raytracer();
 
     xdg::BoundingBox bbox = mesh_manager->global_bounding_box();
 
