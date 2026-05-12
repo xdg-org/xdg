@@ -3,7 +3,6 @@
 #include <random>
 
 #include "xdg/xdg.h"
-#include "xdg/mesh_managers.h"
 
 int main(int argc, char* argv[])
 {
