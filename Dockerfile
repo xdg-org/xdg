@@ -82,8 +82,8 @@ RUN cmake .. \
         -DXDG_LINK_MPI=ON \
         -DXDG_ENABLE_EMBREE=ON \
         -DCMAKE_PREFIX_PATH=${EMBREE_INSTALL_PATH} \
-        -DCMAKE_INCLUDE_PATH=${EMBREE_INSTALL_PATH}/include \
+        -DCMAKE_CXX_FLAGS="-I/${EMBREE_INSTALL_PATH}/include" \
         -DXDG_BUILD_TESTS=ON \
-        -DXDG_BUILD_TOOLS=ON \
-
+        -DXDG_BUILD_TOOLS=ON
 RUN make -j$(nproc)
+
