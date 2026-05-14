@@ -16,6 +16,7 @@ RUN apt-get install --yes \
         libhdf5-dev \
         libopenblas-dev \
         mpich \
+        libmpich-dev \
         libtirpc-dev \
         python3 \
         python3-pip \
@@ -73,14 +74,14 @@ WORKDIR /XDG_TEST_SYSTEM/xdg/build
 RUN cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
         -DXDG_ENABLE_MOAB=ON \
-        -DMOAB_DIR=/XDG_TEST_SYSTEM/moab_install_dir \
+        -DMOAB_DIR=${MOAB_INSTALL_PATH} \
         -DXDG_ENABLE_LIBMESH=ON \
-        -DLIBMESH_DIR=/XDG_TEST_SYSTEM/libmesh_install_dir \
+        -DLIBMESH_DIR=${LIBMESH_INSTALL_PATH} \
         -DXDG_LINK_MPI=ON \
         -DXDG_ENABLE_EMBREE=ON \
-        -DCMAKE_PREFIX_PATH=/XDG_TEST_SYSTEM/embree_install_dir \
+        -DCMAKE_PREFIX_PATH=${EMBREE_INSTALL_PATH} \
+        -DCMAKE_INCLUDE_PATH=${EMBREE_INSTALL_PATH}/include \
         -DXDG_BUILD_TESTS=ON \
         -DXDG_BUILD_TOOLS=ON \
-        -DCMAKE_INSTALL_PREFIX=/XDG_TEST_SYSTEM/xdg_install_dir
-RUN make -j$(nproc)
 
+RUN make -j$(nproc)
