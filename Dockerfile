@@ -73,6 +73,8 @@ RUN git clone --recurse-submodules -j$(nproc) https://github.com/xdg-org/xdg.git
 WORKDIR /XDG_TEST_SYSTEM/xdg/build
 RUN cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_C_COMPILER=mpicc \
+        -DCMAKE_CXX_COMPILER=mpicxx \
         -DXDG_ENABLE_MOAB=ON \
         -DMOAB_DIR=${MOAB_INSTALL_PATH} \
         -DXDG_ENABLE_LIBMESH=ON \
