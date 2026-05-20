@@ -328,7 +328,7 @@ if (XDG_ENABLE_GPRT)
   target_link_options(xdg PRIVATE -Wl,--unresolved-symbols=ignore-in-shared-libs)
 endif()
 
-target_link_libraries(xdg PRIVATE fmt::fmt)
+target_link_libraries(xdg PUBLIC fmt::fmt)
 
 # ==========================
 # Link ray tracing libraries
