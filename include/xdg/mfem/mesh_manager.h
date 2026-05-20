@@ -157,6 +157,9 @@ private:
   // set to capture all of the valid volumes/attributes
   // It's a set (not vector) to prevent double counting
   std::set<int> attributes_;
+
+  int num_interior_faces_;
+  int num_boundary_faces_;
 };
 
 struct MfemMeshElementFaceAccessor : public ElementFaceAccessor {

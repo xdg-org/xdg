@@ -56,6 +56,10 @@ void MfemMeshManager::init() {
   // attributes_ into volumes_, so the base class has access to the list
   // of volume IDs
   std::copy(attributes_.begin(), attributes_.end(), std::back_inserter(volumes_));
+
+  // set these two attributes related to interior/boundary faces
+  num_interior_faces_ = mesh_->GetNumFaces();
+  num_boundary_faces_ = mesh_->GetNBE();
 }
 
 // TODO: very slow, and could be done during init()
@@ -101,16 +105,37 @@ std::vector<MeshID> MfemMeshManager::get_surface_faces(MeshID surface) const {
   // copy it into a vector
   std::vector<int> output(boundary_faces.begin(), boundary_faces.end());
 
+  // We want [0->mesh_->GetNumFaces() ) to represent interior faces.
+  // and we want [ mesh_->GetNumFaces(), mesh_->GetNumFaces() + mesh_->GetNBE() )
+  // to represent the boundary faces.
+  // When we query the face vertices later, we need to take this
+  // mapping into account. All we do here is increase the MeshIDs by
+  // num_interior_faces_ to effect this mapping
+  std::transform( output.begin(), output.end(), output.begin(), [&](int in){ return in + num_interior_faces_; } );
+
   return output;
 }
 
 std::array<Vertex, 3> MfemMeshManager::face_vertices(MeshID element) const {
   std::array<Vertex, 3> output;
-
-  // create an mfem array to be passed into Mesh::GetFaceVertices.
-  // this gets populated with the indices of the vertices itself
   mfem::Array<int> index_array;
-  mesh_->GetFaceVertices(element, index_array);
+  
+  if (element >= num_interior_faces_) {
+    // we are actually talking about a boundary element here. this is
+    // us taking the mapping into account. see comments at the end of
+    // get_surfaces_faces
+    MeshID bdr_element = element - num_interior_faces_;
+    mesh_->GetBdrElementVertices(bdr_element, index_array);
+
+    mfem::Element* bdr_el = mesh_->GetBdrElement(bdr_element);
+    int* vertices = bdr_el->GetVertices();
+  }
+
+  else {
+    // create an mfem array to be passed into Mesh::GetFaceVertices.
+    // this gets populated with the indices of the vertices itself
+    mesh_->GetFaceVertices(element, index_array);
+  }
 
   for (int i=0; i<index_array.Size(); i++) {
     const double* vertices = mesh_->GetVertex( index_array[i] );
@@ -125,8 +150,8 @@ std::pair<int, int> MfemMeshManager::surface_senses(MeshID surface) const {
   // I am trying to get the raytracer preparation routines working with
   // the jezebel, so just return {-1, 1}. i.e. implicit_complement, interior_volume.
   // Even though we haven't created implicit_complement yet.
-  warning("MfemMeshManager::surface_senses() is hardcoded for jezebel");
-  return {-1,1};
+  warning("MfemMeshManager::surface_senses() is hardcoded for single-volume meshes");
+  return {1,2};
 }
 
 std::vector<Vertex> MfemMeshManager::element_vertices(MeshID element) const {
