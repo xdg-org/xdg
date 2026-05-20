@@ -4,6 +4,7 @@
 
 // testing includes
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 // xdg includes
 #include "xdg/error.h"
@@ -47,7 +48,7 @@ TEST_CASE("MFEM element types")
 // next, emulate the Find Element Method
 TEST_CASE("TEST MOAB Find Element Method")
 {
-  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MFEM); // let it pick whichever raytracer
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MFEM);
 
   const auto& mesh_manager = xdg->mesh_manager();
   mesh_manager->load_file("jezebel.exo");
@@ -68,4 +69,26 @@ TEST_CASE("TEST MOAB Find Element Method")
   auto next_element = xdg->mesh_manager()->next_element(element, {0.0, 0.0, 0.0}, {0.0, 0.0, 1.0});
   REQUIRE(next_element.first != ID_NONE);
   REQUIRE(next_element.second != INFTY);
+}
+
+TEST_CASE("TEST Ray Fire Brick")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MFEM);
+
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("brick.exo");
+  mesh_manager->init();
+  xdg->prepare_raytracer();
+
+  MeshID volume = 1;
+
+  Position origin {0.0, 0.0, 0.0};
+  Direction direction {0.0, 0.0, 1.0};
+  std::pair<double, MeshID> intersection;
+
+  intersection = xdg->ray_fire(volume, origin, direction);
+  REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
+
+  origin = {0.0, 0.0, 0.0};
+  REQUIRE(xdg->point_in_volume(volume, origin));
 }
