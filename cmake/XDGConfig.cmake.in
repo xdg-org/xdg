@@ -16,7 +16,7 @@ if(@XDG_ENABLE_MOAB@)
 endif()
 
 if(@XDG_ENABLE_LIBMESH@)
-  include(FindPkgConfig)
+  find_dependency(PkgConfig REQUIRED)
   list(APPEND CMAKE_PREFIX_PATH @LIBMESH_PREFIX@)
   set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH True)
   pkg_check_modules(LIBMESH REQUIRED @LIBMESH_PC_FILE@>=1.7.0 IMPORTED_TARGET)
