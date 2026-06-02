@@ -4,6 +4,7 @@ project(openmc C CXX)
 option(XDG_ENABLE_MOAB    "Enable support for the MOAB mesh library"          ON)
 option(XDG_ENABLE_MFEM    "Enable support for the MFEM mesh library"         OFF)
 option(XDG_ENABLE_LIBMESH "Enable support for the libMesh mesh library"      OFF)
+option(XDG_ENABLE_OMEGA_H "Enable support for the Omega_h mesh library"       ON)
 option(XDG_LINK_MPI       "Link with MPI (for dependency compatibility)"     OFF)
 option(XDG_ENABLE_EMBREE  "Enable support for the Embree ray tracing library" ON)
 option(XDG_ENABLE_GPRT    "Enable support for the GPRT ray tracing library"  OFF)
@@ -42,6 +43,16 @@ if (NOT MOAB_USE_HDF5)
   message(FATAL_ERROR "MOAB must be built with HDF5 support for file specifications required by XDG.")
 endif()
 endif()
+
+
+#===============================================================================
+# Omega_h backend
+#===============================================================================
+if (XDG_ENABLE_OMEGA_H)
+  message(STATUS "OMEGA_H_INSTALL_PATH=$ENV{OMEGA_H_INSTALL_PATH}")
+  find_package(Omega_h REQUIRED HINTS "$ENV{OMEGA_H_INSTALL_PATH}/lib/cmake/Omega_h")
+endif()
+
 
 if (XDG_ENABLE_EMBREE)
   # find Embree for CPU ray tracing
