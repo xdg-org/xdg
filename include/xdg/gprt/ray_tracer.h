@@ -2,6 +2,7 @@
 #define _XDG_GPRT_BASE_RAY_TRACING_INTERFACE_H
 
 #include <memory>
+#include <map>
 #include <vector>
 #include <unordered_map>
 
@@ -35,6 +36,14 @@ struct gprtRayHit {
   dblHit* devHitAddr = nullptr;
 
   bool is_valid() const { return capacity > 0 && ray && hit && devRayAddr && devHitAddr; }
+};
+
+struct GPRTSurfaceBuffers {
+  GPRTBufferOf<double3> vertices = nullptr;
+  GPRTBufferOf<float3> aabbs = nullptr;
+  GPRTBufferOf<uint3> connectivity = nullptr;
+  GPRTBufferOf<double3> normals = nullptr;
+  GPRTBufferOf<GPRTPrimitiveRef> primitive_refs = nullptr;
 };
 
 class GPRTRayTracer : public RayTracer {
@@ -103,6 +112,9 @@ class GPRTRayTracer : public RayTracer {
     
   private:
     void check_ray_buffer_capacity(size_t N);
+    
+    GPRTGeomOf<DPTriangleGeomData>
+    register_surface(const std::shared_ptr<MeshManager>& mesh_manager, MeshID surface_id);
 
     // GPRT objects 
     GPRTContext context_;
@@ -129,10 +141,13 @@ class GPRTRayTracer : public RayTracer {
     uint32_t numRayTypes_ = 1; // <! Number of ray types. Allows multiple shaders to be set to the same geometery
     
     // Mesh-to-Scene maps 
-    std::map<MeshID, GPRTGeomOf<DPTriangleGeomData>> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
+    std::map<MeshID, GPRTGeomOf<DPTriangleGeomData>> surface_to_geometry_map_; //<! Map from mesh surface to GPRT geometry
+    std::map<MeshID, GPRTAccel> surface_to_blas_map_; //<! Map from mesh surface to GPRT BLAS
+    std::map<MeshID, GPRTSurfaceBuffers> surface_buffers_map_; //<! Backing buffers for cached surface geometry
 
     // Internal GPRT Mappings
     std::unordered_map<SurfaceTreeID, GPRTAccel> surface_volume_tree_to_accel_map; // Map from XDG::TreeID to GPRTAccel for volume TLAS
+    std::unordered_map<SurfaceTreeID, GPRTBufferOf<gprt::Instance>> surface_tree_to_instance_buffer_map_; // Backing buffers for TLAS instances
     std::vector<GPRTAccel> blas_handles_; // Store BLAS handles so that they can be explicitly referenced in destructor
 
     // Global Tree IDs

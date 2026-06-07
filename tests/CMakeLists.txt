@@ -30,7 +30,11 @@ if (XDG_ENABLE_LIBMESH)
 endif()
 
 if (XDG_ENABLE_MOAB AND XDG_ENABLE_LIBMESH)
-    list(APPEND TEST_NAMES test_cross_check)
+    list(APPEND TEST_NAMES test_mesh_library_cross_check)
+endif()
+
+if (XDG_ENABLE_MOAB)
+    list(APPEND TEST_NAMES test_ray_tracer_cross_check)
 endif()
 
 if (XDG_ENABLE_MOAB AND XDG_BUILD_TOOLS)
@@ -38,8 +42,8 @@ if (XDG_ENABLE_MOAB AND XDG_BUILD_TOOLS)
 endif()
 
 foreach(test ${TEST_NAMES})
-    add_executable(${test} ${test}.cpp)
-    target_link_libraries(${test} PRIVATE xdg fmt::fmt Catch2::Catch2WithMain)
+    add_executable(${test} test_main.cpp ${test}.cpp)
+    target_link_libraries(${test} PRIVATE xdg fmt::fmt Catch2::Catch2)
     if (XDG_ENABLE_LIBMESH)
         target_link_libraries(${test} PRIVATE ${LIBMESH_LINK_LIBRARIES})
     endif()

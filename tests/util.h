@@ -1,4 +1,5 @@
 #include <random>
+#include <string>
 #include <type_traits>
 #include <utility>
 
@@ -7,7 +8,7 @@
 #include "xdg/constants.h"
 #include "xdg/ray_tracers.h"
 #include "xdg/mesh_managers.h"
-#include "vulkan_probe.h"
+#include "xdg/gprt/vulkan_probe.h"
 
 namespace xdg::test {
 
@@ -33,36 +34,59 @@ struct StringMaker<std::pair<MeshTag, RayTag>> {
 
 // Library availability checks
 
-inline void check_ray_tracer_supported(xdg::RTLibrary rt) {
-  #ifndef XDG_ENABLE_EMBREE
-  if (rt == xdg::RTLibrary::EMBREE) {
-    SKIP("XDG not built with Embree backend; skipping Embree tests.");
-  }
-  #endif
+inline bool ray_tracer_available(xdg::RTLibrary rt) {
+  switch (rt) {
+    case xdg::RTLibrary::EMBREE:
+    #ifdef XDG_ENABLE_EMBREE
+      return true;
+    #else
+      return false;
+    #endif
 
-  #ifndef XDG_ENABLE_GPRT
-  if (rt == xdg::RTLibrary::GPRT) {
-    SKIP("XDG not built with GPRT backend; skipping GPRT tests.");
+    case xdg::RTLibrary::GPRT:
+    #ifdef XDG_ENABLE_GPRT
+      return system_has_vk_device();
+    #else
+      return false;
+    #endif
   }
-  #else // XDG_ENABLE_GPRT
-  if (rt == xdg::RTLibrary::GPRT && !system_has_vk_device()) {
-    SKIP("No Vulkan device found; skipping GPRT tests.");
+
+  return false;
+}
+
+inline bool mesh_library_available(xdg::MeshLibrary mesh) {
+  switch (mesh) {
+    case xdg::MeshLibrary::MOCK:
+      return true;
+
+    case xdg::MeshLibrary::MOAB:
+    #ifdef XDG_ENABLE_MOAB
+      return true;
+    #else
+      return false;
+    #endif
+
+    case xdg::MeshLibrary::LIBMESH:
+    #ifdef XDG_ENABLE_LIBMESH
+      return true;
+    #else
+      return false;
+    #endif
   }
-  #endif
+
+  return false;
+}
+
+inline void check_ray_tracer_supported(xdg::RTLibrary rt) {
+  if (!ray_tracer_available(rt)) {
+    SKIP(fmt::format("{} backend unavailable; skipping.", xdg::RT_LIB_TO_STR.at(rt)));
+  }
 }
 
 inline void check_mesh_library_supported(xdg::MeshLibrary mesh) {
-  #ifndef XDG_ENABLE_MOAB
-  if (mesh == xdg::MeshLibrary::MOAB) {
-    SKIP("MOAB backend not built; skipping.");
+  if (!mesh_library_available(mesh)) {
+    SKIP(fmt::format("{} backend unavailable; skipping.", xdg::MESH_LIB_TO_STR.at(mesh)));
   }
-  #endif
-
-  #ifndef XDG_ENABLE_LIBMESH
-  if (mesh == xdg::MeshLibrary::LIBMESH) {
-    SKIP("LibMesh backend not built; skipping.");
-  }
-  #endif
 }
 
 // Factories

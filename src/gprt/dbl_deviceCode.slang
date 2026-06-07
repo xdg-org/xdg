@@ -123,8 +123,9 @@ populate_aabbs(uint3 DispatchThreadID: SV_DispatchThreadID, uniform DPTriangleGe
     dp::vec3 C = record.vertex[indices[2]];
     dp::vec3 dpaabbmin = min(min(A, B), C);
     dp::vec3 dpaabbmax = max(max(A, B), C);
-    float3 fpaabbmin = float3(dpaabbmin - float3(FLT_EPSILON, FLT_EPSILON, FLT_EPSILON));
-    float3 fpaabbmax = float3(dpaabbmax + float3(FLT_EPSILON, FLT_EPSILON, FLT_EPSILON));
+    dp::vec3 bump = dp::vec3(record.bounding_box_bump, record.bounding_box_bump, record.bounding_box_bump);
+    float3 fpaabbmin = float3(dpaabbmin - bump);
+    float3 fpaabbmax = float3(dpaabbmax + bump);
 
     record.aabbs[2 * primID] = fpaabbmin;
     record.aabbs[2 * primID + 1] = fpaabbmax;

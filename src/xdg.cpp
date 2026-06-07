@@ -145,6 +145,8 @@ XDG::segments(const Position& start,
 {
   MeshID ipc = mesh_manager()->implicit_complement();
 
+  std::vector<MeshID> prev_elements;
+
   Position r = start;
   Direction u = end - start;
   double distance = u.length();
@@ -159,7 +161,12 @@ XDG::segments(const Position& start,
     MeshID volume = ID_NONE;
     if (current_element == ID_NONE) {
       // fire a ray against the implicit complement
-      auto hit = ray_fire(ipc, r, u, INFTY, HitOrientation::EXITING);
+      auto hit = ray_fire(ipc, r, u, INFTY, HitOrientation::ANY, &prev_elements);
+      // if the hit distance is zero, we're likely stuck on an element boundary
+      // fire again and ignore the previous hit
+      while (hit.first < TINY_BIT) {
+        hit = ray_fire(ipc, r, u, INFTY, HitOrientation::ANY, &prev_elements);
+      }
       // if there is no entry point or the distance to the surface
       // is past the end point, return
       if (hit.second == ID_NONE || hit.first > distance) return segments;
@@ -172,10 +179,11 @@ XDG::segments(const Position& start,
 
       // determine what element is on the other side of this surface
       current_element = find_element(r + u * TINY_BIT);
+      // if no element is found, we may be exiting the mesh
       if (current_element == ID_NONE) {
-        warning("Ray fire hit surface {}, but could not find element on the other side of the surface.", hit.second);
-        return {};
+        return segments;
       }
+      prev_elements.clear();
     }
     auto vol_segments = mesh_manager()->walk_elements(current_element, r, u, distance);
     // add to current set of segments

@@ -25,7 +25,7 @@ struct PluckerIntersectionResult {
   double t = 0.0;      // Distance along the ray to the intersection point
 };
 
-constexpr PluckerIntersectionResult EXIT_EARLY = {false, 0.0};
+static constexpr PluckerIntersectionResult EXIT_EARLY = {false, 0.0};
 
 /* Function to return the vertex with the lowest coordinates. To force the same
   ray-edge computation, the Plücker test needs to use consistent edge

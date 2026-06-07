@@ -31,6 +31,8 @@ struct dblHit
 
 /* variables for double precision triangle mesh geometry */
 struct DPTriangleGeomData {
+  // TODO: There are definitely some redundant variables here once some of the
+  // other GPRT PRs are merged I will do a cleanup pass through the code
   double3 *vertex; // vertex buffer
   float3 *aabbs; // AABB buffer 
   uint3 *index;  // index buffer
@@ -45,6 +47,7 @@ struct DPTriangleGeomData {
   int reverse_tree; // TreeID of the reverse volume
   GPRTPrimitiveRef* primitive_refs;
   int num_faces; // Number of faces in the geometry
+  double bounding_box_bump; // Bounding box expansion for this geometry
 };
 
 struct dblRayGenData {
