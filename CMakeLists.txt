@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-project(openmc C CXX)
+project(xdg C CXX)
 
 option(XDG_ENABLE_MOAB    "Enable support for the MOAB mesh library"          ON)
 option(XDG_ENABLE_MFEM    "Enable support for the MFEM mesh library"         OFF)
@@ -15,7 +15,7 @@ option(XDG_BUILD_TOOLS    "Enable tools and miniapps"                         ON
 set(XDG_VERSION_MAJOR 0)
 set(XDG_VERSION_MINOR 14)
 set(XDG_VERSION_RELEASE 1)
-set(XDG_VERSION ${OPENMC_VERSION_MAJOR}.${OPENMC_VERSION_MINOR}.${OPENMC_VERSION_RELEASE})
+set(XDG_VERSION ${XDG_VERSION_MAJOR}.${XDG_VERSION_MINOR}.${XDG_VERSION_RELEASE})
 
 if(NOT CMAKE_BUILD_TYPE)
  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose build type" FORCE)
@@ -48,10 +48,16 @@ endif()
 # Omega_h backend
 #===============================================================================
 if (XDG_ENABLE_OMEGA_H)
-  message(STATUS "OMEGA_H_INSTALL_PATH=$ENV{OMEGA_H_INSTALL_PATH}")
-  find_package(Omega_h REQUIRED HINTS "$ENV{OMEGA_H_INSTALL_PATH}/lib/cmake/Omega_h")
+  if (NOT OMEGA_H_INSTALL_PATH)
+    set(OMEGA_H_INSTALL_PATH "$ENV{OMEGA_H_INSTALL_PATH}")
+  endif()
+  message(STATUS "OMEGA_H_INSTALL_PATH=${OMEGA_H_INSTALL_PATH}")
+  find_package(Omega_h REQUIRED HINTS "${OMEGA_H_INSTALL_PATH}/lib/cmake/Omega_h")
 endif()
 
+#===============================================================================
+# Embree
+#===============================================================================
 if (XDG_ENABLE_EMBREE)
   # find Embree for CPU ray tracing
 
@@ -131,7 +137,7 @@ if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
                       RESULT_VARIABLE GIT_SUBMOD_RESULT)
       if(NOT GIT_SUBMOD_RESULT EQUAL 0)
         message(FATAL_ERROR
-          "git submodule update --init failed with erro code ${GIT_SUBMOD_RESULT}, "
+          "git submodule update --init failed with error code ${GIT_SUBMOD_RESULT}, "
           "please checkout submodule at ${VENDOR_PATH} manually and try again.")
       endif()
     endforeach()
@@ -157,7 +163,6 @@ if (XDG_BUILD_TESTS)
   message(STATUS "Using Catch2 ${Catch2_VERSION} at ${Catch2_DIR}")
 endif()
 
-
 # fmt
 if (NOT fmt_FOUND)
   set(FMT_INSTALL ON CACHE BOOL "Generate the fmt install target")
@@ -174,13 +179,13 @@ if(XDG_BUILD_TOOLS)
   add_subdirectory(${CMAKE_SOURCE_DIR}/vendor/indicators)
 endif()
 
-
 # Ensure at least one mesh backend is enabled
 if (NOT XDG_ENABLE_MOAB AND NOT XDG_ENABLE_LIBMESH AND NOT XDG_ENABLE_OMEGA_H)
   message(FATAL_ERROR
     "No mesh backend enabled. Enable at least one of:\n"
     "  -DXDG_ENABLE_MOAB=ON\n"
-    "  -DXDG_ENABLE_LIBMESH=ON")
+    "  -DXDG_ENABLE_LIBMESH=ON"
+    "  -DXDG_ENABLE_OMEGA_H=ON")
 endif()
 
 # Ensure at least one ray tracing backend is enabled
