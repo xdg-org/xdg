@@ -50,10 +50,19 @@ jobs:
           cd libmesh
           git checkout v1.7.0
 
+      - name: Omega_h Clone
+        shell: bash
+        run: |
+          cd ~
+          git clone https://github.com/SCOREC/omega_h.git
+          cd omega_h
+          git checkout master
+
       - name: Cache Variables
         run: |
           echo "MOAB_SHA"=$(cd ~/moab && git rev-parse HEAD) >> $GITHUB_ENV
           echo "LIBMESH_SHA"=$(cd ~/libmesh && git rev-parse HEAD) >> $GITHUB_ENV
+          echo "OMEGA_H_SHA"=$(cd ~/omega_h && git rev-parse HEAD) >> $GITHUB_ENV
 
       - name: MOAB Cache
         id: moab-cache
@@ -72,6 +81,15 @@ jobs:
         with:
           path: ~/LIBMESH
           key: libmesh-${{ runner.os }}-${{ env.cache-name }}-${{ env.LIBMESH_SHA }}
+
+      - name: Omega_h Cache
+        id: omega-h-cache
+        uses: actions/cache@v3
+        env:
+          cache-name: omega-h-cache
+        with:
+          path: ~/OMEGA_H
+          key: omega-h-${{ runner.os }}-${{ env.cache-name }}-${{ env.OMEGA_H_SHA }}
 
       - if: ${{ steps.moab-cache.outputs.cache-hit != 'true' }}
         name: Build MOAB
@@ -95,13 +113,32 @@ jobs:
           ../configure --prefix=$HOME/LIBMESH --enable-exodus --disable-netcdf4 --disable-eigen --disable-lapack --disable-mpi --disable-metaphysicl
           make -j4
           make install
+      - if: ${{ steps.omega-h-cache.outputs.cache-hit != 'true' }}
+        name: Build Omega_h
+        shell: bash
+        run: |
+          cd ~/omega_h
+          mkdir build
+          cd build
+          cmake .. \
+            -DCMAKE_INSTALL_PREFIX=$HOME/OMEGA_H \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DOmega_h_USE_MPI=OFF \
+            -DBUILD_TESTING=OFF
+          make -j4
+          make install
 
       - name: Build XDG
         shell: bash
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_INSTALL_PREFIX=$HOME/opt -DCMAKE_PREFIX_PATH="$HOME/MOAB;$HOME/LIBMESH" -DXDG_ENABLE_MOAB=ON -DXDG_ENABLE_LIBMESH=ON
+          cmake .. \
+            -DCMAKE_INSTALL_PREFIX=$HOME/opt \
+            -DCMAKE_PREFIX_PATH="$HOME/MOAB;$HOME/LIBMESH;$HOME/OMEGA_H" \
+            -DXDG_ENABLE_MOAB=ON \
+            -DXDG_ENABLE_LIBMESH=ON \
+            -DXDG_ENABLE_OMEGA_H=ON \
           make -j4 all install
 
       - name: Build OpenMC

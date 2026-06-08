@@ -105,6 +105,7 @@ jobs:
         if: ${{ matrix.libmesh }}
         run: |
           echo "LIBMESH_SHA"=$(cd ~/libmesh && git rev-parse HEAD) >> $GITHUB_ENV
+          # Enforce that we're using the debug build of libMesh
           echo "METHOD=dbg" >> $GITHUB_ENV
 
       - name: Omega_h Environment Variables
