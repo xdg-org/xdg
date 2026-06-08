@@ -138,7 +138,7 @@ jobs:
             -DCMAKE_PREFIX_PATH="$HOME/MOAB;$HOME/LIBMESH;$HOME/OMEGA_H" \
             -DXDG_ENABLE_MOAB=ON \
             -DXDG_ENABLE_LIBMESH=ON \
-            -DXDG_ENABLE_OMEGA_H=ON \
+            -DXDG_ENABLE_OMEGA_H=ON 
           make -j4 all install
 
       - name: Build OpenMC
