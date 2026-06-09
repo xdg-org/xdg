@@ -137,6 +137,15 @@ LibMeshManager::face_connectivity(MeshID face) const {
   return conn;
 }
 
+MeshID
+LibMeshManager::get_boundary_face_element(MeshID face) const {
+  const auto& sp = sidepair(face);
+  if (sp.first()) {
+    return sp.first()->id();
+  }
+  return ID_NONE;
+}
+
 MeshID LibMeshManager::create_volume() {
   MeshID next_volume_id = *std::max_element(volumes_.begin(), volumes_.end()) + 1;
   return next_volume_id;

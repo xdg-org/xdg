@@ -102,6 +102,8 @@ public:
 
   std::vector<MeshID> face_connectivity(MeshID element) const override;
 
+  MeshID get_boundary_face_element(MeshID face) const override;
+
   Vertex vertex_coordinates(MeshID vertex) const override;
 
   std::array<Vertex, 3> face_vertices(MeshID triangle) const override;

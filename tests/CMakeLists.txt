@@ -1,6 +1,7 @@
 set(
 TEST_NAMES
 test_bbox
+test_boundary_faces
 test_bvh
 test_config
 test_closest
@@ -94,6 +95,8 @@ pincell.h5m
 pincell-implicit.exo
 small-tet-mesh.h5m
 small-tet-mesh.exo
+single-tet.h5m
+single-tet.exo
 )
 
 foreach(file ${TEST_FILES})

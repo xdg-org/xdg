@@ -70,6 +70,33 @@ TEST_CASE("Face Vertices (MeshMock)", "[surface][unit]") {
   }
 }
 
+TEST_CASE("Boundary Face Element (MeshMock)", "[surface][unit]") {
+  auto mock_mesh = std::make_shared<MeshMock>();
+  std::shared_ptr<MeshManager> mesh_manager = mock_mesh;
+  mesh_manager->init();
+
+  for (MeshID face = 0; face < static_cast<MeshID>(mock_mesh->triangle_connectivity().size()); ++face) {
+    const auto element = mesh_manager->get_boundary_face_element(face);
+    REQUIRE(element != ID_NONE);
+
+    const auto& tri = mock_mesh->triangle_connectivity().at(face);
+    const auto& tet = mock_mesh->tetrahedron_connectivity().at(element);
+    const auto tet_faces = mock_mesh->tet_faces(tet);
+
+    bool found_match = false;
+    for (auto tet_face : tet_faces) {
+      std::sort(tet_face.begin(), tet_face.end());
+      auto sorted_tri = tri;
+      std::sort(sorted_tri.begin(), sorted_tri.end());
+      if (tet_face == sorted_tri) {
+        found_match = true;
+        break;
+      }
+    }
+    REQUIRE(found_match);
+  }
+}
+
 TEST_CASE("Get Surface Connectivity (MeshMock)", "[surface][unit]") {
   auto mock_mesh = std::make_shared<MeshMock>();
   std::shared_ptr<MeshManager> mesh_manager = mock_mesh;

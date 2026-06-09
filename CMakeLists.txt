@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-project(openmc C CXX)
+project(xdg C CXX)
 
 option(XDG_ENABLE_MOAB    "Enable support for the MOAB mesh library"          ON)
 option(XDG_ENABLE_MFEM    "Enable support for the MFEM mesh library"         OFF)
@@ -15,7 +15,7 @@ option(XDG_BUILD_TOOLS    "Enable tools and miniapps"                         ON
 set(XDG_VERSION_MAJOR 0)
 set(XDG_VERSION_MINOR 14)
 set(XDG_VERSION_RELEASE 1)
-set(XDG_VERSION ${OPENMC_VERSION_MAJOR}.${OPENMC_VERSION_MINOR}.${OPENMC_VERSION_RELEASE})
+set(XDG_VERSION ${XDG_VERSION_MAJOR}.${XDG_VERSION_MINOR}.${XDG_VERSION_RELEASE})
 
 if(NOT CMAKE_BUILD_TYPE)
  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose build type" FORCE)
