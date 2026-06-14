@@ -18,17 +18,10 @@ RUN apt-get install --yes \
         mpich \
         libmpich-dev \
         libtirpc-dev \
-        python3 \
-        python3-pip \
-        python3-packaging \
-        python3-jinja2 \
-        python3-yaml \
-        python3-pkgconfig \
         curl \
         nano \
         libtbb-dev \
-        libglfw3-dev \
-        libgl1-mesa-dev
+        libembree-dev
 
 # compile libmesh from source and install it
 RUN git clone --recurse-submodules https://github.com/libMesh/libmesh.git /XDG_TEST_SYSTEM/libmesh
@@ -54,19 +47,6 @@ RUN make install
 
 ENV MOAB_INSTALL_PATH=/XDG_TEST_SYSTEM/moab_install_dir
 
-# build Embree from source
-RUN git clone https://github.com/RenderKit/embree.git /XDG_TEST_SYSTEM/embree
-WORKDIR /XDG_TEST_SYSTEM/embree/build
-RUN cmake .. \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/XDG_TEST_SYSTEM/embree_install_dir \
-        -DEMBREE_ISPC_SUPPORT=OFF \
-        -DEMBREE_TUTORIALS=OFF \
-        -DEMBREE_STATIC_LIB=OFF
-RUN make -j$(nproc)
-RUN make install
-
-ENV EMBREE_INSTALL_PATH=/XDG_TEST_SYSTEM/embree_install_dir
 
 # build XDG
 RUN git clone --recurse-submodules -j$(nproc) https://github.com/xdg-org/xdg.git /XDG_TEST_SYSTEM/xdg
@@ -78,12 +58,6 @@ RUN cmake .. \
         -DXDG_ENABLE_MOAB=ON \
         -DMOAB_DIR=${MOAB_INSTALL_PATH} \
         -DXDG_ENABLE_LIBMESH=ON \
-        -DLIBMESH_DIR=${LIBMESH_INSTALL_PATH} \
-        -DXDG_LINK_MPI=ON \
-        -DXDG_ENABLE_EMBREE=ON \
-        -DCMAKE_PREFIX_PATH=${EMBREE_INSTALL_PATH} \
-        -DCMAKE_CXX_FLAGS="-I/${EMBREE_INSTALL_PATH}/include" \
-        -DXDG_BUILD_TESTS=ON \
-        -DXDG_BUILD_TOOLS=ON
+        -DLIBMESH_DIR=${LIBMESH_INSTALL_PATH}
 RUN make -j$(nproc)
 
