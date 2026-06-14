@@ -21,7 +21,8 @@ RUN apt-get install --yes \
         curl \
         nano \
         libtbb-dev \
-        libembree-dev
+        libembree-dev \
+        pkg-config
 
 # compile libmesh from source and install it
 RUN git clone --recurse-submodules https://github.com/libMesh/libmesh.git /XDG_TEST_SYSTEM/libmesh
