@@ -1,5 +1,7 @@
 FROM ubuntu:24.04
 
+ARG NUM_THREADS=1
+
 # installing dependencies
 RUN apt-get update --yes
 RUN apt-get install --yes \
@@ -27,7 +29,7 @@ RUN apt-get install --yes \
 RUN git clone --recurse-submodules https://github.com/libMesh/libmesh.git /XDG_TEST_SYSTEM/libmesh
 WORKDIR /XDG_TEST_SYSTEM/libmesh/build
 RUN ../configure --prefix=/XDG_TEST_SYSTEM/libmesh_install_dir
-RUN make -j$(nproc)
+RUN make -j $(NUM_THREADS)
 RUN make install
 
 ENV LIBMESH_INSTALL_PATH=/XDG_TEST_SYSTEM/libmesh_install_dir
@@ -42,14 +44,14 @@ RUN cmake .. \
         -DHDF5_ROOT=/usr \
         -DBLAS_LIBRARIES=/usr/lib/x86_64-linux-gnu/libopenblas.so \
         -DBUILD_SHARED_LIBS=ON
-RUN make -j$(nproc)
+RUN make -j $(NUM_THREADS)
 RUN make install
 
 ENV MOAB_INSTALL_PATH=/XDG_TEST_SYSTEM/moab_install_dir
 
 
 # build XDG
-RUN git clone --recurse-submodules -j$(nproc) https://github.com/xdg-org/xdg.git /XDG_TEST_SYSTEM/xdg
+RUN git clone --recurse-submodules https://github.com/xdg-org/xdg.git /XDG_TEST_SYSTEM/xdg
 WORKDIR /XDG_TEST_SYSTEM/xdg/build
 RUN cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
@@ -59,5 +61,5 @@ RUN cmake .. \
         -DMOAB_DIR=${MOAB_INSTALL_PATH} \
         -DXDG_ENABLE_LIBMESH=ON \
         -DLIBMESH_DIR=${LIBMESH_INSTALL_PATH}
-RUN make -j$(nproc)
+RUN make -j$(NUM_THREADS)
 
