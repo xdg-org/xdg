@@ -20,7 +20,6 @@ RUN apt-get install --yes \
         libtirpc-dev \
         curl \
         nano \
-        libtbb-dev \
         libembree-dev \
         pkg-config
 
