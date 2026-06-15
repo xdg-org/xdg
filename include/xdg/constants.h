@@ -48,7 +48,8 @@ enum class Sense {
 enum class MeshLibrary {
   MOCK = 0, // mock testing interface
   MOAB,
-  LIBMESH
+  LIBMESH,
+  OMEGA_H
 };
 
 // Ray Tracing library identifier
@@ -61,7 +62,8 @@ static const std::map<MeshLibrary, std::string> MESH_LIB_TO_STR =
 {
   {MeshLibrary::MOCK, "MOCK"},
   {MeshLibrary::MOAB, "MOAB"},
-  {MeshLibrary::LIBMESH, "LIBMESH"}
+  {MeshLibrary::LIBMESH, "LIBMESH"},
+  {MeshLibrary::OMEGA_H,"OMEGA_H"}
 };
 
 static const std::map<RTLibrary, std::string> RT_LIB_TO_STR =
