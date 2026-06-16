@@ -21,6 +21,7 @@ MBDirectAccess::setup() {
   element_data_.setup(mbi);
   vertex_data_.setup(mbi);
   element_adjacency_data_.setup(mbi);
+  boundary_face_adjacency_data_.setup(mbi, face_data_);
 }
 
 void
@@ -30,6 +31,7 @@ MBDirectAccess::clear()
   element_data_.clear();
   vertex_data_.clear();
   element_adjacency_data_.clear();
+  boundary_face_adjacency_data_.clear();
 }
 
 void

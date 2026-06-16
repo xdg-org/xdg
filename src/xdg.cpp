@@ -152,6 +152,8 @@ XDG::segments(const Position& start,
   double distance = u.length();
   u /= distance;
 
+  std::vector<xdg::MeshID> hit_primitives;
+
   std::vector<std::pair<MeshID, double>> segments;
   while (distance > 0) {
     // attempt to find an element at the start location
@@ -161,29 +163,26 @@ XDG::segments(const Position& start,
     MeshID volume = ID_NONE;
     if (current_element == ID_NONE) {
       // fire a ray against the implicit complement
-      auto hit = ray_fire(ipc, r, u, INFTY, HitOrientation::ANY, &prev_elements);
-      // if the hit distance is zero, we're likely stuck on an element boundary
-      // fire again and ignore the previous hit
-      while (hit.first < TINY_BIT) {
-        hit = ray_fire(ipc, r, u, INFTY, HitOrientation::ANY, &prev_elements);
-      }
+      auto hit = ray_fire(ipc, r + u * TINY_BIT, u, INFTY, HitOrientation::EXITING, &hit_primitives);
       // if there is no entry point or the distance to the surface
       // is past the end point, return
       if (hit.second == ID_NONE || hit.first > distance) return segments;
 
+      double hit_dist = hit.first + TINY_BIT;
       // move up to the surface
-      r += u * hit.first;
-      distance -= hit.first;
+      r += u * hit_dist;
+      distance -= hit_dist;
       // determine the volume we're moving into
       mesh_manager()->next_volume(ipc, hit.second);
 
-      // determine what element is on the other side of this surface
-      current_element = find_element(r + u * TINY_BIT);
-      // if no element is found, we may be exiting the mesh
-      if (current_element == ID_NONE) {
+      // Get the element on the other side of the hit face using adjacencies
+      auto adjacent_element = mesh_manager()->get_boundary_face_element(hit_primitives.back());
+      if (adjacent_element == ID_NONE) {
+        warning("Ray fire hit surface {}, but no adjacent elements were found on the other side of the surface.", hit.second);
         return segments;
       }
-      prev_elements.clear();
+      current_element = adjacent_element;
+      hit_primitives.clear();
     }
     auto vol_segments = mesh_manager()->walk_elements(current_element, r, u, distance);
     // add to current set of segments

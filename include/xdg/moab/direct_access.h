@@ -91,6 +91,10 @@ public:
     return element_adjacency_data_.get_element_adjacencies(element);
   }
 
+  inline EntityHandle get_boundary_face_element(const EntityHandle& face) const {
+    return boundary_face_adjacency_data_.get_boundary_face_element(face);
+  }
+
   const std::vector<std::vector<int>>& get_face_ordering(EntityType entity_type) const {
     return element_adjacency_data_.ordering.at(entity_type);
   }
@@ -131,7 +135,7 @@ private:
           std::vector<EntityHandle> verts;
           for (auto idx : o) verts.push_back(conn[idx]);
           Range adj_ents;
-          rval = mbi->get_adjacencies(verts.data(), verts.size(), 3, true, adj_ents);
+          rval = mbi->get_adjacencies(verts.data(), verts.size(), 3, false, adj_ents);
 
           // there be at most two adjacent elements for a given face
           if (adj_ents.size() > 2) {
@@ -217,7 +221,7 @@ private:
 
     template <int N>
     std::array<size_t, N>
-    get_connectivity_indices(const EntityHandle& e) {
+    get_connectivity_indices(const EntityHandle& e) const {
       // determine the correct contiguous block index to use
       int block_idx = 0;
       auto fe = first_elements[block_idx];
@@ -241,6 +245,43 @@ private:
       first_elements.clear();
       vconn.clear();
       entity_range.clear();
+    }
+  };
+
+  struct BoundaryFaceAdjacencyData {
+    std::unordered_map<EntityHandle, EntityHandle> boundary_face_to_element_;
+
+    void setup(Interface* mbi, const ConnectivityData& face_data) {
+      ErrorCode rval;
+
+      for (const auto& face : face_data.entity_range) {
+        auto conn = face_data.get_connectivity_indices<3>(face);
+        std::array<EntityHandle, 3> verts = {conn[0], conn[1], conn[2]};
+
+        Range adjacent_elements;
+        rval = mbi->get_adjacencies(verts.data(), verts.size(), 3, true, adjacent_elements);
+        MB_CHK_SET_ERR_CONT(rval, "Failed to get MOAB boundary face adjacencies");
+
+        if (adjacent_elements.size() > 2) {
+          throw std::runtime_error("Found more than two elements adjacent to a face");
+        }
+
+        if (adjacent_elements.size() == 1) {
+          boundary_face_to_element_[face] = adjacent_elements[0];
+        }
+      }
+    }
+
+    EntityHandle get_boundary_face_element(const EntityHandle& face) const {
+      auto it = boundary_face_to_element_.find(face);
+      if (it == boundary_face_to_element_.end()) {
+        return xdg::ID_NONE;
+      }
+      return it->second;
+    }
+
+    void clear() {
+      boundary_face_to_element_.clear();
     }
   };
 
@@ -310,6 +351,7 @@ private:
   ConnectivityData face_data_;
   ConnectivityData element_data_;
   AdjacencyData element_adjacency_data_;
+  BoundaryFaceAdjacencyData boundary_face_adjacency_data_;
   VertexData vertex_data_;
 
   public:
