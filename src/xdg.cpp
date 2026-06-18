@@ -31,6 +31,14 @@ XDG::XDG(std::shared_ptr<MeshManager> mesh_manager, RTLibrary ray_tracing_lib)
     #else
       fatal_error("This build was not compiled with GPRT support (XDG_ENABLE_GPRT=OFF).");
     #endif
+
+    case RTLibrary::CUBQL:
+    #ifdef XDG_ENABLE_CUBQL
+      set_ray_tracing_interface(std::make_shared<CuBQLRayTracer>());
+      break;
+    #else
+      fatal_error("This build was not compiled with cuBQL support (XDG_ENABLE_CUBQL=OFF).");
+    #endif
   }
 }
 
@@ -84,6 +92,9 @@ std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib
     #ifdef XDG_ENABLE_GPRT
     if (ray_tracing_lib == RTLibrary::GPRT) return std::make_shared<GPRTRayTracer>();
     #endif
+    #ifdef XDG_ENABLE_CUBQL
+    if (ray_tracing_lib == RTLibrary::CUBQL) return std::make_shared<CuBQLRayTracer>();
+    #endif
 
     // If no supported ray tracing library throw an error
     std::string msg = fmt::format("Invalid ray tracing library '{}'. Supported:", RT_LIB_TO_STR.at(ray_tracing_lib));
@@ -92,6 +103,9 @@ std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib
     #endif
     #ifdef XDG_ENABLE_GPRT
     msg += " GPRT";
+    #endif
+    #ifdef XDG_ENABLE_CUBQL
+    msg += " CUBQL";
     #endif
     fatal_error(msg);
   };
