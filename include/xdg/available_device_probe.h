@@ -1,7 +1,11 @@
 #pragma once
 
-#ifdef XDG_ENABLE_GPRT
 #include "xdg/error.h"
+
+// --------------------------------------------------------------------------------------
+// Vulkan probe functions to check for ray tracing capable devices at runtime
+// --------------------------------------------------------------------------------------
+#ifdef XDG_ENABLE_GPRT
 
 #include <cstring>
 #include <string>
@@ -88,6 +92,48 @@ inline bool system_has_vk_device()
   vkDestroyInstance(instance, nullptr);
   warning("No Vulkan device with the required GPRT extensions found. Missing extensions: " +
           missing);
+  return false;
+}
+#endif
+
+// --------------------------------------------------------------------------------------
+// OpenMP target probe functions to check for devices capable of running cuBQL at runtime
+// --------------------------------------------------------------------------------------
+
+#ifdef XDG_ENABLE_CUBQL
+
+#include <omp.h>
+
+inline bool system_has_omp_target_device()
+{
+  const int device_count = omp_get_num_devices();
+  if (device_count <= 0) {
+    warning("No OpenMP target devices found; cuBQL ray tracer unavailable.");
+    return false;
+  }
+
+  const int host_id = omp_get_initial_device();
+  for (int device_id = 0; device_id < device_count; ++device_id) {
+    int value = 1;
+    void* d_value = omp_target_alloc(sizeof(int), device_id);
+    if (!d_value) continue;
+
+    const int copy_result = omp_target_memcpy(d_value,
+                                              &value,
+                                              sizeof(int),
+                                              0,
+                                              0,
+                                              device_id,
+                                              host_id);
+    omp_target_free(d_value, device_id);
+
+    if (copy_result == 0) {
+      write_message("Found OpenMP target device {}.", device_id);
+      return true;
+    }
+  }
+
+  warning("OpenMP target devices were found, but none accepted target allocation; cuBQL ray tracer unavailable.");
   return false;
 }
 
