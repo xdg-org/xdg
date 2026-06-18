@@ -55,6 +55,9 @@ foreach(test ${TEST_NAMES})
     if (XDG_ENABLE_MOAB)
         target_link_libraries(${test} PRIVATE MOAB)
     endif()
+    if (XDG_ENABLE_CUBQL)
+      target_link_libraries(${test} PRIVATE $<BUILD_INTERFACE:cuBQL>)
+    endif()
     set_target_properties(${test} PROPERTIES
                                   BUILD_RPATH "$<TARGET_FILE_DIR:xdg>")
     catch_discover_tests(${test}

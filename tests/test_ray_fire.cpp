@@ -18,7 +18,8 @@ using namespace xdg::test;
 
 TEMPLATE_TEST_CASE("Ray Fire on MockedTriTetMesh (per-backend sections)", "[rayfire][mock]",
                    Embree_Raytracer,
-                   GPRT_Raytracer)
+                   GPRT_Raytracer, 
+                   CuBQL_Raytracer)
 {
   // Generate one test run per enabled backend
   constexpr auto rt_backend = TestType::value;
