@@ -19,6 +19,11 @@
 
 #include "ray_benchmark.h"
 
+#ifdef XDG_ENABLE_CUBQL
+#include <omp.h>
+#include "xdg/cuBQL/intersection.h"
+#include "xdg/cuBQL/ray_tracer.h"
+#endif
 
 using namespace xdg;
 
@@ -60,7 +65,7 @@ int main(int argc, char** argv)
     .default_value("MOAB");
 
   args.add_argument("-rt", "--rt-library")
-    .help("Ray tracing library to use. Currently implemented: EMBREE")
+    .help("Ray tracing library to use. Currently implemented: EMBREE, CUBQL")
     .default_value("EMBREE");
 
   args.add_argument("-l", "--list")
@@ -98,6 +103,8 @@ int main(int argc, char** argv)
   RTLibrary rt_lib;
   if (rt_str == "EMBREE") {
     rt_lib = RTLibrary::EMBREE;
+  } else if (rt_str == "CUBQL") {
+    rt_lib = RTLibrary::CUBQL;
   } else {
     fatal_error("Ray tracing library '{}' is not implemented in this benchmark tool yet", rt_str);
   }
@@ -171,53 +178,127 @@ int main(int argc, char** argv)
 
   setup_timer.stop();
 
+  const auto num_faces = mesh_manager->num_volume_faces(volume);
+  std::size_t num_hits = 0;
+  if (num_rays < 1) fatal_error("Number of rays must be greater than 0");
+
   if (rt_lib == RTLibrary::EMBREE) {
     rt_label += " (" + std::to_string(XDGConfig::config().n_threads())
              + " CPU threads)";
+
+    // Generate random rays from source
+    generation_timer.start();
+    std::vector<Position> origins(num_rays);
+    std::vector<Direction> directions(num_rays);
+
+    #pragma omp parallel for schedule(runtime)
+    for (std::size_t i = 0; i < num_rays; ++i) {
+      std::uint32_t state = seed ^ static_cast<std::uint32_t>(i);
+      auto sample = tools::benchmark::random_spherical_source(origin.x,
+                                                              origin.y,
+                                                              origin.z,
+                                                              state,
+                                                              source_radius);
+      origins[i] = Position(sample.position[0],
+                            sample.position[1],
+                            sample.position[2]);
+      directions[i] = Direction(sample.direction[0],
+                                sample.direction[1],
+                                sample.direction[2]);
+    }
+    generation_timer.stop();
+
+    std::vector<MeshID> hit_surfaces(num_rays, ID_NONE);
+
+    trace_timer.start();
+    #pragma omp parallel for schedule(runtime)
+    for (std::size_t i = 0; i < num_rays; ++i) {
+      hit_surfaces[i] = xdg->ray_fire(volume, origins[i], directions[i]).second; // just return surface id of hit
+    }
+    trace_timer.stop();
+
+    // Count hits outside of timing region
+    for (std::size_t i = 0; i < num_rays; ++i) {
+      if (hit_surfaces[i] != ID_NONE) num_hits++;
+    }
   }
+  else if (rt_lib == RTLibrary::CUBQL) {
+    #ifndef XDG_ENABLE_CUBQL
+      fatal_error("This build was not compiled with cuBQL support (XDG_ENABLE_CUBQL=OFF).");
+    #else
+    auto rti = std::dynamic_pointer_cast<CuBQLRayTracer>(xdg->ray_tracing_interface());
 
-  const auto num_faces = mesh_manager->num_volume_faces(volume);
+      // Generate random rays directly on the target device.
+      generation_timer.start();
 
+      const int gpu_id = omp_get_default_device();
 
-  // Generate random rays from source
-  generation_timer.start();
-  std::vector<Position> origins(num_rays);
-  std::vector<Direction> directions(num_rays);
+      CuBQLRay* d_rays = static_cast<CuBQLRay*>(
+        omp_target_alloc(num_rays * sizeof(CuBQLRay), gpu_id));
 
-  #pragma omp parallel for schedule(runtime)
-  for (std::size_t i = 0; i < num_rays; ++i) {
-    std::uint32_t state = seed ^ static_cast<std::uint32_t>(i);
-    auto sample = tools::benchmark::random_spherical_source(origin.x,
-                                                            origin.y,
-                                                            origin.z,
-                                                            state,
-                                                            source_radius);
-    origins[i] = Position(sample.position[0],
-                          sample.position[1],
-                          sample.position[2]);
-    directions[i] = Direction(sample.direction[0],
-                              sample.direction[1],
-                              sample.direction[2]);
+      if (!d_rays) {
+        fatal_error("Failed to allocate cuBQL ray buffer");
+      }
+
+      const double origin_x = origin.x;
+      const double origin_y = origin.y;
+      const double origin_z = origin.z;
+
+      #pragma omp target teams distribute parallel for device(gpu_id) is_device_ptr(d_rays)
+      for (std::size_t ray_id = 0; ray_id < num_rays; ++ray_id) {
+        std::uint32_t state = seed ^ static_cast<std::uint32_t>(ray_id);
+
+        auto sample = tools::benchmark::random_spherical_source(origin_x,
+                                                                origin_y,
+                                                                origin_z,
+                                                                state,
+                                                                source_radius);
+
+        CuBQLRay ray;
+        ray.origin = cuBQL::vec3d(sample.position[0],
+                                  sample.position[1],
+                                  sample.position[2]);
+        ray.direction = cuBQL::vec3d(sample.direction[0],
+                                     sample.direction[1],
+                                     sample.direction[2]);
+        ray.tMin = 0.0;
+        ray.tMax = INFTY;
+        ray.volume = volume;
+
+        d_rays[ray_id] = ray;
+      }
+
+      CuBQLSurfaceHit* d_hits = static_cast<CuBQLSurfaceHit*>(
+        omp_target_alloc(num_rays * sizeof(CuBQLSurfaceHit), gpu_id));
+
+      if (!d_hits) {
+        omp_target_free(d_rays, gpu_id);
+        fatal_error("Failed to allocate cuBQL hit buffer");
+      }
+
+      generation_timer.stop();
+
+      // Trace rays and count hits on the target device.
+      trace_timer.start();
+      rti->ray_fire_batch(d_rays, d_hits, num_rays);
+      trace_timer.stop();
+
+      #pragma omp target teams distribute parallel for device(gpu_id) \
+        is_device_ptr(d_hits) reduction(+:num_hits)
+      for (std::size_t ray_id = 0; ray_id < num_rays; ++ray_id) {
+        if (d_hits[ray_id].primitive != ID_NONE) num_hits++;
+      }
+
+      omp_target_free(d_hits, gpu_id);
+      omp_target_free(d_rays, gpu_id);
+    #endif
   }
-  generation_timer.stop();
-
-  // Trace rays
-  trace_timer.start();
-
-  std::size_t num_hits = 0;
-
-  #pragma omp parallel for schedule(runtime) reduction(+:num_hits)
-  for (std::size_t i = 0; i < num_rays; ++i) {
-    const auto hit = xdg->ray_fire(volume, origins[i], directions[i]);
-    if (hit.second != ID_NONE) num_hits++;
-  }
-
-  trace_timer.stop();
 
   const std::size_t num_misses = num_rays - num_hits;
   const double hit_fraction = num_rays > 0
     ? static_cast<double>(num_hits) / static_cast<double>(num_rays)
     : 0.0;
+
   const double generation_time = generation_timer.elapsed();
   const double trace_time = trace_timer.elapsed();
   const double end_to_end_time = generation_time + trace_time;
