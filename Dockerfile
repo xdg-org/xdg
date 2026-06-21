@@ -56,7 +56,13 @@ RUN cmake .. \
      -DCMAKE_BUILD_TYPE=Release \
      -DOmega_h_USE_MPI=OFF \
      -DBUILD_TESTING=OFF \
-     -Omega_h_USE_SEACASExodus=ON
+     -Omega_h_USE_SEACASExodus=ON \
+
+RUN make -j $(BUILD_JOBS)
+RUN make install
+ENV OMEGA_H_INSTALL_PATH=/XDG_TEST_SYSTEM/omega_h_install_dir
+
+
 
 # build XDG
 RUN git clone --recurse-submodules https://github.com/xdg-org/xdg.git /XDG_TEST_SYSTEM/xdg
@@ -69,7 +75,10 @@ RUN cmake .. \
         -DXDG_ENABLE_MOAB=ON \
         -DMOAB_DIR=${MOAB_INSTALL_PATH} \
         -DXDG_ENABLE_LIBMESH=ON \
-        -DLIBMESH_DIR=${LIBMESH_INSTALL_PATH}
+        -DLIBMESH_DIR=${LIBMESH_INSTALL_PATH} \
+        -DXDG_ENABLE_OMEGA_H=ON \
+        -DOMEGA_H_dir=${OMEGA_H_INSTALL_PATH} \
+
 RUN make -j $(BUILD_JOBS)
 RUN make install
 
