@@ -178,7 +178,8 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=$HOME/OMEGA_H \
             -DCMAKE_BUILD_TYPE=Release \
             -DOmega_h_USE_MPI=OFF \
-            -DBUILD_TESTING=OFF
+            -DBUILD_TESTING=OFF \
+            -DOmega_h_USE_SEACASExodus=ON 
           make -j4
           make install
 

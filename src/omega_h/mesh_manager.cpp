@@ -23,7 +23,7 @@ static constexpr int CLASS_DIM_VOLUME = 3;
 
 // Classification tag names written by Omega_h
 static constexpr const char *CLASS_DIM_TAG = "class_dim";
-static constexpr const char *CLASS_ID_TAG = "class_id";
+static constexpr const char *CLASS_ID_TAG  = "class_id";
 
 static constexpr int VERTS_PER_TET = 4;
 static constexpr int VERTS_PER_TRI = 3;
@@ -47,11 +47,11 @@ void OmegaHMeshManager::init() {
     fatal_error("Mesh must be 3-dimensional");
   }
 
-  // in Omega_h the regions (3D simplices) are the volume elements
+  // in Omega_h the regions are 3D simplices or aka elements
   num_elements_ = mesh_->nregions();
 
   // a classified mesh defines its volumes and surfaces directly through the
-  // class_dim/class_id tags. Otherwise treat the entire mesh as a single volume
+  // class_dim/class_id tags. Otherwise, treat the entire mesh as a single volume
   // bounded by its exposed faces.
   if (has_classification()) {
     discover_geometry();
@@ -76,10 +76,8 @@ bool OmegaHMeshManager::has_classification() const {
 
 void OmegaHMeshManager::discover_geometry() {
   // volumes are the unique class IDs of regions classified on a 3D model entity
-  auto region_class_dim =
-      mesh_->get_array<Omega_h::I8>(OMEGA_H_REGION, CLASS_DIM_TAG);
-  auto region_class_id =
-      mesh_->get_array<Omega_h::LO>(OMEGA_H_REGION, CLASS_ID_TAG);
+  auto region_class_dim = mesh_->get_array<Omega_h::I8>(OMEGA_H_REGION, CLASS_DIM_TAG);
+  auto region_class_id = mesh_->get_array<Omega_h::LO>(OMEGA_H_REGION, CLASS_ID_TAG);
 
   std::set<MeshID> volume_ids;
   for (Omega_h::LO region = 0; region < mesh_->nregions(); ++region) {

@@ -28,10 +28,9 @@ using namespace xdg::test;
 // ray-fire distances below to match.
 
 TEST_CASE("Test Omega_h Initialization") {
-  std::unique_ptr<MeshManager> mesh_manager =
-      std::make_unique<OmegaHMeshManager>();
+  std::unique_ptr<MeshManager> mesh_manager = std::make_unique<OmegaHMeshManager>();
 
-  mesh_manager->load_file("cube.osh");
+  mesh_manager->load_file("brick.exo");
   mesh_manager->init();
 
   // a cube is a single classified volume bounded by six surfaces
@@ -43,10 +42,8 @@ TEST_CASE("Test Omega_h Initialization") {
   REQUIRE(mesh_manager->num_volumes() == 2);
 
   // num_ents_of_dimension should agree with the volume and surface counts
-  REQUIRE(mesh_manager->num_ents_of_dimension(3) ==
-          mesh_manager->num_volumes());
-  REQUIRE(mesh_manager->num_ents_of_dimension(2) ==
-          mesh_manager->num_surfaces());
+  REQUIRE(mesh_manager->num_ents_of_dimension(3) == mesh_manager->num_volumes());
+  REQUIRE(mesh_manager->num_ents_of_dimension(2) == mesh_manager->num_surfaces());
 
   // every surface is bounded by the cube volume on its forward side
   MeshID volume = mesh_manager->volumes().front();

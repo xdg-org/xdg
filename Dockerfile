@@ -49,6 +49,15 @@ RUN make install
 ENV MOAB_INSTALL_PATH=/XDG_TEST_SYSTEM/moab_install_dir
 
 
+RUN git clone https://github.com/SCOREC/omega_h.git /XDG_TEST_SYSTEM/omega_h
+WORKDIR /XDG_TEST_SYSTEM/omega_h/build
+RUN cmake .. \
+    -DCMAKE_INSTALL_PREFIX=/XDG_TEST_SYSTEM/omega_h_install_dir \
+     -DCMAKE_BUILD_TYPE=Release \
+     -DOmega_h_USE_MPI=OFF \
+     -DBUILD_TESTING=OFF \
+     -Omega_h_USE_SEACASExodus=ON
+
 # build XDG
 RUN git clone --recurse-submodules https://github.com/xdg-org/xdg.git /XDG_TEST_SYSTEM/xdg
 WORKDIR /XDG_TEST_SYSTEM/xdg/build
