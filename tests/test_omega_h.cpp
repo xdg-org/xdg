@@ -1,15 +1,12 @@
-// stl includes
 #include <algorithm>
 #include <cmath>
 #include <memory>
 #include <numeric>
 
-// testing includes
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
-// xdg includes
 #include "util.h"
 #include "xdg/constants.h"
 #include "xdg/error.h"
@@ -20,10 +17,8 @@
 using namespace xdg;
 using namespace xdg::test;
 
-// These tests use "cube.osh", an Omega_h binary mesh of a single cubic volume,
-// 10 units on a side and centered at the origin (the same geometry used by the
-// MOAB "cube.h5m" and libMesh "brick.exo" models). Its classification therefore
-// describes one model volume bounded by six planar model surfaces. If the
+// These tests use "brick.exo".
+// Its classification therefore describes one model volume bounded by six planar model surfaces. If the
 // converted mesh in your test data differs, update the expected counts and
 // ray-fire distances below to match.
 
@@ -56,7 +51,7 @@ TEST_CASE("Test Omega_h Initialization") {
 TEST_CASE("Omega_h Volume Elements") {
   std::unique_ptr<MeshManager> mesh_manager =
       std::make_unique<OmegaHMeshManager>();
-  mesh_manager->load_file("cube.osh");
+  mesh_manager->load_file("brick.exo");
   mesh_manager->init();
 
   // unlike the MOAB surface meshes, an Omega_h mesh is volumetric: the cube
@@ -84,7 +79,7 @@ TEST_CASE("Omega_h Element Types") {
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::OMEGA_H);
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::OMEGA_H);
   const auto &mesh_manager = xdg->mesh_manager();
-  mesh_manager->load_file("cube.osh");
+  mesh_manager->load_file("brick.exo");
   mesh_manager->init();
 
   // Omega_h simplex meshes use triangular surface elements throughout
@@ -97,7 +92,7 @@ TEST_CASE("Omega_h Element Types") {
 TEST_CASE("Omega_h Connectivity") {
   std::unique_ptr<MeshManager> mesh_manager =
       std::make_unique<OmegaHMeshManager>();
-  mesh_manager->load_file("cube.osh");
+  mesh_manager->load_file("brick.exo");
   mesh_manager->init();
 
   auto coords_match = [&](MeshID vertex, const Vertex &v) {
@@ -141,9 +136,8 @@ TEST_CASE("Omega_h Connectivity") {
 }
 
 TEST_CASE("Omega_h Adjacency") {
-  std::unique_ptr<MeshManager> mesh_manager =
-      std::make_unique<OmegaHMeshManager>();
-  mesh_manager->load_file("cube.osh");
+  std::unique_ptr<MeshManager> mesh_manager = std::make_unique<OmegaHMeshManager>();
+  mesh_manager->load_file("brick.exo");
   mesh_manager->init();
 
   constexpr int faces_per_tet = 4;
@@ -174,7 +168,7 @@ TEMPLATE_TEST_CASE("Test BVH Build Omega_h", "[omega_h][bvh]", Embree_Raytracer,
                    GPRT_Raytracer) {
   std::shared_ptr<MeshManager> mesh_manager =
       std::make_shared<OmegaHMeshManager>();
-  mesh_manager->load_file("cube.osh");
+  mesh_manager->load_file("brick.exo");
   mesh_manager->init();
 
   REQUIRE(mesh_manager->num_volumes() == 2);
@@ -275,8 +269,7 @@ TEMPLATE_TEST_CASE("Test Omega_h Find Element Method", "[omega_h][elements]",
 }
 
 TEST_CASE("Omega_h Element ID and Index Mapping") {
-  std::unique_ptr<MeshManager> mesh_manager =
-      std::make_unique<OmegaHMeshManager>();
+  std::unique_ptr<MeshManager> mesh_manager = std::make_unique<OmegaHMeshManager>();
   REQUIRE(mesh_manager->mesh_library() == MeshLibrary::OMEGA_H);
   mesh_manager->load_file("cube.osh");
   mesh_manager->init();

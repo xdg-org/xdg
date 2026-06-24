@@ -31,7 +31,13 @@ static constexpr int FACES_PER_TET = 4;
 
 // Constructor
 
-OmegaHMeshManager::OmegaHMeshManager(const Omega_h::Mesh* mesh) {}
+OmegaHMeshManager::OmegaHMeshManager(const Omega_h::Mesh* mesh) {
+
+  // I will rewrite this method later
+  library_ = std::make_unique<Omega_h::Library>(nullptr, nullptr);
+  mesh_ = std::make_unique<Omega_h::Mesh>(library_.get());
+
+}
 OmegaHMeshManager::OmegaHMeshManager() {
   library_ = std::make_unique<Omega_h::Library>(nullptr, nullptr);
   mesh_ = std::make_unique<Omega_h::Mesh>(library_.get());

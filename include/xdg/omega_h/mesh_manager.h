@@ -93,11 +93,10 @@ public:
   std::array<Vertex, 3> face_vertices(MeshID face) const override;
 
   //! \brief Vertices of a local face of a tetrahedral element
-  std::array<Vertex, 3> element_face_vertices(MeshID element,
-                                              int local_face) const;
+  std::array<Vertex, 3> element_face_vertices(MeshID element, int local_face) const;
 
   SurfaceElementType
-  get_surface_element_type(MeshID /*surface*/) const override {
+  get_surface_element_type(MeshID surface_element_id) const override {
     // Omega_h simplex meshes always use triangular surface elements
     return SurfaceElementType::TRI;
   }
