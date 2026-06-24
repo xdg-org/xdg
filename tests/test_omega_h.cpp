@@ -200,7 +200,7 @@ TEMPLATE_TEST_CASE("Test Ray Fire Omega_h (all built backends)",
     REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::OMEGA_H);
 
     const auto &mm = xdg->mesh_manager();
-    mm->load_file("cube.osh");
+    mm->load_file("brick.exo");
     mm->init();
     xdg->prepare_raytracer();
 
@@ -233,7 +233,7 @@ TEMPLATE_TEST_CASE("Test Omega_h Find Element Method", "[omega_h][elements]",
     std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::OMEGA_H, rt_backend);
     REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::OMEGA_H);
     const auto &mesh_manager = xdg->mesh_manager();
-    mesh_manager->load_file("cube.osh");
+    mesh_manager->load_file("brick.exo");
     mesh_manager->init();
     xdg->prepare_raytracer();
 
@@ -271,7 +271,7 @@ TEMPLATE_TEST_CASE("Test Omega_h Find Element Method", "[omega_h][elements]",
 TEST_CASE("Omega_h Element ID and Index Mapping") {
   std::unique_ptr<MeshManager> mesh_manager = std::make_unique<OmegaHMeshManager>();
   REQUIRE(mesh_manager->mesh_library() == MeshLibrary::OMEGA_H);
-  mesh_manager->load_file("cube.osh");
+  mesh_manager->load_file("brick.exo");
   mesh_manager->init();
 
   // Omega_h stores entities in a contiguous, zero-based index space, so IDs and
@@ -297,7 +297,7 @@ TEST_CASE("Test Track Exiting Mesh Omega_h") {
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::OMEGA_H);
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::OMEGA_H);
   const auto &mesh_manager = xdg->mesh_manager();
-  mesh_manager->load_file("cube.osh");
+  mesh_manager->load_file("brick.exo");
   mesh_manager->init();
   xdg->prepare_raytracer();
 
