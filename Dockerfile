@@ -53,16 +53,14 @@ ENV MOAB_INSTALL_PATH=/XDG_TEST_SYSTEM/moab_install_dir
 RUN git clone --depth=1 https://github.com/sandialabs/seacas.git /XDG_TEST_SYSTEM/seacas
 
 WORKDIR /XDG_TEST_SYSTEM/seacas/build
-
 RUN cmake .. \
     -DCMAKE_INSTALL_PREFIX=/XDG_TEST_SYSTEM/seacas_install_dir \
     -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_SHARED_LIBS=ON \
     -DSeacas_ENABLE_ALL_PACKAGES=OFF \
     -DSeacas_ENABLE_SEACASExodus=ON \
     -DTPL_ENABLE_MPI=OFF \
-    -DTPL_ENABLE_Netcdf=ON \
-    -DTPL_Netcdf_INCLUDE_DIRS=/usr/include \
-    -DTPL_Netcdf_LIBRARIES=/usr/lib/x86_64-linux-gnu/libnetcdf.so
+    -DTPL_ENABLE_Netcdf=ON
 
 RUN make -j${BUILD_JOBS}
 RUN make install
@@ -76,7 +74,8 @@ RUN cmake .. \
      -DCMAKE_BUILD_TYPE=Release \
      -DOmega_h_USE_MPI=OFF \
      -DBUILD_TESTING=OFF \
-     -DOmega_h_USE_SEACASExodus=ON 
+     -DSEACASExodus_DIR=${SEACAS_INSTALL_PATH}/lib/cmake/SEACASExodus\
+     -DOmega_h_USE_SEACASExodus=ON
 
 RUN make -j ${BUILD_JOBS}
 RUN make install
@@ -85,19 +84,20 @@ ENV OMEGA_H_INSTALL_PATH=/XDG_TEST_SYSTEM/omega_h_install_dir
 
 
 # build XDG
-RUN git clone --recurse-submodules https://github.com/xdg-org/xdg.git /XDG_TEST_SYSTEM/xdg
+# currently building docker image from this branch. As omega_h isn't include the cmake build system
+# in upstream yet. I will change this later.
+RUN git clone -b omega_h --recurse-submodules https://github.com/magnoxemo/xdg.git /XDG_TEST_SYSTEM/xdg
+
 WORKDIR /XDG_TEST_SYSTEM/xdg/build
 RUN cmake .. \
-        -DCMAKE_INSTALL_PREFIX=/XDG_TEST_SYSTEM/xdg_install_dir \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_C_COMPILER=mpicc \
-        -DCMAKE_CXX_COMPILER=mpicxx \
-        -DXDG_ENABLE_MOAB=ON \
-        -DMOAB_DIR=${MOAB_INSTALL_PATH} \
-        -DXDG_ENABLE_LIBMESH=ON \
-        -DLIBMESH_DIR=${LIBMESH_INSTALL_PATH} \
-        -DXDG_ENABLE_OMEGA_H=ON \
-        -DOMEGA_H_dir=${OMEGA_H_INSTALL_PATH}
+    -DCMAKE_INSTALL_PREFIX=/XDG_TEST_SYSTEM/xdg_install_dir \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_C_COMPILER=mpicc \
+    -DCMAKE_CXX_COMPILER=mpicxx \
+    -DXDG_ENABLE_OMEGA_H=ON \
+    -DXDG_ENABLE_MOAB=ON \
+    -DXDG_ENABLE_LIBMESH=ON \
+    -DCMAKE_PREFIX_PATH="${OMEGA_H_INSTALL_PATH};${SEACAS_INSTALL_PATH};${MOAB_INSTALL_PATH};${LIBMESH_INSTALL_PATH}"
 
 RUN make -j${BUILD_JOBS}
 RUN make install
