@@ -58,10 +58,12 @@ public:
                                      HitOrientation orientation = HitOrientation::EXITING,
                                      std::vector<MeshID>* const exclude_primitives = nullptr) override;
 
-  void ray_fire_batch(const CuBQLRay* d_rays,
-                      CuBQLSurfaceHit* d_hits,
-                      std::size_t num_rays,
-                      HitOrientation orientation = HitOrientation::EXITING);
+  void ray_fire_batch(const XDGRayHitBuffer& ray_hits,
+                      HitOrientation hit_orientation = HitOrientation::EXITING) const override;
+
+  XDGRayHitBuffer allocate_ray_hits(std::size_t count) const override;
+
+  void free_ray_hits(XDGRayHitBuffer& ray_hits) const override;
 
   std::pair<double, MeshID> closest(TreeID tree,
                                     const Position& origin) override;

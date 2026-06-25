@@ -173,37 +173,56 @@ intersect_surface_tree_scalar(const cubql::Context& context,
 void
 intersect_surface_tree_batch(const cubql::Context& context,
                              const CuBQLVolumeTLAS::DD* d_volume_to_tlas,
-                             const CuBQLRay* d_rays,
-                             CuBQLSurfaceHit* d_hits,
+                             XDGRayHit* d_ray_hits,
                              std::size_t num_rays,
                              HitOrientation hit_orientation)
 {
-
   if (num_rays == 0) return;
 
-  if (!d_volume_to_tlas || !d_rays || !d_hits) {
+  if (!d_volume_to_tlas || !d_ray_hits) {
     fatal_error("Invalid cuBQL batch intersection buffers");
   }
 
   const int gpu_id = context.gpuID;
 
   #pragma omp target teams distribute parallel for device(gpu_id) \
-    is_device_ptr(d_volume_to_tlas, d_rays, d_hits)
+    is_device_ptr(d_volume_to_tlas, d_ray_hits)
   for (std::size_t ray_id = 0; ray_id < num_rays; ++ray_id) {
-    const CuBQLRay ray = d_rays[ray_id];
-    const CuBQLVolumeTLAS::DD volume_tlas = d_volume_to_tlas[ray.volume];
+    XDGRayHit ray_hit = d_ray_hits[ray_id];
 
     CuBQLSurfaceHit hit;
-    hit.distance = ray.tMax;
+    hit.distance = ray_hit.t_max;
+    hit.surface = ID_NONE;
+    hit.primitive = ID_NONE;
+    hit.piv = OUTSIDE;
 
-    intersect_surface_tree(volume_tlas,
-                           ray,
-                           &hit,
-                           static_cast<int>(hit_orientation),
-                           nullptr,
-                           0);
+    if (ray_hit.volume != ID_NONE) {
+      CuBQLRay ray;
+      ray.origin = cuBQL::vec3d(ray_hit.origin[0],
+                                ray_hit.origin[1],
+                                ray_hit.origin[2]);
+      ray.direction = cuBQL::vec3d(ray_hit.direction[0],
+                                   ray_hit.direction[1],
+                                   ray_hit.direction[2]);
+      ray.tMin = ray_hit.t_min;
+      ray.tMax = ray_hit.t_max;
+      ray.volume = ray_hit.volume;
 
-    d_hits[ray_id] = hit;
+      const CuBQLVolumeTLAS::DD volume_tlas = d_volume_to_tlas[ray.volume];
+
+      intersect_surface_tree(volume_tlas,
+                             ray,
+                             &hit,
+                             static_cast<int>(hit_orientation),
+                             nullptr,
+                             0);
+    }
+
+    ray_hit.distance = hit.distance;
+    ray_hit.surface = hit.surface;
+    ray_hit.primitive = hit.primitive;
+    ray_hit.point_in_volume = static_cast<std::int32_t>(hit.piv);
+    d_ray_hits[ray_id] = ray_hit;
   }
 }
 

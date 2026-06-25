@@ -398,13 +398,43 @@ CuBQLRayTracer::ray_fire(TreeID tree,
   return {surface_hit.distance, surface_hit.surface};
 }
 
-void
-CuBQLRayTracer::ray_fire_batch(const CuBQLRay* d_rays,
-                               CuBQLSurfaceHit* d_hits,
-                               std::size_t num_rays,
-                               HitOrientation orientation)
+XDGRayHitBuffer CuBQLRayTracer::allocate_ray_hits(std::size_t count) const
 {
-  if (num_rays == 0) return;
+  if (count == 0) {
+    warning("Request to allocate 0 cuBQL XDG ray-hit buffer; returning empty buffer");
+    return {};
+  }
+
+  auto* d_ray_hits = static_cast<XDGRayHit*>
+    (omp_target_alloc(count * sizeof(XDGRayHit), context_.gpuID));
+
+  if (!d_ray_hits) {
+    fatal_error("Failed to allocate cuBQL XDG ray-hit buffer");
+  }
+
+  return {d_ray_hits, count, context_.gpuID};
+}
+
+void CuBQLRayTracer::free_ray_hits(XDGRayHitBuffer& ray_hits) const
+{
+  if (!ray_hits.data) {
+    warning("Request to free empty cuBQL XDG ray-hit buffer; ignoring");
+    return;
+  }
+
+  omp_target_free(ray_hits.data, ray_hits.device_id);
+  ray_hits = {};
+}
+
+void
+CuBQLRayTracer::ray_fire_batch(const XDGRayHitBuffer& ray_hits,
+                               HitOrientation hit_orientation) const
+{
+  if (ray_hits.count == 0) return;
+
+  if (!ray_hits.data) {
+    fatal_error("Invalid cuBQL XDG ray-hit buffer");
+  }
 
   if (!d_volume_to_tlas_) {
     fatal_error("cuBQL volume TLAS lookup table has not been uploaded");
@@ -412,10 +442,9 @@ CuBQLRayTracer::ray_fire_batch(const CuBQLRay* d_rays,
 
   intersect_surface_tree_batch(context_,
                                d_volume_to_tlas_,
-                               d_rays,
-                               d_hits,
-                               num_rays,
-                               orientation);
+                               ray_hits.data,
+                               ray_hits.count,
+                               hit_orientation);
 }
 
 std::pair<double, MeshID>

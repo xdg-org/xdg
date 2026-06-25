@@ -19,12 +19,6 @@
 
 #include "ray_benchmark.h"
 
-#ifdef XDG_ENABLE_CUBQL
-#include <omp.h>
-#include "xdg/cuBQL/intersection.h"
-#include "xdg/cuBQL/ray_tracer.h"
-#endif
-
 using namespace xdg;
 
 int main(int argc, char** argv)
@@ -223,29 +217,20 @@ int main(int argc, char** argv)
     }
   }
   else if (rt_lib == RTLibrary::CUBQL) {
-    #ifndef XDG_ENABLE_CUBQL
-      fatal_error("This build was not compiled with cuBQL support (XDG_ENABLE_CUBQL=OFF).");
-    #else
-    auto rti = std::dynamic_pointer_cast<CuBQLRayTracer>(xdg->ray_tracing_interface());
-
       // Generate random rays directly on the target device.
       generation_timer.start();
 
-      const int gpu_id = omp_get_default_device();
-
-      CuBQLRay* d_rays = static_cast<CuBQLRay*>(
-        omp_target_alloc(num_rays * sizeof(CuBQLRay), gpu_id));
-
-      if (!d_rays) {
-        fatal_error("Failed to allocate cuBQL ray buffer");
-      }
+      XDGRayHitBuffer ray_hits = xdg->allocate_ray_hits(num_rays);
+      XDGRayHit* d_ray_hits = ray_hits.data;
+      const std::size_t ray_count = ray_hits.count;
+      const int gpu_id = ray_hits.device_id;
 
       const double origin_x = origin.x;
       const double origin_y = origin.y;
       const double origin_z = origin.z;
 
-      #pragma omp target teams distribute parallel for device(gpu_id) is_device_ptr(d_rays)
-      for (std::size_t ray_id = 0; ray_id < num_rays; ++ray_id) {
+      #pragma omp target teams distribute parallel for device(gpu_id) is_device_ptr(d_ray_hits)
+      for (std::size_t ray_id = 0; ray_id < ray_count; ++ray_id) {
         std::uint32_t state = seed ^ static_cast<std::uint32_t>(ray_id);
 
         auto sample = tools::benchmark::random_spherical_source(origin_x,
@@ -254,44 +239,38 @@ int main(int argc, char** argv)
                                                                 state,
                                                                 source_radius);
 
-        CuBQLRay ray;
-        ray.origin = cuBQL::vec3d(sample.position[0],
-                                  sample.position[1],
-                                  sample.position[2]);
-        ray.direction = cuBQL::vec3d(sample.direction[0],
-                                     sample.direction[1],
-                                     sample.direction[2]);
-        ray.tMin = 0.0;
-        ray.tMax = INFTY;
-        ray.volume = volume;
+        XDGRayHit ray_hit;
+        ray_hit.origin[0] = sample.position[0];
+        ray_hit.origin[1] = sample.position[1];
+        ray_hit.origin[2] = sample.position[2];
+        ray_hit.direction[0] = sample.direction[0];
+        ray_hit.direction[1] = sample.direction[1];
+        ray_hit.direction[2] = sample.direction[2];
+        ray_hit.t_min = 0.0;
+        ray_hit.t_max = INFTY;
+        ray_hit.volume = volume;
+        ray_hit.distance = INFTY;
+        ray_hit.surface = ID_NONE;
+        ray_hit.primitive = ID_NONE;
+        ray_hit.point_in_volume = OUTSIDE;
 
-        d_rays[ray_id] = ray;
-      }
-
-      CuBQLSurfaceHit* d_hits = static_cast<CuBQLSurfaceHit*>(
-        omp_target_alloc(num_rays * sizeof(CuBQLSurfaceHit), gpu_id));
-
-      if (!d_hits) {
-        omp_target_free(d_rays, gpu_id);
-        fatal_error("Failed to allocate cuBQL hit buffer");
+        d_ray_hits[ray_id] = ray_hit;
       }
 
       generation_timer.stop();
 
       // Trace rays and count hits on the target device.
       trace_timer.start();
-      rti->ray_fire_batch(d_rays, d_hits, num_rays);
+      xdg->ray_fire_batch(ray_hits);
       trace_timer.stop();
 
       #pragma omp target teams distribute parallel for device(gpu_id) \
-        is_device_ptr(d_hits) reduction(+:num_hits)
-      for (std::size_t ray_id = 0; ray_id < num_rays; ++ray_id) {
-        if (d_hits[ray_id].primitive != ID_NONE) num_hits++;
+        is_device_ptr(d_ray_hits) reduction(+:num_hits)
+      for (std::size_t ray_id = 0; ray_id < ray_count; ++ray_id) {
+        if (d_ray_hits[ray_id].surface != ID_NONE) num_hits++;
       }
 
-      omp_target_free(d_hits, gpu_id);
-      omp_target_free(d_rays, gpu_id);
-    #endif
+      xdg->free_ray_hits(ray_hits);
   }
 
   const std::size_t num_misses = num_rays - num_hits;

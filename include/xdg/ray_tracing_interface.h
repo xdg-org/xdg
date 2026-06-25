@@ -1,11 +1,13 @@
 #ifndef _XDG_RAY_TRACING_INTERFACE_H
 #define _XDG_RAY_TRACING_INTERFACE_H
 
+#include <cstddef>
 #include <memory>
 #include <vector>
 #include <unordered_map>
 
 #include "xdg/constants.h"
+#include "xdg/device_ray.h"
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/primitive_ref.h"
 #include "xdg/geometry_data.h"
@@ -84,6 +86,13 @@ public:
                                      const double dist_limit = INFTY,
                                      HitOrientation orientation = HitOrientation::EXITING,
                                      std::vector<MeshID>* const exclude_primitives = nullptr) = 0;
+
+  virtual XDGRayHitBuffer allocate_ray_hits(std::size_t count) const;
+
+  virtual void free_ray_hits(XDGRayHitBuffer& ray_hits) const;
+
+  virtual void ray_fire_batch(const XDGRayHitBuffer& ray_hits,
+                              HitOrientation hit_orientation = HitOrientation::EXITING) const;
 
   /**
    * @brief Finds the element containing a given point using the global element tree.
