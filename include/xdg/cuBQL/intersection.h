@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "xdg/constants.h"
+#include "xdg/device_ray.h"
 #include "xdg/cuBQL/triangles.h"
 #include "cuBQL/math/vec.h"
 
@@ -23,16 +24,6 @@ struct CuBQLRay {
   double tMax {INFTY};
   MeshID volume {ID_NONE}; // volume we are tracing ray against
 };
-
-/* POD SurfaceRay struct for external population*/
-// struct CuBQLSurfaceRay {
-//   double origin[3];
-//   double direction[3];
-//   uint32_t volume_slot;
-//   uint32_t enabled;
-//   const MeshID* exclude_primitives;
-//   int32_t exclude_count;
-// };
 
 // TODO - Consider whether this is useful/necessary as its own struct
 // struct CuBQLExcludeList {
@@ -79,8 +70,7 @@ intersect_surface_tree_scalar(const cubql::Context& context,
 void
 intersect_surface_tree_batch(const cubql::Context& context,
                              const CuBQLVolumeTLAS::DD* d_volume_to_tlas,
-                             const CuBQLRay* d_rays,
-                             CuBQLSurfaceHit* d_hits,
+                             XDGRayHit* d_ray_hits,
                              std::size_t num_rays,
                              HitOrientation hit_orientation);
 

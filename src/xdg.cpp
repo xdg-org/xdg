@@ -260,6 +260,22 @@ XDG::ray_fire(MeshID volume,
   return ray_tracing_interface()->ray_fire(scene, origin, direction, dist_limit, orientation, exclude_primitives);
 }
 
+XDGRayHitBuffer XDG::allocate_ray_hits(std::size_t count) const
+{
+  return ray_tracing_interface()->allocate_ray_hits(count);
+}
+
+void XDG::free_ray_hits(XDGRayHitBuffer& ray_hits) const
+{
+  ray_tracing_interface()->free_ray_hits(ray_hits);
+}
+
+void XDG::ray_fire_batch(const XDGRayHitBuffer& ray_hits,
+                         HitOrientation hit_orientation) const
+{
+  ray_tracing_interface()->ray_fire_batch(ray_hits, hit_orientation);
+}
+
 std::pair<double, MeshID> XDG::closest(MeshID volume,
                                        const Position& origin) const
 {

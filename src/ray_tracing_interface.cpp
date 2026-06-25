@@ -1,11 +1,29 @@
 #include <algorithm>
 #include "xdg/ray_tracing_interface.h"
+#include "xdg/error.h"
 
 // Any methods which are identical for all RT backends should be defined here
 
 namespace xdg {
 
 RayTracer::~RayTracer() {}
+
+XDGRayHitBuffer RayTracer::allocate_ray_hits(std::size_t) const
+{
+  fatal_error("Selected ray tracer does not support device batch ray fire");
+  return {};
+}
+
+void RayTracer::free_ray_hits(XDGRayHitBuffer&) const
+{
+  fatal_error("Selected ray tracer does not support device batch ray fire");
+}
+
+void RayTracer::ray_fire_batch(const XDGRayHitBuffer&,
+                               HitOrientation) const
+{
+  fatal_error("Selected ray tracer does not support device batch ray fire");
+}
 
 SurfaceTreeID RayTracer::next_surface_tree_id()
 {
