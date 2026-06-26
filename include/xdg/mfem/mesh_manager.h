@@ -85,6 +85,10 @@ public:
   // The table works wonders for this
   virtual MeshID adjacent_element(MeshID element, int face) const override;
 
+  virtual MeshID get_boundary_face_element(MeshID face) const override {
+    fatal_error("MfemMeshManager::get_boundary_face_element() not implemented yet");
+  }
+
   virtual Sense surface_sense(MeshID surface, MeshID volume) const override {
     fatal_error("MfemMeshManager::surface_sense() not implemented yet");
   }
