@@ -46,7 +46,7 @@ TEST_CASE("MFEM element types")
 }
 
 // next, emulate the Find Element Method
-TEST_CASE("TEST MOAB Find Element Method")
+TEST_CASE("TEST MFEM Find Element Method")
 {
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MFEM);
 

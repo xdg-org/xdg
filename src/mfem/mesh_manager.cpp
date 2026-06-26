@@ -151,6 +151,10 @@ std::pair<int, int> MfemMeshManager::surface_senses(MeshID surface) const {
   // the jezebel, so just return {-1, 1}. i.e. implicit_complement, interior_volume.
   // Even though we haven't created implicit_complement yet.
   warning("MfemMeshManager::surface_senses() is hardcoded for single-volume meshes");
+
+  // TODO: make the second value one more than the largest volume ID we've seen
+  // i.e. since the only volume in the jezebel/brick is 1, the second id must be 2,
+  // to denote the implicit complement
   return {1,2};
 }
 
