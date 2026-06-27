@@ -43,8 +43,12 @@ OmegaHMeshManager::OmegaHMeshManager() {
   mesh_ = std::make_unique<Omega_h::Mesh>(library_.get());
 }
 
-void OmegaHMeshManager::load_file(const std::string &file_path) {
-  *mesh_ = Omega_h::binary::read(file_path, library_.get());
+
+void OmegaHMeshManager::load_file(const std::string &file_path)
+{
+    const int exodus_file = Omega_h::exodus::open(file_path);
+    Omega_h::exodus::read_mesh(exodus_file, mesh_.get());
+    Omega_h::exodus::close(exodus_file);
 }
 
 void OmegaHMeshManager::init() {
