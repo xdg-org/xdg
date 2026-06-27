@@ -50,7 +50,7 @@ RUN make install
 ENV MOAB_INSTALL_PATH=/XDG_TEST_SYSTEM/moab_install_dir
 
 # installing SEACAS to enable exodus support
-RUN git clone --depth=1 https://github.com/sandialabs/seacas.git /XDG_TEST_SYSTEM/seacas
+RUN git clone https://github.com/sandialabs/seacas.git /XDG_TEST_SYSTEM/seacas
 
 WORKDIR /XDG_TEST_SYSTEM/seacas/build
 RUN cmake .. \

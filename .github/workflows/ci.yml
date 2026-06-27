@@ -91,6 +91,9 @@ jobs:
           git clone https://github.com/SCOREC/omega_h.git
           cd omega_h
           git checkout master
+          cd ~
+          git clone https://github.com/sandialabs/seacas.git 
+          
 
       - name: OpenMP Environment Variables
         run: |
@@ -171,6 +174,22 @@ jobs:
         name: Build Omega_h
         shell: bash
         run: |
+          # before building omega_h we need to compile seacas on which omega_h depends 
+          # for interacting with exodus mesh API
+          cd ~/seacas
+          mkdir build  
+          cd build
+          cmake .. \
+          -DCMAKE_INSTALL_PREFIX=$HOME/SEACAS \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DBUILD_SHARED_LIBS=ON \
+          -DSeacas_ENABLE_ALL_PACKAGES=OFF \
+          -DSeacas_ENABLE_SEACASExodus=ON \
+          -DTPL_ENABLE_MPI=OFF \
+          -DTPL_ENABLE_Netcdf=ON
+          make -j4 
+          make install
+          # now let's install omega_h
           cd ~/omega_h
           mkdir build
           cd build
@@ -179,6 +198,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DOmega_h_USE_MPI=OFF \
             -DBUILD_TESTING=OFF \
+            -DSEACASExodus_DIR=$HOME/SEACAS/lib/cmake/SEACASExodus \
             -DOmega_h_USE_SEACASExodus=ON 
           make -j4
           make install
