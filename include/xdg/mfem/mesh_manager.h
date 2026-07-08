@@ -31,13 +31,12 @@ public:
   // Interface methods
   MeshLibrary mesh_library() const override { return MeshLibrary::MFEM; }
 
-  // This info might not be available in mfem
   int num_volumes() const override {
-    return mesh_->attribute_sets.GetAttributeSetNames().size();
+    return volumes_.size();
   }
 
   int num_surfaces() const override {
-    return mesh_->bdr_attribute_sets.GetAttributeSetNames().size();
+    return surfaces_.size();
   }
 
   int num_ents_of_dimension(int dim) const override {
@@ -75,11 +74,9 @@ public:
 
   virtual std::vector<MeshID> get_surface_faces(MeshID surface) const override;
 
-  // see Mesh::GetElementVertices
   virtual std::vector<Vertex> element_vertices(MeshID element) const override;
   std::vector<Vertex> bdr_element_vertices(MeshID element) const;
 
-  // this one is very easy - Mesh::GetFaceVertices returns the coords of face i at the elment level
   virtual std::array<Vertex, 3> face_vertices(MeshID element) const override;
 
   // The table works wonders for this
@@ -93,7 +90,6 @@ public:
     fatal_error("MfemMeshManager::surface_sense() not implemented yet");
   }
 
-  // mesh_->GetElement(0)->GetGeometryType()
   virtual SurfaceElementType get_surface_element_type(MeshID element) const override;
 
   virtual int num_vertices() const override {
@@ -126,13 +122,12 @@ public:
   std::pair<MeshID, MeshID> surface_senses(MeshID surface) const override;
 
   // Seems like it's only used to create the implicit complement
-  MeshID create_volume() override {
-    fatal_error("MfemMeshManager::create_volume() not implemented yet");
-  }
+  MeshID create_volume() override;
 
-  void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override {
-    fatal_error("MfemMeshManager::add_surface_to_volume() not implemented yet");
-  }
+  void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override;
+
+  // This will be largely a copy of the libmesh version
+  void determine_surface_senses();
 
   // Metadata methods
   void parse_metadata() override {
@@ -152,6 +147,7 @@ private:
   std::map<int, std::set<int>> volume_to_element_map_;
   
   // For each sideset of the mesh, keep a set of the boundary element IDs
+  // This the libmesh equivalent of surface_map_
   std::map<int, std::set<int>> sideset_to_element_map_;
 
   // map to keep track of each sideset held by a particular
@@ -160,10 +156,21 @@ private:
 
   // set to capture all of the valid volumes/attributes
   // It's a set (not vector) to prevent double counting
+  // Note that this is somewhat redundant, since the base
+  // class has the volumes_ vector, which we copy the
+  // contents of this into. We keep BOTH, with attributes_
+  // meant to resemble the TRUE volumes that the mfem mesh
+  // recogonises. volumes_ will be amended to include the
+  // implicit complement as well...
   std::set<int> attributes_;
 
   int num_interior_faces_;
   int num_boundary_faces_;
+
+  //! Mapping of surfaces to the volumes on either side. Volumes are ordered
+  //! based on their sense with respect to the surface triangles. We reuase
+  //! whichever ordering mfem decides on when the mesh is constructed.
+  std::unordered_map<MeshID, std::pair<MeshID, MeshID>> surface_senses_;
 };
 
 struct MfemMeshElementFaceAccessor : public ElementFaceAccessor {
