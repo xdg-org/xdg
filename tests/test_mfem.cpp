@@ -172,3 +172,267 @@ TEST_CASE("Test Cylinder-Brick Initialization")
   //   }
   // }
 }
+
+TEST_CASE("Test Brick w/ Sidesets")
+{
+  std::unique_ptr<MeshManager> mesh_manager  {std::make_unique<MfemMeshManager>()};
+  mesh_manager->load_file("brick-sidesets.exo");
+  mesh_manager->init();
+
+  REQUIRE(mesh_manager->num_volumes() == 2);
+  REQUIRE(mesh_manager->num_surfaces() == 6);
+}
+
+TEST_CASE("Test BVH Build Brick")
+{
+  std::shared_ptr<MeshManager> mesh_manager = std::make_shared<MfemMeshManager>();
+
+  mesh_manager->load_file("brick.exo");
+  mesh_manager->init();
+
+  REQUIRE(mesh_manager->num_volumes() == 2);
+  REQUIRE(mesh_manager->num_surfaces() == 1);
+
+  std::unique_ptr<RayTracer> ray_tracing_interface = std::make_unique<EmbreeRayTracer>();
+  for (auto volume : mesh_manager->volumes()) {
+    ray_tracing_interface->register_volume(mesh_manager, volume);
+  }
+
+  // volume elements will be detected on the mfem mesh, so three trees will be registered
+  REQUIRE(ray_tracing_interface->num_registered_trees() == 3);
+}
+
+
+TEST_CASE("Test BVH Build Brick w/ Sidesets")
+{
+  std::shared_ptr<MeshManager> mesh_manager = std::make_shared<MfemMeshManager>();
+  mesh_manager->load_file("brick-sidesets.exo");
+  mesh_manager->init();
+
+  REQUIRE(mesh_manager->num_volumes() == 2);
+  REQUIRE(mesh_manager->num_surfaces() == 6);
+
+  std::unique_ptr<RayTracer> ray_tracing_interface = std::make_unique<EmbreeRayTracer>();
+
+  for (auto volume : mesh_manager->volumes()) {
+    ray_tracing_interface->register_volume(mesh_manager, volume);
+  }
+  // volume elements will be detected on the mfem mesh, so two trees will be registered
+  REQUIRE(ray_tracing_interface->num_registered_trees() == 3);
+}
+
+
+TEST_CASE("Test Ray Fire Brick")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MFEM);
+  xdg->mesh_manager()->mesh_library();
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MFEM);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("brick.exo");
+  mesh_manager->init();
+  xdg->prepare_raytracer();
+
+  MeshID volume = 1;
+
+  Position origin {0.0, 0.0, 0.0};
+  Direction direction {0.0, 0.0, 1.0};
+  std::pair<double, MeshID> intersection;
+
+  intersection = xdg->ray_fire(volume, origin, direction);
+  // this cube is 10 cm on a side, so the ray should hit the surface at 5 cm
+  REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
+
+  origin = {0.0, 0.0, 0.0};
+  REQUIRE(xdg->point_in_volume(volume, origin));
+}
+
+TEST_CASE("Test Ray Fire Cylinder-Brick")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MFEM);
+  xdg->mesh_manager()->mesh_library();
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MFEM);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("cyl-brick.exo");
+  mesh_manager->init();
+  xdg->prepare_raytracer();
+
+  MeshID volume = 2;
+
+  // fire ray from the center of the cube
+  Position origin {0.0, 0.0, 10.0};
+  Direction direction {0.0, 0.0, 1.0};
+  std::pair<double, MeshID> intersection;
+  intersection = xdg->ray_fire(volume, origin, direction);
+  // this cube is 10 cm on a side, so the ray should hit the surface at 5 cm
+  REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
+
+  // fire ray in the opposite direction
+  direction = {0.0, 0.0, -1.0};
+  intersection = xdg->ray_fire(volume, origin, direction);
+  // this cube is 10 cm on a side, so the ray should hit the surface at 5 cm
+  REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
+
+  // fire ray from the center of the cylinder in the negative z direction
+  volume = 1;
+  origin = {0.0, 0.0, 0.0};
+  intersection = xdg->ray_fire(volume, origin, direction);
+  REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
+
+  // fire a ray from the center of the cylinder in the positive z direction
+  direction = {0.0, 0.0, 1.0};
+  intersection = xdg->ray_fire(volume, origin, direction);
+  REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
+
+  // fire a ray from the center of the cylinder in the positive x direction
+  direction = {1.0, 0.0, 0.0};
+  intersection = xdg->ray_fire(volume, origin, direction);
+  REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-3));
+
+  volume = 1;
+  origin = {0.0, 0.0, 0.0};
+  REQUIRE(xdg->point_in_volume(volume, origin));
+
+  volume = 2;
+  origin = {0.0, 0.0, 10.0};
+  REQUIRE(xdg->point_in_volume(volume, origin));
+}
+
+TEST_CASE("Test Volume Element Count Jezebel")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MFEM);
+  xdg->mesh_manager()->mesh_library();
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MFEM);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("jezebel.exo");
+  mesh_manager->init();
+  xdg->prepare_raytracer();
+
+  MeshID volume = 1;
+
+  auto elements = mesh_manager->get_volume_elements(volume);
+  REQUIRE(elements.size() == 10333);
+  REQUIRE(mesh_manager->num_volume_elements() == 10333);
+}
+
+TEST_CASE("Test Point Location Jezebel")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MFEM);
+  xdg->mesh_manager()->mesh_library();
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MFEM);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("jezebel.exo");
+  mesh_manager->init();
+  xdg->prepare_raytracer();
+
+  MeshID volume = 1;
+
+  // fire ray from the center of the cube
+  Position origin {0.0, 0.0, 0.0};
+  Direction direction {0.0, 0.0, 1.0};
+
+  // the origin of the problem should be in the volume
+  MeshID volume_id = xdg->find_volume(origin, direction);
+  REQUIRE(volume_id == volume);
+
+  // a point outside of the sphere should be in the implicit complement
+  origin = {0.0, 0.0, 10.0};
+  volume_id = xdg->find_volume(origin, direction);
+  REQUIRE(volume_id == xdg->mesh_manager()->implicit_complement());
+}
+
+TEST_CASE("Test Point Location Cylinder-Brick")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MFEM);
+  xdg->mesh_manager()->mesh_library();
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MFEM);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("cyl-brick.exo");
+  mesh_manager->init();
+  xdg->prepare_raytracer();
+
+  REQUIRE(mesh_manager->num_volume_elements() == 16624);
+
+  MeshID expected_volume = 1;
+
+  // fire ray from the center of the cube
+  Position origin {0.0, 0.0, 0.0};
+  Direction direction {0.0, 0.0, 1.0};
+
+  // test a point inside the cylinder
+  MeshID volume_id = xdg->find_volume(origin, direction);
+  REQUIRE(volume_id == expected_volume);
+
+  // test a point inside the cube
+  expected_volume = 2;
+  origin = {0.0, 0.0, 10.0};
+  volume_id = xdg->find_volume(origin, direction);
+  REQUIRE(volume_id == expected_volume);
+
+  // a point outside of the sphere should be in the implicit complement
+  origin = {0.0, 0.0, 100.0};
+  volume_id = xdg->find_volume(origin, direction);
+  REQUIRE(volume_id == xdg->mesh_manager()->implicit_complement());
+}
+
+TEST_CASE("Test Volume Element Count Cylinder-Brick")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MFEM);
+  xdg->mesh_manager()->mesh_library();
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MFEM);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("cyl-brick.exo");
+  mesh_manager->init();
+  xdg->prepare_raytracer();
+
+  MeshID volume = 1;
+  auto elements = mesh_manager->get_volume_elements(volume);
+  REQUIRE(elements.size() == 7587);
+
+  volume = 2;
+  elements = mesh_manager->get_volume_elements(volume);
+  REQUIRE(elements.size() == 9037);
+}
+
+TEST_CASE("Test Find Element Brick")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MFEM);
+  xdg->mesh_manager()->mesh_library();
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MFEM);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("brick.exo");
+  mesh_manager->init();
+  xdg->prepare_raytracer();
+
+  REQUIRE(mesh_manager->num_volume_elements() == 8790);
+
+  MeshID volume = 1;
+
+  MeshID element = xdg->find_element(volume, {0.0, 0.0, 0.0});
+  REQUIRE(element != ID_NONE);
+
+  element = xdg->find_element(volume, {0.0, 0.0, 100.0});
+  REQUIRE(element == ID_NONE);
+}
+
+TEST_CASE("Test Track Exiting Mesh Brick")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MFEM);
+  xdg->mesh_manager()->mesh_library();
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MFEM);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("brick.exo");
+  mesh_manager->init();
+  xdg->prepare_raytracer();
+
+  MeshID volume = 1;
+  Position start {0.0, 0.0, -1000.0};
+  Position end {0.0, 0.0, 1000.0};
+  auto tracks = xdg->segments(volume, start, end);
+
+  double length = std::accumulate(tracks.begin(), tracks.end(), 0.0, [](double sum, const auto& track) {
+    return sum + track.second;
+  });
+
+  REQUIRE_THAT(length, Catch::Matchers::WithinAbs(10.0, 1e-6));
+}
+
