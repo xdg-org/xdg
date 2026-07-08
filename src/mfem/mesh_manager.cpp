@@ -30,6 +30,10 @@ void MfemMeshManager::init() {
     volume_to_element_map_[volume_id].insert(i);
   }
 
+  // create a set for capturing all of the sideset IDs
+  // without repeats
+  std::set<int> sideset_ids;
+
   // same for boundary attributes
   for (int i=0; i<mesh_->GetNBE(); i++) {
     int sideset = mesh_->GetBdrAttribute(i);
@@ -49,6 +53,9 @@ void MfemMeshManager::init() {
 
     int volume = mesh_->GetAttribute(elem_no);
     volumes_to_sidesets_[volume].insert(sideset);
+
+    // we want to populate the surfaces_ array from the base class
+    sideset_ids.insert(sideset);
   }
 
   // We've read in the mesh and counted all the attributes, i.e. a unique
@@ -57,20 +64,44 @@ void MfemMeshManager::init() {
   // of volume IDs
   std::copy(attributes_.begin(), attributes_.end(), std::back_inserter(volumes_));
 
+  // ditto for surfaces
+  std::copy(sideset_ids.begin(), sideset_ids.end(), std::back_inserter(surfaces_));
+
   // set these two attributes related to interior/boundary faces
   num_interior_faces_ = mesh_->GetNumFaces();
   num_boundary_faces_ = mesh_->GetNBE();
+
+  determine_surface_senses();
+
+  create_implicit_complement();
 }
 
 // TODO: very slow, and could be done during init()
 std::vector<MeshID> MfemMeshManager::get_volume_elements(MeshID volume) const {
-  if (attributes_.find(volume) == attributes_.end()) {
-    std::ostringstream output;
-    output << "Couldn't find volume " << volume << "\n";
-    fatal_error(output.str());
-  }
-
   std::vector<MeshID> output;
+  
+  // Copy the way that libmesh does it, which is if we calling
+  // this function on the implicit complement, then return an
+  // empty vector.
+  // Note the deliberate use of attributes_ (which comes from
+  // the mfem mesh, naming convention intact) and not volumes_.
+  // This is because we would have modified volumes_ to include
+  // an implicit complement. More concretetly, attributes_
+  // represents the TRUE volumes that the mfem mesh recognises.
+  if (attributes_.find(volume) == attributes_.end()) {
+    // check that we are looking at the implcit complement
+    if (std::find(volumes_.begin(), volumes_.end(), volume) == volumes_.end()) {
+      // This is an error now. It's not a true volume
+      // or the implicit complement
+      std::ostringstream output;
+      output << "Couldn't find volume " << volume << "\n";
+      fatal_error(output.str());
+    }
+
+    // simply return the empty vector if this is the implicit
+    // complement
+    return output;
+  }
 
   // gather all the element IDs that have this attribute
   // this method is absolutely criminal. Could be done at the start
@@ -89,13 +120,15 @@ SurfaceElementType MfemMeshManager::get_surface_element_type(MeshID element) con
 
 // Should return all of the sidesets that are a part of this volume
 std::vector<MeshID> MfemMeshManager::get_volume_surfaces(MeshID volume) const {
-  // get the set associated with this volume
-  const std::set<int>& sidesets = volumes_to_sidesets_.at(volume);
-
-  // create a vector from this set
-  std::vector<int> output(sidesets.begin(), sidesets.end());
-
-  return output;
+  // walk the surface senses and return the surfaces that have this volume
+  // as an entry
+  std::vector<MeshID> surfaces;
+  for (const auto& [surface, senses] : surface_senses_) {
+    if (senses.first == volume || senses.second == volume) {
+      surfaces.push_back(surface);
+    }
+  }
+  return surfaces;
 }
 
 std::vector<MeshID> MfemMeshManager::get_surface_faces(MeshID surface) const {
@@ -132,8 +165,7 @@ std::array<Vertex, 3> MfemMeshManager::face_vertices(MeshID element) const {
   }
 
   else {
-    // create an mfem array to be passed into Mesh::GetFaceVertices.
-    // this gets populated with the indices of the vertices itself
+    // index_array gets populated with the indices of the vertices itself
     mesh_->GetFaceVertices(element, index_array);
   }
 
@@ -147,15 +179,11 @@ std::array<Vertex, 3> MfemMeshManager::face_vertices(MeshID element) const {
 }
 
 std::pair<int, int> MfemMeshManager::surface_senses(MeshID surface) const {
-  // I am trying to get the raytracer preparation routines working with
-  // the jezebel, so just return {-1, 1}. i.e. implicit_complement, interior_volume.
-  // Even though we haven't created implicit_complement yet.
-  warning("MfemMeshManager::surface_senses() is hardcoded for single-volume meshes");
 
   // TODO: make the second value one more than the largest volume ID we've seen
   // i.e. since the only volume in the jezebel/brick is 1, the second id must be 2,
   // to denote the implicit complement
-  return {1,2};
+  return surface_senses_.at(surface);
 }
 
 std::vector<Vertex> MfemMeshManager::element_vertices(MeshID element) const {
@@ -208,6 +236,81 @@ MeshID MfemMeshManager::adjacent_element(MeshID element, int face) const {
   // that the caller asked for
   return faces[face];
 }
+
+// TODO: Mesh::GetFaceElements or Mesh::GetFaceInformation are what you need
+// if 
+void MfemMeshManager::determine_surface_senses() {
+  for (auto &[surface_id, surface_faces] : sideset_to_element_map_) {
+    if (surface_faces.size() == 0) continue;
+
+    int face_index = *surface_faces.begin();
+
+    // first, get the volume that this sideset is living on.
+    // we do it the dumb way
+    int elem_no, info;
+    mesh_->GetBdrElementAdjacentElement(face_index, elem_no, info);
+
+    // TODO: does this return the same number for every element on
+    // sideset 3?
+
+    int volume = mesh_->GetAttribute(elem_no);
+
+    int face_no = mesh_->GetBdrElementFaceIndex(face_index);
+    // check if the connectivity is still there
+    int e1, e2;
+    mesh_->GetFaceElements(face_no, &e1, &e2);
+
+    // if we have both elements nontrivial (i.e. != -1) then we ask the
+    // the mesh which is elem1 and which is elem2
+    // The normal vector is supposed to point from the reverse sense
+    // to the forward sense
+    if (e1 != -1 and e2 !=-1) {
+      auto face_el_tx = mesh_->GetFaceElementTransformations(face_no);
+
+      // check that face_el_tx has picked out the correct elements
+      assert( (face_el_tx->Elem1No == e1 or face_el_tx->Elem1No == e2)
+        and   (face_el_tx->Elem2No == e1 or face_el_tx->Elem2No == e2)
+      );
+
+      // Elem1 is the reverse sense and Elem2 is the forwards sense, since
+      // by construction, this is the way the normal vectors are pointing.
+      // We can't put the element IDs in to the array, so we have to ask
+      // the mesh for their attributes
+      surface_senses_[surface_id] = {
+        mesh_->GetAttribute(face_el_tx->Elem1No), mesh_->GetAttribute(face_el_tx->Elem2No)
+      };
+    }
+
+    // We have a surface on a true boundary. The second element is simply
+    // the implcit complement
+    else {
+      surface_senses_[surface_id] = {volume, ID_NONE};
+    }
+  }
+}
+
+MeshID MfemMeshManager::create_volume() {
+  MeshID next_volume_id = *std::max_element(volumes_.begin(), volumes_.end()) + 1;
+  return next_volume_id;
+}
+
+void MfemMeshManager::add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite) {
+  auto senses = surface_senses(surface);
+  if (sense == Sense::FORWARD) {
+    if (!overwrite && senses.first != ID_NONE) {
+      fatal_error("Surface already has a forward sense");
+    }
+    surface_senses_[surface] = {volume, senses.second};
+  }
+
+  else {
+    if (!overwrite && senses.second != ID_NONE) {
+      fatal_error("Surface already has a reverse sense");
+    }
+      surface_senses_[surface] = {senses.first, volume};
+  }
+}
+
 
 // helper function to convert mfem's element types to xdg
 VolumeElementType GetTypeFromMfem( mfem::Element::Type t ) {
