@@ -232,9 +232,21 @@ MeshID MfemMeshManager::adjacent_element(MeshID element, int face) const {
 
   mesh_->GetElementFaces(element, faces, ori);
 
-  // face is in range [0,3). So we just need the one
-  // that the caller asked for
-  return faces[face];
+  if (face==ID_NONE) return ID_NONE;
+
+  // not quite. faces[face] is just the faceID. We need
+  // the element that it's connected to.
+  int e1, e2;
+  mesh_->GetFaceElements(faces[face], &e1, &e2);
+
+  // e1 and e2 are now the element IDs of two elements
+  // that share this face.
+  assert(element == e1 or element == e2);
+
+  if      (element == e1) return e2;
+  else if (element == e2) return e1;
+  
+  fatal_error("Shouldn't reach this far!");
 }
 
 // TODO: Mesh::GetFaceElements or Mesh::GetFaceInformation are what you need
