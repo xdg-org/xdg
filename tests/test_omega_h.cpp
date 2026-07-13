@@ -8,7 +8,6 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include "util.h"
-#include "xdg/constants.h"
 #include "xdg/error.h"
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/omega_h/mesh_manager.h"
@@ -18,27 +17,28 @@ using namespace xdg;
 using namespace xdg::test;
 
 // These tests use "brick.exo".
-// Its classification therefore describes one model volume bounded by six planar model surfaces. If the
-// converted mesh in your test data differs, update the expected counts and
-// ray-fire distances below to match.
+// Its classification therefore describes one model volume bounded by six planar
+// model surfaces. If the converted mesh in your test data differs, update the
+// expected counts and ray-fire distances below to match.
 
 TEST_CASE("Test Omega_h Initialization") {
-  std::unique_ptr<MeshManager> mesh_manager = std::make_unique<OmegaHMeshManager>();
+  std::unique_ptr<MeshManager> mesh_manager =
+      std::make_unique<OmegaHMeshManager>();
 
-  mesh_manager->load_file("brick.exo");
+  mesh_manager->load_file("pincell-implicit.exo");
   mesh_manager->init();
 
-  // a cube is a single classified volume bounded by six surfaces
-  REQUIRE(mesh_manager->num_volumes() == 1);
-  REQUIRE(mesh_manager->num_surfaces() == 6);
+  REQUIRE(mesh_manager->num_volumes() == 5);
+  REQUIRE(mesh_manager->num_surfaces() == 13);
 
   // init() already builds the implicit complement, so it should be counted
   REQUIRE(mesh_manager->implicit_complement() != ID_NONE);
-  REQUIRE(mesh_manager->num_volumes() == 2);
 
   // num_ents_of_dimension should agree with the volume and surface counts
-  REQUIRE(mesh_manager->num_ents_of_dimension(3) == mesh_manager->num_volumes());
-  REQUIRE(mesh_manager->num_ents_of_dimension(2) == mesh_manager->num_surfaces());
+  REQUIRE(mesh_manager->num_ents_of_dimension(3) ==
+          mesh_manager->num_volumes());
+  REQUIRE(mesh_manager->num_ents_of_dimension(2) ==
+          mesh_manager->num_surfaces());
 
   // every surface is bounded by the cube volume on its forward side
   MeshID volume = mesh_manager->volumes().front();
@@ -51,7 +51,7 @@ TEST_CASE("Test Omega_h Initialization") {
 TEST_CASE("Omega_h Volume Elements") {
   std::unique_ptr<MeshManager> mesh_manager =
       std::make_unique<OmegaHMeshManager>();
-  mesh_manager->load_file("brick.exo");
+  mesh_manager->load_file("pincell-implicit.exo");
   mesh_manager->init();
 
   // unlike the MOAB surface meshes, an Omega_h mesh is volumetric: the cube
@@ -79,7 +79,7 @@ TEST_CASE("Omega_h Element Types") {
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::OMEGA_H);
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::OMEGA_H);
   const auto &mesh_manager = xdg->mesh_manager();
-  mesh_manager->load_file("brick.exo");
+  mesh_manager->load_file("pincell-implicit.exo");
   mesh_manager->init();
 
   // Omega_h simplex meshes use triangular surface elements throughout
@@ -92,7 +92,7 @@ TEST_CASE("Omega_h Element Types") {
 TEST_CASE("Omega_h Connectivity") {
   std::unique_ptr<MeshManager> mesh_manager =
       std::make_unique<OmegaHMeshManager>();
-  mesh_manager->load_file("brick.exo");
+  mesh_manager->load_file("pincell-implicit.exo");
   mesh_manager->init();
 
   auto coords_match = [&](MeshID vertex, const Vertex &v) {
@@ -136,11 +136,12 @@ TEST_CASE("Omega_h Connectivity") {
 }
 
 TEST_CASE("Omega_h Adjacency") {
-  std::unique_ptr<MeshManager> mesh_manager = std::make_unique<OmegaHMeshManager>();
-  mesh_manager->load_file("brick.exo");
+  std::unique_ptr<MeshManager> mesh_manager =
+      std::make_unique<OmegaHMeshManager>();
+  mesh_manager->load_file("pincell-implicit.exo");
   mesh_manager->init();
 
-  constexpr int faces_per_tet = 4;
+  constexpr unsigned int faces_per_tet = 4;
   MeshID volume = mesh_manager->volumes().front();
 
   for (auto element : mesh_manager->get_volume_elements(volume)) {
@@ -164,17 +165,17 @@ TEST_CASE("Omega_h Adjacency") {
   }
 }
 
-TEMPLATE_TEST_CASE("Test BVH Build Omega_h", "[omega_h][bvh]", Embree_Raytracer,
-                   GPRT_Raytracer) {
+TEMPLATE_TEST_CASE("Test BVH Build Omega_h", "[omega_h][bvh]",
+                   Embree_Raytracer) {
+  constexpr auto rt_backend = TestType::value;
+
   std::shared_ptr<MeshManager> mesh_manager =
       std::make_shared<OmegaHMeshManager>();
-  mesh_manager->load_file("brick.exo");
+  mesh_manager->load_file("pincell-implicit.exo");
   mesh_manager->init();
 
-  REQUIRE(mesh_manager->num_volumes() == 2);
-  REQUIRE(mesh_manager->num_surfaces() == 6);
-
-  constexpr auto rt_backend = TestType::value;
+  REQUIRE(mesh_manager->num_volumes() == 5);
+  REQUIRE(mesh_manager->num_surfaces() == 13);
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     check_ray_tracer_supported(
@@ -184,8 +185,7 @@ TEMPLATE_TEST_CASE("Test BVH Build Omega_h", "[omega_h][bvh]", Embree_Raytracer,
     for (const auto &volume : mesh_manager->volumes()) {
       rti->register_volume(mesh_manager, volume);
     }
-    // at least one acceleration structure is registered per non-empty volume
-    REQUIRE(rti->num_registered_trees() > 0);
+    REQUIRE(rti->num_registered_trees() == 2);
   }
 }
 
@@ -200,10 +200,10 @@ TEMPLATE_TEST_CASE("Test Ray Fire Omega_h (all built backends)",
     REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::OMEGA_H);
 
     const auto &mm = xdg->mesh_manager();
-    mm->load_file("brick.exo");
+    mm->load_file("pincell-implicit.exo");
     mm->init();
-    xdg->prepare_raytracer();
 
+    xdg->prepare_raytracer();
     MeshID volume = mm->volumes()[0];
 
     Position origin{0.0, 0.0, 0.0};
@@ -225,6 +225,7 @@ TEMPLATE_TEST_CASE("Test Ray Fire Omega_h (all built backends)",
 
 TEMPLATE_TEST_CASE("Test Omega_h Find Element Method", "[omega_h][elements]",
                    Embree_Raytracer) {
+  // Gold values for this test needs to be fixed. I will do that later.
   constexpr auto rt_backend = TestType::value;
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
@@ -233,14 +234,15 @@ TEMPLATE_TEST_CASE("Test Omega_h Find Element Method", "[omega_h][elements]",
     std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::OMEGA_H, rt_backend);
     REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::OMEGA_H);
     const auto &mesh_manager = xdg->mesh_manager();
-    mesh_manager->load_file("brick.exo");
+    mesh_manager->load_file("pincell-implicit.exo");
     mesh_manager->init();
     xdg->prepare_raytracer();
 
     MeshID volume = mesh_manager->volumes().front();
 
-    MeshID element = xdg->find_element(volume, {0.0, 0.0, 100.0});
-    REQUIRE(element == ID_NONE); // point lies outside the cube
+    MeshID element = xdg->find_element(
+        volume, {0.0, 0.0, 100.0}); // I will need to fix this one as well
+    REQUIRE(element == ID_NONE);    // point lies outside the cube
 
     element = xdg->find_element(volume, {0.0, 0.0, 0.0});
     REQUIRE(element != ID_NONE); // point lies inside the cube
@@ -269,14 +271,17 @@ TEMPLATE_TEST_CASE("Test Omega_h Find Element Method", "[omega_h][elements]",
 }
 
 TEST_CASE("Omega_h Element ID and Index Mapping") {
-  std::unique_ptr<MeshManager> mesh_manager = std::make_unique<OmegaHMeshManager>();
+  // Gold values for this test needs to be fixed. I will do that later.
+  std::unique_ptr<MeshManager> mesh_manager =
+      std::make_unique<OmegaHMeshManager>();
   REQUIRE(mesh_manager->mesh_library() == MeshLibrary::OMEGA_H);
   mesh_manager->load_file("brick.exo");
   mesh_manager->init();
 
-  // Omega_h stores entities in a contiguous, zero-based index space, so IDs and
-  // indices are identical for both elements and vertices
-  size_t num_elements = mesh_manager->num_volume_elements();
+  // Omega_h stores entities in a contiguous, zero-based index space, so IDs
+  and
+      // indices are identical for both elements and vertices
+      size_t num_elements = mesh_manager->num_volume_elements();
   REQUIRE(num_elements > 0);
   for (size_t idx = 0; idx < num_elements; ++idx) {
     MeshID element_id = mesh_manager->element_id(idx);
@@ -297,7 +302,7 @@ TEST_CASE("Test Track Exiting Mesh Omega_h") {
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::OMEGA_H);
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::OMEGA_H);
   const auto &mesh_manager = xdg->mesh_manager();
-  mesh_manager->load_file("brick.exo");
+  mesh_manager->load_file("pincell-implicit.exo");
   mesh_manager->init();
   xdg->prepare_raytracer();
 

@@ -72,7 +72,7 @@ static const std::map<RTLibrary, std::string> RT_LIB_TO_STR =
   {RTLibrary::GPRT, "GPRT"}
 };
 
-// Mesh identifer type
+// Mesh identifier type
 using MeshID = int32_t;
 using MeshIndex  = int32_t;
 

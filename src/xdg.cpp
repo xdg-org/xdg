@@ -77,7 +77,7 @@ std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib
     msg += " LIBMESH";
     #endif
     #ifdef XDG_ENABLE_OMEGA_H
-          msg += " OMEGA_H";
+    msg += " OMEGA_H";
     #endif
     fatal_error(msg);
   };
