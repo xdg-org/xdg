@@ -36,6 +36,9 @@ struct CuBQLSurfaceHit {
   MeshID surface {ID_NONE};
   MeshID primitive {ID_NONE};
   PointInVolume piv {OUTSIDE};
+  MeshID next_volume {ID_NONE};
+  SurfaceBoundaryCondition boundary_condition {SurfaceBoundaryCondition::UNSET};
+  cuBQL::vec3d normal {0.0};
 
   bool hit_found() const { return primitive != ID_NONE; }
 };

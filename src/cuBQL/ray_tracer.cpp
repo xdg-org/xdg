@@ -229,13 +229,31 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
     CuBQLVolumeTLAS::SurfaceInstanceDD surface_instance;
     surface_instance.surface_blas = surface_blas.get_device_data();
 
-    // Sense setting for each surface instance in the TLAS
+    // Store per-instance topology for this volume and surface.
     if (volume_id == forward_parent) {
       surface_instance.reverse_sense = false;
+      surface_instance.next_volume = reverse_parent;
     } else if (volume_id == reverse_parent) {
       surface_instance.reverse_sense = true;
+      surface_instance.next_volume = forward_parent;
     } else {
       fatal_error("Volume {} is not a parent of surface {}", volume_id, surf);
+    }
+
+    // Store boundary-condition metadata for this surface instance.
+    const auto property = mesh_manager->get_surface_property(
+      surf, PropertyType::BOUNDARY_CONDITION);
+
+    if (property.value == "vacuum") {
+      surface_instance.boundary_condition = VACUUM;
+    } else if (property.value == "reflecting" ||
+               property.value == "reflective") {
+      surface_instance.boundary_condition = REFLECTIVE;
+    } else if (property.value == "transmission") {
+      surface_instance.boundary_condition = TRANSMISSION;
+    } else {
+      fatal_error("Unsupported boundary condition '{}' on surface {}",
+                  property.value, surf);
     }
 
     h_tlas_boxes.push_back(surface_bounds);

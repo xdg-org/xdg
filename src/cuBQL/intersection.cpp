@@ -83,12 +83,16 @@ static inline void intersect_surface_tree(CuBQLVolumeTLAS::DD volume_tlas,
                                                   intersection_ray.tMin,
                                                   false,
                                                   0);
-
+    
+    // store ray payload if hit found
     if (intersection.hit) {
       hit->distance = intersection.t;
       hit->surface = mesh.surface_id;
       hit->primitive = primitive_ref;
       hit->piv = normal_dot_direction > 0.0 ? INSIDE : OUTSIDE;
+      hit->next_volume = surface_instance.next_volume;
+      hit->boundary_condition = surface_instance.boundary_condition;
+      hit->normal = normal;
       traversal_ray.tMax = static_cast<float>(intersection.t);
     }
 
@@ -200,6 +204,7 @@ intersect_surface_tree_batch(const cubql::Context& context,
     hit.surface = ID_NONE;
     hit.primitive = ID_NONE;
     hit.piv = OUTSIDE;
+    hit.next_volume = ID_NONE;
 
     if (ray_hit.volume != ID_NONE) {
       CuBQLRay ray;
@@ -227,6 +232,11 @@ intersect_surface_tree_batch(const cubql::Context& context,
     d_ray_hits[ray_id].surface = hit.surface;
     d_ray_hits[ray_id].primitive = hit.primitive;
     d_ray_hits[ray_id].point_in_volume = static_cast<std::int32_t>(hit.piv);
+    d_ray_hits[ray_id].next_volume = hit.next_volume;
+    d_ray_hits[ray_id].boundary_condition = static_cast<std::int32_t>(hit.boundary_condition);
+    d_ray_hits[ray_id].normal[0] = hit.normal.x;
+    d_ray_hits[ray_id].normal[1] = hit.normal.y;
+    d_ray_hits[ray_id].normal[2] = hit.normal.z;
   }
 }
 
