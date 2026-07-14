@@ -17,6 +17,9 @@ struct XDGRayHit {
   std::int32_t surface;
   std::int32_t primitive;
   std::int32_t point_in_volume;
+  std::int32_t next_volume;
+  std::int32_t boundary_condition;
+  double normal[3];
 };
 
 // Light wrapper for count and device id associated with pointer

@@ -98,6 +98,8 @@ struct CuBQLVolumeTLAS {
   struct SurfaceInstanceDD {
     CuBQLSurfaceBLAS::DD surface_blas;
     bool reverse_sense {false}; // value set in create_surface_tree based on parent vols
+    MeshID next_volume {ID_NONE};
+    SurfaceBoundaryCondition boundary_condition {UNSET};
   };
 
   struct DD {
