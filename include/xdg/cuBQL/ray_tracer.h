@@ -74,20 +74,19 @@ public:
                 double& dist) const override;
 
 private:
-  CuBQLSurfaceBLAS
+  CuBQLSurfaceMesh
   register_surface(const std::shared_ptr<MeshManager>& mesh_manager,
-                   MeshID surface_id,
-                   double bounding_box_bump);
+                   MeshID surface_id);
 
-  void upload_volume_to_tlas_table_();
+  void upload_volume_to_group_table_();
 
   cubql::Context context_;
 
-  std::unordered_map<TreeID, CuBQLVolumeTLAS> tree_to_volume_tlas_;
-  std::unordered_map<MeshID, CuBQLSurfaceBLAS> surface_to_blas_map_;
+  std::unordered_map<TreeID, CuBQLVolumeGroup> tree_to_volume_group_;
+  std::unordered_map<MeshID, CuBQLSurfaceMesh> surface_to_mesh_;
 
-  std::vector<CuBQLVolumeTLAS::DD> volume_to_tlas_;
-  CuBQLVolumeTLAS::DD* d_volume_to_tlas_ {nullptr};
+  std::vector<CuBQLVolumeGroup::DD> volume_to_group_;
+  CuBQLVolumeGroup::DD* d_volume_to_group_ {nullptr};
   bool initialized_ {false};
 };
 

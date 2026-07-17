@@ -63,7 +63,7 @@ Performs host side staging and transfer hit data back to host after device side 
 */
 void
 intersect_surface_tree_scalar(const cubql::Context& context,
-                              const CuBQLVolumeTLAS& volume_tlas,
+                              const CuBQLVolumeGroup& volume_group,
                               const CuBQLRay& ray,
                               CuBQLSurfaceHit& hit,
                               HitOrientation hit_orientation,
@@ -72,7 +72,7 @@ intersect_surface_tree_scalar(const cubql::Context& context,
 
 void
 intersect_surface_tree_batch(const cubql::Context& context,
-                             const CuBQLVolumeTLAS::DD* d_volume_to_tlas,
+                             const CuBQLVolumeGroup::DD* d_volume_to_group,
                              XDGRayHit* d_ray_hits,
                              std::size_t num_rays,
                              HitOrientation hit_orientation);
