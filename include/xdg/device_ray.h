@@ -12,6 +12,7 @@ struct XDGRayHit {
   double t_min;
   double t_max;
   std::int32_t volume;
+  std::int32_t last_hit_primitive {-1};
 
   double distance;
   std::int32_t surface;

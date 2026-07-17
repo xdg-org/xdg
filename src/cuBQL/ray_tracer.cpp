@@ -12,6 +12,7 @@
 #include "cuBQL/traversal/rayQueries.h"
 
 #include <algorithm>
+#include <limits>
 
 namespace xdg {
 
@@ -27,42 +28,43 @@ CuBQLRayTracer::CuBQLRayTracer()
 
 CuBQLRayTracer::~CuBQLRayTracer()
 {
-  if (d_volume_to_tlas_) {
-    omp_target_free(d_volume_to_tlas_, context_.gpuID);
-    d_volume_to_tlas_ = nullptr;
+  if (d_volume_to_group_) {
+    omp_target_free(d_volume_to_group_, context_.gpuID);
+    d_volume_to_group_ = nullptr;
   }
 
-  for (auto& [tree, tlas] : tree_to_volume_tlas_) {
-    tlas.release();
+  for (auto& [tree, group] : tree_to_volume_group_) {
+    group.release();
   }
 
-  for (auto& [surface, blas] : surface_to_blas_map_) {
-    blas.release();
+  for (auto& [surface, mesh] : surface_to_mesh_) {
+    mesh.release();
   }
 }
 
 void CuBQLRayTracer::init()
 {
-  upload_volume_to_tlas_table_();
+  upload_volume_to_group_table_();
   initialized_ = true;
 }
 
-void CuBQLRayTracer::upload_volume_to_tlas_table_()
+void CuBQLRayTracer::upload_volume_to_group_table_()
 {
-  if (d_volume_to_tlas_) {
-    omp_target_free(d_volume_to_tlas_, context_.gpuID);
-    d_volume_to_tlas_ = nullptr;
+  if (d_volume_to_group_) {
+    omp_target_free(d_volume_to_group_, context_.gpuID);
+    d_volume_to_group_ = nullptr;
   }
 
-  if (volume_to_tlas_.empty()) {
+  if (volume_to_group_.empty()) {
     return;
   }
 
-  d_volume_to_tlas_ = static_cast<CuBQLVolumeTLAS::DD*>
-    (omp_target_alloc(volume_to_tlas_.size() * sizeof(CuBQLVolumeTLAS::DD), context_.gpuID));
-  omp_target_memcpy(d_volume_to_tlas_,
-                    volume_to_tlas_.data(),
-                    volume_to_tlas_.size() * sizeof(CuBQLVolumeTLAS::DD),
+  d_volume_to_group_ = static_cast<CuBQLVolumeGroup::DD*>
+    (omp_target_alloc(volume_to_group_.size() * sizeof(CuBQLVolumeGroup::DD),
+                      context_.gpuID));
+  omp_target_memcpy(d_volume_to_group_,
+                    volume_to_group_.data(),
+                    volume_to_group_.size() * sizeof(CuBQLVolumeGroup::DD),
                     0,
                     0,
                     context_.gpuID,
@@ -78,14 +80,14 @@ CuBQLRayTracer::register_volume(const std::shared_ptr<MeshManager>& mesh_manager
   return {surface_tree, element_tree};
 }
 
-CuBQLSurfaceBLAS
+CuBQLSurfaceMesh
 CuBQLRayTracer::register_surface(const std::shared_ptr<MeshManager>& mesh_manager,
-                                  MeshID surface_id,
-                                  double bounding_box_bump)
+                                  MeshID surface_id)
 {
-  auto num_faces = mesh_manager->num_surface_faces(surface_id);
+  const auto num_faces = mesh_manager->num_surface_faces(surface_id);
   auto vertices = mesh_manager->get_surface_vertices(surface_id);
   auto indices = mesh_manager->get_surface_connectivity(surface_id);
+  auto h_primitive_ids = mesh_manager->get_surface_faces(surface_id);
 
   std::vector<cuBQL::vec3d> h_vertices;
   h_vertices.reserve(vertices.size());
@@ -98,8 +100,6 @@ CuBQLRayTracer::register_surface(const std::shared_ptr<MeshManager>& mesh_manage
   for (size_t i = 0; i < indices.size(); i += 3) {
     h_indices.emplace_back(indices[i], indices[i + 1], indices[i + 2]);
   }
-
-  std::vector<MeshID> h_primitive_refs = mesh_manager->get_surface_faces(surface_id);
 
   // TODO- think about how to better handle omp transfer calls. AutoUploadArrays is one option
   auto* d_vertices = static_cast<cuBQL::vec3d*>
@@ -122,67 +122,26 @@ CuBQLRayTracer::register_surface(const std::shared_ptr<MeshManager>& mesh_manage
                     context_.gpuID,
                     context_.hostID);
 
-  auto* d_primitive_refs = static_cast<MeshID*>
-    (omp_target_alloc(h_primitive_refs.size() * sizeof(MeshID), context_.gpuID));
-  omp_target_memcpy(d_primitive_refs,
-                    h_primitive_refs.data(),
-                    h_primitive_refs.size() * sizeof(MeshID),
+  auto* d_primitive_ids = static_cast<MeshID*>
+    (omp_target_alloc(h_primitive_ids.size() * sizeof(MeshID), context_.gpuID));
+  omp_target_memcpy(d_primitive_ids,
+                    h_primitive_ids.data(),
+                    h_primitive_ids.size() * sizeof(MeshID),
                     0,
                     0,
                     context_.gpuID,
                     context_.hostID);
 
-  auto* d_aabbs = static_cast<cuBQL::box3f*>
-    (omp_target_alloc(h_indices.size() * sizeof(cuBQL::box3f), context_.gpuID));
-  const auto num_primitives = static_cast<uint32_t>(h_indices.size());
-
-  // TODO - Abstract this out into its own bounding_box creation function
-  #pragma omp target device(context_.gpuID) is_device_ptr(d_vertices, d_indices, d_aabbs) \
-    firstprivate(bounding_box_bump)
-  #pragma omp teams distribute parallel for
-  for (uint32_t primID = 0; primID < num_primitives; ++primID) {
-    cuBQL::vec3i indices = d_indices[primID];
-
-    cuBQL::vec3d A = d_vertices[indices.x];
-    cuBQL::vec3d B = d_vertices[indices.y];
-    cuBQL::vec3d C = d_vertices[indices.z];
-
-    cuBQL::box3d aabb;
-    aabb.extend(A);
-    aabb.extend(B);
-    aabb.extend(C);
-
-    const cuBQL::vec3d bump(bounding_box_bump);
-    aabb.lower = aabb.lower - bump;
-    aabb.upper = aabb.upper + bump;
-
-    d_aabbs[primID] = cuBQL::box3f(aabb);
-  }
-
-  cuBQL::BuildConfig blasBuildParams;
-  // TODO - Try setting leaf params to 1 to see what it does
-  // Check what default is for CUDA 
-  cuBQL::bvh3f bvh;
-  cuBQL::build_omp_target(bvh, d_aabbs, num_faces, blasBuildParams, context_.gpuID);
-
-  omp_target_free(d_aabbs, context_.gpuID);
-
   CuBQLSurfaceMesh surface_mesh;
   surface_mesh.surface_id = surface_id;
   surface_mesh.d_vertices = d_vertices;
   surface_mesh.d_indices = d_indices;
-  surface_mesh.d_primitive_refs = d_primitive_refs;
-  surface_mesh.num_vertices = h_vertices.size();
-  surface_mesh.num_triangles = num_faces;
+  surface_mesh.d_primitive_ids = d_primitive_ids;
+  surface_mesh.num_vertices = static_cast<std::uint32_t>(h_vertices.size());
+  surface_mesh.num_primitives = static_cast<std::uint32_t>(num_faces);
   surface_mesh.gpu_id = context_.gpuID;
 
-  CuBQLSurfaceBLAS surface_blas;
-  surface_blas.bvh = bvh;
-  surface_blas.mesh = surface_mesh;
-  surface_blas.num_prims = num_faces;
-  surface_blas.gpu_id = context_.gpuID;
-
-  return surface_blas;
+  return surface_mesh;
 }
 
 TreeID
@@ -195,129 +154,157 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
   SurfaceTreeID tree = next_surface_tree_id();
   surface_trees_.push_back(tree);
   auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
-  std::vector<cuBQL::box3f> h_tlas_boxes;
-  std::vector<CuBQLVolumeTLAS::SurfaceInstanceDD> h_surface_instances;
-  h_tlas_boxes.reserve(volume_surfaces.size());
-  h_surface_instances.reserve(volume_surfaces.size());
 
-  for (const auto &surf : volume_surfaces) {
-    auto [forward_parent, reverse_parent] = mesh_manager->get_parent_volumes(surf);
-    const double max_parent_bbox_bump = std::max(bounding_box_bump(mesh_manager, forward_parent),
-                                                bounding_box_bump(mesh_manager, reverse_parent));
-
-    if (!surface_to_blas_map_.count(surf)) {
-      surface_to_blas_map_[surf] = register_surface(mesh_manager, surf, max_parent_bbox_bump);
-    }
-
-    CuBQLSurfaceBLAS& surface_blas = surface_to_blas_map_.at(surf);
-
-    // Store BLAS bounding boxes to build TLAS
-    const auto surface_bounding_box = mesh_manager->surface_bounding_box(surf);
-    cuBQL::box3d surface_bounds_dp;
-    surface_bounds_dp.lower = cuBQL::vec3d(surface_bounding_box.min_x,
-                                           surface_bounding_box.min_y,
-                                           surface_bounding_box.min_z);
-    surface_bounds_dp.upper = cuBQL::vec3d(surface_bounding_box.max_x,
-                                           surface_bounding_box.max_y,
-                                           surface_bounding_box.max_z);
-
-    const cuBQL::vec3d bump(max_parent_bbox_bump);
-    surface_bounds_dp.lower = surface_bounds_dp.lower - bump;
-    surface_bounds_dp.upper = surface_bounds_dp.upper + bump;
-    cuBQL::box3f surface_bounds(surface_bounds_dp);
-
-    CuBQLVolumeTLAS::SurfaceInstanceDD surface_instance;
-    surface_instance.surface_blas = surface_blas.get_device_data();
-
-    // Store per-instance topology for this volume and surface.
-    if (volume_id == forward_parent) {
-      surface_instance.reverse_sense = false;
-      surface_instance.next_volume = reverse_parent;
-    } else if (volume_id == reverse_parent) {
-      surface_instance.reverse_sense = true;
-      surface_instance.next_volume = forward_parent;
-    } else {
-      fatal_error("Volume {} is not a parent of surface {}", volume_id, surf);
-    }
-
-    // Store boundary-condition metadata for this surface instance.
-    const auto property = mesh_manager->get_surface_property(
-      surf, PropertyType::BOUNDARY_CONDITION);
-
-    if (property.value == "vacuum") {
-      surface_instance.boundary_condition = VACUUM;
-    } else if (property.value == "reflecting" ||
-               property.value == "reflective") {
-      surface_instance.boundary_condition = REFLECTIVE;
-    } else if (property.value == "transmission") {
-      surface_instance.boundary_condition = TRANSMISSION;
-    } else {
-      fatal_error("Unsupported boundary condition '{}' on surface {}",
-                  property.value, surf);
-    }
-
-    h_tlas_boxes.push_back(surface_bounds);
-    h_surface_instances.push_back(surface_instance);
-  }
-
-  if (h_surface_instances.empty()) {
+  if (volume_surfaces.empty()) {
     fatal_error("Volume {} has no surfaces; cannot build cuBQL surface tree", volume_id);
   }
 
-  auto* d_tlas_boxes = static_cast<cuBQL::box3f*>
-    (omp_target_alloc(h_tlas_boxes.size() * sizeof(cuBQL::box3f), context_.gpuID));
-  omp_target_memcpy(d_tlas_boxes,
-                    h_tlas_boxes.data(),
-                    h_tlas_boxes.size() * sizeof(cuBQL::box3f),
+  std::uint64_t num_volume_primitives = 0;
+  for (const MeshID surface : volume_surfaces) {
+    if (!surface_to_mesh_.count(surface)) {
+      surface_to_mesh_.emplace(
+        surface, register_surface(mesh_manager, surface));
+    }
+    num_volume_primitives += surface_to_mesh_.at(surface).num_primitives;
+  }
+
+  std::vector<CuBQLVolumeGroup::SurfaceDD> h_surfaces;
+  std::vector<CuBQLVolumeGroup::PrimRef> h_prim_refs;
+  std::vector<double> h_surface_bumps;
+  h_surfaces.reserve(volume_surfaces.size());
+  h_surface_bumps.reserve(volume_surfaces.size());
+  h_prim_refs.reserve(static_cast<std::size_t>(num_volume_primitives));
+
+  for (const MeshID surface : volume_surfaces) {
+    const auto [forward_parent, reverse_parent] =
+      mesh_manager->get_parent_volumes(surface);
+    const CuBQLSurfaceMesh& surface_mesh = surface_to_mesh_.at(surface);
+
+    CuBQLVolumeGroup::SurfaceDD surface_data;
+    surface_data.mesh = surface_mesh.get_device_data();
+
+    if (volume_id == forward_parent) {
+      surface_data.next_volume = reverse_parent;
+    } else if (volume_id == reverse_parent) {
+      surface_data.reverse_sense = true;
+      surface_data.next_volume = forward_parent;
+    } else {
+      fatal_error("Volume {} is not a parent of surface {}", volume_id, surface);
+    }
+
+    const auto property = mesh_manager->get_surface_property(
+      surface, PropertyType::BOUNDARY_CONDITION);
+    if (property.value == "vacuum") {
+      surface_data.boundary_condition = VACUUM;
+    } else if (property.value == "reflecting" ||
+               property.value == "reflective") {
+      surface_data.boundary_condition = REFLECTIVE;
+    } else if (property.value == "transmission") {
+      surface_data.boundary_condition = TRANSMISSION;
+    } else {
+      fatal_error("Unsupported boundary condition '{}' on surface {}",
+                  property.value, surface);
+    }
+
+    const auto surface_index = static_cast<std::uint32_t>(h_surfaces.size());
+    h_surfaces.push_back(surface_data);
+    h_surface_bumps.push_back(std::max(
+      bounding_box_bump(mesh_manager, forward_parent),
+      bounding_box_bump(mesh_manager, reverse_parent)));
+
+    for (std::uint32_t primitive_index = 0;
+         primitive_index < surface_mesh.num_primitives;
+         ++primitive_index) {
+      h_prim_refs.push_back({surface_index, primitive_index});
+    }
+  }
+
+  auto* d_aabbs = static_cast<cuBQL::box3f*>
+    (omp_target_alloc(h_prim_refs.size() * sizeof(cuBQL::box3f),
+                      context_.gpuID));
+  auto* d_surfaces = static_cast<CuBQLVolumeGroup::SurfaceDD*>
+    (omp_target_alloc(h_surfaces.size() * sizeof(CuBQLVolumeGroup::SurfaceDD),
+                      context_.gpuID));
+  omp_target_memcpy(d_surfaces,
+                    h_surfaces.data(),
+                    h_surfaces.size() * sizeof(CuBQLVolumeGroup::SurfaceDD),
                     0,
                     0,
                     context_.gpuID,
                     context_.hostID);
 
-  auto* d_surface_instances = static_cast<CuBQLVolumeTLAS::SurfaceInstanceDD*>
-    (omp_target_alloc(h_surface_instances.size() * sizeof(CuBQLVolumeTLAS::SurfaceInstanceDD), context_.gpuID));
-  omp_target_memcpy(d_surface_instances,
-                    h_surface_instances.data(),
-                    h_surface_instances.size() * sizeof(CuBQLVolumeTLAS::SurfaceInstanceDD),
+  auto* d_prim_refs = static_cast<CuBQLVolumeGroup::PrimRef*>
+    (omp_target_alloc(h_prim_refs.size() * sizeof(CuBQLVolumeGroup::PrimRef),
+                      context_.gpuID));
+  omp_target_memcpy(d_prim_refs,
+                    h_prim_refs.data(),
+                    h_prim_refs.size() * sizeof(CuBQLVolumeGroup::PrimRef),
                     0,
                     0,
                     context_.gpuID,
                     context_.hostID);
 
-  cuBQL::BuildConfig tlasBuildParams;
-  tlasBuildParams.makeLeafThreshold = 1;
-  tlasBuildParams.maxAllowedLeafSize = 1;
+  auto* d_surface_bumps = static_cast<double*>
+    (omp_target_alloc(h_surface_bumps.size() * sizeof(double), context_.gpuID));
+  omp_target_memcpy(d_surface_bumps,
+                    h_surface_bumps.data(),
+                    h_surface_bumps.size() * sizeof(double),
+                    0,
+                    0,
+                    context_.gpuID,
+                    context_.hostID);
 
-  CuBQLVolumeTLAS volume_tlas;
-  volume_tlas.volume_id = volume_id; // store meshid in the TLAS object for easier mapping between the two
-  volume_tlas.num_surface_instances = static_cast<uint32_t>(h_surface_instances.size());
-  volume_tlas.gpu_id = context_.gpuID;
-  volume_tlas.d_surface_instances = d_surface_instances;
-  cuBQL::build_omp_target(volume_tlas.bvh,
-                          d_tlas_boxes,
-                          volume_tlas.num_surface_instances,
-                          tlasBuildParams,
+  const auto num_primitives = static_cast<std::uint32_t>(h_prim_refs.size());
+  const int gpu_id = context_.gpuID;
+  #pragma omp target teams distribute parallel for device(gpu_id) \
+    is_device_ptr(d_aabbs, d_surfaces, d_prim_refs, d_surface_bumps)
+  for (std::uint32_t primID = 0; primID < num_primitives; ++primID) {
+    const auto primitive = d_prim_refs[primID];
+    const auto mesh = d_surfaces[primitive.surface_index].mesh;
+    const auto indices = mesh.indices[primitive.primitive_index];
+
+    cuBQL::box3d aabb;
+    aabb.extend(mesh.vertices[indices.x]);
+    aabb.extend(mesh.vertices[indices.y]);
+    aabb.extend(mesh.vertices[indices.z]);
+
+    // get correct bump for surface
+    const cuBQL::vec3d bump(d_surface_bumps[primitive.surface_index]); 
+    aabb.lower = aabb.lower - bump;
+    aabb.upper = aabb.upper + bump;
+    d_aabbs[primID] = cuBQL::box3f(aabb);
+  }
+
+  CuBQLVolumeGroup volume_group;
+  volume_group.d_surfaces = d_surfaces;
+  volume_group.d_prim_refs = d_prim_refs;
+  volume_group.num_surfaces = static_cast<std::uint32_t>(h_surfaces.size());
+  volume_group.num_primitives = num_primitives;
+  volume_group.gpu_id = context_.gpuID;
+
+  cuBQL::BuildConfig build_params;
+  cuBQL::build_omp_target(volume_group.bvh,
+                          d_aabbs,
+                          num_primitives,
+                          build_params,
                           context_.gpuID);
 
-  omp_target_free(d_tlas_boxes, context_.gpuID);
+  omp_target_free(d_surface_bumps, context_.gpuID);
+  omp_target_free(d_aabbs, context_.gpuID);
 
-  // Still required for lifetime and scalar calls which need to resolve TreeID->volume_tlas on CPU side.
-  auto result = tree_to_volume_tlas_.emplace(tree, std::move(volume_tlas));
+  // Retain owning objects for scalar TreeID lookups and allocation lifetime.
+  auto result = tree_to_volume_group_.emplace(tree, std::move(volume_group));
   auto it = result.first;
 
-  // Keep a dense host-side MeshID -> TLAS device-data table for prepared queries.
-  // The TLAS object in tree_to_volume_tlas_ owns the device allocations; this table
-  // only stores lightweight DD views indexed by volume ID. Upload to device once in
-  // init(), unless a volume is registered after initialization.
-
+  // Keep a dense host-side MeshID -> group device-data table for batch queries.
   const auto volume_index = static_cast<size_t>(volume_id);
-  if (volume_index >= volume_to_tlas_.size()) {
-    volume_to_tlas_.resize(volume_index + 1);
+  if (volume_index >= volume_to_group_.size()) {
+    volume_to_group_.resize(volume_index + 1);
   }
-  volume_to_tlas_[volume_index] = it->second.get_device_data();
+  volume_to_group_[volume_index] = it->second.get_device_data();
 
   if (initialized_) {
-    upload_volume_to_tlas_table_();
+    upload_volume_to_group_table_();
   }
   
   return tree;
@@ -359,7 +346,7 @@ bool CuBQLRayTracer::point_in_volume(TreeID tree,
                                      const std::vector<MeshID>* exclude_primitives) const
 {
   const auto& context = context_;
-  const CuBQLVolumeTLAS& volume_tlas = tree_to_volume_tlas_.at(tree);
+  const CuBQLVolumeGroup& volume_group = tree_to_volume_group_.at(tree);
 
   // Use provided direction or if Direction == nulptr use default direction
   Direction directionUsed = (direction != nullptr) ? Direction{direction->x, direction->y, direction->z} 
@@ -375,7 +362,12 @@ bool CuBQLRayTracer::point_in_volume(TreeID tree,
   CuBQLSurfaceHit surface_hit;
 
   // TODO - Maybe we can come up with a better name for this
-  intersect_surface_tree_scalar(context, volume_tlas, ray, surface_hit, HitOrientation::ANY, exclude_primitives);
+  intersect_surface_tree_scalar(context, 
+                                volume_group, 
+                                ray, 
+                                surface_hit,
+                                HitOrientation::ANY, 
+                                exclude_primitives);
 
   // if the ray hit nothing the point must be outside the volume
   if (surface_hit.primitive == ID_NONE) return false; 
@@ -392,7 +384,7 @@ CuBQLRayTracer::ray_fire(TreeID tree,
                          std::vector<MeshID>* const exclude_primitives)
 {
   const auto& context = context_;
-  const CuBQLVolumeTLAS& volume_tlas = tree_to_volume_tlas_.at(tree);
+  const CuBQLVolumeGroup& volume_group = tree_to_volume_group_.at(tree);
 
   CuBQLRay ray;
   ray.origin = cuBQL::vec3d(origin.x, origin.y, origin.z);
@@ -403,7 +395,12 @@ CuBQLRayTracer::ray_fire(TreeID tree,
   CuBQLSurfaceHit surface_hit;
 
   // TODO - Maybe we can come up with a better name for this
-  intersect_surface_tree_scalar(context, volume_tlas, ray, surface_hit, hitOrientation, exclude_primitives);
+  intersect_surface_tree_scalar(context, 
+                                volume_group, 
+                                ray, 
+                                surface_hit, 
+                                hitOrientation, 
+                                exclude_primitives);
 
   if (surface_hit.primitive == ID_NONE) {
     return {INFTY, ID_NONE};
@@ -454,12 +451,12 @@ CuBQLRayTracer::ray_fire_batch(const XDGRayHitBuffer& ray_hits,
     fatal_error("Invalid cuBQL XDG ray-hit buffer");
   }
 
-  if (!d_volume_to_tlas_) {
-    fatal_error("cuBQL volume TLAS lookup table has not been uploaded");
+  if (!d_volume_to_group_) {
+    fatal_error("cuBQL volume-group lookup table has not been uploaded");
   }
 
   intersect_surface_tree_batch(context_,
-                               d_volume_to_tlas_,
+                               d_volume_to_group_,
                                ray_hits.data,
                                ray_hits.count,
                                hit_orientation);

@@ -14,13 +14,16 @@ void CuBQLSurfaceMesh::release()
     omp_target_free(d_indices, gpu_id);
     d_indices = nullptr;
   }
-  if (d_primitive_refs) {
-    omp_target_free(d_primitive_refs, gpu_id);
-    d_primitive_refs = nullptr;
+  if (d_primitive_ids) {
+    omp_target_free(d_primitive_ids, gpu_id);
+    d_primitive_ids = nullptr;
   }
+
+  num_vertices = 0;
+  num_primitives = 0;
 }
 
-void CuBQLSurfaceBLAS::release()
+void CuBQLVolumeGroup::release()
 {
   if (bvh.primIDs) {
     omp_target_free(bvh.primIDs, gpu_id);
@@ -30,23 +33,19 @@ void CuBQLSurfaceBLAS::release()
     omp_target_free(bvh.nodes, gpu_id);
     bvh.nodes = nullptr;
   }
-  mesh.release();
-}
+  if (d_surfaces) {
+    omp_target_free(d_surfaces, gpu_id);
+    d_surfaces = nullptr;
+  }
+  if (d_prim_refs) {
+    omp_target_free(d_prim_refs, gpu_id);
+    d_prim_refs = nullptr;
+  }
 
-void CuBQLVolumeTLAS::release()
-{
-  if (bvh.primIDs) {
-    omp_target_free(bvh.primIDs, gpu_id);
-    bvh.primIDs = nullptr;
-  }
-  if (bvh.nodes) {
-    omp_target_free(bvh.nodes, gpu_id);
-    bvh.nodes = nullptr;
-  }
-  if (d_surface_instances) {
-    omp_target_free(d_surface_instances, gpu_id);
-    d_surface_instances = nullptr;
-  }
+  bvh.numNodes = 0;
+  bvh.numPrims = 0;
+  num_surfaces = 0;
+  num_primitives = 0;
 }
 
 } // namespace xdg

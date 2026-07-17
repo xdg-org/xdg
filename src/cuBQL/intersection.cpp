@@ -9,17 +9,19 @@
 
 namespace xdg {
 
-// Core traversal and intersection routine for a single ray against a given volume tlas
+// Core traversal and intersection routine for a single ray against a flattened
+// volume group.
 #pragma omp declare target
 static inline float reject_candidate(const cuBQL::ray3f& traversal_ray)
 {
   return traversal_ray.tMax;
 }
 
-static inline void intersect_surface_tree(CuBQLVolumeTLAS::DD volume_tlas,
+static inline void intersect_surface_tree(CuBQLVolumeGroup::DD volume_group,
                                           CuBQLRay intersection_ray,
                                           CuBQLSurfaceHit* hit,
                                           int orientation,
+                                          MeshID last_hit_primitive,
                                           const MeshID* exclude_primitives,
                                           int exclude_count)
 {
@@ -32,34 +34,34 @@ static inline void intersect_surface_tree(CuBQLVolumeTLAS::DD volume_tlas,
   traversal_ray.tMin = static_cast<float>(intersection_ray.tMin);
   traversal_ray.tMax = static_cast<float>(hit->distance);
 
-  CuBQLVolumeTLAS::SurfaceInstanceDD surface_instance;
-
-  auto enter_blas = [=, &surface_instance, &traversal_ray]
-    (cuBQL::ray3f& out_ray, cuBQL::bvh3f& out_bvh, int instance_id)
+  auto intersect_prim = [=, &traversal_ray]
+    (std::uint32_t bvh_primitive_index) -> float
   {
-    surface_instance = volume_tlas.surface_instances[instance_id];
-    out_ray = traversal_ray;
-    out_bvh = surface_instance.surface_blas.bvh;
-  };
+    const auto ref = volume_group.prim_refs[bvh_primitive_index];
+    const auto surface = volume_group.surfaces[ref.surface_index];
+    const auto mesh = surface.mesh;
+    const auto local_index = ref.primitive_index;
+    const MeshID primitive_id = mesh.primitive_ids[local_index];
 
-  auto intersect_prim = [=, &traversal_ray, &surface_instance]
-    (uint32_t prim_id) -> float
-  {
-    const CuBQLSurfaceMesh::DD mesh = surface_instance.surface_blas.mesh;
-    const MeshID primitive_ref = mesh.primitive_refs[prim_id];
+    // Reject the previously hit primitive to avoid immediate self-intersection.
+    if (primitive_id == last_hit_primitive) {
+      return reject_candidate(traversal_ray);
+    }
 
+    // Scalar queries may provide an arbitrary primitive exclusion history.
+    // TODO - Think about how to provide arbitrary history checks for batch queries.
     for (int i = 0; i < exclude_count; ++i) {
-      if (exclude_primitives[i] == primitive_ref) {
+      if (exclude_primitives[i] == primitive_id) {
         return reject_candidate(traversal_ray);
       }
     }
 
-    const cuBQL::vec3i index = mesh.indices[prim_id];
+    const cuBQL::vec3i vertex_indices = mesh.indices[local_index];
 
     cuBQL::vec3d vertices[3] = {
-      mesh.vertices[index.x],
-      mesh.vertices[index.y],
-      mesh.vertices[index.z]
+      mesh.vertices[vertex_indices.x],
+      mesh.vertices[vertex_indices.y],
+      mesh.vertices[vertex_indices.z]
     };
 
     cuBQL::vec3d normal = cuBQL::cross(vertices[1] - vertices[0],
@@ -67,7 +69,7 @@ static inline void intersect_surface_tree(CuBQLVolumeTLAS::DD volume_tlas,
 
     double normal_dot_direction = dot(normal, intersection_ray.direction);
 
-    if (surface_instance.reverse_sense) {
+    if (surface.reverse_sense) {
       normal_dot_direction = -normal_dot_direction;
     }
 
@@ -88,10 +90,10 @@ static inline void intersect_surface_tree(CuBQLVolumeTLAS::DD volume_tlas,
     if (intersection.hit) {
       hit->distance = intersection.t;
       hit->surface = mesh.surface_id;
-      hit->primitive = primitive_ref;
+      hit->primitive = primitive_id;
       hit->piv = normal_dot_direction > 0.0 ? INSIDE : OUTSIDE;
-      hit->next_volume = surface_instance.next_volume;
-      hit->boundary_condition = surface_instance.boundary_condition;
+      hit->next_volume = surface.next_volume;
+      hit->boundary_condition = surface.boundary_condition;
       hit->normal = normal;
       traversal_ray.tMax = static_cast<float>(intersection.t);
     }
@@ -101,19 +103,16 @@ static inline void intersect_surface_tree(CuBQLVolumeTLAS::DD volume_tlas,
     return reject_candidate(traversal_ray);
   };
 
-  auto leave_blas = []() -> void {};
-
-  cuBQL::shrinkingRayQuery::twoLevel::forEachPrim(enter_blas,
-                                                  leave_blas,
-                                                  intersect_prim,
-                                                  volume_tlas.bvh,
-                                                  traversal_ray);
+  // Single level traversal call for a shrinking ray query against the flattened BVH of the volume group.
+  cuBQL::shrinkingRayQuery::forEachPrim(intersect_prim,
+                                        volume_group.bvh,
+                                        traversal_ray);
 }
 #pragma omp end declare target
 
 void
 intersect_surface_tree_scalar(const cubql::Context& context,
-                              const CuBQLVolumeTLAS& volume_tlas,
+                              const CuBQLVolumeGroup& volume_group,
                               const CuBQLRay& ray,
                               CuBQLSurfaceHit& surface_hit,
                               HitOrientation hit_orientation,
@@ -148,16 +147,17 @@ intersect_surface_tree_scalar(const cubql::Context& context,
                     gpu_id,
                     context.hostID);
 
-  const auto volume_tlas_dd = volume_tlas.get_device_data();
+  const auto volume_group_dd = volume_group.get_device_data();
   const int orientation = static_cast<int>(hit_orientation);
 
   #pragma omp target device(gpu_id) \
     is_device_ptr(d_exclude_primitives, d_surface_hit)
   {
-    intersect_surface_tree(volume_tlas_dd,
+    intersect_surface_tree(volume_group_dd,
                            ray,
                            d_surface_hit,
                            orientation,
+                           ID_NONE,
                            d_exclude_primitives,
                            exclude_count);
   }
@@ -181,21 +181,21 @@ intersect_surface_tree_scalar(const cubql::Context& context,
 
 void
 intersect_surface_tree_batch(const cubql::Context& context,
-                             const CuBQLVolumeTLAS::DD* d_volume_to_tlas,
+                             const CuBQLVolumeGroup::DD* d_volume_to_group,
                              XDGRayHit* d_ray_hits,
                              std::size_t num_rays,
                              HitOrientation hit_orientation)
 {
   if (num_rays == 0) return;
 
-  if (!d_volume_to_tlas || !d_ray_hits) {
+  if (!d_volume_to_group || !d_ray_hits) {
     fatal_error("Invalid cuBQL batch intersection buffers");
   }
 
   const int gpu_id = context.gpuID;
 
   #pragma omp target teams distribute parallel for device(gpu_id) \
-    is_device_ptr(d_volume_to_tlas, d_ray_hits)
+    is_device_ptr(d_volume_to_group, d_ray_hits)
   for (std::size_t ray_id = 0; ray_id < num_rays; ++ray_id) {
     const XDGRayHit ray_hit = d_ray_hits[ray_id];
 
@@ -218,12 +218,13 @@ intersect_surface_tree_batch(const cubql::Context& context,
       ray.tMax = ray_hit.t_max;
       ray.volume = ray_hit.volume;
 
-      const CuBQLVolumeTLAS::DD volume_tlas = d_volume_to_tlas[ray.volume];
+      const CuBQLVolumeGroup::DD volume_group = d_volume_to_group[ray.volume];
 
-      intersect_surface_tree(volume_tlas,
+      intersect_surface_tree(volume_group,
                              ray,
                              &hit,
                              static_cast<int>(hit_orientation),
+                             ray_hit.last_hit_primitive,
                              nullptr,
                              0);
     }
@@ -233,7 +234,8 @@ intersect_surface_tree_batch(const cubql::Context& context,
     d_ray_hits[ray_id].primitive = hit.primitive;
     d_ray_hits[ray_id].point_in_volume = static_cast<std::int32_t>(hit.piv);
     d_ray_hits[ray_id].next_volume = hit.next_volume;
-    d_ray_hits[ray_id].boundary_condition = static_cast<std::int32_t>(hit.boundary_condition);
+    d_ray_hits[ray_id].boundary_condition =
+      static_cast<std::int32_t>(hit.boundary_condition);
     d_ray_hits[ray_id].normal[0] = hit.normal.x;
     d_ray_hits[ray_id].normal[1] = hit.normal.y;
     d_ray_hits[ray_id].normal[2] = hit.normal.z;

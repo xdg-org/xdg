@@ -32,7 +32,7 @@
         "XDG_ENABLE_CUBQL": "ON"
       },
       "environment": {
-        "PRESET_CXX_FLAGS": "-fopenmp-targets=nvptx64 -Xopenmp-target -march=sm_80"
+        "PRESET_CXX_FLAGS": "-fopenmp-targets=nvptx64 -Xopenmp-target -march=sm_89"
       }
     },
     {

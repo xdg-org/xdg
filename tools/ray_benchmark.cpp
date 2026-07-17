@@ -249,6 +249,7 @@ int main(int argc, char** argv)
         ray_hit.t_min = 0.0;
         ray_hit.t_max = INFTY;
         ray_hit.volume = volume;
+        ray_hit.last_hit_primitive = ID_NONE;
         ray_hit.distance = INFTY;
         ray_hit.surface = ID_NONE;
         ray_hit.primitive = ID_NONE;
