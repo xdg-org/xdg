@@ -159,25 +159,26 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
     fatal_error("Volume {} has no surfaces; cannot build cuBQL surface tree", volume_id);
   }
 
+  const double volume_bump = bounding_box_bump(mesh_manager, volume_id);
+
   std::uint64_t num_volume_primitives = 0;
   for (const MeshID surface : volume_surfaces) {
     if (!surface_to_mesh_.count(surface)) {
-      surface_to_mesh_.emplace(
-        surface, register_surface(mesh_manager, surface));
+      surface_to_mesh_.emplace(surface, register_surface(mesh_manager, surface));
     }
-    num_volume_primitives += surface_to_mesh_.at(surface).num_primitives;
+
+    auto& surface_mesh = surface_to_mesh_.at(surface);
+    surface_mesh.max_parent_volume_bump = std::max(surface_mesh.max_parent_volume_bump, volume_bump);
+    num_volume_primitives += surface_mesh.num_primitives;
   }
 
   std::vector<CuBQLVolumeGroup::SurfaceDD> h_surfaces;
   std::vector<CuBQLVolumeGroup::PrimRef> h_prim_refs;
-  std::vector<double> h_surface_bumps;
   h_surfaces.reserve(volume_surfaces.size());
-  h_surface_bumps.reserve(volume_surfaces.size());
   h_prim_refs.reserve(static_cast<std::size_t>(num_volume_primitives));
 
   for (const MeshID surface : volume_surfaces) {
-    const auto [forward_parent, reverse_parent] =
-      mesh_manager->get_parent_volumes(surface);
+    const auto [forward_parent, reverse_parent] = mesh_manager->get_parent_volumes(surface);
     const CuBQLSurfaceMesh& surface_mesh = surface_to_mesh_.at(surface);
 
     CuBQLVolumeGroup::SurfaceDD surface_data;
@@ -192,30 +193,22 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
       fatal_error("Volume {} is not a parent of surface {}", volume_id, surface);
     }
 
-    const auto property = mesh_manager->get_surface_property(
-      surface, PropertyType::BOUNDARY_CONDITION);
+    const auto property = mesh_manager->get_surface_property(surface, PropertyType::BOUNDARY_CONDITION);
     if (property.value == "vacuum") {
       surface_data.boundary_condition = VACUUM;
-    } else if (property.value == "reflecting" ||
-               property.value == "reflective") {
+    } else if (property.value == "reflecting" || property.value == "reflective") {
       surface_data.boundary_condition = REFLECTIVE;
     } else if (property.value == "transmission") {
       surface_data.boundary_condition = TRANSMISSION;
     } else {
-      fatal_error("Unsupported boundary condition '{}' on surface {}",
-                  property.value, surface);
+      fatal_error("Unsupported boundary condition '{}' on surface {}", property.value, surface);
     }
 
     const auto surface_index = static_cast<std::uint32_t>(h_surfaces.size());
     h_surfaces.push_back(surface_data);
-    h_surface_bumps.push_back(std::max(
-      bounding_box_bump(mesh_manager, forward_parent),
-      bounding_box_bump(mesh_manager, reverse_parent)));
 
-    for (std::uint32_t primitive_index = 0;
-         primitive_index < surface_mesh.num_primitives;
-         ++primitive_index) {
-      h_prim_refs.push_back({surface_index, primitive_index});
+    for (std::uint32_t prim_index = 0; prim_index < surface_mesh.num_primitives; ++prim_index) {
+      h_prim_refs.push_back({surface_index, prim_index});
     }
   }
 
@@ -244,23 +237,14 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
                     context_.gpuID,
                     context_.hostID);
 
-  auto* d_surface_bumps = static_cast<double*>
-    (omp_target_alloc(h_surface_bumps.size() * sizeof(double), context_.gpuID));
-  omp_target_memcpy(d_surface_bumps,
-                    h_surface_bumps.data(),
-                    h_surface_bumps.size() * sizeof(double),
-                    0,
-                    0,
-                    context_.gpuID,
-                    context_.hostID);
-
   const auto num_primitives = static_cast<std::uint32_t>(h_prim_refs.size());
   const int gpu_id = context_.gpuID;
   #pragma omp target teams distribute parallel for device(gpu_id) \
-    is_device_ptr(d_aabbs, d_surfaces, d_prim_refs, d_surface_bumps)
+    is_device_ptr(d_aabbs, d_surfaces, d_prim_refs)
   for (std::uint32_t primID = 0; primID < num_primitives; ++primID) {
     const auto primitive = d_prim_refs[primID];
-    const auto mesh = d_surfaces[primitive.surface_index].mesh;
+    const auto surface = d_surfaces[primitive.surface_index];
+    const auto mesh = surface.mesh;
     const auto indices = mesh.indices[primitive.primitive_index];
 
     cuBQL::box3d aabb;
@@ -268,8 +252,7 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
     aabb.extend(mesh.vertices[indices.y]);
     aabb.extend(mesh.vertices[indices.z]);
 
-    // get correct bump for surface
-    const cuBQL::vec3d bump(d_surface_bumps[primitive.surface_index]); 
+    const cuBQL::vec3d bump(mesh.max_parent_volume_bump);
     aabb.lower = aabb.lower - bump;
     aabb.upper = aabb.upper + bump;
     d_aabbs[primID] = cuBQL::box3f(aabb);
@@ -289,7 +272,6 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
                           build_params,
                           context_.gpuID);
 
-  omp_target_free(d_surface_bumps, context_.gpuID);
   omp_target_free(d_aabbs, context_.gpuID);
 
   // Retain owning objects for scalar TreeID lookups and allocation lifetime.
@@ -351,7 +333,6 @@ bool CuBQLRayTracer::point_in_volume(TreeID tree,
   // Use provided direction or if Direction == nulptr use default direction
   Direction directionUsed = (direction != nullptr) ? Direction{direction->x, direction->y, direction->z} 
                             : Direction{1. / std::sqrt(2.0), 1. / std::sqrt(2.0), 0.0};
-
   
   CuBQLRay ray;
   ray.origin = cuBQL::vec3d(point.x, point.y, point.z);
@@ -360,7 +341,7 @@ bool CuBQLRayTracer::point_in_volume(TreeID tree,
   ray.tMax = INFTY;
 
   CuBQLSurfaceHit surface_hit;
-
+  
   // TODO - Maybe we can come up with a better name for this
   intersect_surface_tree_scalar(context, 
                                 volume_group, 

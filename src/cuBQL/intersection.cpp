@@ -73,8 +73,7 @@ static inline void intersect_surface_tree(CuBQLVolumeGroup::DD volume_group,
       normal_dot_direction = -normal_dot_direction;
     }
 
-    if (orientation_cull(normal_dot_direction,
-                         static_cast<HitOrientation>(orientation))) {
+    if (orientation_cull(normal_dot_direction, static_cast<HitOrientation>(orientation))) {
       return reject_candidate(traversal_ray);
     }
 
@@ -104,9 +103,7 @@ static inline void intersect_surface_tree(CuBQLVolumeGroup::DD volume_group,
   };
 
   // Single level traversal call for a shrinking ray query against the flattened BVH of the volume group.
-  cuBQL::shrinkingRayQuery::forEachPrim(intersect_prim,
-                                        volume_group.bvh,
-                                        traversal_ray);
+  cuBQL::shrinkingRayQuery::forEachPrim(intersect_prim, volume_group.bvh, traversal_ray);
 }
 #pragma omp end declare target
 
@@ -126,6 +123,7 @@ intersect_surface_tree_scalar(const cubql::Context& context,
     exclude_count = static_cast<int>(exclude_primitives->size());
     d_exclude_primitives = static_cast<MeshID*>
       (omp_target_alloc(exclude_count * sizeof(MeshID), gpu_id));
+
     omp_target_memcpy(d_exclude_primitives,
                       exclude_primitives->data(),
                       exclude_count * sizeof(MeshID),
@@ -208,12 +206,8 @@ intersect_surface_tree_batch(const cubql::Context& context,
 
     if (ray_hit.volume != ID_NONE) {
       CuBQLRay ray;
-      ray.origin = cuBQL::vec3d(ray_hit.origin[0],
-                                ray_hit.origin[1],
-                                ray_hit.origin[2]);
-      ray.direction = cuBQL::vec3d(ray_hit.direction[0],
-                                   ray_hit.direction[1],
-                                   ray_hit.direction[2]);
+      ray.origin = cuBQL::vec3d(ray_hit.origin[0], ray_hit.origin[1], ray_hit.origin[2]);
+      ray.direction = cuBQL::vec3d(ray_hit.direction[0], ray_hit.direction[1], ray_hit.direction[2]);
       ray.tMin = ray_hit.t_min;
       ray.tMax = ray_hit.t_max;
       ray.volume = ray_hit.volume;
@@ -234,8 +228,7 @@ intersect_surface_tree_batch(const cubql::Context& context,
     d_ray_hits[ray_id].primitive = hit.primitive;
     d_ray_hits[ray_id].point_in_volume = static_cast<std::int32_t>(hit.piv);
     d_ray_hits[ray_id].next_volume = hit.next_volume;
-    d_ray_hits[ray_id].boundary_condition =
-      static_cast<std::int32_t>(hit.boundary_condition);
+    d_ray_hits[ray_id].boundary_condition = static_cast<std::int32_t>(hit.boundary_condition);
     d_ray_hits[ray_id].normal[0] = hit.normal.x;
     d_ray_hits[ray_id].normal[1] = hit.normal.y;
     d_ray_hits[ray_id].normal[2] = hit.normal.z;
