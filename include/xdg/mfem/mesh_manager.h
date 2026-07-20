@@ -130,9 +130,7 @@ public:
   void determine_surface_senses();
 
   // Metadata methods
-  void parse_metadata() override {
-    fatal_error("MfemMeshManager::parse_metadata() not implemented yet");
-  }
+  void parse_metadata() override;
 
   // Accessors
   const std::unique_ptr<mfem::Mesh>& mfem_mesh() const {
