@@ -1,6 +1,7 @@
 #include <string>
 
 #include "xdg/mfem/mesh_manager.h"
+#include "xdg/util/str_utils.h"
 
 namespace xdg {
 void MfemMeshManager::load_file(const std::string &filepath) {
@@ -320,6 +321,40 @@ void MfemMeshManager::add_surface_to_volume(MeshID volume, MeshID surface, Sense
       fatal_error("Surface already has a reverse sense");
     }
       surface_senses_[surface] = {senses.first, volume};
+  }
+}
+
+void MfemMeshManager::parse_metadata() {
+  auto& attr_sets = mesh_->attribute_sets;
+
+  for (auto vol_name : attr_sets.GetAttributeSetNames()) {
+    const mfem::Array<int> &attrs = attr_sets.GetAttributeSet(vol_name);
+    remove_substring(vol_name, "mat:");
+
+    // loop over every volume that is named the same thing
+    for (int i = 0; i < attrs.Size(); i++) {
+      const int vol_id = attrs[i];
+      if (vol_name.empty())
+        volume_metadata_[{vol_id, PropertyType::MATERIAL}] = VOID_MATERIAL;
+      else
+        volume_metadata_[{vol_id, PropertyType::MATERIAL}] = {PropertyType::MATERIAL, vol_name};
+
+    }
+  }
+
+  // ditto for boundaries
+  auto& bdr_attr_sets = mesh_->bdr_attribute_sets;
+  for (auto bdr_name : bdr_attr_sets.GetAttributeSetNames()) {
+    const mfem::Array<int> &attrs = bdr_attr_sets.GetAttributeSet(bdr_name);
+    remove_substring(bdr_name, "boundary:");
+
+    // loop over every surface that is named the same thing
+    for (int i = 0; i < attrs.Size(); i++) {
+      const int bdr_id = attrs[i];
+      const auto key = std::make_pair(bdr_id, PropertyType::BOUNDARY_CONDITION);
+
+      surface_metadata_[key] = {PropertyType::BOUNDARY_CONDITION, bdr_name};
+    }
   }
 }
 

@@ -143,34 +143,31 @@ TEST_CASE("Test Cylinder-Brick Initialization")
   auto vol2_elems = mesh_manager->get_volume_elements(2);
   REQUIRE(!vol2_elems.empty());
 
-  // MFEM does not capture the right metadata for all this stuff!!!
-  //
-  //
-  // mesh_manager->parse_metadata();
+  mesh_manager->parse_metadata();
 
-  // xdg::Property prop;
+  xdg::Property prop;
 
-  // // check the model's metadata
-  // prop = mesh_manager->get_volume_property(1, PropertyType::MATERIAL);
-  // REQUIRE(prop.type == PropertyType::MATERIAL);
-  // REQUIRE(prop.value == "steel");
+  // check the model's metadata
+  prop = mesh_manager->get_volume_property(1, PropertyType::MATERIAL);
+  REQUIRE(prop.type == PropertyType::MATERIAL);
+  REQUIRE(prop.value == "steel");
 
-  // prop = mesh_manager->get_volume_property(2, PropertyType::MATERIAL);
-  // REQUIRE(prop.type == PropertyType::MATERIAL);
-  // REQUIRE(prop.value == "iron");
+  prop = mesh_manager->get_volume_property(2, PropertyType::MATERIAL);
+  REQUIRE(prop.type == PropertyType::MATERIAL);
+  REQUIRE(prop.value == "iron");
 
-  // for (auto s : mesh_manager->surfaces()) {
-  //   prop = mesh_manager->get_surface_property(s, PropertyType::BOUNDARY_CONDITION);
-  //   std::cout << s << ", " << prop.value << std::endl;
-  //   REQUIRE(prop.type == PropertyType::BOUNDARY_CONDITION);
-  //   if (s == 3) {
-  //     REQUIRE(prop.value == "transmission");
-  //   } else if (s == 4) {
-  //     REQUIRE(prop.value == "reflective");
-  //   } else {
-  //     REQUIRE(prop.value == "vacuum");
-  //   }
-  // }
+  for (auto s : mesh_manager->surfaces()) {
+    prop = mesh_manager->get_surface_property(s, PropertyType::BOUNDARY_CONDITION);
+    std::cout << s << ", " << prop.value << std::endl;
+    REQUIRE(prop.type == PropertyType::BOUNDARY_CONDITION);
+    if (s == 3) {
+      REQUIRE(prop.value == "transmission");
+    } else if (s == 4) {
+      REQUIRE(prop.value == "reflective");
+    } else {
+      REQUIRE(prop.value == "vacuum");
+    }
+  }
 }
 
 TEST_CASE("Test Brick w/ Sidesets")
