@@ -24,6 +24,7 @@ struct CuBQLSurfaceMesh {
   struct DD {
     // Topological metadata
     MeshID surface_id {ID_NONE};
+    double max_parent_volume_bump {0.0};
 
     // Geometric data
     const cuBQL::vec3d* vertices {nullptr};
@@ -33,6 +34,7 @@ struct CuBQLSurfaceMesh {
 
   // Topological metadata
   MeshID surface_id {ID_NONE};
+  double max_parent_volume_bump {0.0};
 
   // Device buffers for primitive data
   cuBQL::vec3d* d_vertices {nullptr};
@@ -48,6 +50,7 @@ struct CuBQLSurfaceMesh {
   {
     return {
       surface_id,
+      max_parent_volume_bump,
       d_vertices,
       d_indices,
       d_primitive_ids
