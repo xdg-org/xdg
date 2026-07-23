@@ -16,10 +16,7 @@
 using namespace xdg;
 using namespace xdg::test;
 
-// These tests use "brick.exo".
-// Its classification therefore describes one model volume bounded by six planar
-// model surfaces. If the converted mesh in your test data differs, update the
-// expected counts and ray-fire distances below to match.
+
 
 TEST_CASE("Test Omega_h Initialization") {
   std::unique_ptr<MeshManager> mesh_manager =
@@ -35,10 +32,8 @@ TEST_CASE("Test Omega_h Initialization") {
   REQUIRE(mesh_manager->implicit_complement() != ID_NONE);
 
   // num_ents_of_dimension should agree with the volume and surface counts
-  REQUIRE(mesh_manager->num_ents_of_dimension(3) ==
-          mesh_manager->num_volumes());
-  REQUIRE(mesh_manager->num_ents_of_dimension(2) ==
-          mesh_manager->num_surfaces());
+  REQUIRE(mesh_manager->num_ents_of_dimension(3) == mesh_manager->num_volumes());
+  REQUIRE(mesh_manager->num_ents_of_dimension(2) == mesh_manager->num_surfaces());
 
   // every surface is bounded by the cube volume on its forward side
   MeshID volume = mesh_manager->volumes().front();
@@ -59,17 +54,16 @@ TEST_CASE("Omega_h Volume Elements") {
   MeshID volume = mesh_manager->volumes().front();
   auto elements = mesh_manager->get_volume_elements(volume);
   REQUIRE(!elements.empty());
-  REQUIRE(mesh_manager->num_volume_elements(volume) ==
-          static_cast<int>(elements.size()));
+  REQUIRE(mesh_manager->num_volume_elements(volume) == static_cast<int>(elements.size()));
 
   // the implicit complement holds no elements
-  REQUIRE(mesh_manager->num_volume_elements(
-              mesh_manager->implicit_complement()) == 0);
+  REQUIRE(mesh_manager->num_volume_elements( mesh_manager->implicit_complement()) == 0);
 
   // the global element count is the sum over all volumes and equals the number
   // of regions (tetrahedra) in the mesh
   int total = 0;
-  for (auto v : mesh_manager->volumes()) {
+  for (auto v : mesh_manager->volumes())
+  {
     total += mesh_manager->num_volume_elements(v);
   }
   REQUIRE(mesh_manager->num_volume_elements() == total);
@@ -174,17 +168,23 @@ TEMPLATE_TEST_CASE("Test BVH Build Omega_h", "[omega_h][bvh]",
   mesh_manager->load_file("pincell-implicit.exo");
   mesh_manager->init();
 
+  REQUIRE(mesh_manager->num_volume_elements() == 93170)  ;
   REQUIRE(mesh_manager->num_volumes() == 5);
   REQUIRE(mesh_manager->num_surfaces() == 13);
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
-    check_ray_tracer_supported(
-        rt_backend); // skip if backend not enabled at configuration time
+    check_ray_tracer_supported( rt_backend); // skip if backend not enabled at configuration time
     auto rti = create_raytracer(rt_backend);
 
-    for (const auto &volume : mesh_manager->volumes()) {
+    auto volume_surfaces = mesh_manager->get_volume_surfaces(mesh_manager->volumes().front());
+    std::cout<<"number of surfaces in this volume is "<<volume_surfaces.size();
+
+    // This test fails. I will have to track down the possibly coming from
+    // the way I impelmented get_surface_faces() method
+    for (const auto &volume : mesh_manager->volumes()){
       rti->register_volume(mesh_manager, volume);
     }
+
     REQUIRE(rti->num_registered_trees() == 2);
   }
 }
@@ -240,8 +240,7 @@ TEMPLATE_TEST_CASE("Test Omega_h Find Element Method", "[omega_h][elements]",
 
     MeshID volume = mesh_manager->volumes().front();
 
-    MeshID element = xdg->find_element(
-        volume, {0.0, 0.0, 100.0}); // I will need to fix this one as well
+    MeshID element = xdg->find_element( volume, {0.0, 0.0, 100.0}); // I will need to fix this one as well
     REQUIRE(element == ID_NONE);    // point lies outside the cube
 
     element = xdg->find_element(volume, {0.0, 0.0, 0.0});
@@ -278,10 +277,9 @@ TEST_CASE("Omega_h Element ID and Index Mapping") {
   mesh_manager->load_file("brick.exo");
   mesh_manager->init();
 
-  // Omega_h stores entities in a contiguous, zero-based index space, so IDs
-  and
-      // indices are identical for both elements and vertices
-      size_t num_elements = mesh_manager->num_volume_elements();
+  // Omega_h stores entities in a contiguous, zero-based index space, so IDs and
+  // indices are identical for both elements and vertices
+  size_t num_elements = mesh_manager->num_volume_elements();
   REQUIRE(num_elements > 0);
   for (size_t idx = 0; idx < num_elements; ++idx) {
     MeshID element_id = mesh_manager->element_id(idx);

@@ -126,13 +126,10 @@ void OmegaHMeshManager::determine_surface_senses() {
   // the parent volumes of a surface are the volumes of the regions on either
   // side of its faces. The first region encountered defines the forward sense
   // and the opposing region, if any, defines the reverse sense.
-  auto face_to_region = mesh_->ask_up(OMEGA_H_FACE, OMEGA_H_REGION);
-  auto face_class_dim =
-      mesh_->get_array<Omega_h::I8>(OMEGA_H_FACE, CLASS_DIM_TAG);
-  auto face_class_id =
-      mesh_->get_array<Omega_h::LO>(OMEGA_H_FACE, CLASS_ID_TAG);
-  auto region_class_id =
-      mesh_->get_array<Omega_h::LO>(OMEGA_H_REGION, CLASS_ID_TAG);
+  auto face_to_region  = mesh_->ask_up(OMEGA_H_FACE, OMEGA_H_REGION);
+  auto face_class_dim  = mesh_->get_array<Omega_h::I8>(OMEGA_H_FACE, CLASS_DIM_TAG);
+  auto face_class_id   = mesh_->get_array<Omega_h::LO>(OMEGA_H_FACE, CLASS_ID_TAG);
+  auto region_class_id = mesh_->get_array<Omega_h::LO>(OMEGA_H_REGION, CLASS_ID_TAG);
 
   for (auto surface : surfaces_) {
     surface_senses_[surface] = {ID_NONE, ID_NONE};
@@ -363,5 +360,7 @@ Sense OmegaHMeshManager::surface_sense(MeshID surface, MeshID volume) const {
   auto senses = surface_senses(surface);
   return volume == senses.first ? Sense::FORWARD : Sense::REVERSE;
 }
+
+
 
 } // namespace xdg

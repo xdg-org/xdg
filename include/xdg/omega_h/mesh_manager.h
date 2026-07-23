@@ -39,7 +39,8 @@ public:
 
   void init() override;
 
-  void parse_metadata() override {}
+  // TODO: I will have to implement this one.
+  void parse_metadata() override {};
 
   int num_volumes() const override { return volumes_.size(); }
 
