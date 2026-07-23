@@ -14,6 +14,7 @@ struct SurfaceUserData {
   MeshManager* mesh_manager {nullptr}; //! Pointer to the mesh manager for this geometry
   PrimitiveRef* prim_ref_buffer {nullptr}; //! Pointer to the mesh primitives in the geometry
   double box_bump; //! Bump distance for the bounding boxes in this geometry
+  SurfaceFaceType face_type {SurfaceFaceType::UNKNOWN}; //! Surface element type for this geometry
   MeshID forward_vol {ID_NONE}; // ID of the forward sense volume
   MeshID reverse_vol {ID_NONE}; // ID of the reverse sense volume
 };

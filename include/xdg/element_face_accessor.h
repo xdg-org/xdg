@@ -2,6 +2,7 @@
 #define XDG_ELEMENT_FACE_ACCESSOR_H
 
 #include <memory>
+#include <vector>
 #include "xdg/mesh_manager_interface.h"
 
 namespace xdg {
@@ -24,9 +25,12 @@ namespace xdg {
     static std::shared_ptr<ElementFaceAccessor> create(const MeshManager* mesh_manager, MeshID element);
 
     //! \brief Get the vertices of a face
-    //! \param i The face index (0-3 for tetrahedra)
-    //! \return An array of vertices
-    virtual std::array<Vertex, 3> face_vertices(int i) const = 0;
+    //! \param i The face index
+    //! \return A vector of vertices
+    virtual std::vector<Vertex> face_vertices(int i) const = 0;
+
+    //! \brief Get the number of faces for this element
+    virtual int num_faces() const = 0;
 
     //! \brief Get the element ID
     //! \return The element ID

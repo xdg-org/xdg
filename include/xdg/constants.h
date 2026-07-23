@@ -118,14 +118,34 @@ static Property VOID_MATERIAL {PropertyType::MATERIAL, "void"};
 enum class RayFireType { VOLUME, POINT_CONTAINMENT, ACCUMULATE_HITS, FIND_VOLUME };
 
 // Enumerator for different element types (maybe we want more here?)
-enum class SurfaceElementType {
+enum class SurfaceFaceType {
+  UNKNOWN = -2,
+  UNSUPPORTED = -1,
   TRI = 0,
   QUAD = 1,
 };
 
 enum class VolumeElementType {
+  UNKNOWN = -2,
+  UNSUPPORTED = -1,
   TET = 0,
   HEX = 1,
+};
+
+static const std::map<SurfaceFaceType, std::string> SURFACE_FACE_TYPE_TO_STR =
+{
+  {SurfaceFaceType::UNKNOWN, "UNKNOWN"},
+  {SurfaceFaceType::UNSUPPORTED, "UNSUPPORTED"},
+  {SurfaceFaceType::TRI, "TRI"},
+  {SurfaceFaceType::QUAD, "QUAD"}
+};
+
+static const std::map<VolumeElementType, std::string> VOLUME_ELEMENT_TYPE_TO_STR =
+{
+  {VolumeElementType::UNKNOWN, "UNKNOWN"},
+  {VolumeElementType::UNSUPPORTED, "UNSUPPORTED"},
+  {VolumeElementType::TET, "TET"},
+  {VolumeElementType::HEX, "HEX"}
 };
 
 } // namespace xdg
@@ -145,6 +165,19 @@ struct formatter<xdg::MeshLibrary> : fmt::formatter<std::string> {
   }
 };
 
+template <>
+struct formatter<xdg::SurfaceFaceType> : fmt::formatter<std::string> {
+  auto format(xdg::SurfaceFaceType type, fmt::format_context& ctx) const {
+    return fmt::formatter<std::string>::format(xdg::SURFACE_FACE_TYPE_TO_STR.at(type), ctx);
+  }
+};
+
+template <>
+struct formatter<xdg::VolumeElementType> : fmt::formatter<std::string> {
+  auto format(xdg::VolumeElementType type, fmt::format_context& ctx) const {
+    return fmt::formatter<std::string>::format(xdg::VOLUME_ELEMENT_TYPE_TO_STR.at(type), ctx);
+  }
+};
 
 }
 

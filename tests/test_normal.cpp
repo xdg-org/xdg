@@ -7,14 +7,14 @@
 #include "xdg/primitive_ref.h"
 #include "xdg/xdg.h"
 
-#include "mesh_mock.h"
+#include "mesh_mocks.h"
 #include "xdg/embree/ray_tracer.h"
 
 using namespace xdg;
 
 TEST_CASE("Test Get Normal")
 {
-  std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
+  std::shared_ptr<MeshManager> mm = std::make_shared<MockedTriTetMesh>();
   mm->init(); // this should do nothing, but its good practice to call it
 
   std::shared_ptr<XDG> xdg = std::make_shared<XDG>(mm);

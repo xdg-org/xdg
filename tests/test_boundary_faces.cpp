@@ -15,7 +15,7 @@
 #include "xdg/constants.h"
 #include "xdg/mesh_managers.h"
 
-#include "mesh_mock.h"
+#include "mesh_mocks.h"
 #include "util.h"
 
 using namespace xdg;

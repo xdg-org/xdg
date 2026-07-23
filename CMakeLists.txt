@@ -192,12 +192,16 @@ list(APPEND xdg_sources
 src/geometry/measure.cpp
 src/geometry/plucker.cpp
 src/geometry/closest.cpp
+src/bounding_functions.cpp
 src/error.cpp
+src/intersect_common.cpp
 src/mesh_manager_interface.cpp
 src/ray_tracing_interface.cpp
 src/triangle_intersect.cpp
+src/quadrilateral_intersection.cpp
 src/util/str_utils.cpp
 src/tetrahedron_contain.cpp
+src/hexahedron_contain.cpp
 src/config.cpp
 src/xdg.cpp
 src/element_face_accessor.cpp

@@ -95,7 +95,15 @@ public:
   // TODO: can we accomplish this without allocating memory?
   virtual std::vector<Vertex> element_vertices(MeshID element) const = 0;
 
-  virtual std::array<Vertex, 3> face_vertices(MeshID element) const = 0;
+  //! \brief Get the vertex IDs for a face by its ID
+  //! \param face The face ID
+  //! \return A vector of vertex IDs for the face (size 3 for tri, 4 for quad)
+  virtual std::vector<MeshID> face_vertices(MeshID face) const = 0;
+
+  //! \brief Get the coordinates of the vertices for a face by its ID
+  //! \param face The face ID
+  //! \return A vector of vertex coordinates for the face
+  std::vector<Vertex> face_vertex_coordinates(MeshID face) const;
 
   std::vector<Vertex> get_surface_vertices(MeshID surface) const;
 
@@ -110,7 +118,13 @@ public:
   // Return a vector of connectivity indices for a given surface in the model
   std::vector<int> get_surface_connectivity(MeshID surface) const;
 
-  virtual SurfaceElementType get_surface_element_type(MeshID element) const = 0;
+  virtual SurfaceFaceType get_surface_face_type(MeshID element) const = 0;
+
+  //! \brief Get the volume element type for a given volume
+  //! \note Assumes homogeneous element types within a volume
+  //! \param volume The volume ID
+  //! \return The volumetric element type for the volume
+  virtual VolumeElementType get_volume_element_type(MeshID volume) const = 0;
 
   //! \brief Convert an element's ID to its index in the mesh
   //! \param element_idx The index of the element in the mesh
@@ -126,14 +140,14 @@ public:
 
   //! \brief Get the adjacent element across a given face
   //! \param element The current element ID
-  //! \param face The local face index (0-3 for tetrahedra)
+  //! \param face The local face index
   //! \return The ID of the adjacent element, or ID_NONE if the face is on a boundary
   virtual MeshID adjacent_element(MeshID element, int face) const = 0;
 
   //! \brief Get the volume of a given element
   //! \param element The element ID
   //! \return The volume of the element
-  virtual double element_volume(MeshID element) const = 0;
+  virtual double element_volume(MeshID element) const;
 
   //! \brief Get the coordinates of a vertex by its ID
   //! \param vertex_id The vertex ID
@@ -146,7 +160,7 @@ public:
   //! \return A vector of vertex IDs that make up the element
   virtual
   std::vector<MeshID> element_connectivity(MeshID element) const = 0;
-  
+
   virtual
   std::vector<MeshID> face_connectivity(MeshID face) const = 0;
 
