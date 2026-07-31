@@ -133,7 +133,8 @@ TEST_CASE("XDG batch ray fire matches scalar queries on MeshMock",
   }
 }
 
-TEST_CASE("XDG batch ray fire multi-volume", "[rayfire][batch][cubql]")
+TEST_CASE("XDG batch ray fire multi-volume check full rayhit results", 
+          "[rayfire][batch][cubql]")
 {
   check_ray_tracer_supported(RTLibrary::CUBQL);
 
@@ -211,10 +212,10 @@ TEST_CASE("XDG batch ray fire multi-volume", "[rayfire][batch][cubql]")
                             ray_hits.device_id) == 0);
 
   xdg->free_ray_hits(ray_hits);
-
+  
+  // Loop over each ray and perform a scalar ray_fire to compare against the batch results
   for (std::size_t ray_id = 0; ray_id < host_ray_hits.size(); ++ray_id) {
     const auto& batch_ray_hit = host_ray_hits[ray_id]; // recover rayhit for this ray from batch results
-
     const Position origin {batch_ray_hit.origin[0], batch_ray_hit.origin[1], batch_ray_hit.origin[2]};
     const Direction direction {batch_ray_hit.direction[0], batch_ray_hit.direction[1], batch_ray_hit.direction[2]};
     std::vector<MeshID> last_hit_prim;
@@ -223,7 +224,6 @@ TEST_CASE("XDG batch ray fire multi-volume", "[rayfire][batch][cubql]")
     REQUIRE(scalar_hit.second != ID_NONE);
     REQUIRE(last_hit_prim.size() == 1);
 
-    // Get expected values for this ray from scalar ray_fire and mesh manager for direct comparison against batch ray_fire results
     const MeshID expected_surface = scalar_hit.second;
     const double expected_distance = scalar_hit.first;
     const MeshID expected_primitive = last_hit_prim.back();
@@ -239,14 +239,20 @@ TEST_CASE("XDG batch ray fire multi-volume", "[rayfire][batch][cubql]")
     const auto vertices = mesh_manager->face_vertices(expected_primitive);
     const Direction expected_normal = (vertices[1] - vertices[0]).cross(vertices[2] - vertices[0]);
 
+    // Outputting full rayhit state on failure 
     INFO("ray index: " << ray_id);
-    INFO("volume: " << batch_ray_hit.volume);
+    INFO("input volume: " << batch_ray_hit.volume);
     INFO("origin: " << origin);
     INFO("direction: " << direction);
-    INFO("batch ray hit: surface=" << batch_ray_hit.surface << ", distance=" << std::setprecision(17) << batch_ray_hit.distance);
-    INFO("scalar hit: surface=" << expected_surface << ", distance=" << std::setprecision(17) << expected_distance);
-    INFO("boundary property: " << boundary_property.value);
-    
+    INFO("surface: batch=" << batch_ray_hit.surface << ", scalar=" << expected_surface);
+    INFO("distance: batch=" << std::setprecision(17) << batch_ray_hit.distance << ", scalar=" << expected_distance);
+    INFO("primitive: batch=" << batch_ray_hit.primitive << ", scalar=" << expected_primitive);
+    INFO("point in volume: batch=" << batch_ray_hit.point_in_volume << ", scalar=" << expected_point_in_volume);
+    INFO("next volume: batch=" << batch_ray_hit.next_volume << ", scalar=" << expected_next_volume);
+    INFO("boundary condition: batch=" << batch_ray_hit.boundary_condition << ", scalar=" << expected_boundary_condition << " (" << boundary_property.value << ")");
+    INFO("normal: batch=[" << batch_ray_hit.normal[0] << " " << batch_ray_hit.normal[1] << " " << batch_ray_hit.normal[2] << "], scalar=" << expected_normal);
+
+    // Perform assertions per ray
     REQUIRE(expected_boundary_condition != UNSET);
     REQUIRE(batch_ray_hit.surface == expected_surface);
     REQUIRE_THAT(batch_ray_hit.distance, Catch::Matchers::WithinAbs(expected_distance, tolerance));
