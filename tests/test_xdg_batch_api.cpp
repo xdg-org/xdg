@@ -1,3 +1,4 @@
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <iomanip>
@@ -67,9 +68,9 @@ TEST_CASE("XDG batch ray fire matches scalar queries on MeshMock",
   auto xdg = std::make_shared<XDG>(mesh_manager, RTLibrary::CUBQL);
   xdg->prepare_raytracer();
 
-  const std::size_t batch_sizes[] = {1, 64};
+  const std::size_t batch_sizes[] = {1, 1024};
   for (std::size_t num_rays : batch_sizes) {
-    DYNAMIC_SECTION("N=" << num_rays << " matches scalar")
+    DYNAMIC_SECTION("N=" << num_rays)
     {
       XDGRayHitBuffer ray_hits = xdg->allocate_ray_hits(num_rays);
 
@@ -129,5 +130,132 @@ TEST_CASE("XDG batch ray fire matches scalar queries on MeshMock",
         REQUIRE_THAT(batch_results[ray_id].distance, Catch::Matchers::WithinAbs(scalar_result.first, tolerance));
       }
     }
+  }
+}
+
+TEST_CASE("XDG batch ray fire multi-volume", "[rayfire][batch][cubql]")
+{
+  check_ray_tracer_supported(RTLibrary::CUBQL);
+
+  auto xdg = XDG::create(MeshLibrary::MOAB, RTLibrary::CUBQL);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("pwr_pincell.h5m");
+  mesh_manager->init();
+  mesh_manager->parse_metadata();
+  xdg->prepare_raytracer();
+
+  struct VolumeCase {
+    MeshID volume;
+    Position origin;
+  };
+
+  const std::array<VolumeCase, 3> volume_cases {{
+    {1, {0.0, 0.01, 0.1}},
+    {2, {0.42, 0.01, 0.1}},
+    {3, {0.50, 0.01, 0.1}}
+  }};
+
+  for (const auto& volume_case : volume_cases) {
+    CAPTURE(volume_case.volume, volume_case.origin);
+    REQUIRE(xdg->point_in_volume(volume_case.volume, volume_case.origin));
+  }
+
+  const std::array<Direction, 6> axis_aligned_directions {{
+    {1.0, 0.0, 0.0},
+    {-1.0, 0.0, 0.0},
+    {0.0, 1.0, 0.0},
+    {0.0, -1.0, 0.0},
+    {0.0, 0.0, 1.0},
+    {0.0, 0.0, -1.0}
+  }};
+
+  // Build host-side ray-hit buffer and copy to device to handle every ray in one batch
+  std::vector<XDGRayHit> host_ray_hits;
+  host_ray_hits.reserve(volume_cases.size() * axis_aligned_directions.size());
+
+  for (const auto& direction : axis_aligned_directions) {
+    for (const auto& volume_case : volume_cases) {
+      XDGRayHit ray_hit {};
+      ray_hit.origin[0] = volume_case.origin.x;
+      ray_hit.origin[1] = volume_case.origin.y;
+      ray_hit.origin[2] = volume_case.origin.z;
+      ray_hit.direction[0] = direction.x;
+      ray_hit.direction[1] = direction.y;
+      ray_hit.direction[2] = direction.z;
+      ray_hit.t_min = 0.0;
+      ray_hit.t_max = INFTY;
+      ray_hit.volume = volume_case.volume;
+      ray_hit.last_hit_primitive = ID_NONE;
+      host_ray_hits.push_back(ray_hit);
+    }
+  }
+
+  XDGRayHitBuffer ray_hits = xdg->allocate_ray_hits(host_ray_hits.size());
+  const std::size_t buffer_size = host_ray_hits.size() * sizeof(XDGRayHit);
+  REQUIRE(omp_target_memcpy(ray_hits.data,
+                            host_ray_hits.data(),
+                            buffer_size,
+                            0,
+                            0,
+                            ray_hits.device_id,
+                            omp_get_initial_device()) == 0);
+
+  xdg->ray_fire_batch(ray_hits);
+
+  REQUIRE(omp_target_memcpy(host_ray_hits.data(),
+                            ray_hits.data,
+                            buffer_size,
+                            0,
+                            0,
+                            omp_get_initial_device(),
+                            ray_hits.device_id) == 0);
+
+  xdg->free_ray_hits(ray_hits);
+
+  for (std::size_t ray_id = 0; ray_id < host_ray_hits.size(); ++ray_id) {
+    const auto& batch_ray_hit = host_ray_hits[ray_id]; // recover rayhit for this ray from batch results
+
+    const Position origin {batch_ray_hit.origin[0], batch_ray_hit.origin[1], batch_ray_hit.origin[2]};
+    const Direction direction {batch_ray_hit.direction[0], batch_ray_hit.direction[1], batch_ray_hit.direction[2]};
+    std::vector<MeshID> last_hit_prim;
+    const auto scalar_hit = xdg->ray_fire(batch_ray_hit.volume, origin, direction, INFTY, HitOrientation::EXITING, &last_hit_prim);
+
+    REQUIRE(scalar_hit.second != ID_NONE);
+    REQUIRE(last_hit_prim.size() == 1);
+
+    // Get expected values for this ray from scalar ray_fire and mesh manager for direct comparison against batch ray_fire results
+    const MeshID expected_surface = scalar_hit.second;
+    const double expected_distance = scalar_hit.first;
+    const MeshID expected_primitive = last_hit_prim.back();
+    const PointInVolume expected_point_in_volume = xdg->point_in_volume(batch_ray_hit.volume, origin, &direction) ? INSIDE : OUTSIDE;
+    const MeshID expected_next_volume = mesh_manager->next_volume(batch_ray_hit.volume, expected_surface);
+    const auto boundary_property = mesh_manager->get_surface_property(expected_surface, PropertyType::BOUNDARY_CONDITION);
+    SurfaceBoundaryCondition expected_boundary_condition = UNSET;
+    if (boundary_property.value == "transmission") {
+      expected_boundary_condition = TRANSMISSION;
+    } else if (boundary_property.value == "reflecting") {
+      expected_boundary_condition = REFLECTIVE;
+    }
+    const auto vertices = mesh_manager->face_vertices(expected_primitive);
+    const Direction expected_normal = (vertices[1] - vertices[0]).cross(vertices[2] - vertices[0]);
+
+    INFO("ray index: " << ray_id);
+    INFO("volume: " << batch_ray_hit.volume);
+    INFO("origin: " << origin);
+    INFO("direction: " << direction);
+    INFO("batch ray hit: surface=" << batch_ray_hit.surface << ", distance=" << std::setprecision(17) << batch_ray_hit.distance);
+    INFO("scalar hit: surface=" << expected_surface << ", distance=" << std::setprecision(17) << expected_distance);
+    INFO("boundary property: " << boundary_property.value);
+    
+    REQUIRE(expected_boundary_condition != UNSET);
+    REQUIRE(batch_ray_hit.surface == expected_surface);
+    REQUIRE_THAT(batch_ray_hit.distance, Catch::Matchers::WithinAbs(expected_distance, tolerance));
+    REQUIRE(batch_ray_hit.primitive == expected_primitive);
+    REQUIRE(batch_ray_hit.point_in_volume == expected_point_in_volume);
+    REQUIRE(batch_ray_hit.next_volume == expected_next_volume);
+    REQUIRE(batch_ray_hit.boundary_condition == expected_boundary_condition);
+    REQUIRE_THAT(batch_ray_hit.normal[0], Catch::Matchers::WithinAbs(expected_normal.x, tolerance));
+    REQUIRE_THAT(batch_ray_hit.normal[1], Catch::Matchers::WithinAbs(expected_normal.y, tolerance));
+    REQUIRE_THAT(batch_ray_hit.normal[2], Catch::Matchers::WithinAbs(expected_normal.z, tolerance));
   }
 }
