@@ -39,6 +39,10 @@ if (XDG_ENABLE_MOAB)
     list(APPEND TEST_NAMES test_ray_tracer_cross_check)
 endif()
 
+if (XDG_ENABLE_CUBQL)
+    list(APPEND TEST_NAMES test_xdg_batch_api)
+endif()
+
 if (XDG_ENABLE_MOAB AND XDG_BUILD_TOOLS)
     list(APPEND TEST_NAMES test_overlap_check)
 endif()
