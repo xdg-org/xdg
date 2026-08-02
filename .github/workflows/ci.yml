@@ -223,7 +223,7 @@ jobs:
             if [ -n "$CMAKE_PREFIX_PATH" ]; then
               CMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH;"
             fi
-            CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}$HOME/OMEGA_H; $HOME/SEACAS"
+            CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}$HOME/OMEGA_H;$HOME/SEACAS"
           fi
           cmake .. \
             -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" \
