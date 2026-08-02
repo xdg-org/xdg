@@ -9,6 +9,10 @@
 #include "xdg/libmesh/mesh_manager.h"
 #endif
 
+#ifdef XDG_ENABLE_OMEGA_H
+#include "xdg/omega_h/mesh_manager.h"
+#endif
+
 #include "xdg/testing/mesh_mock.h"
 
 namespace xdg {
@@ -24,6 +28,12 @@ std::shared_ptr<ElementFaceAccessor> ElementFaceAccessor::create(const MeshManag
   if (mesh_manager->mesh_library() == MeshLibrary::LIBMESH) {
     const LibMeshManager* libmesh_mesh_manager = dynamic_cast<const LibMeshManager*>(mesh_manager);
     return std::make_shared<LibMeshElementFaceAccessor>(libmesh_mesh_manager, element);
+  }
+  #endif
+  #ifdef XDG_ENABLE_OMEGA_H
+  if (mesh_manager->mesh_library() == MeshLibrary::OMEGA_H) {
+    const OmegaHMeshManager* omega_h_mesh_manager = dynamic_cast<const OmegaHMeshManager*>(mesh_manager);
+    return std::make_shared<OmegaHElementFaceAccessor>(omega_h_mesh_manager, element);
   }
   #endif
   // for testing

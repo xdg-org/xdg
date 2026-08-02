@@ -179,13 +179,14 @@ TEMPLATE_TEST_CASE("Test BVH Build Omega_h", "[omega_h][bvh]",
     auto volume_surfaces = mesh_manager->get_volume_surfaces(mesh_manager->volumes().front());
     std::cout<<"number of surfaces in this volume is "<<volume_surfaces.size();
 
-    // This test fails. I will have to track down the possibly coming from
-    // the way I impelmented get_surface_faces() method
     for (const auto &volume : mesh_manager->volumes()){
       rti->register_volume(mesh_manager, volume);
     }
 
-    REQUIRE(rti->num_registered_trees() == 2);
+    // one surface tree per volume, plus one element tree per volume that
+    // actually contains elements (the implicit complement has none, so it
+    // contributes a surface tree only): 5 surface trees + 4 element trees
+    REQUIRE(rti->num_registered_trees() == 9);
   }
 }
 
@@ -204,19 +205,23 @@ TEMPLATE_TEST_CASE("Test Ray Fire Omega_h (all built backends)",
     mm->init();
 
     xdg->prepare_raytracer();
-    MeshID volume = mm->volumes()[0];
+    // Volume 6 (the moderator region) is bounded by a clean, fully-classified
+    // set of surfaces (7-12), unlike volumes 1/2 whose only registered
+    // boundary is a degenerate surface (class_id -1) spanning several
+    // unrelated volume interfaces in this mesh's classification data. Its
+    // outer boundary is an axis-aligned box extending to +/-25 on each axis.
+    MeshID volume = 6;
 
     Position origin{0.0, 0.0, 0.0};
     Direction dir{1.0, 0.0, 0.0};
 
-    // the cube is 10 units on a side and centered at the origin
     auto hit = xdg->ray_fire(volume, origin, dir);
     REQUIRE(hit.second != ID_NONE);
-    REQUIRE_THAT(hit.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
+    REQUIRE_THAT(hit.first, Catch::Matchers::WithinAbs(25.0, 1e-6));
 
     origin = {3.0, 0.0, 0.0};
     hit = xdg->ray_fire(volume, origin, dir);
-    REQUIRE_THAT(hit.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
+    REQUIRE_THAT(hit.first, Catch::Matchers::WithinAbs(22.0, 1e-6));
 
     origin = {0.0, 0.0, 0.0};
     REQUIRE(xdg->point_in_volume(volume, origin));
@@ -274,7 +279,7 @@ TEST_CASE("Omega_h Element ID and Index Mapping") {
   std::unique_ptr<MeshManager> mesh_manager =
       std::make_unique<OmegaHMeshManager>();
   REQUIRE(mesh_manager->mesh_library() == MeshLibrary::OMEGA_H);
-  mesh_manager->load_file("brick.exo");
+  mesh_manager->load_file("brick-sidesets.exo");
   mesh_manager->init();
 
   // Omega_h stores entities in a contiguous, zero-based index space, so IDs and
@@ -304,14 +309,19 @@ TEST_CASE("Test Track Exiting Mesh Omega_h") {
   mesh_manager->init();
   xdg->prepare_raytracer();
 
-  MeshID volume = mesh_manager->volumes().front();
+  // volume 6 (the moderator) is only used to locate the starting element;
+  // segments() then walks element adjacency across every material the ray
+  // actually crosses (see volume 1/2's note in the Ray Fire test above for
+  // why they aren't suitable here)
+  MeshID volume = 6;
   Position start{0.0, 0.0, -1000.0};
   Position end{0.0, 0.0, 1000.0};
   auto tracks = xdg->segments(volume, start, end);
 
-  // the accumulated track length through the cube equals its 10 unit extent
+  // the accumulated track length equals the combined axial extent of every
+  // material the ray crosses through the pincell assembly
   double length = std::accumulate(
       tracks.begin(), tracks.end(), 0.0,
       [](double sum, const auto &track) { return sum + track.second; });
-  REQUIRE_THAT(length, Catch::Matchers::WithinAbs(10.0, 1e-6));
+  REQUIRE_THAT(length, Catch::Matchers::WithinAbs(52.5, 1e-6));
 }

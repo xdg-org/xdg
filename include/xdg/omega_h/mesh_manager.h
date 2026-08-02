@@ -138,8 +138,27 @@ private:
   //! \brief Map element and vertex ID spaces into contiguous index spaces
   void map_id_spaces();
 
-  std::unique_ptr<Omega_h::Library> library_;
+  //! \brief Fetch Omega_h's derived adjacencies and coordinate array exactly
+  //! once, single-threaded, and store them as members. Omega_h::Read<>/Adj
+  //! objects are reference-counted handles (Omega_h::SharedAlloc) whose
+  //! copy/destroy operations are NOT thread-safe. Every accessor below reads
+  //! only from these cached members instead of calling mesh_->ask_*()/coords()
+  //! itself, so no Read<>/Adj handle is ever copied or destroyed again after
+  //! init() -- which is what let concurrent Embree bounds-callback threads
+  //! race on Omega_h's internal refcounts and cause a double-free.
+  void cache_derived_arrays();
+
   std::unique_ptr<Omega_h::Mesh> mesh_;
+
+  //! Cached derived arrays/adjacencies (see cache_derived_arrays()). Never
+  //! touch mesh_->ask_*()/coords() anywhere outside of that function -- read
+  //! from these members instead so no Omega_h::Read<>/Adj handle is copied or
+  //! destroyed from more than one thread.
+  Omega_h::Reals coords_;
+  Omega_h::LOs elem_verts_;
+  Omega_h::LOs face_verts_;
+  Omega_h::Adj region_to_face_;
+  Omega_h::Adj face_to_region_;
 
   //! Mapping of surfaces to the volumes on either side. Volumes are ordered
   //! based on their sense with respect to the surface triangles
