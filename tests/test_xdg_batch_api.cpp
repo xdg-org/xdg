@@ -234,8 +234,7 @@ TEST_CASE("XDG batch ray fire multi-volume check full rayhit results",
     } else if (boundary_property.value == "reflecting") {
       expected_boundary_condition = REFLECTIVE;
     }
-    const auto vertices = mesh_manager->face_vertices(expected_primitive);
-    const Direction expected_normal = (vertices[1] - vertices[0]).cross(vertices[2] - vertices[0]);
+    const Direction expected_normal = mesh_manager->face_normal(expected_primitive);
 
     // Outputting full rayhit state on failure 
     INFO("ray index: " << ray_id);
