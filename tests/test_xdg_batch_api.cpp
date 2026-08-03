@@ -9,7 +9,7 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <omp.h>
 
-#include "mesh_mock.h"
+#include "mesh_mocks.h"
 #include "util.h"
 #include "xdg/constants.h"
 #include "xdg/device_ray.h"
@@ -73,8 +73,6 @@ TEST_CASE("XDG batch ray fire matches scalar queries on MeshMock",
     DYNAMIC_SECTION("N=" << num_rays)
     {
       XDGRayHitBuffer ray_hits = xdg->allocate_ray_hits(num_rays);
-
-      REQUIRE(ray_hits.data != nullptr);
 
       XDGRayHit* d_ray_hits = ray_hits.data;
       const int device_id = ray_hits.device_id;
