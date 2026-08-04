@@ -17,35 +17,21 @@
 namespace xdg {
 
 //! \brief Mesh manager backed by the Omega_h simplex mesh library.
-//!
-//! Omega_h tetrahedral meshes carry the geometric model they were generated
-//! from as "class_dim"/"class_id" classification tags on each entity. These
-//! tags map mesh entities onto the volumes (3D model entities) and surfaces
-//! (2D model entities) of the geometry, which is all the topology XDG needs.
-//! When a mesh has no classification, the whole mesh is treated as a single
-//! volume bounded by its exposed faces.
 class OmegaHMeshManager : public MeshManager {
 public:
   OmegaHMeshManager();
 
-  OmegaHMeshManager(const Omega_h::Mesh* mesh);
-
   ~OmegaHMeshManager() override = default;
 
-  // Interface methods
   MeshLibrary mesh_library() const override { return MeshLibrary::OMEGA_H; }
-
   void load_file(const std::string &file_path) override;
-
   void init() override;
 
   // TODO: I will have to implement this one.
   void parse_metadata() override {};
 
   int num_volumes() const override { return volumes_.size(); }
-
   int num_surfaces() const override { return surfaces_.size(); }
-
   int num_ents_of_dimension(int dim) const override {
     switch (dim) {
     case 3:
@@ -94,11 +80,12 @@ public:
   std::array<Vertex, 3> face_vertices(MeshID face) const override;
 
   //! \brief Vertices of a local face of a tetrahedral element
-  std::array<Vertex, 3> element_face_vertices(MeshID element, int local_face) const;
+  std::array<Vertex, 3> element_face_vertices(MeshID element,
+                                              int local_face) const;
 
   SurfaceElementType
   get_surface_element_type(MeshID surface_element_id) const override {
-    // Omega_h simplex meshes always use triangular surface elements
+    // As Omega_h simplex meshes always use triangular surface elements
     return SurfaceElementType::TRI;
   }
 
@@ -106,7 +93,7 @@ public:
 
   double element_volume(MeshID element) const override;
 
-  MeshID create_volume() override;
+  MeshID create_volume() override  { return next_volume_id(); };
 
   void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense,
                              bool overwrite = false) override;
@@ -139,21 +126,12 @@ private:
   void map_id_spaces();
 
   //! \brief Fetch Omega_h's derived adjacencies and coordinate array exactly
-  //! once, single-threaded, and store them as members. Omega_h::Read<>/Adj
-  //! objects are reference-counted handles (Omega_h::SharedAlloc) whose
-  //! copy/destroy operations are NOT thread-safe. Every accessor below reads
-  //! only from these cached members instead of calling mesh_->ask_*()/coords()
-  //! itself, so no Read<>/Adj handle is ever copied or destroyed again after
-  //! init() -- which is what let concurrent Embree bounds-callback threads
-  //! race on Omega_h's internal refcounts and cause a double-free.
+  //! once, single-threaded, and store them as members.
   void cache_derived_arrays();
 
   std::unique_ptr<Omega_h::Mesh> mesh_;
 
-  //! Cached derived arrays/adjacencies (see cache_derived_arrays()). Never
-  //! touch mesh_->ask_*()/coords() anywhere outside of that function -- read
-  //! from these members instead so no Omega_h::Read<>/Adj handle is copied or
-  //! destroyed from more than one thread.
+  //! Cached derived arrays/adjacencies
   Omega_h::Reals coords_;
   Omega_h::LOs elem_verts_;
   Omega_h::LOs face_verts_;

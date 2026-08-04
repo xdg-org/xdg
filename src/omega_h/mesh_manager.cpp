@@ -23,19 +23,12 @@ static constexpr int CLASS_DIM_VOLUME = 3;
 
 // Classification tag names written by Omega_h
 static constexpr const char *CLASS_DIM_TAG = "class_dim";
-static constexpr const char *CLASS_ID_TAG  = "class_id";
+static constexpr const char *CLASS_ID_TAG = "class_id";
 
 static constexpr int VERTS_PER_TET = 4;
 static constexpr int VERTS_PER_TRI = 3;
 static constexpr int FACES_PER_TET = 4;
 
-// Omega_h's canonical tet local-face -> local-vertex template (elem_dim=3,
-// bdry_dim=2 case of simplex_down_template() in Omega_h_simplex.hpp). Indexing
-// an element's own vertex connectivity with this table always yields a
-// winding whose normal points outward from that specific element -- the
-// element's own natural vertex order alone does not, since a face's global
-// (face->vertex) order is only outward-facing for one of its (up to two)
-// adjacent elements.
 static constexpr int kLocalFaceVerts[FACES_PER_TET][VERTS_PER_TRI] = {
     {0, 2, 1}, {0, 1, 3}, {1, 2, 3}, {2, 0, 3}};
 
@@ -44,30 +37,21 @@ static constexpr int kLocalFaceVerts[FACES_PER_TET][VERTS_PER_TRI] = {
 namespace {
 // Omega_h::Library wraps process-wide MPI/Kokkos init and finalize calls and
 // must only be constructed once per process -- Kokkos aborts (and corrupts
-// its allocator state) if initialized more than once. Share a single,
-// lazily-constructed instance across every OmegaHMeshManager rather than
-// creating one per manager, since Catch2 constructs a fresh manager in
-// nearly every TEST_CASE.
-Omega_h::Library& shared_omega_h_library() {
+// its allocator state) if initialized more than once.
+Omega_h::Library &shared_omega_h_library() {
   static Omega_h::Library lib(nullptr, nullptr);
   return lib;
 }
 } // namespace
 
-OmegaHMeshManager::OmegaHMeshManager(const Omega_h::Mesh* mesh) {
-  // I will rewrite this method later
-  mesh_ = std::make_unique<Omega_h::Mesh>(&shared_omega_h_library());
-}
 OmegaHMeshManager::OmegaHMeshManager() {
   mesh_ = std::make_unique<Omega_h::Mesh>(&shared_omega_h_library());
 }
 
-
-void OmegaHMeshManager::load_file(const std::string &file_path)
-{
-    const int exodus_file = Omega_h::exodus::open(file_path);
-    Omega_h::exodus::read_mesh(exodus_file, mesh_.get());
-    Omega_h::exodus::close(exodus_file);
+void OmegaHMeshManager::load_file(const std::string &file_path) {
+  const int exodus_file = Omega_h::exodus::open(file_path);
+  Omega_h::exodus::read_mesh(exodus_file, mesh_.get());
+  Omega_h::exodus::close(exodus_file);
 }
 
 void OmegaHMeshManager::init() {
@@ -79,14 +63,13 @@ void OmegaHMeshManager::init() {
   // in Omega_h the regions are 3D simplices or aka elements
   num_elements_ = mesh_->nregions();
 
-  // Fetch every derived array/adjacency this class needs exactly once, here,
-  // single-threaded. See the member declarations in the header for why: it
-  // is not safe to call mesh_->ask_*()/coords() again after this point.
+  // We should cache all necessary derived objects as rediscovering those thing
+  // during run time causes performance penalties.
   cache_derived_arrays();
 
   // a classified mesh defines its volumes and surfaces directly through the
-  // class_dim/class_id tags. Otherwise, treat the entire mesh as a single volume
-  // bounded by its exposed faces.
+  // class_dim/class_id tags. Otherwise, treat the entire mesh as a single
+  // volume bounded by its exposed faces.
   if (has_classification()) {
     discover_geometry();
     determine_surface_senses();
@@ -102,19 +85,6 @@ void OmegaHMeshManager::init() {
 }
 
 void OmegaHMeshManager::cache_derived_arrays() {
-  // Omega_h::Read<>/Adj objects are reference-counted handles
-  // (Omega_h::SharedAlloc) whose copy/destroy operations are NOT
-  // thread-safe. Ray tracer BVH builds (e.g. Embree with RTC_BUILD_QUALITY_HIGH)
-  // invoke element_connectivity()/face_connectivity()/vertex_coordinates()/
-  // element_face_vertices()/adjacent_element() from many worker threads in
-  // parallel via their bounds/intersect callbacks. Those methods used to call
-  // mesh_->ask_elem_verts()/ask_verts_of()/ask_down()/ask_up()/coords()
-  // directly, which copies Omega_h's internally cached shared array into a
-  // new Read<>/Adj handle on every single call -- racing the refcount of the
-  // underlying SharedAlloc across threads and causing a double-free once two
-  // threads both drop it to zero. Fetching each array exactly once here and
-  // reading only from these members afterward means no Read<>/Adj handle is
-  // ever copied or destroyed from more than one thread.
   coords_ = mesh_->coords();
   elem_verts_ = mesh_->ask_elem_verts();
   face_verts_ = mesh_->ask_verts_of(OMEGA_H_FACE);
@@ -131,8 +101,10 @@ bool OmegaHMeshManager::has_classification() const {
 
 void OmegaHMeshManager::discover_geometry() {
   // volumes are the unique class IDs of regions classified on a 3D model entity
-  auto region_class_dim = mesh_->get_array<Omega_h::I8>(OMEGA_H_REGION, CLASS_DIM_TAG);
-  auto region_class_id = mesh_->get_array<Omega_h::LO>(OMEGA_H_REGION, CLASS_ID_TAG);
+  auto region_class_dim =
+      mesh_->get_array<Omega_h::I8>(OMEGA_H_REGION, CLASS_DIM_TAG);
+  auto region_class_id =
+      mesh_->get_array<Omega_h::LO>(OMEGA_H_REGION, CLASS_ID_TAG);
 
   std::set<MeshID> volume_ids;
   for (Omega_h::LO region = 0; region < mesh_->nregions(); ++region) {
@@ -150,9 +122,8 @@ void OmegaHMeshManager::discover_geometry() {
 
   std::set<MeshID> surface_ids;
   for (Omega_h::LO face = 0; face < mesh_->nfaces(); ++face) {
-    if (face_class_dim.get(face) == CLASS_DIM_SURFACE) {
+    if (face_class_dim.get(face) == CLASS_DIM_SURFACE)
       surface_ids.insert(static_cast<MeshID>(face_class_id.get(face)));
-    }
   }
   surfaces_.assign(surface_ids.begin(), surface_ids.end());
 }
@@ -168,16 +139,7 @@ void OmegaHMeshManager::discover_single_volume() {
 }
 
 void OmegaHMeshManager::determine_surface_senses() {
-  // The parent volumes of a surface are the volumes of the regions on either
-  // side of its faces. Which region is "forward" vs "reverse" isn't just a
-  // matter of adjacency order: face_vertices()/face_normal() (used by the ray
-  // tracer) always return a face's fixed global winding, which only points
-  // outward from ONE of its (up to two) adjacent regions -- the other sees
-  // an inward-pointing normal that the ray tracer flips based on this
-  // forward/reverse assignment (see EmbreeRayTracer::register_surface() and
-  // TriangleIntersectionFunc()). So the region whose canonical outward local
-  // face winding (see kLocalFaceVerts) matches the face's actual global
-  // winding must be recorded as "forward"; the other, if any, as "reverse".
+  
   auto face_class_dim  = mesh_->get_array<Omega_h::I8>(OMEGA_H_FACE, CLASS_DIM_TAG);
   auto face_class_id   = mesh_->get_array<Omega_h::LO>(OMEGA_H_FACE, CLASS_ID_TAG);
   auto region_class_id = mesh_->get_array<Omega_h::LO>(OMEGA_H_REGION, CLASS_ID_TAG);
@@ -187,16 +149,17 @@ void OmegaHMeshManager::determine_surface_senses() {
   }
 
   for (Omega_h::LO face = 0; face < mesh_->nfaces(); ++face) {
-    if (face_class_dim.get(face) != CLASS_DIM_SURFACE) {
+    if (face_class_dim.get(face) != CLASS_DIM_SURFACE)
       continue;
-    }
+
     MeshID surface = static_cast<MeshID>(face_class_id.get(face));
     auto &senses = surface_senses_[surface];
 
-    Omega_h::LO fbase = face * VERTS_PER_TRI;
+    Omega_h::LO f_base = face * VERTS_PER_TRI;
     std::array<Omega_h::LO, VERTS_PER_TRI> natural_order = {
-        face_verts_.get(fbase + 0), face_verts_.get(fbase + 1),
-        face_verts_.get(fbase + 2)};
+      face_verts_.get(f_base + 0), face_verts_.get(f_base + 1),
+        face_verts_.get(f_base + 2)
+    };
 
     Omega_h::LO begin = face_to_region_.a2ab.get(face);
     Omega_h::LO end = face_to_region_.a2ab.get(face + 1);
@@ -217,14 +180,17 @@ void OmegaHMeshManager::determine_surface_senses() {
       Omega_h::LO ebase = region * VERTS_PER_TET;
       std::array<Omega_h::LO, VERTS_PER_TRI> outward_order;
       for (int i = 0; i < VERTS_PER_TRI; ++i) {
-        outward_order[i] = elem_verts_.get(ebase + kLocalFaceVerts[local_face][i]);
+        outward_order[i] =
+            elem_verts_.get(ebase + kLocalFaceVerts[local_face][i]);
       }
 
       // the two possible windings of 3 vertices are cyclic rotations of
       // either `outward_order` or its reverse; find where outward_order[0]
       // falls in natural_order and compare the next element to tell them apart
       int rot = 0;
-      while (natural_order[rot] != outward_order[0]) ++rot;
+      while (natural_order[rot] != outward_order[0]) {
+        ++rot;
+      }
       bool is_outward = natural_order[(rot + 1) % VERTS_PER_TRI] == outward_order[1];
 
       // Only assign each slot once: a well-formed surface's every face
@@ -234,9 +200,11 @@ void OmegaHMeshManager::determine_surface_senses() {
       // interface); for those, keep whichever pair of volumes was recorded
       // first rather than letting later faces keep overwriting the senses.
       if (is_outward) {
-        if (senses.first == ID_NONE) senses.first = volume;
+        if (senses.first == ID_NONE)
+          senses.first = volume;
       } else {
-        if (senses.second == ID_NONE && senses.first != volume) senses.second = volume;
+        if (senses.second == ID_NONE && senses.first != volume)
+          senses.second = volume;
       }
     }
   }
@@ -253,8 +221,6 @@ void OmegaHMeshManager::map_id_spaces() {
   std::iota(vertex_ids.begin(), vertex_ids.end(), 0);
   vertex_id_map_ = IDBlockMapping<MeshID>(vertex_ids);
 }
-
-MeshID OmegaHMeshManager::create_volume() { return next_volume_id(); }
 
 void OmegaHMeshManager::add_surface_to_volume(MeshID volume, MeshID surface,
                                               Sense sense, bool overwrite) {
@@ -386,7 +352,8 @@ OmegaHMeshManager::element_face_vertices(MeshID element, int local_face) const {
   auto connectivity = element_connectivity(element);
   std::array<Vertex, 3> vertices;
   for (int i = 0; i < VERTS_PER_TRI; ++i) {
-    vertices[i] = vertex_coordinates(connectivity[kLocalFaceVerts[local_face][i]]);
+    vertices[i] =
+        vertex_coordinates(connectivity[kLocalFaceVerts[local_face][i]]);
   }
   return vertices;
 }
@@ -439,7 +406,5 @@ Sense OmegaHMeshManager::surface_sense(MeshID surface, MeshID volume) const {
   auto senses = surface_senses(surface);
   return volume == senses.first ? Sense::FORWARD : Sense::REVERSE;
 }
-
-
 
 } // namespace xdg

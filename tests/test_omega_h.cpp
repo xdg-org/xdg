@@ -141,14 +141,16 @@ TEST_CASE("Omega_h Adjacency") {
   for (auto element : mesh_manager->get_volume_elements(volume)) {
     for (int face = 0; face < faces_per_tet; ++face) {
       MeshID neighbor = mesh_manager->adjacent_element(element, face);
-      // a neighbor is either another element or a boundary (ID_NONE), but never
-      // the element itself
+      // a neighbor is either another element or a boundary (ID_NONE), but never the element itself
       REQUIRE(neighbor != element);
-      if (neighbor != ID_NONE) {
+      if (neighbor != ID_NONE)
+      {
         // adjacency is symmetric: the neighbor must list this element back
         bool reciprocal = false;
-        for (int j = 0; j < faces_per_tet; ++j) {
-          if (mesh_manager->adjacent_element(neighbor, j) == element) {
+        for (int j = 0; j < faces_per_tet; ++j)
+        {
+          if (mesh_manager->adjacent_element(neighbor, j) == element)
+          {
             reciprocal = true;
             break;
           }
@@ -195,8 +197,7 @@ TEMPLATE_TEST_CASE("Test Ray Fire Omega_h (all built backends)",
   constexpr auto rt_backend = TestType::value;
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
-    check_ray_tracer_supported(
-        rt_backend); // skip if backend not enabled at configuration time
+    check_ray_tracer_supported( rt_backend); // skip if backend not enabled at configuration time
     auto xdg = XDG::create(MeshLibrary::OMEGA_H, rt_backend);
     REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::OMEGA_H);
 
@@ -205,11 +206,6 @@ TEMPLATE_TEST_CASE("Test Ray Fire Omega_h (all built backends)",
     mm->init();
 
     xdg->prepare_raytracer();
-    // Volume 6 (the moderator region) is bounded by a clean, fully-classified
-    // set of surfaces (7-12), unlike volumes 1/2 whose only registered
-    // boundary is a degenerate surface (class_id -1) spanning several
-    // unrelated volume interfaces in this mesh's classification data. Its
-    // outer boundary is an axis-aligned box extending to +/-25 on each axis.
     MeshID volume = 6;
 
     Position origin{0.0, 0.0, 0.0};
@@ -234,10 +230,10 @@ TEMPLATE_TEST_CASE("Test Omega_h Find Element Method", "[omega_h][elements]",
   constexpr auto rt_backend = TestType::value;
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
-    check_ray_tracer_supported(
-        rt_backend); // skip if backend not enabled at configuration time
+    check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
     std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::OMEGA_H, rt_backend);
     REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::OMEGA_H);
+
     const auto &mesh_manager = xdg->mesh_manager();
     mesh_manager->load_file("pincell-implicit.exo");
     mesh_manager->init();
@@ -274,7 +270,8 @@ TEMPLATE_TEST_CASE("Test Omega_h Find Element Method", "[omega_h][elements]",
   }
 }
 
-TEST_CASE("Omega_h Element ID and Index Mapping") {
+TEST_CASE("Omega_h Element ID and Index Mapping")
+{
   // Gold values for this test needs to be fixed. I will do that later.
   std::unique_ptr<MeshManager> mesh_manager =
       std::make_unique<OmegaHMeshManager>();
@@ -309,10 +306,6 @@ TEST_CASE("Test Track Exiting Mesh Omega_h") {
   mesh_manager->init();
   xdg->prepare_raytracer();
 
-  // volume 6 (the moderator) is only used to locate the starting element;
-  // segments() then walks element adjacency across every material the ray
-  // actually crosses (see volume 1/2's note in the Ray Fire test above for
-  // why they aren't suitable here)
   MeshID volume = 6;
   Position start{0.0, 0.0, -1000.0};
   Position end{0.0, 0.0, 1000.0};
