@@ -24,7 +24,7 @@ GPRTRayTracer::GPRTRayTracer()
 
   setup_shaders();
 
-  
+
   // Bind the buffers to the RayGenData structure
   dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGenPrograms_.at(RayGenType::RAY_FIRE));
   rayGenData->ray = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
@@ -42,7 +42,7 @@ GPRTRayTracer::GPRTRayTracer()
 GPRTRayTracer::~GPRTRayTracer()
 {
   // Ensure all GPU operations are complete before destroying resources
-  gprtGraphicsSynchronize(context_); 
+  gprtGraphicsSynchronize(context_);
   gprtComputeSynchronize(context_);
 
 
@@ -99,11 +99,11 @@ void GPRTRayTracer::setup_shaders()
   gprtGeomTypeSetIntersectionProg(trianglesGeomType_, 0, module_, "DPTrianglePluckerIntersection"); // set intersection program for double precision rays
 }
 
-void GPRTRayTracer::init() 
+void GPRTRayTracer::init()
 {
   // Build the shader binding table (SBT) after all shader programs and acceleration structures are set up
   gprtBuildShaderBindingTable(context_, GPRT_SBT_ALL);
-  // Note that should we need to update any shaders or acceleration structures, we must rebuild the SBT  
+  // Note that should we need to update any shaders or acceleration structures, we must rebuild the SBT
 }
 
 std::pair<TreeID,TreeID>
@@ -112,7 +112,7 @@ GPRTRayTracer::register_volume(const std::shared_ptr<MeshManager>& mesh_manager,
   // set up ray tracing tree for boundary faces of the volume
   TreeID faces_tree = create_surface_tree(mesh_manager, volume_id);
   // set up point location tree for any volumetric elements. TODO - currently not supported with GPRT
-  TreeID element_tree = create_element_tree(mesh_manager, volume_id); 
+  TreeID element_tree = create_element_tree(mesh_manager, volume_id);
   return {faces_tree, element_tree}; // return TREE_NONE for element tree until implmemented
 }
 
@@ -128,6 +128,11 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
   for (const auto &surf : volume_surfaces) {
     GPRTGeomOf<DPTriangleGeomData> surfaceGeometry;
     GPRTAccel blas = nullptr;
+
+    if (mesh_manager->get_surface_face_type(surf) == SurfaceFaceType::QUAD) {
+      fatal_error("GPRT quad intersection not implemented (surface {})", surf);
+    }
+
     DPTriangleGeomData* geom_data = nullptr;
     auto [forward_parent, reverse_parent] = mesh_manager->get_parent_volumes(surf);
     auto max_parent_bbox_bump = std::max(bounding_box_bump(mesh_manager, forward_parent),
@@ -158,7 +163,7 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
     gprt::Instance instance = gprtAccelGetInstance(blas);
     instance.mask = 0xff; // mask can be used to filter instances during ray traversal. 0xff ensures no filtering
     surfaceBlasInstances.push_back(instance);
-    
+
     // Always update per-volume info
     if (volume_id == forward_parent) {
       geom_data->forward_vol = forward_parent;
@@ -177,7 +182,7 @@ GPRTRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_mana
   gprtAccelBuild(context_, volume_tlas, buildParams_);
   surface_volume_tree_to_accel_map[tree] = volume_tlas;
   surface_tree_to_instance_buffer_map_[tree] = instanceBuffer;
-  
+
   return tree;
 }
 
@@ -225,7 +230,7 @@ GPRTRayTracer::register_surface(const std::shared_ptr<MeshManager>& mesh_manager
   surface_buffers.aabbs = gprtDeviceBufferCreate<float3>(context_, 2*num_faces, 0); // AABBs for each triangle
   gprtAABBsSetPositions(triangleGeom, surface_buffers.aabbs, num_faces, 2*sizeof(float3), 0);
   surface_buffers.connectivity = gprtDeviceBufferCreate<uint3>(context_, ui3Indices.size(), ui3Indices.data());
-  surface_buffers.normals = gprtDeviceBufferCreate<double3>(context_, num_faces, normals.data()); 
+  surface_buffers.normals = gprtDeviceBufferCreate<double3>(context_, num_faces, normals.data());
   surface_buffers.primitive_refs = gprtDeviceBufferCreate<GPRTPrimitiveRef>(context_, num_faces, primitive_refs.data()); // Buffer for primitive sense
 
   // Set user data for the triangle geometry
@@ -256,7 +261,7 @@ GPRTRayTracer::create_element_tree(const std::shared_ptr<MeshManager>& mesh_mana
   return TREE_NONE;
 };
 
-bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree, 
+bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree,
                                     const Position& point,
                                     const Direction* direction,
                                     const std::vector<MeshID>* exclude_primitives) const
@@ -266,12 +271,12 @@ bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree,
   dblRayGenData* rayGenPIVData = gprtRayGenGetParameters(rayGen);
 
   // Use provided direction or if Direction == nulptr use default direction
-  Direction directionUsed = (direction != nullptr) ? Direction{direction->x, direction->y, direction->z} 
+  Direction directionUsed = (direction != nullptr) ? Direction{direction->x, direction->y, direction->z}
                             : Direction{1. / std::sqrt(2.0), 1. / std::sqrt(2.0), 0.0};
 
   gprtBufferMap(rayHitBuffers_.ray); // Update the ray input buffer
   dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
-  ray[0].volume_accel = gprtAccelGetDeviceAddress(volume); 
+  ray[0].volume_accel = gprtAccelGetDeviceAddress(volume);
   ray[0].origin = {point.x, point.y, point.z};
   ray[0].direction = {directionUsed.x, directionUsed.y, directionUsed.z};
   ray[0].tMax = INFTY; // Set a large distance limit
@@ -287,7 +292,7 @@ bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree,
 
     ray[0].exclude_primitives = gprtBufferGetDevicePointer(excludePrimitivesBuffer_);
     ray[0].exclude_count = exclude_primitives->size();
-  } 
+  }
   else {
     // If no primitives are excluded, set the pointer to null and count to 0
     ray[0].exclude_primitives = nullptr;
@@ -304,7 +309,7 @@ bool GPRTRayTracer::point_in_volume(SurfaceTreeID tree,
   auto surface = hit[0].surf_id;
   auto piv = hit[0].piv; // Point in volume check result
   gprtBufferUnmap(rayHitBuffers_.hit); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
-  
+
   // if ray hit nothing, the point is outside volume
   if (surface == ID_NONE) return false;
 
@@ -320,12 +325,12 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
                                                   const Direction& direction,
                                                   double dist_limit,
                                                   HitOrientation orientation,
-                                                  std::vector<MeshID>* const exclude_primitives) 
+                                                  std::vector<MeshID>* const exclude_primitives)
 {
   GPRTAccel volume = surface_volume_tree_to_accel_map.at(tree);
   auto rayGen = rayGenPrograms_.at(RayGenType::RAY_FIRE);
   dblRayGenData* rayGenData = gprtRayGenGetParameters(rayGen);
-  
+
   gprtBufferMap(rayHitBuffers_.ray); // Update the ray input buffer
   dblRay* ray = gprtBufferGetHostPointer(rayHitBuffers_.ray);
   ray[0].volume_accel = gprtAccelGetDeviceAddress(volume);
@@ -344,17 +349,17 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
 
     ray[0].exclude_primitives = gprtBufferGetDevicePointer(excludePrimitivesBuffer_);
     ray[0].exclude_count = exclude_primitives->size();
-  } 
+  }
   else {
     // If no primitives are excluded, set the pointer to null and count to 0
     ray[0].exclude_primitives = nullptr;
     ray[0].exclude_count = 0;
   }
   gprtBufferUnmap(rayHitBuffers_.ray); // required to sync buffer back on GPU?
-  
+
   gprtRayGenLaunch1D(context_, rayGen, 1); // Launch raygen shader (entry point to RT pipeline)
   gprtGraphicsSynchronize(context_); // Ensure all GPU operations are complete before returning control flow to CPU
-                                                  
+
   // Retrieve the hit from the dblHit buffer
   gprtBufferMap(rayHitBuffers_.hit);
   dblHit* hit = gprtBufferGetHostPointer(rayHitBuffers_.hit);
@@ -362,14 +367,14 @@ std::pair<double, MeshID> GPRTRayTracer::ray_fire(SurfaceTreeID tree,
   auto surface = hit[0].surf_id;
   auto primitive_id = hit[0].primitive_id;
   gprtBufferUnmap(rayHitBuffers_.hit); // required to sync buffer back on GPU? Maybe this second unmap isn't actually needed since we dont need to resyncrhonize after retrieving the data from device
-  
+
   if (surface == ID_NONE)
     return {INFTY, ID_NONE};
   else
     if (exclude_primitives) exclude_primitives->push_back(primitive_id);
   return {distance, surface};
 }
-                
+
 void GPRTRayTracer::create_global_surface_tree()
 {
   // Create a TLAS (Top-Level Acceleration Structure) for all the volumes
@@ -387,10 +392,10 @@ void GPRTRayTracer::create_global_surface_tree()
 
   SurfaceTreeID tree = next_surface_tree_id();
   surface_trees_.push_back(tree);
-  surface_volume_tree_to_accel_map[tree] = global_accel;  
+  surface_volume_tree_to_accel_map[tree] = global_accel;
   surface_tree_to_instance_buffer_map_[tree] = globalBuffer;
   global_surface_tree_ = tree;
-  global_surface_accel_ = global_accel; 
+  global_surface_accel_ = global_accel;
 }
 
 void GPRTRayTracer::check_ray_buffer_capacity(size_t N)
@@ -404,10 +409,10 @@ void GPRTRayTracer::check_ray_buffer_capacity(size_t N)
   gprtBufferResize(context_, rayHitBuffers_.hit, newCapacity, false);
   rayHitBuffers_.capacity = newCapacity;
 
-  // Since we have resized the ray buffers, we need to update the geom_data->rayIn pointers in all geometries too 
+  // Since we have resized the ray buffers, we need to update the geom_data->rayIn pointers in all geometries too
   for (auto const& [surf, geom] : surface_to_geometry_map_) {
     DPTriangleGeomData* geom_data = gprtGeomGetParameters(geom);
-    geom_data->ray = gprtBufferGetDevicePointer(rayHitBuffers_.ray); 
+    geom_data->ray = gprtBufferGetDevicePointer(rayHitBuffers_.ray);
   }
 
   // Update raygen data pointers

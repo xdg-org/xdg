@@ -1,8 +1,11 @@
 #include "xdg/embree/ray_tracer.h"
 #include "xdg/error.h"
 #include "xdg/geometry_data.h"
+#include "xdg/quadrilateral_intersection.h"
+#include "xdg/bounding_functions.h"
 #include "xdg/ray.h"
 #include "xdg/tetrahedron_contain.h"
+#include "xdg/hexahedron_contain.h"
 
 
 namespace xdg {
@@ -132,13 +135,21 @@ EmbreeRayTracer::register_surface(const std::shared_ptr<MeshManager>& mesh_manag
   surface_data->surface_id = surface;
   surface_data->mesh_manager = mesh_manager.get();
   surface_data->prim_ref_buffer = tri_ref_ptr + storage_offset;
+  surface_data->face_type = mesh_manager->get_surface_face_type(surface);
   surface_user_data_map_[surface_geometry] = surface_data;
   rtcSetGeometryUserData(surface_geometry, surface_data.get());
 
   // Set RTC callbacks
-  rtcSetGeometryBoundsFunction(surface_geometry, (RTCBoundsFunction)&TriangleBoundsFunc, nullptr);
-  rtcSetGeometryIntersectFunction(surface_geometry, (RTCIntersectFunctionN)&TriangleIntersectionFunc);
-  rtcSetGeometryOccludedFunction(surface_geometry, (RTCOccludedFunctionN)&TriangleOcclusionFunc);
+  rtcSetGeometryBoundsFunction(surface_geometry, (RTCBoundsFunction)&SurfaceFaceBoundsFunc, nullptr);
+  if (surface_data->face_type == SurfaceFaceType::TRI) {
+    rtcSetGeometryIntersectFunction(surface_geometry, (RTCIntersectFunctionN)&TriangleIntersectionFunc);
+    rtcSetGeometryOccludedFunction(surface_geometry, (RTCOccludedFunctionN)&TriangleOcclusionFunc);
+  } else if (surface_data->face_type == SurfaceFaceType::QUAD) {
+    rtcSetGeometryIntersectFunction(surface_geometry, (RTCIntersectFunctionN)&QuadIntersectionFunction);
+    rtcSetGeometryOccludedFunction(surface_geometry, (RTCOccludedFunctionN)&QuadOcclusionFunction);
+  } else {
+    fatal_error("Unsupported surface element type for surface {}", surface);
+  }
   rtcCommitGeometry(surface_geometry);
 
   // increment storage offset by number of faces in this surface
@@ -176,8 +187,18 @@ EmbreeRayTracer::create_element_tree(const std::shared_ptr<MeshManager>& mesh_ma
   rtcSetGeometryUserData(element_geometry, volume_elements_data.get());
 
   rtcSetGeometryBoundsFunction(element_geometry, (RTCBoundsFunction)&VolumeElementBoundsFunc, nullptr);
-  rtcSetGeometryIntersectFunction(element_geometry, (RTCIntersectFunctionN)&TetrahedronIntersectionFunc);
-  rtcSetGeometryOccludedFunction(element_geometry, (RTCOccludedFunctionN)&TetrahedronOcclusionFunc);
+  switch (mesh_manager->get_volume_element_type(volume)) {
+    case VolumeElementType::TET:
+      rtcSetGeometryIntersectFunction(element_geometry, (RTCIntersectFunctionN)&TetrahedronIntersectionFunc);
+      rtcSetGeometryOccludedFunction(element_geometry, (RTCOccludedFunctionN)&TetrahedronOcclusionFunc);
+      break;
+    case VolumeElementType::HEX:
+      rtcSetGeometryIntersectFunction(element_geometry, (RTCIntersectFunctionN)&HexahedronIntersectionFunc);
+      rtcSetGeometryOccludedFunction(element_geometry, (RTCOccludedFunctionN)&HexahedronOcclusionFunc);
+      break;
+    default:
+      fatal_error("Unsupported volume element type for volume {}", volume);
+  }
 
   rtcCommitGeometry(element_geometry);
   rtcCommitScene(volume_element_scene);
@@ -336,7 +357,7 @@ std::pair<double, MeshID> EmbreeRayTracer::closest(SurfaceTreeID tree,
   RTCPointQueryContext context;
   rtcInitPointQueryContext(&context);
 
-  rtcPointQuery(scene, &query, &context, (RTCPointQueryFunction)&TriangleClosestFunc, &scene);
+  rtcPointQuery(scene, &query, &context, (RTCPointQueryFunction)&SurfaceClosestFunc, &scene);
 
   if (query.geomID == RTC_INVALID_GEOMETRY_ID) {
     return {INFTY, ID_NONE};

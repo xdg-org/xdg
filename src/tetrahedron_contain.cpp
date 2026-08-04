@@ -8,11 +8,11 @@
 namespace xdg
 {
 
-bool plucker_tet_containment_test(const Position& point,
-                                  const Position& v0,
-                                  const Position& v1,
-                                  const Position& v2,
-                                  const Position& v3) {
+bool tet_containment_test(const Position& point,
+                          const Position& v0,
+                          const Position& v1,
+                          const Position& v2,
+                          const Position& v3) {
     using namespace linalg::aliases;
     // Create matrix T = [v1 - v0, v2 - v0, v3 - v0]
     Vec3da e0 = v1 - v0;
@@ -44,23 +44,6 @@ bool plucker_tet_containment_test(const Position& point,
 
 // Embree callbacks
 
-void VolumeElementBoundsFunc(RTCBoundsFunctionArguments* args)
-{
-  const VolumeElementsUserData* user_data = (const VolumeElementsUserData*)args->geometryUserPtr;
-  const MeshManager* mesh_manager = user_data->mesh_manager;
-
-  const PrimitiveRef& primitive_ref = user_data->prim_ref_buffer[args->primID];
-
-  BoundingBox bounds = mesh_manager->element_bounding_box(primitive_ref.primitive_id);
-  double bump = bounds.dilation();
-
-  args->bounds_o->lower_x = bounds.min_x - bump;
-  args->bounds_o->lower_y = bounds.min_y - bump;
-  args->bounds_o->lower_z = bounds.min_z - bump;
-  args->bounds_o->upper_x = bounds.max_x + bump;
-  args->bounds_o->upper_y = bounds.max_y + bump;
-  args->bounds_o->upper_z = bounds.max_z + bump;
-}
 
 void TetrahedronIntersectionFunc(RTCIntersectFunctionNArguments* args) {
   const VolumeElementsUserData* user_data = (const VolumeElementsUserData*)args->geometryUserPtr;
@@ -77,7 +60,7 @@ void TetrahedronIntersectionFunc(RTCIntersectFunctionNArguments* args) {
   Position ray_origin = {ray.dorg[0], ray.dorg[1], ray.dorg[2]};
 
   // check the containment of the point
-  bool inside = plucker_tet_containment_test(ray_origin, vertices[0], vertices[1], vertices[2], vertices[3]);
+  bool inside = tet_containment_test(ray_origin, vertices[0], vertices[1], vertices[2], vertices[3]);
 
   if (!inside) return;
   // zero out the hit information
@@ -104,7 +87,7 @@ void TetrahedronOcclusionFunc(RTCOccludedFunctionNArguments* args)
   Position ray_origin = {ray->dorg[0], ray->dorg[1], ray->dorg[2]};
 
   // check the containment of the point
-  bool inside = plucker_tet_containment_test(ray_origin, vertices[0], vertices[1], vertices[2], vertices[3]);
+  bool inside = tet_containment_test(ray_origin, vertices[0], vertices[1], vertices[2], vertices[3]);
 
   if (!inside) return;
 

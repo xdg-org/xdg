@@ -184,7 +184,7 @@ XDG::segments(const Position& start,
       // Get the element on the other side of the hit face using adjacencies
       auto adjacent_element = mesh_manager()->get_boundary_face_element(hit_primitives.back());
       if (adjacent_element == ID_NONE) {
-        warning("Ray fire hit surface {}, but no adjacent elements were found on the other side of the surface.", hit.second);
+        warning(fmt::format("Ray fire hit surface {}, but no adjacent elements were found on the other side of the surface.", hit.second));
         return segments;
       }
       current_element = adjacent_element;
@@ -311,7 +311,8 @@ double XDG::measure_volume(MeshID volume) const
     double surface_contribution {0.0};
     auto triangles = mesh_manager()->get_surface_faces(surface);
     for (auto triangle : triangles) {
-      surface_contribution += triangle_volume_contribution(mesh_manager()->face_vertices(triangle));
+      auto face_vertices = mesh_manager()->face_vertex_coordinates(triangle);
+      surface_contribution += face_volume_contribution_from_vertices(face_vertices);
     }
     if (surface_senses[i] == Sense::REVERSE) surface_contribution *= -1.0;
     volume_total += surface_contribution;
@@ -324,7 +325,8 @@ double XDG::measure_surface_area(MeshID surface) const
 {
   double area {0.0};
   for (auto triangle : mesh_manager()->get_surface_faces(surface)) {
-    area += triangle_area(mesh_manager()->face_vertices(triangle));
+    auto face_vertices = mesh_manager()->face_vertex_coordinates(triangle);
+    area += face_area_from_vertices(face_vertices);
   }
   return area;
 }

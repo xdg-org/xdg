@@ -9,6 +9,12 @@ static std::random_device rd;
 static std::mt19937 gen(rd());
 static std::uniform_real_distribution<double> dis(0.0, 1.0);
 
+inline void seed_rand_double(unsigned int seed)
+{
+  gen.seed(seed);
+  dis.reset();
+}
+
 inline double rand_double(double min=0.0, double max=1.0)
 {
   return min + (max - min) * dis(gen);
