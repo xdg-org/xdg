@@ -1,6 +1,7 @@
 #ifndef _XDG_INTERFACE_H
 #define _XDG_INTERFACE_H
 
+#include <cstddef>
 #include <memory>
 #include <unordered_map>
 
@@ -74,6 +75,23 @@ std::pair<double, MeshID> ray_fire(MeshID volume,
                                    const double dist_limit = INFTY,
                                    HitOrientation orientation = HitOrientation::EXITING,
                                    std::vector<MeshID>* const exclude_primitives = nullptr) const;
+
+//! Allocates a backend-owned device buffer for batch ray-fire records.
+//! @param count Number of XDGRayHit records to allocate.
+//! @return Device buffer handle containing the pointer, record count, and device id.
+//!         Release the buffer with free_ray_hits().
+XDGRayHitBuffer allocate_ray_hits(std::size_t count) const;
+
+//! Releases a device ray-hit buffer allocated by allocate_ray_hits().
+//! @param ray_hits Buffer handle to release. The handle is cleared after release.
+void free_ray_hits(XDGRayHitBuffer& ray_hits) const;
+
+//! Fires all rays stored in a device ray-hit buffer using the selected backend.
+//! @param ray_hits Device buffer whose XDGRayHit records have been populated by the caller.
+//!                 Hit result fields are written back into the same records.
+//! @param hit_orientation Orientation filter applied to every ray in the batch.
+void ray_fire_batch(const XDGRayHitBuffer& ray_hits,
+                    HitOrientation hit_orientation = HitOrientation::EXITING) const;
 
 std::pair<double, MeshID> closest(MeshID volume,
                                   const Position& origin) const;

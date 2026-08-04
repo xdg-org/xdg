@@ -31,6 +31,14 @@ XDG::XDG(std::shared_ptr<MeshManager> mesh_manager, RTLibrary ray_tracing_lib)
     #else
       fatal_error("This build was not compiled with GPRT support (XDG_ENABLE_GPRT=OFF).");
     #endif
+
+    case RTLibrary::CUBQL:
+    #ifdef XDG_ENABLE_CUBQL
+      set_ray_tracing_interface(std::make_shared<CuBQLRayTracer>());
+      break;
+    #else
+      fatal_error("This build was not compiled with cuBQL support (XDG_ENABLE_CUBQL=OFF).");
+    #endif
   }
 }
 
@@ -84,6 +92,9 @@ std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib
     #ifdef XDG_ENABLE_GPRT
     if (ray_tracing_lib == RTLibrary::GPRT) return std::make_shared<GPRTRayTracer>();
     #endif
+    #ifdef XDG_ENABLE_CUBQL
+    if (ray_tracing_lib == RTLibrary::CUBQL) return std::make_shared<CuBQLRayTracer>();
+    #endif
 
     // If no supported ray tracing library throw an error
     std::string msg = fmt::format("Invalid ray tracing library '{}'. Supported:", RT_LIB_TO_STR.at(ray_tracing_lib));
@@ -92,6 +103,9 @@ std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib
     #endif
     #ifdef XDG_ENABLE_GPRT
     msg += " GPRT";
+    #endif
+    #ifdef XDG_ENABLE_CUBQL
+    msg += " CUBQL";
     #endif
     fatal_error(msg);
   };
@@ -244,6 +258,22 @@ XDG::ray_fire(MeshID volume,
 {
   TreeID scene = volume_to_surface_tree_map_.at(volume);
   return ray_tracing_interface()->ray_fire(scene, origin, direction, dist_limit, orientation, exclude_primitives);
+}
+
+XDGRayHitBuffer XDG::allocate_ray_hits(std::size_t count) const
+{
+  return ray_tracing_interface()->allocate_ray_hits(count);
+}
+
+void XDG::free_ray_hits(XDGRayHitBuffer& ray_hits) const
+{
+  ray_tracing_interface()->free_ray_hits(ray_hits);
+}
+
+void XDG::ray_fire_batch(const XDGRayHitBuffer& ray_hits,
+                         HitOrientation hit_orientation) const
+{
+  ray_tracing_interface()->ray_fire_batch(ray_hits, hit_orientation);
 }
 
 std::pair<double, MeshID> XDG::closest(MeshID volume,

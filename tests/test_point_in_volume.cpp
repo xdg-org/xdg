@@ -16,7 +16,8 @@ using namespace xdg::test;
 
 TEMPLATE_TEST_CASE("Point-in-volume on MockedTriTetMesh", "[piv][mock]",
                    Embree_Raytracer,
-                   GPRT_Raytracer) 
+                   GPRT_Raytracer,
+                   CuBQL_Raytracer) 
 {
   constexpr auto rt_backend = TestType::value;
 

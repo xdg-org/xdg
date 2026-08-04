@@ -38,3 +38,7 @@ if (TARGET overlap-check)
         ${CMAKE_CURRENT_SOURCE_DIR}/overlap.cpp
     )
 endif()
+
+if (XDG_ENABLE_CUBQL AND TARGET ray-benchmark)
+    target_link_libraries(ray-benchmark PRIVATE $<BUILD_INTERFACE:cuBQL>)
+endif()
