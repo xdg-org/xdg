@@ -83,10 +83,7 @@ ENV OMEGA_H_INSTALL_PATH=/XDG_TEST_SYSTEM/omega_h_install_dir
 
 
 
-# build XDG
-# currently building docker image from this branch. As omega_h isn't include the cmake build system
-# in upstream yet. I will change this later.
-RUN git clone -b omega_h --recurse-submodules https://github.com/magnoxemo/xdg.git /XDG_TEST_SYSTEM/xdg
+RUN git clone --recurse-submodules https://github.com/xdg-org/xdg.git /XDG_TEST_SYSTEM/xdg
 
 WORKDIR /XDG_TEST_SYSTEM/xdg/build
 RUN cmake .. \
