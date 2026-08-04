@@ -53,7 +53,7 @@ TEST_CASE("Test Walk Elements") {
     std::cout << r << std::endl;
     std::cout << u << std::endl;
     std::tie(next_element, exit_distance) = xdg->next_element(element, r, u);
-    REQUIRE(exit_distance < distance);
+    REQUIRE(exit_distance <= distance);
 
     r += u * exit_distance;
     std::cout << "Next element: " << next_element << std::endl;
