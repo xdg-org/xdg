@@ -20,122 +20,6 @@ bool plucker_tet_containment_test(const Position &point, const Vertex &v0,
                                   const Vertex &v1, const Vertex &v2,
                                   const Vertex &v3);
 
-namespace {
-
-struct ElementExit {
-  MeshID element{ID_NONE};
-  double distance{INFTY};
-  int face{ID_NONE};
-};
-
-Direction outward_normal(const std::array<Vertex, 3> &coords,
-                         const Position &centroid, MeshID element, int face) {
-  Direction normal = triangle_normal(coords);
-  const Position face_centroid = (coords[0] + coords[1] + coords[2]) / 3.0;
-  const Position face_to_centroid = centroid - face_centroid;
-  if (normal.dot(face_to_centroid) > 0.0) {
-    warning("Face {} of element {} has an inward-pointing normal.", face,
-            element);
-    normal = -normal;
-  }
-  return normal;
-}
-
-ElementExit find_element_exit(const MeshManager &mesh_manager,
-                              MeshID current_element, const Position &r,
-                              const Direction &u, MeshID excluded_element) {
-  struct FaceCandidate {
-    MeshID element;
-    double distance;
-    int face;
-    double exiting_dot;
-    bool contains_probe;
-  };
-
-  std::vector<FaceCandidate> candidates;
-  auto element_face_accessor =
-      ElementFaceAccessor::create(&mesh_manager, current_element);
-  auto current_element_vertices =
-      mesh_manager.element_vertices(current_element);
-  Position centroid{0.0, 0.0, 0.0};
-  for (const auto &vertex : current_element_vertices) {
-    centroid += vertex;
-  }
-  centroid /= static_cast<double>(current_element_vertices.size());
-
-  constexpr double EXIT_DOT_TOL = 1.0e-14;
-  for (int i = 0; i < 4; i++) {
-    auto coords = element_face_accessor->face_vertices(i);
-    const Direction normal =
-        outward_normal(coords, centroid, current_element, i);
-    const double exiting_dot = u.dot(normal);
-    if (exiting_dot <= EXIT_DOT_TOL)
-      continue;
-
-    auto result =
-        plucker_ray_tri_intersect(coords.data(), r, u, INFTY, -1e-10, false, 0);
-    if (!result.hit)
-      continue;
-
-    MeshID next_element = mesh_manager.adjacent_element(current_element, i);
-    if (next_element != ID_NONE && next_element == excluded_element)
-      continue;
-
-    bool contains_probe = false;
-    if (next_element != ID_NONE) {
-      const Position probe = r + (std::max(0.0, result.t) + TINY_BIT) * u;
-      auto next_vertices = mesh_manager.element_vertices(next_element);
-      contains_probe = plucker_tet_containment_test(probe, next_vertices[0],
-          next_vertices[1], next_vertices[2], next_vertices[3]);
-    }
-
-    candidates.push_back(
-        {next_element, std::max(0.0, result.t), i, exiting_dot,
-            contains_probe});
-  }
-
-  if (candidates.empty())
-    return {};
-
-  double min_dist = INFTY;
-  for (const auto &candidate : candidates) {
-    min_dist = std::min(min_dist, candidate.distance);
-  }
-
-  const double tie_tol = 1.0e-10 * std::max(1.0, std::abs(min_dist));
-  const FaceCandidate *selected = nullptr;
-  for (const auto &candidate : candidates) {
-    if (std::abs(candidate.distance - min_dist) > tie_tol)
-      continue;
-
-    if (selected == nullptr) {
-      selected = &candidate;
-      continue;
-    }
-
-    const bool selected_is_boundary = selected->element == ID_NONE;
-    const bool candidate_is_boundary = candidate.element == ID_NONE;
-    if (selected->contains_probe != candidate.contains_probe) {
-      if (candidate.contains_probe)
-        selected = &candidate;
-      continue;
-    }
-
-    if (selected_is_boundary != candidate_is_boundary) {
-      if (!candidate_is_boundary)
-        selected = &candidate;
-      continue;
-    }
-
-    if (candidate.exiting_dot > selected->exiting_dot)
-      selected = &candidate;
-  }
-
-  return {selected->element, selected->distance, selected->face};
-}
-
-} // namespace
-
 MeshManager::MeshManager() {
   if (XDGConfig::config().initialized() == false) {
     XDGConfig::config().initialize();
@@ -227,36 +111,25 @@ MeshManager::walk_elements(MeshID starting_element, const Position &start,
   std::vector<std::pair<MeshID, double>> result;
 
   MeshID elem = starting_element;
-  MeshID previous_element_at_point = ID_NONE;
-  int zero_distance_crossings = 0;
-  constexpr int MAX_ZERO_DISTANCE_CROSSINGS = 32;
+  MeshID previous_element = ID_NONE;
   while (distance > 0) {
     // find the exit point from the current element and determine the next
     // element if one exists
-    auto exit = find_element_exit(*this, elem, r, u, previous_element_at_point);
+    auto exit = next_element(elem, r, u);
     // ensure we are not traveling beyond the end of the ray
-    exit.distance = std::min(exit.distance, distance);
-    distance -= exit.distance;
+    exit.second = std::min(exit.second, distance);
+    distance -= exit.second;
     // only add to the result if the distance is greater than 0
-    result.push_back({elem, exit.distance});
-    r += exit.distance * u;
+    result.push_back({elem, exit.second});
+    r += exit.second * u;
 
-    if (exit.distance > TINY_BIT) {
-      previous_element_at_point = ID_NONE;
-      zero_distance_crossings = 0;
+    if (exit.second > TINY_BIT) {
+      previous_element = ID_NONE;
     } else {
-      previous_element_at_point = elem;
-      ++zero_distance_crossings;
-      if (zero_distance_crossings > MAX_ZERO_DISTANCE_CROSSINGS) {
-        warning("Exceeded {} zero-distance element crossings while walking "
-                "elements from ({}, {}, {}) in direction ({}, {}, {}).",
-                MAX_ZERO_DISTANCE_CROSSINGS, start[0], start[1], start[2], u[0],
-                u[1], u[2]);
-        break;
-      }
+      previous_element = elem;
     }
 
-    elem = exit.element;
+    elem = exit.first;
 
     // if there is no next element, we're exiting the mesh
     if (elem == ID_NONE) {
@@ -279,8 +152,92 @@ MeshManager::walk_elements(MeshID starting_element, const Position &start,
 std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
                                                     const Position &r,
                                                     const Position &u) const {
-  auto exit = find_element_exit(*this, current_element, r, u, ID_NONE);
-  return {exit.element, exit.distance};
+  struct FaceCandidate {
+    MeshID element {ID_NONE};
+    double distance;
+    int face {ID_NONE};
+    double exiting_dot;
+  };
+
+  auto element_face_accessor = ElementFaceAccessor::create(this, current_element);
+
+  constexpr int EXITING_ORIENTATION = 1;
+  std::vector<FaceCandidate> candidates;
+  for (int i = 0; i < 4; i++) {
+    auto coords = element_face_accessor->face_vertices(i);
+    const double exiting_dot = u.dot(triangle_normal(coords));
+
+    auto result = plucker_ray_tri_intersect(
+        coords.data(), r, u, INFTY, -1e-10, true, EXITING_ORIENTATION);
+    if (!result.hit)
+      continue;
+
+    MeshID next_element = this->adjacent_element(current_element, i);
+
+    candidates.push_back(
+        {next_element, std::max(0.0, result.t), i, exiting_dot});
+  }
+
+  if (candidates.empty()) return {};
+
+  // find the minimum distance among candidate hits
+  double min_dist = INFTY;
+  for (const auto &candidate : candidates) {
+    min_dist = std::min(min_dist, candidate.distance);
+  }
+
+  // find all candidates that are tied for the minimum distance
+  // break ties by selecting candidates with the following priority:
+  // 1. candidate contains the a point on the just on the other size of the hit face
+  // 2. candidate is not a boundary face
+  // 3. candidate has the largest exiting dot product
+  const double tie_tol = 1.0e-10 * std::max(1.0, std::abs(min_dist));
+  std::vector<const FaceCandidate *> tied_candidates;
+  for (const auto &candidate : candidates) {
+    if (std::abs(candidate.distance - min_dist) > tie_tol)
+      continue;
+    tied_candidates.push_back(&candidate);
+  }
+
+  if (tied_candidates.empty())
+    return {};
+
+  if (tied_candidates.size() == 1)
+    return {tied_candidates.front()->element, tied_candidates.front()->distance};
+
+  const FaceCandidate *selected = tied_candidates.front();
+  bool selected_contains_probe =
+    selected->element == ID_NONE ? false : this->element_contains_point(selected->element, r);
+
+  for (auto candidate : tied_candidates) {
+    if (candidate == selected) continue;
+
+    const bool candidate_contains_probe = candidate->element == ID_NONE ? false : this->element_contains_point(candidate->element, r);
+    if (selected_contains_probe != candidate_contains_probe) {
+      if (candidate_contains_probe) {
+        selected = candidate;
+        selected_contains_probe = candidate_contains_probe;
+      }
+      continue;
+    }
+
+    const bool selected_is_boundary = selected->element == ID_NONE;
+    const bool candidate_is_boundary = candidate->element == ID_NONE;
+    if (selected_is_boundary != candidate_is_boundary) {
+      if (!candidate_is_boundary) {
+        selected = candidate;
+        selected_contains_probe = candidate_contains_probe;
+      }
+      continue;
+    }
+
+    if (candidate->exiting_dot > selected->exiting_dot) {
+      selected = candidate;
+      selected_contains_probe = candidate_contains_probe;
+    }
+  }
+
+  return {selected->element, selected->distance};
 }
 
 MeshID MeshManager::next_volume(MeshID current_volume, MeshID surface) const {
@@ -301,6 +258,12 @@ Direction MeshManager::face_normal(MeshID element) const
 {
   auto vertices = this->face_vertex_coordinates(element);
   return (vertices[1] - vertices[0]).cross(vertices[2] - vertices[0]).normalize();
+}
+
+bool MeshManager::element_contains_point(MeshID element, const Position &r) const {
+  auto vertices = this->element_vertices(element);
+  return plucker_tet_containment_test(r, vertices[0], vertices[1], vertices[2],
+                                      vertices[3]);
 }
 
 BoundingBox MeshManager::element_bounding_box(MeshID element) const {
