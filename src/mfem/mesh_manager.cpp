@@ -26,10 +26,20 @@ void MfemMeshManager::init() {
   // Create a set for each volume attribute. Gather the IDs of all the
   // interior elements with this characteristic
   // TODO: This won't work with ParMesh
+  //
+  // While we are here, we can lazily populate the volume_element_id_map_
+  // To do that, we need a vector to store the element IDs into. This
+  // is very lazy, and no better than just filling a vector with sequential
+  // ints anyway.
+  std::vector<MeshID> volume_element_ids(mesh_->GetNE());
   for (int i=0; i<mesh_->GetNE(); i++) {
     int volume_id = mesh_->GetAttribute(i);
     volume_to_element_map_[volume_id].insert(i);
+    volume_element_ids[i] = i;
   }
+
+  // Finish the BlockMapping for volume elements
+  volume_element_id_map_ = IDBlockMapping<MeshID>(volume_element_ids);
 
   // create a set for capturing all of the sideset IDs
   // without repeats
@@ -58,6 +68,35 @@ void MfemMeshManager::init() {
     // we want to populate the surfaces_ array from the base class
     sideset_ids.insert(sideset);
   }
+  
+  /*
+  // we wanna check how many implicit boundaries we detect. So let's
+  // create a set to collect them
+  std::set< std::pair<int,int> > implicit_bdr;
+  for (int f=0; f<mesh_->GetNumFaces(); f++) {
+    int e1, e2;
+    mesh_->GetFaceElements(f, &e1, &e2);
+
+    // if the el index is -1, then just set the volume id to -1.
+    // this means the outside
+    int vol1 = (e1==-1) ? -1 : mesh_->GetAttribute(e1);
+    int vol2 = (e2==-1) ? -1 : mesh_->GetAttribute(e2);
+
+    if (vol1!=vol2) {
+      // we have found implicit boundary. add to list!
+      if (vol1<vol2) implicit_bdr.insert( {vol1, vol2} );
+      else           implicit_bdr.insert( {vol2, vol1} );
+    }
+
+  }
+
+  // let's see what we got
+  std::cout << "\n\nPrinting the boundaries we discovered!!!\n";
+  auto iter = implicit_bdr.begin();
+  for (; iter!=implicit_bdr.end(); iter++) {
+    std::cout << "detected bdr between vol " << iter->first << " and " << iter->second << "\n";
+  }
+  */
 
   // We've read in the mesh and counted all the attributes, i.e. a unique
   // list of all the attributes we've seen. Let's copy the contents of
@@ -81,7 +120,7 @@ void MfemMeshManager::init() {
 std::vector<MeshID> MfemMeshManager::get_volume_elements(MeshID volume) const {
   std::vector<MeshID> output;
   
-  // Copy the way that libmesh does it, which is if we calling
+  // Copy the way that libmesh does it, which is if we call
   // this function on the implicit complement, then return an
   // empty vector.
   // Note the deliberate use of attributes_ (which comes from
@@ -250,8 +289,6 @@ MeshID MfemMeshManager::adjacent_element(MeshID element, int face) const {
   fatal_error("Shouldn't reach this far!");
 }
 
-// TODO: Mesh::GetFaceElements or Mesh::GetFaceInformation are what you need
-// if 
 void MfemMeshManager::determine_surface_senses() {
   for (auto &[surface_id, surface_faces] : sideset_to_element_map_) {
     if (surface_faces.size() == 0) continue;

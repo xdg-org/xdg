@@ -433,3 +433,22 @@ TEST_CASE("Test Track Exiting Mesh Brick")
   REQUIRE_THAT(length, Catch::Matchers::WithinAbs(10.0, 1e-6));
 }
 
+// TEST_CASE("Multiblock sidesets")
+// {
+//   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MFEM);
+//   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MFEM);
+//   const auto& mesh_manager = xdg->mesh_manager();
+//   mesh_manager->load_file("cube-w-multiblock-sideset.exo");
+//   mesh_manager->init();
+//   mesh_manager->parse_metadata();
+
+//   xdg->prepare_raytracer();
+
+//   MeshID volume = 1;
+//   Position start {0.0, 0.0, 0.0};
+//   Position end {15.0, 20.0, 3.0};
+//   auto tracks = xdg->segments(volume, start, end);
+
+//   assert(tracks.size() > 0);
+// }
+
