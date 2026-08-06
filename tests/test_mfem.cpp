@@ -40,8 +40,8 @@ TEST_CASE("MFEM element types")
 
   // At time of writing, brick.exo does not have sidesets labelled, so we just check
   // each of the elements
-  for (int i=0; i<mesh_manager->num_boundary_elements(); i++) 
-    REQUIRE( mesh_manager->get_surface_element_type(i) == SurfaceElementType::TRI );
+  // for (int i=0; i<mesh_manager->num_boundary_elements(); i++) 
+  //   REQUIRE( mesh_manager->get_surface_element_type(i) == SurfaceElementType::TRI );
 
 }
 

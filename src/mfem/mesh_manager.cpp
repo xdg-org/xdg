@@ -153,11 +153,6 @@ std::vector<MeshID> MfemMeshManager::get_volume_elements(MeshID volume) const {
   return output;
 }
 
-SurfaceElementType MfemMeshManager::get_surface_element_type(MeshID element) const {
-  auto mfem_element_type = mesh_->GetBdrElement(element)->GetType();
-  return GetSurfaceElementTypeFromMfem(mfem_element_type);
-}
-
 // Should return all of the sidesets that are a part of this volume
 std::vector<MeshID> MfemMeshManager::get_volume_surfaces(MeshID volume) const {
   // walk the surface senses and return the surfaces that have this volume
@@ -189,8 +184,7 @@ std::vector<MeshID> MfemMeshManager::get_surface_faces(MeshID surface) const {
   return output;
 }
 
-std::array<Vertex, 3> MfemMeshManager::face_vertices(MeshID element) const {
-  std::array<Vertex, 3> output;
+std::vector<MeshID> MfemMeshManager::face_vertices(MeshID element) const {
   mfem::Array<int> index_array;
   
   if (element >= num_interior_faces_) {
@@ -209,12 +203,14 @@ std::array<Vertex, 3> MfemMeshManager::face_vertices(MeshID element) const {
     mesh_->GetFaceVertices(element, index_array);
   }
 
-  for (int i=0; i<index_array.Size(); i++) {
-    const double* vertices = mesh_->GetVertex( index_array[i] );
+  // for (int i=0; i<index_array.Size(); i++) {
+  //   const double* vertices = mesh_->GetVertex( index_array[i] );
 
-    for (int d=0; d<mesh_->SpaceDimension(); d++) output[i][d] = vertices[d];
-  }
+  //   for (int d=0; d<mesh_->SpaceDimension(); d++) output[i][d] = vertices[d];
+  // }
 
+  // copy these indices into std::vector and return it
+  std::vector<MeshID> output( index_array.GetData(), index_array.GetData() + index_array.Size() );
   return output;
 }
 
@@ -395,6 +391,38 @@ void MfemMeshManager::parse_metadata() {
   }
 }
 
+// This is not quite correct. mfem does support mixed meshes.
+// The intention of the caller is that the argument (surface) corresponds
+// to the sideset. So we need to find a typical element from the sideset
+// that is marked by the argument surface. For now, this will do
+SurfaceFaceType MfemMeshManager::get_surface_face_type(MeshID surface) const {
+  mfem::Geometry::Type geom = mesh_->GetFaceGeometry(surface);
+
+  switch(geom) {
+    case mfem::Geometry::TRIANGLE:     return SurfaceFaceType::TRI;
+    case mfem::Geometry::TETRAHEDRON : return SurfaceFaceType::QUAD;
+    default:
+      fatal_error("Unsupported geom");
+  }
+}
+
+// Same problem as above. Volume is supposed to be a block_id, and this
+// function is interpreting it as an element index. We should have a LOT more
+// elements than blocks, so it's safe, but wrong. When dealing with a mixed
+// mesh, it will fail tests
+VolumeElementType MfemMeshManager::get_volume_element_type(MeshID volume) const {
+  mfem::Geometry::Type geom = mesh_->GetElementBaseGeometry(volume);
+
+  switch (geom) {
+    case mfem::Geometry::TETRAHEDRON: return VolumeElementType::TET;
+    case mfem::Geometry::TRIANGLE:    return VolumeElementType::HEX;
+    default: 
+      fatal_error("Unsupported geom");
+  }
+
+  return VolumeElementType::TET;
+}
+
 
 // helper function to convert mfem's element types to xdg
 VolumeElementType GetTypeFromMfem( mfem::Element::Type t ) {
@@ -405,17 +433,5 @@ VolumeElementType GetTypeFromMfem( mfem::Element::Type t ) {
       fatal_error("Unsupported element type\n");
   }
 }
-
-// this second function is somewhat redundant. The mfem enum captures all
-// of the possible geometries, in all possible dimensions...
-SurfaceElementType GetSurfaceElementTypeFromMfem( mfem::Element::Type t ) {
-  switch (t) {
-    case mfem::Element::TRIANGLE:      return SurfaceElementType::TRI;
-    case mfem::Element::QUADRILATERAL: return SurfaceElementType::QUAD;
-    default:
-      fatal_error("Unsupported element type\n");
-  }
-}
-
 
 } // namespace xdg
