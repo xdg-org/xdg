@@ -77,7 +77,11 @@ public:
   virtual std::vector<Vertex> element_vertices(MeshID element) const override;
   std::vector<Vertex> bdr_element_vertices(MeshID element) const;
 
-  virtual std::array<Vertex, 3> face_vertices(MeshID element) const override;
+  virtual std::vector<MeshID> face_vertices(MeshID element) const override;
+
+  SurfaceFaceType get_surface_face_type(MeshID surface) const override;
+
+  VolumeElementType get_volume_element_type(MeshID volume) const override;
 
   // The table works wonders for this
   virtual MeshID adjacent_element(MeshID element, int face) const override;
@@ -89,8 +93,6 @@ public:
   virtual Sense surface_sense(MeshID surface, MeshID volume) const override {
     fatal_error("MfemMeshManager::surface_sense() not implemented yet");
   }
-
-  virtual SurfaceElementType get_surface_element_type(MeshID element) const override;
 
   virtual int num_vertices() const override {
     return mesh_->GetNV();
@@ -188,13 +190,11 @@ struct MfemMeshElementFaceAccessor : public ElementFaceAccessor {
 
       // pointer to the element object that defines this face
       auto face_obj = mesh->GetFace(face_no);
+      face_obj->GetVertices(vertex_indices_);
 
-      mfem::Array<int> vertex_indices;
-      face_obj->GetVertices(vertex_indices);
-
-      for (int v=0; v<vertex_indices.Size(); v++) {
+      for (int v=0; v<vertex_indices_.Size(); v++) {
         face_vertices_[f][v].a = 0.0;
-        const double* vertices = mesh->GetVertex( vertex_indices[v] );
+        const double* vertices = mesh->GetVertex( vertex_indices_[v] );
         for (int d=0; d<mesh->SpaceDimension(); d++)
           face_vertices_[f][v][d] = vertices[d];
       }
@@ -207,12 +207,12 @@ struct MfemMeshElementFaceAccessor : public ElementFaceAccessor {
   // stores the vertices of the element, and picks the correct three
   // that correspond to this face. Why not just get the face from
   // the mesh itself? It exposes the vertices
-  std::array<Vertex, 3> face_vertices(int i) const override {
-    std::array<Vertex, 3> verts;
+  std::vector<Vertex> face_vertices(int i) const override {
+    std::vector<Vertex> output;
 
     // we have already gathered the vertices for this face.
     // copy them into the output array
-    std::copy(face_vertices_[i], face_vertices_[i+1], verts.begin());
+    std::copy(face_vertices_[i], face_vertices_[i+1], std::back_inserter(output));
 
     // we need mesh_->GetFaceElementTransformations
     auto& mesh = mesh_manager_->mfem_mesh();
@@ -229,9 +229,20 @@ struct MfemMeshElementFaceAccessor : public ElementFaceAccessor {
     if ( face_el_tx->Elem2No == element_ )
       // This element is NOT the one that the normal vector points out of.
       // switch two of the vertices around to make sure the cross product is good.
-      std::swap( verts[0], verts[1] );
+      std::swap( output[0], output[1] );
 
-    return verts;
+    return output;
+  }
+
+  int num_faces() const override {
+    // first, look up the geom type
+    auto geom = mesh_manager_->get_volume_element_type(element_);
+
+    switch (geom) {
+      case VolumeElementType::TET: return 4;
+      case VolumeElementType::HEX: return 6;
+      default: fatal_error("");
+    }
   }
 
   // data members
@@ -241,12 +252,14 @@ struct MfemMeshElementFaceAccessor : public ElementFaceAccessor {
   Vertex face_vertices_[4][3];
   // indices for each of the faces on this element
   mfem::Array<int> faces_;
+  mfem::Array<int> vertex_indices_;
+
   MeshID element_;
 };
 
 // helper functions to convert mfem's element types to xdg
 VolumeElementType GetVolumeElementTypeFromMfem( mfem::Element::Type t );
-SurfaceElementType GetSurfaceElementTypeFromMfem( mfem::Element::Type t );
+// SurfaceElementType GetSurfaceElementTypeFromMfem( mfem::Element::Type t );
 
 } // namespace xdg
 
