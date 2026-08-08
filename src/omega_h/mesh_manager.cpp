@@ -338,19 +338,14 @@ std::vector<Vertex> OmegaHMeshManager::element_vertices(MeshID element) const {
   return vertices;
 }
 
-std::array<Vertex, 3> OmegaHMeshManager::face_vertices(MeshID face) const {
-  auto connectivity = face_connectivity(face);
-  std::array<Vertex, 3> vertices;
-  for (int i = 0; i < VERTS_PER_TRI; ++i) {
-    vertices[i] = vertex_coordinates(connectivity[i]);
-  }
-  return vertices;
+std::vector<MeshID> OmegaHMeshManager::face_vertices(MeshID face) const {
+  return face_connectivity(face);
 }
 
-std::array<Vertex, 3>
+std::vector<Vertex>
 OmegaHMeshManager::element_face_vertices(MeshID element, int local_face) const {
   auto connectivity = element_connectivity(element);
-  std::array<Vertex, 3> vertices;
+  std::vector<Vertex> vertices(VERTS_PER_TRI);
   for (int i = 0; i < VERTS_PER_TRI; ++i) {
     vertices[i] =
         vertex_coordinates(connectivity[kLocalFaceVerts[local_face][i]]);
@@ -373,12 +368,6 @@ MeshID OmegaHMeshManager::adjacent_element(MeshID element, int face) const {
     }
   }
   return ID_NONE; // boundary face, no neighbor
-}
-
-double OmegaHMeshManager::element_volume(MeshID element) const {
-  auto vertices = element_vertices(element);
-  std::array<Vertex, 4> tet{vertices[0], vertices[1], vertices[2], vertices[3]};
-  return tetrahedron_volume(tet);
 }
 
 std::pair<MeshID, MeshID>

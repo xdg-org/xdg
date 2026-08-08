@@ -13,7 +13,6 @@
 #include "xdg/omega_h/mesh_manager.h"
 #endif
 
-#include "xdg/testing/mesh_mock.h"
 #include "xdg/testing/mesh_mocks.h"
 
 namespace xdg {

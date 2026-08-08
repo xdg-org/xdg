@@ -77,21 +77,22 @@ public:
 
   std::vector<Vertex> element_vertices(MeshID element) const override;
 
-  std::array<Vertex, 3> face_vertices(MeshID face) const override;
+  std::vector<MeshID> face_vertices(MeshID face) const override;
 
   //! \brief Vertices of a local face of a tetrahedral element
-  std::array<Vertex, 3> element_face_vertices(MeshID element,
-                                              int local_face) const;
+  std::vector<Vertex> element_face_vertices(MeshID element, int local_face) const;
 
-  SurfaceElementType
-  get_surface_element_type(MeshID surface_element_id) const override {
+  SurfaceFaceType get_surface_face_type(MeshID surface_element_id) const override {
     // As Omega_h simplex meshes always use triangular surface elements
-    return SurfaceElementType::TRI;
+    return SurfaceFaceType::TRI;
+  }
+
+  VolumeElementType get_volume_element_type(MeshID volume) const override {
+    // Omega_h simplex meshes always use tetrahedral volume elements
+    return VolumeElementType::TET;
   }
 
   MeshID adjacent_element(MeshID element, int face) const override;
-
-  double element_volume(MeshID element) const override;
 
   MeshID create_volume() override  { return next_volume_id(); };
 
@@ -151,9 +152,11 @@ struct OmegaHElementFaceAccessor : public ElementFaceAccessor {
                             MeshID element)
       : ElementFaceAccessor(element), mesh_manager_(mesh_manager) {}
 
-  std::array<Vertex, 3> face_vertices(int i) const override {
+  std::vector<Vertex> face_vertices(int i) const override {
     return mesh_manager_->element_face_vertices(element_, i);
   }
+
+  int num_faces() const override { return 4; }
 
   const OmegaHMeshManager *mesh_manager_;
 };

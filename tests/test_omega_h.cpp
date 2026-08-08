@@ -78,8 +78,8 @@ TEST_CASE("Omega_h Element Types") {
 
   // Omega_h simplex meshes use triangular surface elements throughout
   for (const auto surface : mesh_manager->surfaces()) {
-    REQUIRE(mesh_manager->get_surface_element_type(surface) ==
-            SurfaceElementType::TRI);
+    REQUIRE(mesh_manager->get_surface_face_type(surface) ==
+            SurfaceFaceType::TRI);
   }
 }
 
@@ -118,7 +118,10 @@ TEST_CASE("Omega_h Connectivity") {
       auto conn = mesh_manager->face_connectivity(face);
       REQUIRE(conn.size() == 3);
 
-      auto verts = mesh_manager->face_vertices(face);
+      auto vertex_ids = mesh_manager->face_vertices(face);
+      REQUIRE(vertex_ids == conn);
+
+      auto verts = mesh_manager->face_vertex_coordinates(face);
       for (int i = 0; i < 3; ++i) {
         coords_match(conn[i], verts[i]);
       }
