@@ -173,7 +173,7 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
     if (coords.size() == 3) {
       result = plucker_ray_tri_intersect(
           coords.data(), r, u, INFTY, -1e-10, true, EXITING_ORIENTATION);
-      } else if (coords.size() == 4) {
+    } else if (coords.size() == 4) {
       std::array<Vertex, 3> tri0;
       std::array<Vertex, 3> tri1;
       if (canonical_diagonal(coords)) {
@@ -204,12 +204,13 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
       if (hit0 || hit1) {
         result.hit = true;
         if (hit0 && hit1) {
-        result.t = std::min(dist0, dist1);
+          result.t = std::min(dist0, dist1);
         } else {
           result.t = hit0 ? dist0 : dist1;
+        }
       }
     } else {
-            fatal_error("Unsupported face vertex count {} in next_element", coords.size());
+      fatal_error("Unsupported face vertex count {} in next_element", coords.size());
     }
 
     if (!result.hit) continue;
