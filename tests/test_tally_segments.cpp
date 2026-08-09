@@ -46,7 +46,6 @@ TEST_CASE("Test Walk Elements") {
   while (element != ID_NONE && iteration < max_iterations) {
 
     std::cout << "Remaining distance: " << distance << std::endl;
-    // if(distance <= TINY_BIT) break;
 
     std::cout << "---" << std::endl;
     std::cout << "Current element: " << element << std::endl;
