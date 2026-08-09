@@ -116,6 +116,10 @@ MeshManager::walk_elements(MeshID starting_element, const Position &start,
     // find the exit point from the current element and determine the next
     // element if one exists
     auto exit = next_element(elem, r, u);
+    if (exit.second == INFTY && distance > 0) {
+      warning("Unable to find finite exit point from element {}. Exiting walk_elements with {} distance unaccounted for.", elem, distance);
+      break;
+    }
     // ensure we are not traveling beyond the end of the ray
     exit.second = std::min(exit.second, distance);
     distance -= exit.second;
@@ -178,7 +182,7 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
         {next_element, std::max(0.0, result.t), i, exiting_dot});
   }
 
-  if (candidates.empty()) return {};
+  if (candidates.empty()) return {ID_NONE, INFTY};
 
   // find the minimum distance among candidate hits
   double min_dist = INFTY;
@@ -187,10 +191,7 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
   }
 
   // find all candidates that are tied for the minimum distance
-  // break ties by selecting candidates with the following priority:
-  // 1. candidate contains the a point on the just on the other size of the hit face
-  // 2. candidate is not a boundary face
-  // 3. candidate has the largest exiting dot product
+  // break ties by selecting the face most aligned with the query direction
   const double tie_tol = 1.0e-10 * std::max(1.0, std::abs(min_dist));
   std::vector<const FaceCandidate *> tied_candidates;
   for (const auto &candidate : candidates) {
@@ -199,43 +200,12 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
     tied_candidates.push_back(&candidate);
   }
 
-  if (tied_candidates.empty())
-    return {};
-
   if (tied_candidates.size() == 1)
     return {tied_candidates.front()->element, tied_candidates.front()->distance};
 
-  const FaceCandidate *selected = tied_candidates.front();
-  bool selected_contains_probe =
-    selected->element == ID_NONE ? false : this->element_contains_point(selected->element, r);
-
-  for (auto candidate : tied_candidates) {
-    if (candidate == selected) continue;
-
-    const bool candidate_contains_probe = candidate->element == ID_NONE ? false : this->element_contains_point(candidate->element, r);
-    if (selected_contains_probe != candidate_contains_probe) {
-      if (candidate_contains_probe) {
-        selected = candidate;
-        selected_contains_probe = candidate_contains_probe;
-      }
-      continue;
-    }
-
-    const bool selected_is_boundary = selected->element == ID_NONE;
-    const bool candidate_is_boundary = candidate->element == ID_NONE;
-    if (selected_is_boundary != candidate_is_boundary) {
-      if (!candidate_is_boundary) {
-        selected = candidate;
-        selected_contains_probe = candidate_contains_probe;
-      }
-      continue;
-    }
-
-    if (candidate->exiting_dot > selected->exiting_dot) {
-      selected = candidate;
-      selected_contains_probe = candidate_contains_probe;
-    }
-  }
+  const auto selected = *std::max_element(
+    tied_candidates.begin(), tied_candidates.end(),
+    [](const auto a, const auto b) { return a->exiting_dot < b->exiting_dot; });
 
   return {selected->element, selected->distance};
 }
