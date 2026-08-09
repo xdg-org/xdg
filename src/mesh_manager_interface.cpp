@@ -203,7 +203,10 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
       double dist1 = result1.t;
       if (hit0 || hit1) {
         result.hit = true;
+        if (hit0 && hit1) {
         result.t = std::min(dist0, dist1);
+        } else {
+          result.t = hit0 ? dist0 : dist1;
       }
     } else {
             fatal_error("Unsupported face vertex count {} in next_element", coords.size());
