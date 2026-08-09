@@ -16,10 +16,6 @@
 
 namespace xdg {
 
-bool plucker_tet_containment_test(const Position &point, const Vertex &v0,
-                                  const Vertex &v1, const Vertex &v2,
-                                  const Vertex &v3);
-
 MeshManager::MeshManager() {
   if (XDGConfig::config().initialized() == false) {
     XDGConfig::config().initialize();
@@ -167,14 +163,53 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
 
   constexpr int EXITING_ORIENTATION = 1;
   std::vector<FaceCandidate> candidates;
-  for (int i = 0; i < 4; i++) {
+
+  const int num_faces = element_face_accessor->num_faces();
+  for (int i = 0; i < num_faces; i++) {
     auto coords = element_face_accessor->face_vertices(i);
     const double exiting_dot = u.dot(triangle_normal(coords));
 
-    auto result = plucker_ray_tri_intersect(
-        coords.data(), r, u, INFTY, -1e-10, true, EXITING_ORIENTATION);
-    if (!result.hit)
-      continue;
+    PluckerIntersectionResult result;
+    if (coords.size() == 3) {
+      result = plucker_ray_tri_intersect(
+          coords.data(), r, u, INFTY, -1e-10, true, EXITING_ORIENTATION);
+      } else if (coords.size() == 4) {
+      std::array<Vertex, 3> tri0;
+      std::array<Vertex, 3> tri1;
+      if (canonical_diagonal(coords)) {
+        tri0 = {coords[0], coords[1], coords[2]};
+        tri1 = {coords[0], coords[2], coords[3]};
+      } else {
+        tri0 = {coords[1], coords[2], coords[3]};
+        tri1 = {coords[1], coords[3], coords[0]};
+      }
+      auto result0 = plucker_ray_tri_intersect(tri0.data(),
+                                               r,
+                                               u,
+                                               INFTY,
+                                               0.0,
+                                               true,
+                                               EXITING_ORIENTATION);
+      auto result1 = plucker_ray_tri_intersect(tri1.data(),
+                                               r,
+                                               u,
+                                               INFTY,
+                                               0.0,
+                                               true,
+                                               EXITING_ORIENTATION);
+      bool hit0 = result0.hit;
+      bool hit1 = result1.hit;
+      double dist0 = result0.t;
+      double dist1 = result1.t;
+      if (hit0 || hit1) {
+        result.hit = true;
+        result.t = std::min(dist0, dist1);
+      }
+    } else {
+            fatal_error("Unsupported face vertex count {} in next_element", coords.size());
+    }
+
+    if (!result.hit) continue;
 
     MeshID next_element = this->adjacent_element(current_element, i);
 
@@ -228,12 +263,6 @@ Direction MeshManager::face_normal(MeshID element) const
 {
   auto vertices = this->face_vertex_coordinates(element);
   return (vertices[1] - vertices[0]).cross(vertices[2] - vertices[0]).normalize();
-}
-
-bool MeshManager::element_contains_point(MeshID element, const Position &r) const {
-  auto vertices = this->element_vertices(element);
-  return plucker_tet_containment_test(r, vertices[0], vertices[1], vertices[2],
-                                      vertices[3]);
 }
 
 BoundingBox MeshManager::element_bounding_box(MeshID element) const {

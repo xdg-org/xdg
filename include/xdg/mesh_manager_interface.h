@@ -170,8 +170,6 @@ public:
   virtual
   MeshID get_boundary_face_element(MeshID face) const = 0;
 
-  bool element_contains_point(MeshID element, const Position &r) const;
-
   BoundingBox element_bounding_box(MeshID element) const;
 
   BoundingBox face_bounding_box(MeshID element) const;
