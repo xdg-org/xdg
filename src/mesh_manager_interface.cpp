@@ -113,7 +113,7 @@ MeshManager::walk_elements(MeshID starting_element, const Position &start,
     // element if one exists
     auto exit = next_element(elem, r, u);
     if (exit.second == INFTY && distance > 0) {
-      warning("Unable to find finite exit point from element {}. Exiting walk_elements with {} distance unaccounted for.", elem, distance);
+      warning(fmt::format("Unable to find finite exit point from element {}. Exiting walk_elements with {} distance unaccounted for.", elem, distance));
       break;
     }
     // ensure we are not traveling beyond the end of the ray
