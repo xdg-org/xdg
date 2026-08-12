@@ -9,6 +9,7 @@
 
 #include "argparse/argparse.hpp"
 
+#include "progress_bars.h"
 #include "tally_segments.h"
 
 using namespace xdg;
@@ -92,7 +93,21 @@ int main(int argc, char** argv) {
   tally_context.verbose_ = args.get<bool>("--verbose");
   tally_context.quiet_ = args.get<bool>("--quiet");
 
+  auto prog_bar = block_progress_bar(fmt::format("Running {} tally tracks", tally_context.n_tracks_));
+  if (!tally_context.quiet_) {
+    tally_context.on_track_complete_ =
+      [&](int track_id, int n_tracks_run, size_t n_segments) {
+        if (tally_context.verbose_) {
+          std::cout << fmt::format("Track {}: {} segments", track_id, n_segments) << "\n";
+        } else {
+          prog_bar.set_progress(100.0 * static_cast<double>(n_tracks_run) /
+                                static_cast<double>(tally_context.n_tracks_));
+        }
+      };
+  }
+
   tally_segments(tally_context);
+  if (!tally_context.quiet_) prog_bar.mark_as_completed();
 
   return 0;
 

@@ -8,7 +8,7 @@
 // xdg includes
 #include "xdg/constants.h"
 #include "xdg/mesh_manager_interface.h"
-#include "mesh_mock.h"
+#include "mesh_mocks.h"
 #include "util.h"
 
 using namespace xdg;
@@ -16,7 +16,7 @@ using namespace xdg::test;
 
 // ------- single test, multiple sections (one per built backend) --------------
 
-TEMPLATE_TEST_CASE("Ray Fire on MeshMock (per-backend sections)", "[rayfire][mock]",
+TEMPLATE_TEST_CASE("Ray Fire on MockedTriTetMesh (per-backend sections)", "[rayfire][mock]",
                    Embree_Raytracer,
                    GPRT_Raytracer)
 {
@@ -29,7 +29,7 @@ TEMPLATE_TEST_CASE("Ray Fire on MeshMock (per-backend sections)", "[rayfire][moc
     auto rti = create_raytracer(rt_backend);
     REQUIRE(rti);
 
-    auto mm = std::make_shared<MeshMock>(false);
+    auto mm = std::make_shared<MockedTriTetMesh>(false);
     mm->init();
     REQUIRE(mm->mesh_library() == MeshLibrary::MOCK);
 
@@ -109,4 +109,37 @@ TEMPLATE_TEST_CASE("Ray Fire on MeshMock (per-backend sections)", "[rayfire][moc
     intersection = rti->ray_fire(volume_tree, origin, direction, INFTY, HitOrientation::EXITING, &exclude_primitives);
     REQUIRE(intersection.second == ID_NONE);
   }
+}
+
+TEST_CASE("Quad Ray Fire on MockedQuadHexMesh (Embree)")
+{
+  check_ray_tracer_supported(RTLibrary::EMBREE);
+  std::shared_ptr<MeshManager> mm = std::make_shared<MockedQuadHexMesh>();
+  mm->init();
+  REQUIRE(mm->mesh_library() == MeshLibrary::MOCK);
+
+  auto rti = std::make_shared<EmbreeRayTracer>();
+
+  auto [volume_tree, element_tree] = rti->register_volume(mm, mm->volumes()[0]);
+  REQUIRE(volume_tree != ID_NONE);
+  REQUIRE(element_tree != ID_NONE);
+
+  MeshID volume = mm->volumes()[0];
+
+  Position origin {0.6, 0.6, 2.0};
+  Direction dir {0.0, 0.0, -1.0};
+
+  auto hit_any = rti->ray_fire(volume_tree, origin, dir, INFTY, HitOrientation::ENTERING);
+  REQUIRE_THAT(hit_any.first, Catch::Matchers::WithinAbs(1.0, 1e-6));
+  REQUIRE(hit_any.second == 0);
+
+  auto hit_enter = rti->ray_fire(volume_tree, origin, dir, INFTY, HitOrientation::ENTERING);
+  REQUIRE(hit_enter.second == 0);
+
+  auto hit_exit = rti->ray_fire(volume_tree, origin, dir, INFTY, HitOrientation::EXITING);
+  REQUIRE_THAT(hit_exit.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
+  REQUIRE(hit_exit.second == 1);
+
+  REQUIRE(rti->find_element(element_tree, Position {0.5, 0.5, 0.5}) == 0);
+  REQUIRE(rti->find_element(element_tree, Position {1.5, 0.5, 0.5}) == 1);
 }

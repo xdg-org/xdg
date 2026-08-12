@@ -9,6 +9,7 @@
 
 #include "argparse/argparse.hpp"
 
+#include "progress_bars.h"
 #include "walk_elements.h"
 
 using namespace xdg;
@@ -86,7 +87,24 @@ int main(int argc, char** argv) {
   walkelementscontext.verbose_ = args.get<bool>("--verbose");
   walkelementscontext.quiet_ = args.get<bool>("--quiet");
 
+  auto prog_bar = block_progress_bar(fmt::format("Running {} particles", walkelementscontext.n_particles_));
+  if (!walkelementscontext.quiet_) {
+    walkelementscontext.on_particle_complete_ =
+      [&](size_t particle_id, int n_events, double distance, int n_particles_run) {
+        if (walkelementscontext.verbose_) {
+          std::cout << fmt::format("Particle {} underwent {} events. Distance: {}",
+                                   particle_id,
+                                   n_events,
+                                   distance) << "\n";
+        } else {
+          prog_bar.set_progress(100.0 * static_cast<double>(n_particles_run) /
+                                static_cast<double>(walkelementscontext.n_particles_));
+        }
+      };
+  }
+
   walk_elements(walkelementscontext);
+  if (!walkelementscontext.quiet_) prog_bar.mark_as_completed();
 
   return 0;
 }

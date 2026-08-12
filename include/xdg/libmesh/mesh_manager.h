@@ -12,6 +12,7 @@
 #include "libmesh/libmesh.h"
 #include "libmesh/elem.h"
 #include "libmesh/cell_tet4.h"
+#include "libmesh/cell_hex8.h"
 #include "libmesh/mesh.h"
 namespace xdg {
 
@@ -60,6 +61,19 @@ public:
 
   void parse_metadata() override;
 
+  void check_face_and_element_types() const;
+
+  static VolumeElementType _elem_xdg_type(const libMesh::Elem *elem_ptr) {
+    switch (elem_ptr->type()) {
+    case libMesh::TET4:
+      return VolumeElementType::TET;
+    case libMesh::HEX8:
+      return VolumeElementType::HEX;
+    default:
+      return VolumeElementType::UNSUPPORTED;
+    }
+  }
+
   int num_volumes() const override { return volumes_.size(); }
 
   int num_surfaces() const override { return surfaces_.size(); }
@@ -106,18 +120,15 @@ public:
 
   Vertex vertex_coordinates(MeshID vertex) const override;
 
-  std::array<Vertex, 3> face_vertices(MeshID triangle) const override;
+  std::vector<MeshID> face_vertices(MeshID triangle) const override;
 
   std::vector<MeshID> get_volume_surfaces(MeshID volume) const override;
 
-  SurfaceElementType get_surface_element_type(MeshID surface) const override
-  {
-    fatal_error("LibMeshManager::get_surface_element_type() not implemented yet");
-  }
+  SurfaceFaceType get_surface_face_type(MeshID surface) const override;
+
+  VolumeElementType get_volume_element_type(MeshID volume) const override;
 
   MeshID adjacent_element(MeshID element, int face) const override;
-
-  double element_volume(MeshID element) const override;
 
   MeshID create_volume() override;
 
@@ -198,6 +209,16 @@ public:
       }
     }
 
+    SurfaceFaceType face_type() const {
+      switch (side.first->type()) {
+        case libMesh::TET4:
+          return SurfaceFaceType::TRI;
+        case libMesh::HEX8:
+          return SurfaceFaceType::QUAD;
+        default:
+          return SurfaceFaceType::UNSUPPORTED;
+      }
+    }
 
     //! Retrieve a vertex of the side pair face, using the type
     //! to access the node reference though an internal, non-blocking
@@ -350,22 +371,41 @@ struct LibMeshElementFaceAccessor : public ElementFaceAccessor {
   ElementFaceAccessor(element), mesh_manager_(mesh_manager) {
     mesh_ = mesh_manager_->mesh();
     elem_ptr_ = mesh_->elem_ptr(element);
-    tet_ = (const libMesh::Tet4*)elem_ptr_;
   }
 
-  std::array<Vertex, 3> face_vertices(int i) const override {
-    std::array<Vertex, 3> coords;
-    for (int j = 0; j < 3; j++) {
-      const auto node_ptr = elem_ptr_->node_ptr(tet_->side_nodes_map[i][j]);
-      coords[j] = {(*node_ptr)(0), (*node_ptr)(1), (*node_ptr)(2)};
+  std::vector<Vertex> face_vertices(int i) const override {
+    std::vector<Vertex> coords;
+    switch (elem_ptr_->type()) {
+      case libMesh::TET4: {
+        coords.reserve(3);
+        for (int j = 0; j < 3; j++) {
+          const auto node_ptr = elem_ptr_->node_ptr(libMesh::Tet4::side_nodes_map[i][j]);
+          coords.push_back({(*node_ptr)(0), (*node_ptr)(1), (*node_ptr)(2)});
+        }
+        break;
+      }
+      case libMesh::HEX8: {
+        coords.reserve(4);
+        for (int j = 0; j < 4; j++) {
+          const auto node_ptr = elem_ptr_->node_ptr(libMesh::Hex8::side_nodes_map[i][j]);
+          coords.push_back({(*node_ptr)(0), (*node_ptr)(1), (*node_ptr)(2)});
+        }
+        break;
+      }
+      default:
+        fatal_error("Unsupported element type {} in LibMeshElementFaceAccessor",
+                    static_cast<int>(elem_ptr_->type()));
     }
-    return std::move(coords);
+    return coords;
+  }
+
+  int num_faces() const override {
+    return static_cast<int>(elem_ptr_->n_sides());
   }
 
   // data members
   const LibMeshManager* mesh_manager_;
   const libMesh::MeshBase* mesh_;
-  const libMesh::Tet4* tet_;
   const libMesh::Elem* elem_ptr_;
 };
 

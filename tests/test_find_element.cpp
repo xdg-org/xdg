@@ -6,14 +6,14 @@
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/embree/ray_tracer.h"
 
-#include "mesh_mock.h"
+#include "mesh_mocks.h"
 
 using namespace xdg;
 
 TEST_CASE("Test Find Volumetric Element")
 {
   // create a mock mesh manager without volumetric elements
-  std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
+  std::shared_ptr<MeshManager> mm = std::make_shared<MockedTriTetMesh>();
   mm->init(); // this should do nothing
 
   REQUIRE(mm->num_volumes() == 1);

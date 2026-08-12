@@ -8,6 +8,7 @@
 
 #include "libmesh/boundary_info.h"
 #include "libmesh/elem.h"
+#include "libmesh/cell_hex8.h"
 #include "libmesh/mesh_base.h"
 #include "libmesh/mesh_tools.h"
 
@@ -80,6 +81,56 @@ void LibMeshManager::init() {
   }
 
   map_id_spaces();
+
+  check_face_and_element_types();
+}
+
+void LibMeshManager::check_face_and_element_types() const {
+  for (auto surface : surfaces_) {
+    const auto& faces = surface_map_.at(surface);
+    if (faces.empty()) {
+      fatal_error("Surface {} has no faces, which is not supported", surface);
+    }
+
+    // get the type of the first face
+    const auto& side_pair = sidepair(faces[0]);
+    SurfaceFaceType type = side_pair.face_type();
+
+    // check that all other faces are the same type
+    for (const auto face : faces) {
+      const auto& side_pair = sidepair(face);
+      if (side_pair.face_type() != type) {
+        fatal_error("Surface {} has mixed face types, which is not supported. Face ID {} has type {}, expected type {}.",
+                    surface, face, side_pair.face_type(), type);
+      }
+
+    }
+  }
+
+  for (auto volume : volumes_) {
+    // the implicit complement contains no volumetric elements
+    // by definition, so we can skip the check for that volume
+    if (volume == this->implicit_complement()) continue;
+
+    const auto elements = get_volume_elements(volume);
+    if (elements.empty()) {
+      fatal_error("Volume {} has no elements, which is not supported", volume);
+    }
+
+    // get the type of the first element
+    const auto elem_ptr = mesh()->elem_ptr(elements[0]);
+    VolumeElementType type = get_volume_element_type(volume);
+
+    // check that all other elements are the same type
+    for (const auto element : elements) {
+      const auto* elem_ptr = mesh()->elem_ptr(element);
+      VolumeElementType elem_type = _elem_xdg_type(elem_ptr);
+      if (elem_type != type) {
+        fatal_error("Volume {} has mixed element types, which is not supported. Element ID {} has type {}, expected type {}.",
+                    volume, element, elem_type, type);
+      }
+    }
+  }
 }
 
 MeshID LibMeshManager::adjacent_element(MeshID element, int face) const {
@@ -88,15 +139,6 @@ MeshID LibMeshManager::adjacent_element(MeshID element, int face) const {
   auto neighbor = elem_ptr->neighbor_ptr(face);
   if (!neighbor) return ID_NONE;
   return neighbor->id();
-}
-
-double
-LibMeshManager::element_volume(MeshID element) const {
-  const auto elem_ptr = mesh()->elem_ptr(element);
-  if (!elem_ptr) {
-    fatal_error("Invalid element ID in element_volume");
-  }
-  return elem_ptr->volume();
 }
 
 xdg::Vertex
@@ -541,14 +583,78 @@ LibMeshManager::element_vertices(MeshID element) const {
   return vertices;
 }
 
-std::array<Vertex, 3>
-LibMeshManager::face_vertices(MeshID element) const {
-  const auto& side_pair = sidepair(element);
-  std::array<Vertex, 3> vertices;
-  for (unsigned int i = 0; i < 3; ++i) {
-    vertices[i] = std::move(side_pair.vertex<libMesh::Tet4>(i));
+std::vector<MeshID>
+LibMeshManager::face_vertices(MeshID face) const {
+  const auto& side_pair = sidepair(face);
+  std::vector<MeshID> vertex_ids;
+  const auto* elem = side_pair.first();
+  if (!elem) {
+    fatal_error("Invalid face ID {} for LibMesh mesh", face);
   }
-  return vertices;
+  const auto side_num = static_cast<unsigned int>(side_pair.side_num());
+
+  switch (elem->type()) {
+    case libMesh::TET4: {
+      vertex_ids.reserve(3);
+      for (unsigned int i = 0; i < 3; ++i) {
+        const auto node_ptr = elem->node_ptr(libMesh::Tet4::side_nodes_map[side_num][i]);
+        vertex_ids.push_back(node_ptr->id());
+      }
+      break;
+    }
+    case libMesh::HEX8: {
+      vertex_ids.reserve(4);
+      for (unsigned int i = 0; i < 4; ++i) {
+        const auto node_ptr = elem->node_ptr(libMesh::Hex8::side_nodes_map[side_num][i]);
+        vertex_ids.push_back(node_ptr->id());
+      }
+      break;
+    }
+    default:
+      fatal_error("Unsupported element type {} for face {}", static_cast<int>(elem->type()), face);
+  }
+  return std::move(vertex_ids);
+}
+
+SurfaceFaceType
+LibMeshManager::get_surface_face_type(MeshID surface) const {
+  const auto& faces = surface_map_.at(surface);
+  if (faces.empty()) {
+    return SurfaceFaceType::UNKNOWN;
+  }
+
+  // we've already validated that all faces in the surface have the same type,
+  // so we can rely on the type of the first face to determine the surface face
+  // type
+  const auto& side_pair = sidepair(faces.front());
+  return side_pair.face_type();
+}
+
+VolumeElementType
+LibMeshManager::get_volume_element_type(MeshID volume) const {
+  const auto elements = get_volume_elements(volume);
+  if (elements.empty()) {
+    return VolumeElementType::UNKNOWN;
+  }
+
+  // we already validated that all elements in the volume have the same type, so
+  // we can rely on the type of the first element to determine the volume
+  // element type
+  const auto elem_ptr = mesh()->elem_ptr(elements.front());
+  if (!elem_ptr) {
+    fatal_error("Invalid element ID {} in get_volume_element_type", elements.front());
+  }
+
+  switch (elem_ptr->type()) {
+    case libMesh::TET4:
+      return VolumeElementType::TET;
+    case libMesh::HEX8:
+      return VolumeElementType::HEX;
+    default:
+      fatal_error("Unsupported libMesh element type {} in get_volume_element_type",
+                  static_cast<int>(elem_ptr->type()));
+  }
+  return VolumeElementType::TET;
 }
 
 std::vector<MeshID>

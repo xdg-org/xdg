@@ -16,8 +16,9 @@ test_no_geom
 test_ray_duals
 test_xdg_interface
 test_tet_containment
+test_hex_containment
 test_tracks
-test_tet_intersection
+test_walk_elements
 test_tally_segments
 test_mesh_connectivity
 )
@@ -78,6 +79,8 @@ cube-mesh-no-geom.h5m
 cube-mesh-no-geom.exo
 cube-w-multiblock-sideset.exo
 cube-w-multiblock-sideset.h5m
+cyl-brick-quads.h5m
+cyl-brick-quads.exo
 no_overlap.h5m
 overlap.h5m
 overlap-edge.h5m
@@ -91,12 +94,15 @@ brick.exo
 brick-sidesets.exo
 jezebel.exo
 jezebel.h5m
+jezebel-quads.exo
+jezebel-quads.h5m
 pincell.h5m
 pincell-implicit.exo
 small-tet-mesh.h5m
 small-tet-mesh.exo
 single-tet.h5m
 single-tet.exo
+quad_sphere.h5m
 )
 
 foreach(file ${TEST_FILES})

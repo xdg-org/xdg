@@ -22,12 +22,10 @@ if(@XDG_ENABLE_LIBMESH@)
   pkg_check_modules(LIBMESH REQUIRED @LIBMESH_PC_FILE@>=1.7.0 IMPORTED_TARGET)
 endif()
 
-if(NOT TARGET fmt::fmt)
-  find_dependency(fmt CONFIG REQUIRED HINTS "${_XDG_PREFIX}")
-endif()
-
-if(NOT TARGET indicators::indicators)
-  find_dependency(indicators CONFIG REQUIRED HINTS "${_XDG_PREFIX}")
+if(@XDG_BUILD_TOOLS@)
+  if(NOT TARGET indicators::indicators)
+    find_dependency(indicators CONFIG REQUIRED HINTS "${_XDG_PREFIX}")
+  endif()
 endif()
 
 if(@XDG_LINK_MPI@)

@@ -10,7 +10,7 @@
 #include "xdg/geometry/measure.h"
 
 // xdg test includes
-#include "mesh_mock.h"
+#include "mesh_mocks.h"
 #include "util.h"
 #include "xdg/embree/ray_tracer.h"
 
@@ -20,7 +20,7 @@ using namespace xdg::test;
 
 TEST_CASE("Test Mesh Mock")
 {
-  std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
+  std::shared_ptr<MeshManager> mm = std::make_shared<MockedTriTetMesh>();
   mm->init();
 
   XDG xdg{mm, RTLibrary::EMBREE};
@@ -41,7 +41,7 @@ TEST_CASE("Test Mesh Mock")
 }
 
 TEST_CASE("Test Mesh Mock Element Volume") {
-  std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
+  std::shared_ptr<MeshManager> mm = std::make_shared<MockedTriTetMesh>();
   mm->init();
 
   // Test the element_volume method
@@ -185,4 +185,46 @@ TEMPLATE_TEST_CASE("Test Area and Volume Spherical Mesh", "[measure][sphere]",
     // these should match closely since we're summing element volumes that fill the surface mesh volume
     REQUIRE_THAT(sum_element_volumes, Catch::Matchers::WithinAbs(total_volume, 1e-6));
   }
+}
+
+TEMPLATE_TEST_CASE("TEST Quad Measurements", "[model_properties][quads]", MOAB_Interface, LibMesh_Interface)
+{
+  constexpr auto mesh_backend = TestType::value;
+
+  constexpr auto mesh_library = TestType::value;
+  const std::string file = mesh_library == MeshLibrary::MOAB ? "jezebel-quads.h5m"
+                                                            : "jezebel-quads.exo";
+
+
+  DYNAMIC_SECTION(fmt::format("Backend = {}, File = {}", mesh_backend, file)) {
+    check_mesh_library_supported(mesh_backend); // skip if backend not enabled at configuration time
+    std::shared_ptr<XDG> xdg = XDG::create(mesh_backend);
+    REQUIRE(xdg->mesh_manager()->mesh_library() == mesh_backend);
+    const auto& mesh_manager = xdg->mesh_manager();
+    mesh_manager->load_file(file);
+    mesh_manager->init();
+    xdg->prepare_raytracer();
+
+    // Determine model radius based on the width of the bounding box
+    auto bbox = mesh_manager->global_bounding_box();
+    double model_radius = 0.5 * bbox.width()[0];
+    double exp_area = 4.0 * M_PI * std::pow(model_radius, 2);
+    double exp_volume = (4.0 / 3.0) * M_PI * std::pow(model_radius, 3);
+
+    MeshID volume = 1;
+    double total_volume = xdg->measure_volume(volume);
+     std::cout << "Total Volume: " << total_volume << ", Expected: " << exp_volume << std::endl;
+    // high tolerance due to coarse mesh
+    REQUIRE_THAT(total_volume, Catch::Matchers::WithinAbs(exp_volume, 10.0));
+
+    // Measure the surface area of the sphere
+    double total_surface_area = 0.0;
+    for (const auto surface : mesh_manager->surfaces()) {
+      double area = xdg->measure_surface_area(surface);
+      total_surface_area += area;
+    }
+    std::cout << "Total Surface Area: " << total_surface_area << ", Expected: " << exp_area << std::endl;
+    // high tolerance due to coarse mesh
+    REQUIRE_THAT(total_surface_area, Catch::Matchers::WithinAbs(exp_area, 1.0));
+ }
 }

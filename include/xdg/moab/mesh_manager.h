@@ -78,13 +78,13 @@ public:
 
   std::vector<Vertex> element_vertices(MeshID element) const override;
 
-  std::array<Vertex, 3> face_vertices(MeshID face) const override;
+  std::vector<MeshID> face_vertices(MeshID element) const override;
 
-  SurfaceElementType get_surface_element_type(MeshID surface) const override;
+  SurfaceFaceType get_surface_face_type(MeshID surface) const override;
+
+  VolumeElementType get_volume_element_type(MeshID volume) const override;
 
   MeshID adjacent_element(MeshID element, int face) const override;
-
-  double element_volume(MeshID element) const override;
 
   // Topology
   std::pair<MeshID, MeshID> surface_senses(MeshID surface) const override;
@@ -98,6 +98,7 @@ public:
 
 private:
   // Internal MOAB methods
+  moab::EntityHandle element_handle(MeshID element) const;
 
   /**
    * @brief Sets up required MOAB tags for geometry management
@@ -213,7 +214,7 @@ private:
 struct MOABElementFaceAccessor : public ElementFaceAccessor {
 
   MOABElementFaceAccessor(const MOABMeshManager* mesh_manager, MeshID element) :
-  ElementFaceAccessor(element), mesh_manager_(mesh_manager), element_ordering_(mesh_manager->mb_direct()->get_face_ordering(moab::MBTET)) {
+  ElementFaceAccessor(element), mesh_manager_(mesh_manager) {
 
     auto moab_mesh_manager = dynamic_cast<const MOABMeshManager*>(mesh_manager);
     if (!moab_mesh_manager) {
@@ -221,20 +222,33 @@ struct MOABElementFaceAccessor : public ElementFaceAccessor {
     }
     mesh_manager_ = moab_mesh_manager;
     element_coordinates_ = mesh_manager_->element_vertices(element);
+    if (element_coordinates_.size() == 4) {
+      element_ordering_ = &mesh_manager_->mb_direct()->get_face_ordering(VolumeElementType::TET);
+    } else if (element_coordinates_.size() == 8) {
+      element_ordering_ = &mesh_manager_->mb_direct()->get_face_ordering(VolumeElementType::HEX);
+    } else {
+      throw std::runtime_error("Unsupported element vertex count in MOABElementFaceAccessor");
+    }
   }
 
-  std::array<Vertex, 3> face_vertices(int i) const override {
-    std::array<Vertex, 3> verts;
-    for (int j = 0; j < 3; j++) {
-      verts[j] = element_coordinates_[element_ordering_[i][j]];
+  std::vector<Vertex> face_vertices(int i) const override {
+    const auto& face = (*element_ordering_)[i];
+    std::vector<Vertex> verts;
+    verts.reserve(face.size());
+    for (auto idx : face) {
+      verts.push_back(element_coordinates_[idx]);
     }
-    return std::move(verts);
+    return verts;
+  }
+
+  int num_faces() const override {
+    return static_cast<int>(element_ordering_->size());
   }
 
   // data members
   const MOABMeshManager* mesh_manager_;
   std::vector<Vertex> element_coordinates_;
-  const std::vector<std::vector<int>>& element_ordering_;
+  const std::vector<std::vector<int>>* element_ordering_ {nullptr};
 };
 
 } // namespace xdg

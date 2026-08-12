@@ -8,12 +8,12 @@
 
 #include "xdg/xdg.h"
 
-#include "mesh_mock.h"
+#include "mesh_mocks.h"
 
 using namespace xdg;
 
 TEST_CASE("Test Walk Elements") {
-  std::shared_ptr<MeshMock> mm = std::make_shared<MeshMock>();
+  std::shared_ptr<MockedTriTetMesh> mm = std::make_shared<MockedTriTetMesh>();
   mm->init(); // this should do nothing
   std::shared_ptr<XDG> xdg = std::make_shared<XDG>(mm);
   REQUIRE(mm->num_volumes() == 1);

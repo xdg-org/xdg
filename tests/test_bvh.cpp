@@ -6,13 +6,13 @@
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/embree/ray_tracer.h"
 
-#include "mesh_mock.h"
+#include "mesh_mocks.h"
 
 using namespace xdg;
 
 TEST_CASE("Test Mesh BVH")
 {
-  std::shared_ptr<MeshManager> mm = std::make_shared<MeshMock>();
+  std::shared_ptr<MeshManager> mm = std::make_shared<MockedTriTetMesh>();
   mm->init(); // this should do nothing
 
   REQUIRE(mm->num_volumes() == 1);
@@ -31,7 +31,7 @@ TEST_CASE("Test Mesh BVH")
   REQUIRE(rti->num_registered_surface_trees() == 1);
   REQUIRE(rti->num_registered_element_trees() == 1);
 
-  mm = std::make_shared<MeshMock>();
+  mm = std::make_shared<MockedTriTetMesh>();
   mm->init(); // this should do nothing
 
   REQUIRE(mm->num_volumes() == 1);

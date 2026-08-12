@@ -160,7 +160,7 @@ endif()
 
 # fmt
 if (NOT fmt_FOUND)
-  set(FMT_INSTALL ON CACHE BOOL "Generate the fmt install target")
+  set(FMT_INSTALL OFF CACHE BOOL "Generate the fmt install target")
   add_subdirectory(vendor/fmt)
 endif()
 message(STATUS "Using fmt ${fmt_VERSION} at ${fmt_DIR}")
@@ -201,12 +201,16 @@ list(APPEND xdg_sources
 src/geometry/measure.cpp
 src/geometry/plucker.cpp
 src/geometry/closest.cpp
+src/bounding_functions.cpp
 src/error.cpp
+src/intersect_common.cpp
 src/mesh_manager_interface.cpp
 src/ray_tracing_interface.cpp
 src/triangle_intersect.cpp
+src/quadrilateral_intersection.cpp
 src/util/str_utils.cpp
 src/tetrahedron_contain.cpp
+src/hexahedron_contain.cpp
 src/config.cpp
 src/xdg.cpp
 src/element_face_accessor.cpp
@@ -419,3 +423,8 @@ install(FILES
 )
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+if (NOT fmt_FOUND)
+  install(DIRECTORY ${CMAKE_SOURCE_DIR}/vendor/fmt/include/
+          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+endif()

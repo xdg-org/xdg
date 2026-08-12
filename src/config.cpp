@@ -38,7 +38,7 @@ void XDGConfig::initialize() {
   // libMesh respects the OpenMP settings of the host application
   if (n_threads() == -1) {
   #ifdef XDG_HAVE_OPENMP
-    set_n_threads(omp_get_num_threads());
+    set_n_threads(omp_get_max_threads());
   #else
     set_n_threads(1);
   #endif

@@ -1,10 +1,12 @@
 #include "xdg/mesh_manager_interface.h"
 
+#include <array>
 #include <set>
 
 #include "xdg/config.h"
 #include "xdg/error.h"
 #include "xdg/geometry/plucker.h"
+#include "xdg/geometry/measure.h"
 #include "xdg/geometry/face_common.h"
 #include "xdg/element_face_accessor.h"
 
@@ -151,35 +153,68 @@ MeshManager::next_element(MeshID current_element,
                            const Position& r,
                            const Position& u) const
 {
-  std::array<double, 4> dists = {INFTY, INFTY, INFTY, INFTY};
-  std::array<bool, 4> hit_types;
-
   auto element_face_accessor = ElementFaceAccessor::create(this, current_element);
+  const int num_faces = element_face_accessor->num_faces();
+  std::vector<double> dists(num_faces, INFTY);
+  std::vector<bool> hit_types(num_faces, false);
 
-  // get the faces (triangles) of this element
-  for (int i = 0; i < 4; i++) {
-    // triangle connectivity
+  for (int i = 0; i < num_faces; i++) {
     auto coords = element_face_accessor->face_vertices(i);
 
-    // get the normal of the triangle face
-    const Position normal = triangle_normal(coords);
-
-    // exiting hit only, assumes triangle normals point outward
+    // exiting hit only, assumes face normals point outward
     // with respect to the element
     int orientation = 1;
-    // perform ray-triangle intersection
 
-    auto result = plucker_ray_tri_intersect(coords.data(),
-                                            r,
-                                            u,
-                                            INFTY,
-                                            0.0,
-                                            true,
-                                            orientation);
+    if (coords.size() == 3) {
+      std::array<Vertex, 3> tri {coords[0], coords[1], coords[2]};
+      auto result = plucker_ray_tri_intersect(tri.data(),
+                                               r,
+                                               u,
+                                               INFTY,
+                                               0.0,
+                                               true,
+                                               orientation);
+      hit_types[i] = result.hit;
+      if (hit_types[i]) dists[i] = result.t;
+    } else if (coords.size() == 4) {
+      std::array<Vertex, 3> tri0;
+      std::array<Vertex, 3> tri1;
+      if (canonical_diagonal(coords)) {
+        tri0 = {coords[0], coords[1], coords[2]};
+        tri1 = {coords[0], coords[2], coords[3]};
+      } else {
+        tri0 = {coords[1], coords[2], coords[3]};
+        tri1 = {coords[1], coords[3], coords[0]};
+      }
+      auto result0 = plucker_ray_tri_intersect(tri0.data(),
+                                               r,
+                                               u,
+                                               INFTY,
+                                               0.0,
+                                               true,
+                                               orientation);
+      auto result1 = plucker_ray_tri_intersect(tri1.data(),
+                                               r,
+                                               u,
+                                               INFTY,
+                                               0.0,
+                                               true,
+                                               orientation);
+      bool hit0 = result0.hit;
+      bool hit1 = result1.hit;
+      double dist0 = result0.t;
+      double dist1 = result1.t;
+      if (hit0 || hit1) {
+        hit_types[i] = true;
+        if (hit0 && hit1) dists[i] = std::min(dist0, dist1);
+        else dists[i] = hit0 ? dist0 : dist1;
+      }
+    } else {
+      fatal_error("Unsupported face vertex count {} in next_element", coords.size());
+    }
 
-    hit_types[i] = result.hit;
     // set distance and ensure it is non-negative
-    dists[i] = result.hit ? std::max(0.0, result.t) : INFTY;
+    dists[i] = std::max(0.0, dists[i]);
   }
 
   // determine the minimum distance to exit and the face number
@@ -215,7 +250,7 @@ MeshID MeshManager::next_volume(MeshID current_volume, MeshID surface) const
 
 Direction MeshManager::face_normal(MeshID element) const
 {
-  auto vertices = this->face_vertices(element);
+  auto vertices = this->face_vertex_coordinates(element);
   return (vertices[1] - vertices[0]).cross(vertices[2] - vertices[0]).normalize();
 }
 
@@ -229,7 +264,7 @@ MeshManager::element_bounding_box(MeshID element) const
 BoundingBox
 MeshManager::face_bounding_box(MeshID element) const
 {
-  auto vertices = this->face_vertices(element);
+  auto vertices = this->face_vertex_coordinates(element);
   return BoundingBox::from_points(vertices);
 }
 
@@ -264,6 +299,32 @@ MeshManager::surface_bounding_box(MeshID surface) const
     bb.update(this->face_bounding_box(element));
   }
   return bb;
+}
+
+double MeshManager::element_volume(MeshID element) const
+{
+  // create an element face accessor
+  auto element_face_accessor = ElementFaceAccessor::create(this, element);
+  const int num_faces = element_face_accessor->num_faces();
+
+  double volume = 0.0;
+  for (int i = 0; i < num_faces; i++) {
+    auto vertices = element_face_accessor->face_vertices(i);
+    volume += face_volume_contribution_from_vertices(vertices);
+  }
+  return volume / 6.0;
+}
+
+std::vector<Vertex>
+MeshManager::face_vertex_coordinates(MeshID face) const
+{
+  auto vertex_ids = this->face_vertices(face);
+  std::vector<Vertex> vertices;
+  vertices.reserve(vertex_ids.size());
+  for (auto id : vertex_ids) {
+    vertices.push_back(this->vertex_coordinates(id));
+  }
+  return vertices;
 }
 
 std::pair<MeshID, MeshID>
