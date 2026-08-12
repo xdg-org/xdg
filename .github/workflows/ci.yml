@@ -10,16 +10,18 @@ on:
 jobs:
   main:
     name: |
-      libMesh=${{ matrix.libmesh }};MOAB=${{ matrix.moab }}
+      libMesh=${{ matrix.libmesh }};MOAB=${{ matrix.moab }};Omega_h=${{ matrix.omega_h }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         libmesh: [true, false]
         moab: [true, false]
+        omega_h: [true, false]
         exclude:
           - moab: false
             libmesh: false
+            omega_h: false
 
     steps:
       - name: Checkout
@@ -81,6 +83,18 @@ jobs:
           cd libmesh
           git checkout v1.7.0
 
+      - name: Omega_h Clone
+        if: ${{ matrix.omega_h }}
+        shell: bash
+        run: |
+          cd ~
+          git clone https://github.com/SCOREC/omega_h.git
+          cd omega_h
+          git checkout master
+          cd ~
+          git clone https://github.com/sandialabs/seacas.git 
+          
+
       - name: OpenMP Environment Variables
         run: |
           echo "OMP_NUM_THREADS=1" >> $GITHUB_ENV
@@ -96,6 +110,16 @@ jobs:
           echo "LIBMESH_SHA"=$(cd ~/libmesh && git rev-parse HEAD) >> $GITHUB_ENV
           # Enforce that we're using the debug build of libMesh
           echo "METHOD=dbg" >> $GITHUB_ENV
+
+      - name: Omega_h Environment Variables
+        if: ${{ matrix.omega_h }}
+        run: |
+          echo "OMEGA_H_SHA"=$(cd ~/omega_h && git rev-parse HEAD) >> $GITHUB_ENV
+
+      - name: Seacas Environment Variables
+        if: ${{ matrix.omega_h }}
+        run: |
+          echo "SEACAS_SHA"=$(cd ~/seacas && git rev-parse HEAD) >> $GITHUB_ENV
 
       - name: MOAB Cache
         if: ${{ matrix.moab }}
@@ -116,6 +140,26 @@ jobs:
         with:
           path: ~/LIBMESH
           key: libmesh-${{ runner.os }}-${{ env.cache-name }}-${{ env.LIBMESH_SHA }}
+
+      - name: Omega_h Cache
+        if: ${{ matrix.omega_h }}
+        id: omega-h-cache
+        uses: actions/cache@v3
+        env:
+          cache-name: omega-h-cache
+        with:
+          path: ~/OMEGA_H
+          key: omega-h-${{ runner.os }}-${{ env.cache-name }}-${{ env.OMEGA_H_SHA }}
+
+      - name: Seacas Cache
+        if: ${{ matrix.omega_h }}
+        id: seacas-cache
+        uses: actions/cache@v3
+        env:
+          cache-name: seacas-cache
+        with:
+          path: ~/SEACAS
+          key: seacas-${{ runner.os }}-${{ env.cache-name }}-${{ env.SEACAS_SHA }}
 
       - if: ${{ matrix.moab && steps.moab-cache.outputs.cache-hit != 'true' }}
         name: Build MOAB
@@ -141,6 +185,43 @@ jobs:
           make -j4
           sudo make install
 
+      - if: ${{ matrix.omega_h && steps.seacas-cache.outputs.cache-hit != 'true' }}
+        name: Build Seacas
+        shell: bash
+        run: |
+          # before building omega_h we need to compile seacas on which omega_h depends
+          # for interacting with exodus mesh API
+          cd ~/seacas
+          mkdir build
+          cd build
+          cmake .. \
+          -DCMAKE_INSTALL_PREFIX=$HOME/SEACAS \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DBUILD_SHARED_LIBS=ON \
+          -DSeacas_ENABLE_ALL_PACKAGES=OFF \
+          -DSeacas_ENABLE_SEACASExodus=ON \
+          -DTPL_ENABLE_MPI=OFF \
+          -DTPL_ENABLE_Netcdf=ON
+          make -j4
+          make install
+
+      - if: ${{ matrix.omega_h && steps.omega-h-cache.outputs.cache-hit != 'true' }}
+        name: Build Omega_h
+        shell: bash
+        run: |
+          cd ~/omega_h
+          mkdir build
+          cd build
+          cmake .. \
+            -DCMAKE_INSTALL_PREFIX=$HOME/OMEGA_H \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DOmega_h_USE_MPI=OFF \
+            -DBUILD_TESTING=OFF \
+            -DSEACASExodus_DIR=$HOME/SEACAS/lib/cmake/SEACASExodus \
+            -DOmega_h_USE_SEACASExodus=ON 
+          make -j4
+          make install
+
       - name: Build
         shell: bash
         run: |
@@ -157,7 +238,19 @@ jobs:
             fi
             CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}$HOME/MOAB"
           fi
-          cmake .. -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" -DCMAKE_INSTALL_PREFIX=$HOME/opt -DXDG_ENABLE_MOAB=${{ matrix.moab && 'ON' || 'OFF' }} -DXDG_ENABLE_LIBMESH=${{ matrix.libmesh && 'ON' || 'OFF' }}
+          if [ "${{ matrix.omega_h }}" = 'true' ]; then
+            if [ -n "$CMAKE_PREFIX_PATH" ]; then
+              CMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH;"
+            fi
+            CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}$HOME/OMEGA_H;$HOME/SEACAS"
+          fi
+          cmake .. \
+            -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" \
+            -DCMAKE_INSTALL_PREFIX=$HOME/opt \
+            -DXDG_ENABLE_MOAB=${{ matrix.moab && 'ON' || 'OFF' }} \
+            -DXDG_ENABLE_LIBMESH=${{ matrix.libmesh && 'ON' || 'OFF' }} \
+            -DXDG_ENABLE_OMEGA_H=${{ matrix.omega_h && 'ON' || 'OFF' }} \
+            -DOMEGA_H_INSTALL_PATH=$HOME/OMEGA_H
           make -j4 install
 
       - name: Test

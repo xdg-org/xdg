@@ -43,6 +43,10 @@ if (XDG_ENABLE_MOAB AND XDG_BUILD_TOOLS)
     list(APPEND TEST_NAMES test_overlap_check)
 endif()
 
+if (XDG_ENABLE_OMEGA_H)
+    list(APPEND TEST_NAMES test_omega_h)
+endif ()
+
 foreach(test ${TEST_NAMES})
     add_executable(${test} test_main.cpp ${test}.cpp)
     target_link_libraries(${test} PRIVATE xdg fmt::fmt Catch2::Catch2)
@@ -55,6 +59,10 @@ foreach(test ${TEST_NAMES})
     if (XDG_ENABLE_MOAB)
         target_link_libraries(${test} PRIVATE MOAB)
     endif()
+    if (XDG_ENABLE_OMEGA_H)
+        target_link_libraries(${test} PRIVATE Omega_h::omega_h)
+    endif ()
+
     set_target_properties(${test} PROPERTIES
                                   BUILD_RPATH "$<TARGET_FILE_DIR:xdg>")
     catch_discover_tests(${test}

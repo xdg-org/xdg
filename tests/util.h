@@ -67,11 +67,17 @@ inline bool mesh_library_available(xdg::MeshLibrary mesh) {
     #endif
 
     case xdg::MeshLibrary::LIBMESH:
-    #ifdef XDG_ENABLE_LIBMESH
-      return true;
-    #else
-      return false;
-    #endif
+        #ifdef XDG_ENABLE_LIBMESH
+          return true;
+        #else
+          return false;
+        #endif
+    case xdg::MeshLibrary::OMEGA_H:
+        #ifdef XDG_ENABLE_OMEGA_H
+                  return true;
+        #else
+                  return false;
+        #endif
   }
 
   return false;
@@ -101,6 +107,10 @@ create_mesh_manager(xdg::MeshLibrary mesh) {
   #ifdef XDG_ENABLE_LIBMESH
   if (mesh == xdg::MeshLibrary::LIBMESH)
     return std::make_unique<xdg::LibMeshManager>();
+  #endif
+  #ifdef XDG_ENABLE_OMEGA_H
+    if (mesh == xdg::MeshLibrary::OMEGA_H)
+      return std::make_unique<xdg::OmegaHMeshManager>();
   #endif
 
   return nullptr;
