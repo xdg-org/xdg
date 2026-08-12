@@ -116,6 +116,11 @@ jobs:
         run: |
           echo "OMEGA_H_SHA"=$(cd ~/omega_h && git rev-parse HEAD) >> $GITHUB_ENV
 
+      - name: Seacas Environment Variables
+        if: ${{ matrix.omega_h }}
+        run: |
+          echo "SEACAS_SHA"=$(cd ~/seacas && git rev-parse HEAD) >> $GITHUB_ENV
+
       - name: MOAB Cache
         if: ${{ matrix.moab }}
         id: moab-cache
@@ -146,6 +151,16 @@ jobs:
           path: ~/OMEGA_H
           key: omega-h-${{ runner.os }}-${{ env.cache-name }}-${{ env.OMEGA_H_SHA }}
 
+      - name: Seacas Cache
+        if: ${{ matrix.omega_h }}
+        id: seacas-cache
+        uses: actions/cache@v3
+        env:
+          cache-name: seacas-cache
+        with:
+          path: ~/SEACAS
+          key: seacas-${{ runner.os }}-${{ env.cache-name }}-${{ env.SEACAS_SHA }}
+
       - if: ${{ matrix.moab && steps.moab-cache.outputs.cache-hit != 'true' }}
         name: Build MOAB
         run: |
@@ -170,14 +185,14 @@ jobs:
           make -j4
           sudo make install
 
-      - if: ${{ matrix.omega_h && steps.omega-h-cache.outputs.cache-hit != 'true' }}
-        name: Build Omega_h
+      - if: ${{ matrix.omega_h && steps.seacas-cache.outputs.cache-hit != 'true' }}
+        name: Build Seacas
         shell: bash
         run: |
-          # before building omega_h we need to compile seacas on which omega_h depends 
+          # before building omega_h we need to compile seacas on which omega_h depends
           # for interacting with exodus mesh API
           cd ~/seacas
-          mkdir build  
+          mkdir build
           cd build
           cmake .. \
           -DCMAKE_INSTALL_PREFIX=$HOME/SEACAS \
@@ -187,9 +202,13 @@ jobs:
           -DSeacas_ENABLE_SEACASExodus=ON \
           -DTPL_ENABLE_MPI=OFF \
           -DTPL_ENABLE_Netcdf=ON
-          make -j4 
+          make -j4
           make install
-          # now let's install omega_h
+
+      - if: ${{ matrix.omega_h && steps.omega-h-cache.outputs.cache-hit != 'true' }}
+        name: Build Omega_h
+        shell: bash
+        run: |
           cd ~/omega_h
           mkdir build
           cd build

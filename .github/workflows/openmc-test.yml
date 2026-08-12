@@ -57,12 +57,15 @@ jobs:
           git clone https://github.com/SCOREC/omega_h.git
           cd omega_h
           git checkout master
+          cd ~
+          git clone https://github.com/sandialabs/seacas.git
 
       - name: Cache Variables
         run: |
           echo "MOAB_SHA"=$(cd ~/moab && git rev-parse HEAD) >> $GITHUB_ENV
           echo "LIBMESH_SHA"=$(cd ~/libmesh && git rev-parse HEAD) >> $GITHUB_ENV
           echo "OMEGA_H_SHA"=$(cd ~/omega_h && git rev-parse HEAD) >> $GITHUB_ENV
+          echo "SEACAS_SHA"=$(cd ~/seacas && git rev-parse HEAD) >> $GITHUB_ENV
 
       - name: MOAB Cache
         id: moab-cache
@@ -91,6 +94,15 @@ jobs:
           path: ~/OMEGA_H
           key: omega-h-${{ runner.os }}-${{ env.cache-name }}-${{ env.OMEGA_H_SHA }}
 
+      - name: Seacas Cache
+        id: seacas-cache
+        uses: actions/cache@v3
+        env:
+          cache-name: seacas-cache
+        with:
+          path: ~/SEACAS
+          key: seacas-${{ runner.os }}-${{ env.cache-name }}-${{ env.SEACAS_SHA }}
+
       - if: ${{ steps.moab-cache.outputs.cache-hit != 'true' }}
         name: Build MOAB
         shell: bash
@@ -113,6 +125,26 @@ jobs:
           ../configure --prefix=$HOME/LIBMESH --enable-exodus --disable-netcdf4 --disable-eigen --disable-lapack --disable-mpi --disable-metaphysicl
           make -j4
           make install
+      - if: ${{ steps.seacas-cache.outputs.cache-hit != 'true' }}
+        name: Build Seacas
+        shell: bash
+        run: |
+          # before building omega_h we need to compile seacas on which omega_h depends
+          # for interacting with exodus mesh API
+          cd ~/seacas
+          mkdir build
+          cd build
+          cmake .. \
+          -DCMAKE_INSTALL_PREFIX=$HOME/SEACAS \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DBUILD_SHARED_LIBS=ON \
+          -DSeacas_ENABLE_ALL_PACKAGES=OFF \
+          -DSeacas_ENABLE_SEACASExodus=ON \
+          -DTPL_ENABLE_MPI=OFF \
+          -DTPL_ENABLE_Netcdf=ON
+          make -j4
+          make install
+
       - if: ${{ steps.omega-h-cache.outputs.cache-hit != 'true' }}
         name: Build Omega_h
         shell: bash
@@ -124,7 +156,9 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=$HOME/OMEGA_H \
             -DCMAKE_BUILD_TYPE=Release \
             -DOmega_h_USE_MPI=OFF \
-            -DBUILD_TESTING=OFF
+            -DBUILD_TESTING=OFF \
+            -DSEACASExodus_DIR=$HOME/SEACAS/lib/cmake/SEACASExodus \
+            -DOmega_h_USE_SEACASExodus=ON
           make -j4
           make install
 
@@ -135,7 +169,7 @@ jobs:
           cd build
           cmake .. \
             -DCMAKE_INSTALL_PREFIX=$HOME/opt \
-            -DCMAKE_PREFIX_PATH="$HOME/MOAB;$HOME/LIBMESH;$HOME/OMEGA_H" \
+            -DCMAKE_PREFIX_PATH="$HOME/MOAB;$HOME/LIBMESH;$HOME/OMEGA_H;$HOME/SEACAS" \
             -DXDG_ENABLE_MOAB=ON \
             -DXDG_ENABLE_LIBMESH=ON \
             -DXDG_ENABLE_OMEGA_H=ON 

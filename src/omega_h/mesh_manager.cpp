@@ -195,10 +195,7 @@ void OmegaHMeshManager::determine_surface_senses() {
 
       // Only assign each slot once: a well-formed surface's every face
       // agrees on which side is outward, so this is a no-op after the first
-      // face. Some meshes carry degenerate faces classified onto a surface
-      // that borders more than two distinct volumes (not a true 2-manifold
-      // interface); for those, keep whichever pair of volumes was recorded
-      // first rather than letting later faces keep overwriting the senses.
+      // face.
       if (is_outward) {
         if (senses.first == ID_NONE)
           senses.first = volume;
