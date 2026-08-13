@@ -150,7 +150,8 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(dp::vec3 vertices[3],
   double v = plucker_coord0 * inverse_sum;
 
   // Barycentric coords check
-  if (u < 0.0 || v < 0.0 || (u + v) > 1.0) {
+  const double bary_tol = dp::DBL_ZERO_TOL;
+  if (u < -bary_tol || v < -bary_tol || (u + v) > 1.0 + bary_tol) {
       dist_out = -1.0;
   }
 

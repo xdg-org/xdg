@@ -160,19 +160,18 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
   };
 
   auto element_face_accessor = ElementFaceAccessor::create(this, current_element);
-
-  constexpr int EXITING_ORIENTATION = 1;
   std::vector<FaceCandidate> candidates;
 
   const int num_faces = element_face_accessor->num_faces();
   for (int i = 0; i < num_faces; i++) {
     auto coords = element_face_accessor->face_vertices(i);
     const double exiting_dot = u.dot(triangle_normal(coords));
+    if (exiting_dot < 0.0) continue;
 
     PluckerIntersectionResult result;
     if (coords.size() == 3) {
       result = plucker_ray_tri_intersect(
-          coords.data(), r, u, INFTY, -1e-10, true, EXITING_ORIENTATION);
+          coords.data(), r, u, INFTY, -1e-10, false, 0);
     } else if (coords.size() == 4) {
       std::array<Vertex, 3> tri0;
       std::array<Vertex, 3> tri1;
@@ -188,15 +187,15 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
                                                u,
                                                INFTY,
                                                0.0,
-                                               true,
-                                               EXITING_ORIENTATION);
+                                               false,
+                                               0);
       auto result1 = plucker_ray_tri_intersect(tri1.data(),
                                                r,
                                                u,
                                                INFTY,
                                                0.0,
-                                               true,
-                                               EXITING_ORIENTATION);
+                                               false,
+                                               0);
       bool hit0 = result0.hit;
       bool hit1 = result1.hit;
       double dist0 = result0.t;
@@ -244,7 +243,7 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
 
   const auto selected = *std::max_element(
     tied_candidates.begin(), tied_candidates.end(),
-    [](const auto a, const auto b) { return a->exiting_dot < b->exiting_dot; });
+    [](const auto a, const auto b) { return a->distance < b->distance; });
 
   return {selected->element, selected->distance};
 }
