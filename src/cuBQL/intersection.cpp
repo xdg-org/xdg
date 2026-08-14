@@ -104,6 +104,10 @@ static inline void intersect_surface_tree(CuBQLVolumeGroup::DD volume_group,
 
   // Single level traversal call for a shrinking ray query against the flattened BVH of the volume group.
   cuBQL::shrinkingRayQuery::forEachPrim(intersect_prim, volume_group.bvh, traversal_ray);
+
+  if (hit->hit_found()) {
+    hit->normal = cuBQL::normalize(hit->normal);
+  }
 }
 #pragma omp end declare target
 
