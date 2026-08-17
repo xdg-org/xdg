@@ -161,63 +161,89 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
 
   auto element_face_accessor = ElementFaceAccessor::create(this, current_element);
   std::vector<FaceCandidate> candidates;
+  const auto element_vertices = this->element_vertices(current_element);
 
   const int num_faces = element_face_accessor->num_faces();
-  for (int i = 0; i < num_faces; i++) {
-    auto coords = element_face_accessor->face_vertices(i);
-    const double exiting_dot = u.dot(triangle_normal(coords));
-    if (exiting_dot < 0.0) continue;
-
-    PluckerIntersectionResult result;
-    if (coords.size() == 3) {
-      result = plucker_ray_tri_intersect(
-          coords.data(), r, u, INFTY, -1e-10, false, 0);
-    } else if (coords.size() == 4) {
-      std::array<Vertex, 3> tri0;
-      std::array<Vertex, 3> tri1;
-      if (canonical_diagonal(coords)) {
-        tri0 = {coords[0], coords[1], coords[2]};
-        tri1 = {coords[0], coords[2], coords[3]};
-      } else {
-        tri0 = {coords[1], coords[2], coords[3]};
-        tri1 = {coords[1], coords[3], coords[0]};
-      }
-      auto result0 = plucker_ray_tri_intersect(tri0.data(),
-                                               r,
-                                               u,
-                                               INFTY,
-                                               0.0,
-                                               false,
-                                               0);
-      auto result1 = plucker_ray_tri_intersect(tri1.data(),
-                                               r,
-                                               u,
-                                               INFTY,
-                                               0.0,
-                                               false,
-                                               0);
-      bool hit0 = result0.hit;
-      bool hit1 = result1.hit;
-      double dist0 = result0.t;
-      double dist1 = result1.t;
-      if (hit0 || hit1) {
-        result.hit = true;
-        if (hit0 && hit1) {
-          result.t = std::min(dist0, dist1);
+  auto collect_candidates = [&](const Position& query_point,
+                                double distance_offset) {
+    for (int i = 0; i < num_faces; i++) {
+      auto coords = element_face_accessor->face_vertices(i);
+      double exiting_dot;
+      PluckerIntersectionResult result;
+      if (coords.size() == 3) {
+        exiting_dot = u.dot(triangle_normal(coords));
+        if (exiting_dot < 0) continue;
+        result = plucker_ray_tri_intersect(
+            coords.data(), query_point, u, INFTY, -1e-10, false, 0);
+      } else if (coords.size() == 4) {
+        std::array<Vertex, 3> tri0;
+        std::array<Vertex, 3> tri1;
+        if (canonical_diagonal(coords)) {
+          tri0 = {coords[0], coords[1], coords[2]};
+          tri1 = {coords[0], coords[2], coords[3]};
         } else {
-          result.t = hit0 ? dist0 : dist1;
+          tri0 = {coords[1], coords[2], coords[3]};
+          tri1 = {coords[1], coords[3], coords[0]};
         }
+        double exiting_dot0 = u.dot(triangle_normal(tri0));
+        double exiting_dot1 = u.dot(triangle_normal(tri1));
+        auto result0 = plucker_ray_tri_intersect(tri0.data(),
+                                                 query_point,
+                                                 u,
+                                                 INFTY,
+                                                 -1e-10,
+                                                 false,
+                                                 0);
+        auto result1 = plucker_ray_tri_intersect(tri1.data(),
+                                                 query_point,
+                                                 u,
+                                                 INFTY,
+                                                 -1e-10,
+                                                 false,
+                                                 0);
+        bool hit0 = result0.hit;
+        bool hit1 = result1.hit;
+        double dist0 = result0.t;
+        double dist1 = result1.t;
+        const bool exiting_hit0 = hit0 && exiting_dot0 >= 0.0;
+        const bool exiting_hit1 = hit1 && exiting_dot1 >= 0.0;
+        if (exiting_hit0 || exiting_hit1) {
+          result.hit = true;
+          if (exiting_hit0 && exiting_hit1) {
+            if (dist0 < dist1) {
+              result.t = dist0;
+              exiting_dot = exiting_dot0;
+            } else {
+              result.t = dist1;
+              exiting_dot = exiting_dot1;
+            }
+          } else if (exiting_hit0) {
+            result.t = dist0;
+            exiting_dot = exiting_dot0;
+          } else {
+            result.t = dist1;
+            exiting_dot = exiting_dot1;
+          }
+        }
+      } else {
+        fatal_error("Unsupported face vertex count {} in next_element", coords.size());
       }
-    } else {
-      fatal_error("Unsupported face vertex count {} in next_element", coords.size());
+
+      if (!result.hit) continue;
+      if (exiting_dot < 0.0) continue;
+
+      MeshID next_element = this->adjacent_element(current_element, i);
+
+      candidates.push_back({next_element,
+                            distance_offset + std::max(0.0, result.t),
+                            i,
+                            exiting_dot});
     }
+  };
 
-    if (!result.hit) continue;
-
-    MeshID next_element = this->adjacent_element(current_element, i);
-
-    candidates.push_back(
-        {next_element, std::max(0.0, result.t), i, exiting_dot});
+  collect_candidates(r, 0.0);
+  if (candidates.empty()) {
+    collect_candidates(r + u * TINY_BIT, TINY_BIT);
   }
 
   if (candidates.empty()) return {ID_NONE, INFTY};
@@ -243,7 +269,7 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
 
   const auto selected = *std::max_element(
     tied_candidates.begin(), tied_candidates.end(),
-    [](const auto a, const auto b) { return a->distance < b->distance; });
+    [](const auto a, const auto b) { return a->exiting_dot < b->exiting_dot; });
 
   return {selected->element, selected->distance};
 }
