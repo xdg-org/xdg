@@ -77,6 +77,10 @@ TEMPLATE_TEST_CASE("Test Hex Element Random Walk Jezebel Tets",
   }
 }
 
+// Regression coverage for a LibMesh hex element whose quad exit face is split
+// into two subtriangles. This ray intersects the outward-facing subtriangle;
+// `next_element` used to miss that exit and return ID_NONE/INFTY when it chose
+// the other subtriangle's orientation.
 TEST_CASE("LibMesh next_element chooses exiting quad subtriangle",
           "[walk_elements][hex][quads][libmesh]")
 {
