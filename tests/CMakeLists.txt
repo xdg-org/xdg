@@ -105,6 +105,7 @@ single-tet.exo
 quad_sphere.h5m
 regularized_tet_mesh.h5m
 regularized_tet_mesh.exo
+regularized_hex_mesh.exo
 )
 
 foreach(file ${TEST_FILES})

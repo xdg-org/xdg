@@ -1,5 +1,7 @@
 #include <memory>
+#include <numeric>
 #include <string>
+#include <vector>
 
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -103,4 +105,55 @@ TEST_CASE("LibMesh next_element chooses exiting quad subtriangle",
   REQUIRE(next_element != ID_NONE);
   REQUIRE_THAT(exit_distance,
                Catch::Matchers::WithinAbs(0.10494826380348422, 1e-12));
+}
+
+struct TrackCase {
+  Position start;
+  Position end;
+};
+
+double segment_sum(const std::vector<std::pair<MeshID, double>>& segments)
+{
+  return std::accumulate(segments.begin(), segments.end(), 0.0,
+    [](double total, const auto& segment) { return total + segment.second; });
+}
+
+TEST_CASE("LibMesh segments account for OpenMC hex tracks starting on faces",
+  "[tracks][hex][libmesh][openmc]")
+{
+  check_mesh_library_supported(MeshLibrary::LIBMESH);
+
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("regularized_hex_mesh.exo");
+  mesh_manager->init();
+  xdg->prepare_raytracer();
+
+  const std::vector<TrackCase> cases {
+    {{-6.0, 0.777417, -7.82735}, {-5.97095, 0.0210081, -7.17389}},
+    {{6.0, 4.04678, 7.38517}, {5.1321, 4.14004, 6.89727}},
+  };
+
+  for (const auto& c : cases) {
+    const Direction track = c.end - c.start;
+    const double length = track.length();
+    Direction u = track;
+    u.normalize();
+
+    DYNAMIC_SECTION(fmt::format("start = {}, end = {}", c.start, c.end))
+    {
+      CHECK(xdg->find_element(c.start + TINY_BIT * u) != ID_NONE);
+
+      const auto bumped_segments = xdg->segments(c.start + TINY_BIT * u, c.end);
+      CHECK_FALSE(bumped_segments.empty());
+      CHECK_THAT(segment_sum(bumped_segments),
+        Catch::Matchers::WithinAbs((c.end - (c.start + TINY_BIT * u)).length(),
+          1.0e-12));
+
+      const auto segments = xdg->segments(c.start, c.end);
+      CHECK_FALSE(segments.empty());
+      CHECK_THAT(segment_sum(segments),
+        Catch::Matchers::WithinAbs(length, 1.0e-12));
+    }
+  }
 }
