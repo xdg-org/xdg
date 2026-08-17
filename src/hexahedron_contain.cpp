@@ -2,6 +2,7 @@
 
 #include "xdg/constants.h"
 #include "xdg/geometry/face_common.h"
+#include "xdg/geometry/plucker.h"
 #include "xdg/ray_tracing_interface.h"
 #include "xdg/ray.h"
 #include "xdg/vec3da.h"
@@ -34,17 +35,22 @@ bool hex_containment_test(const Position& point,
   }
   centroid = centroid / 8.0;
 
-  auto outside_triangle = [&](int i0, int i1, int i2) {
-    const auto& v0 = verts[i0];
-    const auto& v1 = verts[i1];
-    const auto& v2 = verts[i2];
-    Direction normal = (v1 - v0).cross(v2 - v0);
-    if (normal.dot(centroid - v0) > 0.0) {
-      normal = -normal;
+  Direction direction = centroid - point;
+  const double distance_to_centroid = direction.length();
+  if (distance_to_centroid <= TINY_BIT) {
+    return true;
+  }
+  direction /= distance_to_centroid;
+
+  auto crosses_boundary_triangle = [&](int i0, int i1, int i2) {
+    std::array<Vertex, 3> triangle {verts[i0], verts[i1], verts[i2]};
+    auto result = plucker_ray_tri_intersect(triangle.data(),
+      point, direction, distance_to_centroid, TINY_BIT, false, 0);
+    if (!result.hit) {
+      return false;
     }
 
-    const double dist = normal.dot(point - v0);
-    return dist > PLUCKER_ZERO_TOL;
+    return result.t < distance_to_centroid - TINY_BIT;
   };
 
   for (const auto& face : k_hex_faces) {
@@ -52,13 +58,13 @@ bool hex_containment_test(const Position& point,
     // of vertex coordinates so diagonals are chosen consistently
     // regardless of face connectivity ordering
     if (select_diagonal(verts, face)) {
-      if (outside_triangle(face[0], face[1], face[2]) ||
-          outside_triangle(face[0], face[2], face[3])) {
+      if (crosses_boundary_triangle(face[0], face[1], face[2]) ||
+          crosses_boundary_triangle(face[0], face[2], face[3])) {
         return false;
       }
     } else {
-      if (outside_triangle(face[1], face[2], face[3]) ||
-          outside_triangle(face[1], face[3], face[0])) {
+      if (crosses_boundary_triangle(face[1], face[2], face[3]) ||
+          crosses_boundary_triangle(face[1], face[3], face[0])) {
         return false;
       }
     }
