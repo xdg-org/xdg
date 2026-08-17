@@ -3,6 +3,7 @@
 
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include "xdg/mesh_managers.h"
 #include "xdg/xdg.h"
@@ -74,4 +75,28 @@ TEMPLATE_TEST_CASE("Test Hex Element Random Walk Jezebel Tets",
     context.quiet_ = true;
     walk_elements(context);
   }
+}
+
+TEST_CASE("LibMesh next_element chooses exiting quad subtriangle",
+          "[walk_elements][hex][quads][libmesh]")
+{
+  check_mesh_library_supported(MeshLibrary::LIBMESH);
+
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("jezebel-quads.exo");
+  mesh_manager->init();
+  xdg->prepare_raytracer();
+
+  const MeshID element = 26960;
+  const Position r {1.2606477549928472, -2.200610435773155, -0.9089446380562195};
+  const Direction u {-0.9106430240324721, -0.13069809240463648, 0.391978687459897};
+
+  REQUIRE(xdg->find_element(r) == element);
+
+  const auto [next_element, exit_distance] = xdg->next_element(element, r, u);
+
+  REQUIRE(next_element != ID_NONE);
+  REQUIRE_THAT(exit_distance,
+               Catch::Matchers::WithinAbs(0.10494826380348422, 1e-12));
 }
