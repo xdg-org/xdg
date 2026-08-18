@@ -173,12 +173,14 @@ jobs:
           # first let's get netcdf
           sudo apt-get update
           sudo apt-get install -y libnetcdf-dev libhdf5-dev
+          HDF5_DIR="$(dirname "$(dpkg -L libhdf5-dev | grep '/hdf5-config.cmake$' | head -1)")"
+          echo "HDF5_DIR=$HDF5_DIR"
           cd ~
           cd mfem
           git checkout v4.9
           mkdir build
           cd build
-          cmake .. -DMFEM_USE_HYPRE=OFF -DMFEM_USE_NETCDF=ON -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_BUILD_TYPE=Debug
+          cmake .. -DMFEM_USE_HYPRE=OFF -DMFEM_USE_NETCDF=ON -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_BUILD_TYPE=Debug -DHDF5_DIR=/usr/lib/x86_64-linux-gnu/hdf5/serial
           make -j4
           sudo make install
 
