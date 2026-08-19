@@ -168,7 +168,7 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
   for (int i = 0; i < num_faces; i++) {
     auto coords = element_face_accessor->face_vertices(i);
     double exiting_dot;
-    PluckerIntersectionResult result;
+    PluckerIntersectionResult result {false, INFTY};
     if (coords.size() == 3) {
       exiting_dot = u.dot(triangle_normal(coords));
       if (exiting_dot < 0) continue;
@@ -184,45 +184,39 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
         tri0 = {coords[1], coords[2], coords[3]};
         tri1 = {coords[1], coords[3], coords[0]};
       }
+      PluckerIntersectionResult result0, result1;
       double exiting_dot0 = u.dot(triangle_normal(tri0));
+      if (exiting_dot0 >= 0.0) {
+      result0 = plucker_ray_tri_intersect(tri0.data(),
+                                                r,
+                                                u,
+                                                INFTY,
+                                                -1e-10,
+                                                false,
+                                                0);
+      }
+
       double exiting_dot1 = u.dot(triangle_normal(tri1));
-      auto result0 = plucker_ray_tri_intersect(tri0.data(),
+      if (exiting_dot1 >= 0.0) {
+      result1 = plucker_ray_tri_intersect(tri1.data(),
                                                 r,
                                                 u,
                                                 INFTY,
                                                 -1e-10,
                                                 false,
                                                 0);
-      auto result1 = plucker_ray_tri_intersect(tri1.data(),
-                                                r,
-                                                u,
-                                                INFTY,
-                                                -1e-10,
-                                                false,
-                                                0);
-      bool hit0 = result0.hit;
-      bool hit1 = result1.hit;
-      double dist0 = result0.t;
-      double dist1 = result1.t;
-      const bool exiting_hit0 = hit0 && exiting_dot0 >= 0.0;
-      const bool exiting_hit1 = hit1 && exiting_dot1 >= 0.0;
-      if (exiting_hit0 || exiting_hit1) {
-        result.hit = true;
-        if (exiting_hit0 && exiting_hit1) {
-          if (dist0 < dist1) {
-            result.t = dist0;
-            exiting_dot = exiting_dot0;
-          } else {
-            result.t = dist1;
-            exiting_dot = exiting_dot1;
-          }
-        } else if (exiting_hit0) {
-          result.t = dist0;
-          exiting_dot = exiting_dot0;
-        } else {
-          result.t = dist1;
-          exiting_dot = exiting_dot1;
-        }
+      }
+      if (!result0.hit && !result1.hit) continue;
+      // we hit one or both triangles, so we will return a hit
+      result.hit = true;
+      // if we hit both triangles, use the closer triangle distance
+      if (result0.hit) {
+        result.t = result0.t;
+        exiting_dot = exiting_dot0;
+      }
+      if (result1.hit && result1.t < result.t) {
+        result.t = result1.t;
+        exiting_dot = exiting_dot1;
       }
     } else {
       fatal_error("Unsupported face vertex count {} in next_element", coords.size());

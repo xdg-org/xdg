@@ -17,8 +17,8 @@ namespace xdg {
  *
  * The hexahedron is defined by eight vertices ordered per the MBCN
  * canonical numbering. The containment test casts toward the hexahedron
- * centroid and uses Plucker ray-triangle tests against triangulated faces;
- * points on the boundary are considered inside.
+ * centroid and uses Plucker edge-coordinate sign tests against triangulated
+ * faces; points on the boundary are considered inside.
  */
 bool hex_containment_test(const Position& point,
                           const std::array<Vertex, 8>& verts);

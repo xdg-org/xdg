@@ -10,6 +10,41 @@
 namespace xdg
 {
 
+bool plucker_line_intersects_triangle(const std::array<Vertex, 3>& triangle,
+                                      const Position& origin,
+                                      const Direction& direction)
+{
+  const auto ray = direction;
+  const auto ray_normal = direction.cross(origin);
+
+  const double plucker_coord0 =
+    plucker_edge_test(triangle[0], triangle[1], ray, ray_normal);
+  const double plucker_coord1 =
+    plucker_edge_test(triangle[1], triangle[2], ray, ray_normal);
+
+  if ((plucker_coord0 < 0.0 && plucker_coord1 > 0.0) ||
+      (plucker_coord0 > 0.0 && plucker_coord1 < 0.0)) {
+    return false;
+  }
+
+  const double plucker_coord2 =
+    plucker_edge_test(triangle[2], triangle[0], ray, ray_normal);
+
+  if ((plucker_coord1 < 0.0 && plucker_coord2 > 0.0) ||
+      (plucker_coord1 > 0.0 && plucker_coord2 < 0.0)) {
+    return false;
+  }
+
+  if ((plucker_coord0 < 0.0 && plucker_coord2 > 0.0) ||
+      (plucker_coord0 > 0.0 && plucker_coord2 < 0.0)) {
+    return false;
+  }
+
+  return !(plucker_coord0 == 0.0 &&
+           plucker_coord1 == 0.0 &&
+           plucker_coord2 == 0.0);
+}
+
 bool select_diagonal(const std::array<Vertex, 8>& verts,
                      const std::array<int, 4>& face)
 {
@@ -44,13 +79,21 @@ bool hex_containment_test(const Position& point,
 
   auto crosses_boundary_triangle = [&](int i0, int i1, int i2) {
     std::array<Vertex, 3> triangle {verts[i0], verts[i1], verts[i2]};
-    auto result = plucker_ray_tri_intersect(triangle.data(),
-      point, direction, distance_to_centroid, TINY_BIT, false, 0);
-    if (!result.hit) {
+
+    if (!plucker_line_intersects_triangle(triangle, point, direction)) {
       return false;
     }
 
-    return result.t < distance_to_centroid - TINY_BIT;
+    Direction normal = (triangle[1] - triangle[0]).cross(
+      triangle[2] - triangle[0]);
+    if (normal.dot(centroid - triangle[0]) > 0.0) {
+      normal = -normal;
+    }
+
+    const double point_side = normal.dot(point - triangle[0]);
+    const double centroid_side = normal.dot(centroid - triangle[0]);
+    return point_side > PLUCKER_ZERO_TOL &&
+           centroid_side < -PLUCKER_ZERO_TOL;
   };
 
   for (const auto& face : k_hex_faces) {
