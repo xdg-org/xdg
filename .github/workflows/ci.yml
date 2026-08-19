@@ -132,15 +132,15 @@ jobs:
           path: ~/LIBMESH
           key: libmesh-${{ runner.os }}-${{ env.cache-name }}-${{ env.LIBMESH_SHA }}
 
-      - name: mfem Cache
-        if: ${{ matrix.mfem }}
-        id: mfem-cache
-        uses: actions/cache@v3
-        env:
-          cache-name: mfem-cache
-        with:
-          path: ~/mfem
-          key: mfem-${{ runner.os }}-${{ env.cache-name }}-${{ env.LIBMESH_SHA }}
+      # - name: mfem Cache
+      #   if: ${{ matrix.mfem }}
+      #   id: mfem-cache
+      #   uses: actions/cache@v3
+      #   env:
+      #     cache-name: mfem-cache
+      #   with:
+      #     path: ~/mfem
+      #     key: mfem-${{ runner.os }}-${{ env.cache-name }}-${{ env.MFEM_SHA }}
 
       - if: ${{ matrix.moab && steps.moab-cache.outputs.cache-hit != 'true' }}
         name: Build MOAB
