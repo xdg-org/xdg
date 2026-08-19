@@ -17,12 +17,6 @@
 #include "xdg/mesh_managers.h"
 #include "xdg/config.h"
 
-#ifdef XDG_ENABLE_LIBMESH
-#include "xdg/libmesh/mesh_manager.h"
-
-#include "libmesh/mesh.h"
-#endif
-
 #include "mesh_mocks.h"
 #include "util.h"
 #include "../tools/tally_segments.h"
@@ -183,7 +177,6 @@ TEST_CASE("Test Random Jezebel Quad Tally Segments")
 TEST_CASE("Test Regularized Tet Mesh Shared-Edge Tracks", "[tracks]") {
   check_mesh_library_supported(MeshLibrary::LIBMESH);
 
-#ifdef XDG_ENABLE_LIBMESH
   // These tracks were isolated from OpenMC unstructured mesh track output. Each
   // starts exactly on an internal tetrahedral edge shared by multiple tets. At
   // that point, several candidate exit faces can be hit at zero distance. The
@@ -318,14 +311,13 @@ TEST_CASE("Test Regularized Tet Mesh Shared-Edge Tracks", "[tracks]") {
         {4369, 0.77178082299458273},  {3179, 0.33949822791579021},
         {3177, 0.20485635142282324},  {3176, 0.55886455134984947}}}};
 
-  libMesh::Mesh mesh(*XDGConfig::config().libmesh_comm(), 3);
-  mesh.read("regularized_tet_mesh.exo");
-  mesh.prepare_for_use();
-  LibMeshManager mesh_manager(&mesh);
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH, RTLibrary::EMBREE);
+  xdg->mesh_manager()->load_file("regularized_tet_mesh.exo");
+  xdg->mesh_manager()->init();
 
   for (const auto &test_case : cases) {
     DYNAMIC_SECTION(test_case.name) {
-      const auto segments = significant_segments(mesh_manager.walk_elements(
+      const auto segments = significant_segments(xdg->mesh_manager()->walk_elements(
           test_case.start_element, test_case.start, test_case.end));
 
       REQUIRE(segments.size() == test_case.expected_segments.size());
@@ -338,7 +330,6 @@ TEST_CASE("Test Regularized Tet Mesh Shared-Edge Tracks", "[tracks]") {
       }
     }
   }
-#endif
 }
 
 TEMPLATE_TEST_CASE("Test Single-Tet Glancing Vertex Intersection Tracks", "[tracks]",
