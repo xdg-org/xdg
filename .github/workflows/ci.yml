@@ -123,7 +123,7 @@ jobs:
           cd ~/moab
           mkdir build
           cd build
-          cmake -DENABLE_HDF5=ON -DENABLE_BLASLAPACK=OFF -DCMAKE_INSTALL_PREFIX=$HOME/MOAB -DCMAKE_BUILD_TYPE=Release ..
+          cmake -DENABLE_HDF5=ON -DENABLE_NETCDF=ON -DENABLE_BLASLAPACK=OFF -DCMAKE_INSTALL_PREFIX=$HOME/MOAB -DCMAKE_BUILD_TYPE=Release ..
           make -j4
           make install
 
