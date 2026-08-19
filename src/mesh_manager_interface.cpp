@@ -100,14 +100,15 @@ Property MeshManager::get_surface_property(MeshID surface,
 }
 
 std::vector<std::pair<MeshID, double>>
-MeshManager::walk_elements(MeshID starting_element, const Position &start,
-                           const Direction &u, double distance) const {
+MeshManager::walk_elements(MeshID starting_element,
+                           const Position &start,
+                           const Direction &u,
+                           double distance) const {
   // a copy of the start position that will be updated as elements are traversed
   Position r = start;
   std::vector<std::pair<MeshID, double>> result;
 
   MeshID elem = starting_element;
-  MeshID previous_element = ID_NONE;
   while (distance > 0) {
     // find the exit point from the current element and determine the next
     // element if one exists
@@ -123,12 +124,6 @@ MeshManager::walk_elements(MeshID starting_element, const Position &start,
     result.push_back({elem, exit.second});
     r += exit.second * u;
 
-    if (exit.second > TINY_BIT) {
-      previous_element = ID_NONE;
-    } else {
-      previous_element = elem;
-    }
-
     elem = exit.first;
 
     // if there is no next element, we're exiting the mesh
@@ -141,7 +136,8 @@ MeshManager::walk_elements(MeshID starting_element, const Position &start,
 }
 
 std::vector<std::pair<MeshID, double>>
-MeshManager::walk_elements(MeshID starting_element, const Position &start,
+MeshManager::walk_elements(MeshID starting_element,
+                           const Position &start,
                            const Position &end) const {
   Position u = (end - start);
   double distance = u.length();
@@ -149,9 +145,10 @@ MeshManager::walk_elements(MeshID starting_element, const Position &start,
   return walk_elements(starting_element, start, u, distance);
 }
 
-std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
-                                                    const Position &r,
-                                                    const Position &u) const {
+std::pair<MeshID, double>
+MeshManager::next_element(MeshID current_element,
+                          const Position &r,
+                          const Position &u) const {
   struct FaceCandidate {
     MeshID element {ID_NONE};
     double distance;
@@ -235,6 +232,8 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
 
   if (candidates.empty()) return {ID_NONE, INFTY};
 
+  if (candidates.size() == 1) return {candidates.front().element, candidates.front().distance};
+
   // find the minimum distance among candidate hits
   double min_dist = INFTY;
   for (const auto &candidate : candidates) {
@@ -243,7 +242,7 @@ std::pair<MeshID, double> MeshManager::next_element(MeshID current_element,
 
   // find all candidates that are tied for the minimum distance
   // break ties by selecting the face most aligned with the query direction
-  const double tie_tol = 1.0e-10 * std::max(1.0, std::abs(min_dist));
+  const double tie_tol = TINY_BIT * std::max(1.0, std::abs(min_dist));
   std::vector<const FaceCandidate *> tied_candidates;
   for (const auto &candidate : candidates) {
     if (std::abs(candidate.distance - min_dist) > tie_tol)
@@ -269,8 +268,7 @@ MeshID MeshManager::next_volume(MeshID current_volume, MeshID surface) const {
   else if (parent_vols.second == current_volume)
     return parent_vols.first;
   else
-    fatal_error("Volume {} is not a parent of surface {}", current_volume,
-                surface);
+    fatal_error("Volume {} is not a parent of surface {}", current_volume, surface);
 
   return ID_NONE;
 }
@@ -281,7 +279,8 @@ Direction MeshManager::face_normal(MeshID element) const
   return (vertices[1] - vertices[0]).cross(vertices[2] - vertices[0]).normalize();
 }
 
-BoundingBox MeshManager::element_bounding_box(MeshID element) const {
+BoundingBox
+MeshManager::element_bounding_box(MeshID element) const {
   auto vertices = this->element_vertices(element);
   return BoundingBox::from_points(vertices);
 }
@@ -293,7 +292,8 @@ MeshManager::face_bounding_box(MeshID element) const
   return BoundingBox::from_points(vertices);
 }
 
-BoundingBox MeshManager::volume_bounding_box(MeshID volume) const {
+BoundingBox
+MeshManager::volume_bounding_box(MeshID volume) const {
   BoundingBox bb;
   auto surfaces = this->get_volume_surfaces(volume);
   for (auto surface : surfaces) {
@@ -302,7 +302,8 @@ BoundingBox MeshManager::volume_bounding_box(MeshID volume) const {
   return bb;
 }
 
-BoundingBox MeshManager::global_bounding_box() const {
+BoundingBox
+MeshManager::global_bounding_box() const {
   BoundingBox bb;
   auto volumes = this->volumes();
   for (auto volume : volumes) {
@@ -311,7 +312,8 @@ BoundingBox MeshManager::global_bounding_box() const {
   return bb;
 }
 
-BoundingBox MeshManager::surface_bounding_box(MeshID surface) const {
+BoundingBox
+MeshManager::surface_bounding_box(MeshID surface) const {
   auto elements = this->get_surface_faces(surface);
   BoundingBox bb;
   for (const auto &element : elements) {
@@ -371,19 +373,23 @@ MeshManager::volume_local_mesh_data(MeshID volume) const {
   return local_mesh_data(elements, connectivity_func);
 }
 
-std::vector<Vertex> MeshManager::get_surface_vertices(MeshID surface) const {
+std::vector<Vertex> MeshManager::get_surface_vertices(MeshID surface) const
+{
   return surface_local_mesh_data(surface).vertices;
 }
 
-std::vector<int> MeshManager::get_surface_connectivity(MeshID surface) const {
+std::vector<int> MeshManager::get_surface_connectivity(MeshID surface) const
+{
   return surface_local_mesh_data(surface).connectivity;
 }
 
-std::vector<Vertex> MeshManager::get_volume_vertices(MeshID volume) const {
+std::vector<Vertex> MeshManager::get_volume_vertices(MeshID volume) const
+{
   return volume_local_mesh_data(volume).vertices;
 }
 
-std::vector<int> MeshManager::get_volume_connectivity(MeshID volume) const {
+std::vector<int> MeshManager::get_volume_connectivity(MeshID volume) const
+{
   return volume_local_mesh_data(volume).connectivity;
 }
 

@@ -30,13 +30,13 @@ static constexpr PluckerIntersectionResult EXIT_EARLY = {false, 0.0};
 /* Function to return the vertex with the lowest coordinates. To force the same
   ray-edge computation, the Plücker test needs to use consistent edge
   representation. This would be more simple with MOAB handles instead of
-  coordinates... 
+  coordinates...
 */
 inline bool first(dp::vec3 a, dp::vec3 b) {
-  if (a[0] < b[0]) return true;  
+  if (a[0] < b[0]) return true;
   if (a[0] > b[0]) return false;
 
-  if (a[1] < b[1]) return true;  
+  if (a[1] < b[1]) return true;
   if (a[1] > b[1]) return false;
 
   return a[2] < b[2];
@@ -150,8 +150,7 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(dp::vec3 vertices[3],
   double v = plucker_coord0 * inverse_sum;
 
   // Barycentric coords check
-  const double bary_tol = dp::DBL_ZERO_TOL;
-  if (u < -bary_tol || v < -bary_tol || (u + v) > 1.0 + bary_tol) {
+  if (u < -PLUCKER_ZERO_TOL || v < -PLUCKER_ZERO_TOL || (u + v) > 1.0 + PLUCKER_ZERO_TOL) {
       dist_out = -1.0;
   }
 
@@ -159,6 +158,42 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(dp::vec3 vertices[3],
   if (dist_out < tMin || dist_out > tMax) return EXIT_EARLY;
 
   return {true, dist_out};
+}
+
+template<typename T>
+inline bool plucker_line_intersects_triangle(const T& triangle,
+                                             const Position& origin,
+                                             const Direction& direction)
+{
+  const auto ray = direction;
+  const auto ray_normal = direction.cross(origin);
+
+  const double plucker_coord0 =
+    plucker_edge_test(triangle[0], triangle[1], ray, ray_normal);
+  const double plucker_coord1 =
+    plucker_edge_test(triangle[1], triangle[2], ray, ray_normal);
+
+  if ((plucker_coord0 < 0.0 && plucker_coord1 > 0.0) ||
+      (plucker_coord0 > 0.0 && plucker_coord1 < 0.0)) {
+    return false;
+  }
+
+  const double plucker_coord2 =
+    plucker_edge_test(triangle[2], triangle[0], ray, ray_normal);
+
+  if ((plucker_coord1 < 0.0 && plucker_coord2 > 0.0) ||
+      (plucker_coord1 > 0.0 && plucker_coord2 < 0.0)) {
+    return false;
+  }
+
+  if ((plucker_coord0 < 0.0 && plucker_coord2 > 0.0) ||
+      (plucker_coord0 > 0.0 && plucker_coord2 < 0.0)) {
+    return false;
+  }
+
+  return !(plucker_coord0 == 0.0 &&
+           plucker_coord1 == 0.0 &&
+           plucker_coord2 == 0.0);
 }
 
 } // namespace xdg

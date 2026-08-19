@@ -103,7 +103,6 @@ small-tet-mesh.exo
 single-tet.h5m
 single-tet.exo
 quad_sphere.h5m
-regularized_tet_mesh.h5m
 regularized_tet_mesh.exo
 regularized_hex_mesh.exo
 )
