@@ -33,7 +33,9 @@
       ],
       "displayName": "cuBQL LLVM OpenMP offload RTX 2000 Ada",
       "cacheVariables": {
-        "XDG_ENABLE_CUBQL": "ON"
+        "XDG_ENABLE_CUBQL": "ON",
+        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.6/bin/nvcc",
+        "CMAKE_CUDA_ARCHITECTURES": "89"
       },
       "environment": {
         "PRESET_CXX_FLAGS": "-fopenmp-cuda-mode -fopenmp-targets=nvptx64 -Xopenmp-target=nvptx64 -march=sm_89"

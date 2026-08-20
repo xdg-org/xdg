@@ -21,6 +21,14 @@ if(NOT CMAKE_BUILD_TYPE)
  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose build type" FORCE)
 endif()
 
+if(XDG_ENABLE_CUBQL)
+  enable_language(CUDA)
+  if(NOT CMAKE_CUDA_ARCHITECTURES)
+    set(CMAKE_CUDA_ARCHITECTURES native CACHE STRING
+        "CUDA architecture for the cuBQL builder" FORCE)
+  endif()
+endif()
+
 if(DEFINED XDG_CMAKE_PRESET)
   message(STATUS "XDG CMake preset: ${XDG_CMAKE_PRESET}")
 endif()
@@ -247,6 +255,7 @@ list(APPEND xdg_sources
 src/cuBQL/triangles.cpp
 src/cuBQL/intersection.cpp
 src/cuBQL/ray_tracer.cpp
+src/cuBQL/cuda_builder_bridge.cu
 )
 
 # We need a precompile definition to switch to using the cuBQL math types in the shared
@@ -304,6 +313,15 @@ if("${isSystemDir}" STREQUAL "-1")
 endif()
 
 add_library(xdg SHARED ${xdg_sources})
+
+if(XDG_ENABLE_CUBQL)
+  message(STATUS "cuBQL BVHs will be built with CUDA and traversed with OpenMP")
+  set_target_properties(xdg PROPERTIES
+    CUDA_STANDARD 17
+    CUDA_STANDARD_REQUIRED YES
+    CUDA_EXTENSIONS NO
+  )
+endif()
 
 if(XDG_ENABLE_EMBREE)
   # pass precompile definition depending on embree version

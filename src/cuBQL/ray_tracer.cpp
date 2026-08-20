@@ -4,8 +4,9 @@
 #include "xdg/geometry/plucker.h"
 #include "xdg/available_device_probe.h"
 
+#include "cuda_builder_bridge.h"
+
 #include <omp.h>
-#include "cuBQL/builder/omp.h"
 #include "cuBQL/math/Ray.h"
 #include "cuBQL/queries/triangleData/Triangle.h"
 #include "cuBQL/queries/triangleData/math/rayTriangleIntersections.h"
@@ -14,6 +15,7 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
+#include <vector>
 
 namespace xdg {
 
@@ -267,11 +269,48 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
   volume_group.gpu_id = context_.gpuID;
 
   cuBQL::BuildConfig build_params;
-  cuBQL::build_omp_target(volume_group.bvh,
-                          d_aabbs,
-                          num_primitives,
-                          build_params,
-                          context_.gpuID);
+  std::vector<cuBQL::box3f> host_aabbs(num_primitives);
+  omp_target_memcpy(
+    host_aabbs.data(),
+    d_aabbs,
+    host_aabbs.size() * sizeof(cuBQL::box3f),
+    0,
+    0,
+    context_.hostID,
+    context_.gpuID);
+  
+  // Call the thin CUDA wrapper which builds BVH via CUDA and returns the host-side BVH data.
+  auto host_bvh = cubql::build_cuda_bvh(host_aabbs, build_params, context_.gpuID);
+  
+  // upload the BVH to openmp device
+  volume_group.bvh.nodes = static_cast<cuBQL::bvh3f::node_t*>(
+    omp_target_alloc(host_bvh.nodes.size() *
+                       sizeof(cuBQL::bvh3f::node_t),
+                     context_.gpuID));
+  volume_group.bvh.primIDs = static_cast<std::uint32_t*>(
+    omp_target_alloc(host_bvh.prim_ids.size() *
+                       sizeof(std::uint32_t),
+                     context_.gpuID));
+
+  omp_target_memcpy(
+    volume_group.bvh.nodes,
+    host_bvh.nodes.data(),
+    host_bvh.nodes.size() * sizeof(cuBQL::bvh3f::node_t),
+    0,
+    0,
+    context_.gpuID,
+    context_.hostID);
+  omp_target_memcpy(
+    volume_group.bvh.primIDs,
+    host_bvh.prim_ids.data(),
+    host_bvh.prim_ids.size() * sizeof(std::uint32_t),
+    0,
+    0,
+    context_.gpuID,
+    context_.hostID);
+
+  volume_group.bvh.numNodes = host_bvh.nodes.size();
+  volume_group.bvh.numPrims = host_bvh.prim_ids.size();
 
   omp_target_free(d_aabbs, context_.gpuID);
 
@@ -506,6 +545,7 @@ void CuBQLRayTracer::bvh_diagnostics(MeshID volume) const
   std::cout << "\n ----------------------------------------------- \n"
             << "BVH diagnostics for Volume = " << volume << "\n"
             << " TreeID = " << tree << "\n"
+            << " builder = CUDA (copied into OpenMP-owned storage)\n"
             << " num_surfaces (populated by mesh_manager) = "
             << volume_group.num_surfaces << "\n"
             << " num_primitives (populated by mesh_manager) = "
