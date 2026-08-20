@@ -187,8 +187,19 @@ TEMPLATE_TEST_CASE("Test Regularized Tet Mesh Shared-Edge Tracks",
           {4369, 0.77178082299458273},  {3179, 0.33949822791579021},
           {3177, 0.20485635142282324},  {3176, 0.55886455134984947}}}};
 
+    std::string filename = "regularized_tet_mesh";
+
+    if (mesh_backend == MeshLibrary::MOAB) {
+      filename += ".h5m";
+    } else if (mesh_backend == MeshLibrary::LIBMESH) {
+      filename += ".exo";
+    } else {
+      throw std::runtime_error(fmt::format(
+          "Unsupported mesh library {} for regression test", mesh_backend));
+    }
+
     std::shared_ptr<XDG> xdg = XDG::create(mesh_backend, RTLibrary::EMBREE);
-    xdg->mesh_manager()->load_file("regularized_tet_mesh.exo");
+    xdg->mesh_manager()->load_file(filename);
     xdg->mesh_manager()->init();
 
     for (const auto &test_case : cases) {
@@ -234,6 +245,16 @@ TEMPLATE_TEST_CASE("Segments account for simulated hex tracks starting on faces"
   DYNAMIC_SECTION(fmt::format("Backend = {}", mesh_backend))
   {
     check_mesh_library_supported(mesh_backend);
+
+    std::string filename = "regularized_hex_mesh";
+    if (mesh_backend == MeshLibrary::MOAB) {
+      filename += ".h5m";
+    } else if (mesh_backend == MeshLibrary::LIBMESH) {
+      filename += ".exo";
+    } else {
+      throw std::runtime_error(fmt::format(
+          "Unsupported mesh library {} for regression test", mesh_backend));
+    }
 
     std::shared_ptr<XDG> xdg = XDG::create(mesh_backend);
     const auto& mesh_manager = xdg->mesh_manager();
