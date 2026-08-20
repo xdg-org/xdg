@@ -21,6 +21,7 @@ test_tracks
 test_walk_elements
 test_tally_segments
 test_mesh_connectivity
+test_regressions
 )
 
 if (XDG_ENABLE_MOAB)

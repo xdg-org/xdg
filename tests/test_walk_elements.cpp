@@ -1,11 +1,8 @@
 #include <memory>
-#include <numeric>
 #include <string>
-#include <vector>
 
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include "xdg/mesh_managers.h"
 #include "xdg/xdg.h"
@@ -76,100 +73,5 @@ TEMPLATE_TEST_CASE("Test Hex Element Random Walk Jezebel Tets",
     context.verbose_ = false;
     context.quiet_ = true;
     walk_elements(context);
-  }
-}
-
-// Regression coverage for a LibMesh hex element whose quad exit face is split
-// into two subtriangles. This ray intersects the outward-facing subtriangle;
-// `next_element` used to miss that exit and return ID_NONE/INFTY when it chose
-// the other subtriangle's orientation.
-TEMPLATE_TEST_CASE("LibMesh next_element chooses exiting quad subtriangle",
-                   "[walk_elements][hex][quads][libmesh]",
-                   MOAB_Interface,
-                   LibMesh_Interface)
-{
-  constexpr auto mesh_backend = TestType::value;
-
-  DYNAMIC_SECTION(fmt::format("Backend = {}", mesh_backend))
-  {
-    check_mesh_library_supported(mesh_backend);
-
-    std::shared_ptr<XDG> xdg = XDG::create(mesh_backend);
-    const auto& mesh_manager = xdg->mesh_manager();
-    mesh_manager->load_file("jezebel-quads.exo");
-    mesh_manager->init();
-    xdg->prepare_raytracer();
-
-    const MeshIndex element_index = 26960;
-    const Position r {1.2606477549928472, -2.200610435773155, -0.9089446380562195};
-    const Direction u {-0.9106430240324721, -0.13069809240463648, 0.391978687459897};
-
-    MeshID found_element = xdg->find_element(r);
-    MeshIndex found_index = xdg->mesh_manager()->element_index(found_element);
-    REQUIRE(found_index == element_index);
-
-    const auto [next_element, exit_distance] = xdg->next_element(found_element, r, u);
-
-    REQUIRE(next_element != ID_NONE);
-    REQUIRE_THAT(exit_distance,
-                Catch::Matchers::WithinAbs(0.10494826380348422, 1e-12));
-  }
-}
-
-struct TrackCase {
-  Position start;
-  Position end;
-};
-
-double segment_sum(const std::vector<std::pair<MeshID, double>>& segments)
-{
-  return std::accumulate(segments.begin(), segments.end(), 0.0,
-    [](double total, const auto& segment) { return total + segment.second; });
-}
-
-TEMPLATE_TEST_CASE("LibMesh segments account for OpenMC hex tracks starting on faces",
-                   "[tracks][hex][openmc]",
-                   MOAB_Interface,
-                   LibMesh_Interface)
-{
-  constexpr auto mesh_backend = TestType::value;
-
-  DYNAMIC_SECTION(fmt::format("Backend = {}", mesh_backend))
-  {
-    check_mesh_library_supported(mesh_backend);
-
-    std::shared_ptr<XDG> xdg = XDG::create(mesh_backend);
-    const auto& mesh_manager = xdg->mesh_manager();
-    mesh_manager->load_file("regularized_hex_mesh.exo");
-    mesh_manager->init();
-    xdg->prepare_raytracer();
-
-    const std::vector<TrackCase> cases {
-      {{-6.0, 0.777417, -7.82735}, {-5.97095, 0.0210081, -7.17389}},
-      {{6.0, 4.04678, 7.38517}, {5.1321, 4.14004, 6.89727}},
-    };
-
-    for (const auto& c : cases) {
-      const Direction track = c.end - c.start;
-      const double length = track.length();
-      Direction u = track;
-      u.normalize();
-
-      DYNAMIC_SECTION(fmt::format("start = {}, end = {}", c.start, c.end))
-      {
-        CHECK(xdg->find_element(c.start + TINY_BIT * u) != ID_NONE);
-
-        const auto bumped_segments = xdg->segments(c.start + TINY_BIT * u, c.end);
-        CHECK_FALSE(bumped_segments.empty());
-        CHECK_THAT(segment_sum(bumped_segments),
-          Catch::Matchers::WithinAbs((c.end - (c.start + TINY_BIT * u)).length(),
-            1.0e-12));
-
-        const auto segments = xdg->segments(c.start, c.end);
-        CHECK_FALSE(segments.empty());
-        CHECK_THAT(segment_sum(segments),
-          Catch::Matchers::WithinAbs(length, 1.0e-12));
-      }
-    }
   }
 }
