@@ -22,7 +22,9 @@ MeshManager::MeshManager() {
   }
 }
 
-MeshID MeshManager::create_implicit_complement() {
+MeshID
+MeshManager::create_implicit_complement()
+{
   // create a new volume
   MeshID ipc_volume = this->create_volume();
 
@@ -37,8 +39,7 @@ MeshID MeshManager::create_implicit_complement() {
   }
 
   // insert the ipc volume into volume sets if it isn't present already
-  if (std::find(volumes().begin(), volumes().end(), ipc_volume) ==
-      volumes().end())
+  if (std::find(volumes().begin(), volumes().end(), ipc_volume) == volumes().end())
     volumes().push_back(ipc_volume);
 
   // TODO: allow for alternate material assignment in IPC
@@ -49,23 +50,28 @@ MeshID MeshManager::create_implicit_complement() {
   return ipc_volume;
 }
 
-MeshID MeshManager::next_volume_id() const {
-  if (volumes().empty())
-    return 1;
+MeshID
+MeshManager::next_volume_id() const {
+  if (volumes().empty()) return 1;
   return *std::max_element(volumes().begin(), volumes().end()) + 1;
 }
 
-MeshID MeshManager::next_surface_id() const {
-  if (surfaces().empty())
-    return 1;
+MeshID
+MeshManager::next_surface_id() const {
+  if (surfaces().empty()) return 1;
   return *std::max_element(surfaces().begin(), surfaces().end()) + 1;
 }
 
-bool MeshManager::volume_has_property(MeshID volume, PropertyType type) const {
+bool
+MeshManager::volume_has_property(MeshID volume,
+                                 PropertyType type) const
+{
   return volume_metadata_.count({volume, type}) > 0;
 }
 
-int MeshManager::num_volume_elements() const {
+int
+MeshManager::num_volume_elements() const
+{
   int n_elements = 0;
   for (auto volume : volumes()) {
     n_elements += num_volume_elements(volume);
@@ -73,7 +79,9 @@ int MeshManager::num_volume_elements() const {
   return n_elements;
 }
 
-std::vector<MeshID> MeshManager::get_volume_faces(MeshID volume) const {
+std::vector<MeshID>
+MeshManager::get_volume_faces(MeshID volume) const
+{
   std::set<MeshID> elements;
   for (auto surface : this->get_volume_surfaces(volume)) {
     auto surface_elements = this->get_surface_faces(surface);
@@ -82,18 +90,24 @@ std::vector<MeshID> MeshManager::get_volume_faces(MeshID volume) const {
   return std::vector<MeshID>(elements.begin(), elements.end());
 }
 
-bool MeshManager::surface_has_property(MeshID surface,
-                                       PropertyType type) const {
+bool
+MeshManager::surface_has_property(MeshID surface,
+                                  PropertyType type) const
+{
   return surface_metadata_.count({surface, type}) > 0;
 }
 
-Property MeshManager::get_volume_property(MeshID volume,
-                                          PropertyType type) const {
+Property
+MeshManager::get_volume_property(MeshID volume,
+                                 PropertyType type) const
+{
   return volume_metadata_.at({volume, type});
 }
 
-Property MeshManager::get_surface_property(MeshID surface,
-                                           PropertyType type) const {
+Property
+MeshManager::get_surface_property(MeshID surface,
+                                  PropertyType type) const
+{
   if (surface_metadata_.count({surface, type}) == 0)
     return {PropertyType::BOUNDARY_CONDITION, "transmission"};
   return surface_metadata_.at({surface, type});
@@ -101,9 +115,10 @@ Property MeshManager::get_surface_property(MeshID surface,
 
 std::vector<std::pair<MeshID, double>>
 MeshManager::walk_elements(MeshID starting_element,
-                           const Position &start,
-                           const Direction &u,
-                           double distance) const {
+                           const Position& start,
+                           const Direction& u,
+                           double distance) const
+{
   // a copy of the start position that will be updated as elements are traversed
   Position r = start;
   std::vector<std::pair<MeshID, double>> result;
@@ -137,8 +152,9 @@ MeshManager::walk_elements(MeshID starting_element,
 
 std::vector<std::pair<MeshID, double>>
 MeshManager::walk_elements(MeshID starting_element,
-                           const Position &start,
-                           const Position &end) const {
+                           const Position& start,
+                           const Position& end) const
+{
   Position u = (end - start);
   double distance = u.length();
   u.normalize();
@@ -147,8 +163,9 @@ MeshManager::walk_elements(MeshID starting_element,
 
 std::pair<MeshID, double>
 MeshManager::next_element(MeshID current_element,
-                          const Position &r,
-                          const Position &u) const {
+                          const Position& r,
+                          const Position& u) const
+{
   struct FaceCandidate {
     MeshID element {ID_NONE};
     double distance;
@@ -260,7 +277,8 @@ MeshManager::next_element(MeshID current_element,
   return {selected->element, selected->distance};
 }
 
-MeshID MeshManager::next_volume(MeshID current_volume, MeshID surface) const {
+MeshID MeshManager::next_volume(MeshID current_volume, MeshID surface) const
+{
   auto parent_vols = this->get_parent_volumes(surface);
 
   if (parent_vols.first == current_volume)
@@ -280,7 +298,8 @@ Direction MeshManager::face_normal(MeshID element) const
 }
 
 BoundingBox
-MeshManager::element_bounding_box(MeshID element) const {
+MeshManager::element_bounding_box(MeshID element) const
+{
   auto vertices = this->element_vertices(element);
   return BoundingBox::from_points(vertices);
 }
@@ -293,7 +312,8 @@ MeshManager::face_bounding_box(MeshID element) const
 }
 
 BoundingBox
-MeshManager::volume_bounding_box(MeshID volume) const {
+MeshManager::volume_bounding_box(MeshID volume) const
+{
   BoundingBox bb;
   auto surfaces = this->get_volume_surfaces(volume);
   for (auto surface : surfaces) {
@@ -303,7 +323,8 @@ MeshManager::volume_bounding_box(MeshID volume) const {
 }
 
 BoundingBox
-MeshManager::global_bounding_box() const {
+MeshManager::global_bounding_box() const
+{
   BoundingBox bb;
   auto volumes = this->volumes();
   for (auto volume : volumes) {
@@ -313,10 +334,11 @@ MeshManager::global_bounding_box() const {
 }
 
 BoundingBox
-MeshManager::surface_bounding_box(MeshID surface) const {
+MeshManager::surface_bounding_box(MeshID surface) const
+{
   auto elements = this->get_surface_faces(surface);
   BoundingBox bb;
-  for (const auto &element : elements) {
+  for (const auto& element : elements) {
     bb.update(this->face_bounding_box(element));
   }
   return bb;
@@ -349,12 +371,14 @@ MeshManager::face_vertex_coordinates(MeshID face) const
 }
 
 std::pair<MeshID, MeshID>
-MeshManager::get_parent_volumes(MeshID surface) const {
+MeshManager::get_parent_volumes(MeshID surface) const
+{
   return this->surface_senses(surface);
 }
 
 MeshManager::LocalMeshData
-MeshManager::surface_local_mesh_data(MeshID surface) const {
+MeshManager::surface_local_mesh_data(MeshID surface) const
+{
   const auto faces = get_surface_faces(surface);
   const auto connectivity_func = [this](MeshID face) {
     return face_connectivity(face);
@@ -364,7 +388,8 @@ MeshManager::surface_local_mesh_data(MeshID surface) const {
 }
 
 MeshManager::LocalMeshData
-MeshManager::volume_local_mesh_data(MeshID volume) const {
+MeshManager::volume_local_mesh_data(MeshID volume) const
+{
   const auto elements = get_volume_elements(volume);
   const auto connectivity_func = [this](MeshID element) {
     return element_connectivity(element);

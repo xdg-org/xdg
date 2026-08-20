@@ -61,6 +61,15 @@ inline double plucker_edge_test(dp::vec3 vertexa, dp::vec3 vertexb,
   return pip;
 }
 
+//! \brief Determine if a ray intersects a triangle using Plücker coordinates
+//! \param triangle The triangle vertices
+//! \param origin The ray origin
+//! \param direction The ray direction
+//! \param tMax The maximum distance along the ray to consider for intersection
+//! \param tMin The minimum distance along the ray to consider for intersection
+//! \param useOrientation Whether to use orientation checks for the intersection
+//! \param orientation The expected orientation of the triangle relative to the ray
+//! \return A PluckerIntersectionResult indicating whether an intersection occurred and the distance to the intersection
 inline PluckerIntersectionResult plucker_ray_tri_intersect(dp::vec3 vertices[3],
                                 dp::vec3 origin,
                                 dp::vec3 direction,
@@ -160,6 +169,11 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(dp::vec3 vertices[3],
   return {true, dist_out};
 }
 
+//! \brief Determine if a ray intersects a triangle using Plücker coordinates
+//! \param triangle The triangle vertices
+//! \param origin The ray origin
+//! \param direction The ray direction
+//! \return True if the ray intersects the triangle, false otherwise
 template<typename T>
 inline bool plucker_line_intersects_triangle(const T& triangle,
                                              const Position& origin,
