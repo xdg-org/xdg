@@ -308,9 +308,19 @@ TEMPLATE_TEST_CASE("Next_element chooses exiting quad subtriangle",
   {
     check_mesh_library_supported(mesh_backend);
 
+    std::string filename = "jezebel-quads";
+    if (mesh_backend == MeshLibrary::MOAB) {
+      filename += ".h5m";
+    } else if (mesh_backend == MeshLibrary::LIBMESH) {
+      filename += ".exo";
+    } else {
+      throw std::runtime_error(fmt::format(
+          "Unsupported mesh library {} for regression test", mesh_backend));
+    }
+
     std::shared_ptr<XDG> xdg = XDG::create(mesh_backend);
     const auto& mesh_manager = xdg->mesh_manager();
-    mesh_manager->load_file("jezebel-quads.exo");
+    mesh_manager->load_file(filename);
     mesh_manager->init();
     xdg->prepare_raytracer();
 
