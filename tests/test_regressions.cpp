@@ -258,7 +258,7 @@ TEMPLATE_TEST_CASE("Segments account for simulated hex tracks starting on faces"
 
     std::shared_ptr<XDG> xdg = XDG::create(mesh_backend);
     const auto& mesh_manager = xdg->mesh_manager();
-    mesh_manager->load_file("regularized_hex_mesh.exo");
+    mesh_manager->load_file(filename);
     mesh_manager->init();
     xdg->prepare_raytracer();
 
