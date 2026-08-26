@@ -73,6 +73,8 @@ public:
                 const Direction& direction,
                 double& dist) const override;
 
+  void bvh_diagnostics(MeshID volume) const override;
+
 private:
   CuBQLSurfaceMesh
   register_surface(const std::shared_ptr<MeshManager>& mesh_manager,
@@ -83,6 +85,7 @@ private:
   cubql::Context context_;
 
   std::unordered_map<TreeID, CuBQLVolumeGroup> tree_to_volume_group_;
+  std::unordered_map<MeshID, TreeID> volume_to_surface_tree_;
   std::unordered_map<MeshID, CuBQLSurfaceMesh> surface_to_mesh_;
 
   std::vector<CuBQLVolumeGroup::DD> volume_to_group_;

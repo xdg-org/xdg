@@ -12,6 +12,7 @@
 #include "cuBQL/traversal/rayQueries.h"
 
 #include <algorithm>
+#include <iostream>
 #include <limits>
 
 namespace xdg {
@@ -277,6 +278,7 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
   // Retain owning objects for scalar TreeID lookups and allocation lifetime.
   auto result = tree_to_volume_group_.emplace(tree, std::move(volume_group));
   auto it = result.first;
+  volume_to_surface_tree_[volume_id] = tree;
 
   // Keep a dense host-side MeshID -> group device-data table for batch queries.
   const auto volume_index = static_cast<size_t>(volume_id);
@@ -457,6 +459,122 @@ bool CuBQLRayTracer::occluded(TreeID,
 {
   fatal_error("Occlusion queries not currently supported with cuBQL ray tracer");
   return false;
+}
+
+void CuBQLRayTracer::bvh_diagnostics(MeshID volume) const
+{
+  const TreeID tree = volume_to_surface_tree_.at(volume);
+  const auto& volume_group = tree_to_volume_group_.at(tree);
+  const auto& bvh = volume_group.bvh;
+
+  std::cout << "\n ----------------------------------------------- \n"
+            << "BVH diagnostics for Volume = " << volume << "\n"
+            << " TreeID = " << tree << "\n"
+            << " num_surfaces (populated by mesh_manager) = "
+            << volume_group.num_surfaces << "\n"
+            << " num_primitives (populated by mesh_manager) = "
+            << volume_group.num_primitives << "\n"
+            << " bvh.numNodes = " << bvh.numNodes << "\n"
+            << " bvh.numPrims = " << bvh.numPrims << "\n"
+            << " bvh.node_width = " << bvh.node_width << "\n"
+            << std::endl;
+
+  // Copy the BVH nodes from device to host
+  using Node = cuBQL::bvh3f::node_t;
+
+  std::vector<Node> nodes_list(bvh.numNodes);
+
+  const int host_id = omp_get_initial_device();
+
+  omp_target_memcpy(nodes_list.data(),
+                    bvh.nodes,
+                    nodes_list.size() * sizeof(Node),
+                    0, 0,
+                    host_id,
+                    volume_group.gpu_id);
+
+  std::uint32_t internal_nodes_checked = 0;
+  std::uint32_t num_invalid_bounds = 0;
+  std::uint32_t num_invalid_child_references = 0;
+
+  // Check that every internal node contains both of its children.
+  for (std::size_t parent_id = 0; parent_id < nodes_list.size(); ++parent_id) {
+    // cuBQL uses node 0 as the root and intentionally leaves node 1 unused.
+    if (parent_id == 1) continue;
+
+    const auto& parent = nodes_list[parent_id];
+    if (parent.admin.count != 0) continue;
+
+    ++internal_nodes_checked;
+
+    const std::uint64_t child_ids[2] = {
+      parent.admin.offset,
+      parent.admin.offset + 1
+    };
+
+    for (const std::uint64_t child_id : child_ids) {
+      if (child_id >= nodes_list.size() || child_id == 1) {
+        ++num_invalid_child_references;
+        continue;
+      }
+
+      bool bounds_invalid = false;
+      static constexpr const char* axis_names[3] = {"X", "Y", "Z"};
+      const auto& child = nodes_list[child_id];
+
+      for (std::size_t axis = 0; axis < 3; ++axis) {
+        const float parent_lower = parent.bounds.lower[axis];
+        const float parent_upper = parent.bounds.upper[axis];
+        const float child_lower = child.bounds.lower[axis];
+        const float child_upper = child.bounds.upper[axis];
+
+        const bool lower_failure = parent_lower > child_lower;
+        const bool upper_failure = parent_upper < child_upper;
+
+        if (!lower_failure && !upper_failure) continue;
+
+        bounds_invalid = true;
+
+        std::cout << "Parent node " << parent_id
+                  << " does not contain child node " << child_id
+                  << " on the " << axis_names[axis] << " axis\n"
+                  << "  Parent lower coordinate : " << parent_lower << "\n"
+                  << "  Parent upper coordinate : " << parent_upper << "\n"
+                  << "  Child lower coordinate  : " << child_lower << "\n"
+                  << "  Child upper coordinate  : " << child_upper << "\n";
+
+        if (lower_failure) {
+          std::cout << "  Failed condition: parent lower <= child lower\n"
+                    << "  Missing lower extent: "
+                    << parent_lower - child_lower << "\n";
+        }
+
+        if (upper_failure) {
+          std::cout << "  Failed condition: parent upper >= child upper\n"
+                    << "  Missing upper extent: "
+                    << child_upper - parent_upper << "\n";
+        }
+      }
+
+      if (bounds_invalid) {
+        ++num_invalid_bounds;
+      }
+    }
+  }
+
+  const bool bounds_valid =
+    num_invalid_bounds == 0 && num_invalid_child_references == 0;
+
+  std::cout << "\nBVH bounds summary for volume " << volume << "\n"
+            << "--------------------------------\n"
+            << "Internal nodes checked              : "
+            << internal_nodes_checked << "\n"
+            << "Invalid child references            : "
+            << num_invalid_child_references << "\n"
+            << "Invalid parent-child relationships  : "
+            << num_invalid_bounds << "\n"
+            << "Bounds status                       : "
+            << (bounds_valid ? "VALID" : "INVALID") << "\n";
 }
 
 } // namespace xdg

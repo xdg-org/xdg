@@ -25,6 +25,11 @@ void RayTracer::ray_fire_batch(const XDGRayHitBuffer&,
   fatal_error("Selected ray tracer does not support device batch ray fire");
 }
 
+void RayTracer::bvh_diagnostics(MeshID) const
+{
+  fatal_error("Selected ray tracer does not support BVH diagnostics");
+}
+
 SurfaceTreeID RayTracer::next_surface_tree_id()
 {
   return ++next_surface_tree_id_;

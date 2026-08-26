@@ -131,6 +131,11 @@ Direction surface_normal(MeshID surface,
   const std::shared_ptr<MeshManager>& mesh_manager() const {
     return mesh_manager_;
   }
+
+  void bvh_diagnostics(MeshID volume) const
+  {
+    ray_tracing_interface_->bvh_diagnostics(volume);
+  }
 // Private methods
 private:
   double _triangle_volume_contribution(const PrimitiveRef& triangle) const;

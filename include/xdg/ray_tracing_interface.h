@@ -94,6 +94,10 @@ public:
   virtual void ray_fire_batch(const XDGRayHitBuffer& ray_hits,
                               HitOrientation hit_orientation = HitOrientation::EXITING) const;
 
+  //! Prints implementation-specific diagnostics for the surface BVH belonging
+  //! to a mesh volume. Backends that support this override the default method.
+  virtual void bvh_diagnostics(MeshID volume) const;
+
   /**
    * @brief Finds the element containing a given point using the global element tree.
    *
