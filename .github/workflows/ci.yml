@@ -10,16 +10,18 @@ on:
 jobs:
   main:
     name: |
-      libMesh=${{ matrix.libmesh }};MOAB=${{ matrix.moab }}
+      libMesh=${{ matrix.libmesh }};MOAB=${{ matrix.moab }}; mfem=${{ matrix.mfem }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         libmesh: [true, false]
         moab: [true, false]
+        mfem: [true, false]
         exclude:
           - moab: false
             libmesh: false
+            mfem: false
 
     steps:
       - name: Checkout
@@ -81,6 +83,15 @@ jobs:
           cd libmesh
           git checkout v1.7.0
 
+      - name: mfem Clone
+        if: ${{ matrix.mfem }}
+        shell: bash
+        run: |
+          cd ~
+          git clone https://github.com/mfem/mfem.git
+          cd mfem
+          git checkout v4.9
+
       - name: OpenMP Environment Variables
         run: |
           echo "OMP_NUM_THREADS=1" >> $GITHUB_ENV
@@ -96,6 +107,11 @@ jobs:
           echo "LIBMESH_SHA"=$(cd ~/libmesh && git rev-parse HEAD) >> $GITHUB_ENV
           # Enforce that we're using the debug build of libMesh
           echo "METHOD=dbg" >> $GITHUB_ENV
+
+      - name: mfem Environment Variables
+        if: ${{ matrix.mfem }}
+        run: |
+          echo "MFEM_SHA"=$(cd ~/mfem && git rev-parse HEAD) >> $GITHUB_ENV
 
       - name: MOAB Cache
         if: ${{ matrix.moab }}
@@ -116,6 +132,16 @@ jobs:
         with:
           path: ~/LIBMESH
           key: libmesh-${{ runner.os }}-${{ env.cache-name }}-${{ env.LIBMESH_SHA }}
+
+      # - name: mfem Cache
+      #   if: ${{ matrix.mfem }}
+      #   id: mfem-cache
+      #   uses: actions/cache@v3
+      #   env:
+      #     cache-name: mfem-cache
+      #   with:
+      #     path: ~/mfem
+      #     key: mfem-${{ runner.os }}-${{ env.cache-name }}-${{ env.MFEM_SHA }}
 
       - if: ${{ matrix.moab && steps.moab-cache.outputs.cache-hit != 'true' }}
         name: Build MOAB
@@ -141,6 +167,23 @@ jobs:
           make -j4
           sudo make install
 
+      - if: ${{ matrix.mfem && steps.mfem-cache.outputs.cache-hit != 'true' }}
+        name: Build mfem
+        shell: bash
+        run: |
+          # first let's get netcdf
+          sudo apt-get update
+          sudo apt-get install -y libnetcdf-dev libhdf5-dev
+          cd ~
+          cd mfem
+          git checkout v4.9
+          mkdir build
+          cd build
+          # manually entering the hdf5 dir since cmake can't find it on its own
+          cmake .. -DMFEM_USE_HYPRE=OFF -DMFEM_USE_NETCDF=ON -DCMAKE_INSTALL_PREFIX=../install -DCMAKE_BUILD_TYPE=Debug -DHDF5_DIR=/usr/lib/x86_64-linux-gnu/hdf5/serial -DBUILD_SHARED_LIBS=ON  -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+          make -j4
+          sudo make install
+
       - name: Build
         shell: bash
         run: |
@@ -157,7 +200,13 @@ jobs:
             fi
             CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}$HOME/MOAB"
           fi
-          cmake .. -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" -DCMAKE_INSTALL_PREFIX=$HOME/opt -DXDG_ENABLE_MOAB=${{ matrix.moab && 'ON' || 'OFF' }} -DXDG_ENABLE_LIBMESH=${{ matrix.libmesh && 'ON' || 'OFF' }}
+          if [ "${{ matrix.mfem }}" = 'true' ]; then
+            if [ -n "$CMAKE_PREFIX_PATH" ]; then
+              CMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH;"
+            fi
+            CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}$HOME/mfem/install"
+          fi          
+          cmake .. -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" -DCMAKE_INSTALL_PREFIX=$HOME/opt -DXDG_ENABLE_MOAB=${{ matrix.moab && 'ON' || 'OFF' }} -DXDG_ENABLE_LIBMESH=${{ matrix.libmesh && 'ON' || 'OFF' }} -DXDG_ENABLE_MFEM=${{ matrix.mfem && 'ON' || 'OFF' }}
           make -j4 install
 
       - name: Test

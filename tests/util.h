@@ -72,6 +72,13 @@ inline bool mesh_library_available(xdg::MeshLibrary mesh) {
     #else
       return false;
     #endif
+
+    case xdg::MeshLibrary::MFEM:
+    #ifdef XDG_ENABLE_MFEM
+      return true;
+    #else
+      return false;
+    #endif
   }
 
   return false;

@@ -10,6 +10,9 @@
 #endif
 
 #include "xdg/testing/mesh_mocks.h"
+#ifdef XDG_ENABLE_MFEM
+#include "xdg/mfem/mesh_manager.h"
+#endif
 
 namespace xdg {
 
@@ -24,6 +27,12 @@ std::shared_ptr<ElementFaceAccessor> ElementFaceAccessor::create(const MeshManag
   if (mesh_manager->mesh_library() == MeshLibrary::LIBMESH) {
     const LibMeshManager* libmesh_mesh_manager = dynamic_cast<const LibMeshManager*>(mesh_manager);
     return std::make_shared<LibMeshElementFaceAccessor>(libmesh_mesh_manager, element);
+  }
+  #endif
+  #ifdef XDG_ENABLE_MFEM
+  if (mesh_manager->mesh_library() == MeshLibrary::MFEM) {
+    const MfemMeshManager* mfem_mesh_manager = dynamic_cast<const MfemMeshManager*>(mesh_manager);
+    return std::make_shared<MfemMeshElementFaceAccessor>(mfem_mesh_manager, element);
   }
   #endif
   // for testing
