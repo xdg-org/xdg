@@ -14,6 +14,20 @@ XDGRayHitBuffer RayTracer::allocate_ray_hits(std::size_t) const
   return {};
 }
 
+void RayTracer::upload_ray_hits(const XDGRayHitBuffer& buffer,
+                                const XDGRayHit* host_data,
+                                std::size_t count) const
+{
+  fatal_error("Selected ray tracer does not support device batch ray fire");
+}
+
+void RayTracer::download_ray_hits(const XDGRayHitBuffer& buffer,
+                                  XDGRayHit* host_destination,
+                                  std::size_t count) const
+{
+  fatal_error("Selected ray tracer does not support device batch ray fire");
+}
+
 void RayTracer::free_ray_hits(XDGRayHitBuffer&) const
 {
   fatal_error("Selected ray tracer does not support device batch ray fire");
