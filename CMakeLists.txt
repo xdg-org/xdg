@@ -178,10 +178,11 @@ endif()
 
 
 # Ensure at least one mesh backend is enabled
-if (NOT XDG_ENABLE_MOAB AND NOT XDG_ENABLE_LIBMESH)
+if (NOT XDG_ENABLE_MOAB AND NOT XDG_ENABLE_LIBMESH AND NOT XDG_ENABLE_MFEM)
   message(FATAL_ERROR
     "No mesh backend enabled. Enable at least one of:\n"
     "  -DXDG_ENABLE_MOAB=ON\n"
+    "  -DXDG_ENABLE_MFEM=ON\n"
     "  -DXDG_ENABLE_LIBMESH=ON")
 endif()
 

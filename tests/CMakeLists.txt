@@ -35,7 +35,7 @@ if (XDG_ENABLE_MFEM)
     list(APPEND TEST_NAMES test_mfem)
 endif()
 
-if (XDG_ENABLE_MOAB AND XDG_ENABLE_LIBMESH and XDG_ENABLE_MFEM)
+if (XDG_ENABLE_MOAB AND XDG_ENABLE_LIBMESH AND XDG_ENABLE_MFEM)
     list(APPEND TEST_NAMES test_mesh_library_cross_check)
 endif()
 
