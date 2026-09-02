@@ -63,6 +63,14 @@ public:
 
   XDGRayHitBuffer allocate_ray_hits(std::size_t count) const override;
 
+  void upload_ray_hits(const XDGRayHitBuffer& buffer,
+                       const XDGRayHit* host_data,
+                       std::size_t count) const override;
+
+  void download_ray_hits(const XDGRayHitBuffer& buffer,
+                         XDGRayHit* host_destination,
+                         std::size_t count) const override;
+                         
   void free_ray_hits(XDGRayHitBuffer& ray_hits) const override;
 
   std::pair<double, MeshID> closest(TreeID tree,

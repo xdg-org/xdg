@@ -413,6 +413,42 @@ XDGRayHitBuffer CuBQLRayTracer::allocate_ray_hits(std::size_t count) const
   return {d_ray_hits, count, context_.gpuID};
 }
 
+void CuBQLRayTracer::upload_ray_hits(const XDGRayHitBuffer& buffer,
+                     const XDGRayHit* host_data,
+                     std::size_t count) const
+{
+  if (count == 0) {
+    warning("Request to upload empty XDG ray-hit buffer; returning without action");
+    return;
+  }
+
+  omp_target_memcpy(buffer.data,
+                    host_data,
+                    count * sizeof(XDGRayHit),
+                    0,
+                    0,
+                    buffer.device_id,
+                    context_.hostID);  
+}
+
+void CuBQLRayTracer::download_ray_hits(const XDGRayHitBuffer& buffer,
+                                      XDGRayHit* host_destination,
+                                      std::size_t count) const
+{
+  if (count == 0) {
+    warning("Request to download empty XDG ray-hit buffer; returning without action");
+    return;
+  }
+
+  omp_target_memcpy(host_destination,
+                    buffer.data,
+                    count * sizeof(XDGRayHit),
+                    0,
+                    0,
+                    context_.hostID,
+                    buffer.device_id);
+}
+
 void CuBQLRayTracer::free_ray_hits(XDGRayHitBuffer& ray_hits) const
 {
   if (!ray_hits.data) {
@@ -484,7 +520,7 @@ void CuBQLRayTracer::bvh_diagnostics(MeshID volume) const
 
   std::vector<Node> nodes_list(bvh.numNodes);
 
-  const int host_id = omp_get_initial_device();
+  const int host_id = context_.hostID;
 
   omp_target_memcpy(nodes_list.data(),
                     bvh.nodes,
