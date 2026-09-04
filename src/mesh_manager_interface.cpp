@@ -129,6 +129,7 @@ MeshManager::walk_elements(MeshID starting_element,
     // element if one exists
     auto exit = next_element(elem, r, u);
     if (exit.second == INFTY && distance > 0) {
+      // TODO: Update to fatal_error once configurable error handling is implemented
       warning(fmt::format("Unable to find finite exit point from element {}. Exiting walk_elements with {} distance unaccounted for.", elem, distance));
       break;
     }
@@ -169,7 +170,6 @@ MeshManager::next_element(MeshID current_element,
   struct FaceCandidate {
     MeshID element {ID_NONE};
     double distance;
-    int face {ID_NONE};
     double exiting_dot;
   };
 
@@ -202,23 +202,23 @@ MeshManager::next_element(MeshID current_element,
       double exiting_dot0 = u.dot(triangle_normal(tri0));
       if (exiting_dot0 >= 0.0) {
       result0 = plucker_ray_tri_intersect(tri0.data(),
-                                                r,
-                                                u,
-                                                INFTY,
-                                                -1e-10,
-                                                false,
-                                                0);
+                                          r,
+                                          u,
+                                          INFTY,
+                                          -1e-10,
+                                          false,
+                                          0);
       }
 
       double exiting_dot1 = u.dot(triangle_normal(tri1));
       if (exiting_dot1 >= 0.0) {
       result1 = plucker_ray_tri_intersect(tri1.data(),
-                                                r,
-                                                u,
-                                                INFTY,
-                                                -1e-10,
-                                                false,
-                                                0);
+                                          r,
+                                          u,
+                                          INFTY,
+                                          -1e-10,
+                                          false,
+                                          0);
       }
       if (!result0.hit && !result1.hit) continue;
       // we hit one or both triangles, so we will return a hit
@@ -243,7 +243,6 @@ MeshManager::next_element(MeshID current_element,
 
     candidates.push_back({next_element,
                           std::max(0.0, result.t),
-                          i,
                           exiting_dot});
   }
 

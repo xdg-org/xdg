@@ -16,7 +16,7 @@ namespace xdg {
  * using MBCN canonical Hex8 ordering (Tautges 2010).
  *
  * The hexahedron is defined by eight vertices ordered per the MBCN
- * canonical numbering. The containment test casts toward the hexahedron
+ * canonical numbering. The containment test casts rays toward the hexahedron
  * centroid and uses Plucker edge-coordinate sign tests against triangulated
  * faces; points on the boundary are considered inside.
  */
