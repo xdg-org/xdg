@@ -71,12 +71,12 @@ inline double plucker_edge_test(dp::vec3 vertexa, dp::vec3 vertexb,
 //! \param orientation The expected orientation of the triangle relative to the ray
 //! \return A PluckerIntersectionResult indicating whether an intersection occurred and the distance to the intersection
 inline PluckerIntersectionResult plucker_ray_tri_intersect(dp::vec3 vertices[3],
-                                dp::vec3 origin,
-                                dp::vec3 direction,
-                                double tMax,
-                                double tMin,
-                                bool useOrientation,
-                                int orientation)
+                                                           dp::vec3 origin,
+                                                           dp::vec3 direction,
+                                                           double tMax,
+                                                           double tMin,
+                                                           bool useOrientation,
+                                                           int orientation)
 {
   double dist_out = dp::INFTY;
 

@@ -35,8 +35,7 @@ bool hex_containment_test(const Position& point,
   }
   centroid = centroid / 8.0;
 
-  dp::vec3 vpoint = {point.x, point.y, point.z};
-  dp::vec3 direction = centroid - point;
+  Direction direction = centroid - point;
   const double distance_to_centroid = direction.length();
   if (distance_to_centroid <= TINY_BIT) {
     return true;
@@ -44,22 +43,21 @@ bool hex_containment_test(const Position& point,
   direction /= distance_to_centroid;
 
   auto crosses_boundary_triangle = [&](int i0, int i1, int i2) {
-    dp::vec3 triangle[3] {verts[i0], verts[i1], verts[i2]};
+    std::array<Vertex, 3> triangle {verts[i0], verts[i1], verts[i2]};
 
-    dp::vec3 normal = dp::cross(triangle[1] - triangle[0],
-      triangle[2] - triangle[0]);
+    Direction normal = (triangle[1] - triangle[0]).cross(triangle[2] - triangle[0]);
     if (normal.dot(centroid - triangle[0]) > 0.0) {
       normal = -normal;
     }
 
-    const double point_side = dp::dot(normal, vpoint - triangle[0]);
-    const double centroid_side = dp::dot(normal, centroid - triangle[0]);
+    const double point_side = normal.dot(point - triangle[0]);
+    const double centroid_side = normal.dot(centroid - triangle[0]);
 
     if (point_side <= dp::DBL_ZERO_TOL || centroid_side >= -dp::DBL_ZERO_TOL) {
       return false;
     }
 
-    if (!plucker_line_intersects_triangle(triangle, vpoint, direction)) {
+    if (!plucker_line_intersects_triangle(triangle.data(), point, direction)) {
       return false;
     }
 

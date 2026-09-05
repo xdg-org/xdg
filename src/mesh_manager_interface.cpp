@@ -201,24 +201,24 @@ MeshManager::next_element(MeshID current_element,
       PluckerIntersectionResult result0, result1;
       double exiting_dot0 = u.dot(triangle_normal(tri0));
       if (exiting_dot0 >= 0.0) {
-      result0 = plucker_ray_tri_intersect(tri0.data(),
-                                          r,
-                                          u,
-                                          INFTY,
-                                          -1e-10,
-                                          false,
-                                          0);
+        result0 = plucker_ray_tri_intersect(tri0.data(),
+                                            r,
+                                            u,
+                                            INFTY,
+                                            -1e-10,
+                                            false,
+                                            0);
       }
 
       double exiting_dot1 = u.dot(triangle_normal(tri1));
       if (exiting_dot1 >= 0.0) {
-      result1 = plucker_ray_tri_intersect(tri1.data(),
-                                          r,
-                                          u,
-                                          INFTY,
-                                          -1e-10,
-                                          false,
-                                          0);
+        result1 = plucker_ray_tri_intersect(tri1.data(),
+                                            r,
+                                            u,
+                                            INFTY,
+                                            -1e-10,
+                                            false,
+                                            0);
       }
       if (!result0.hit && !result1.hit) continue;
       // we hit one or both triangles, so we will return a hit
