@@ -6,7 +6,8 @@
 
 namespace xdg {
 
-inline Direction triangle_normal(const std::array<Vertex, 3>& vertices) {
+template<typename T>
+inline Direction triangle_normal(const T& vertices) {
   const Position v1 = vertices[1] - vertices[0];
   const Position v2 = vertices[2] - vertices[0];
   return (v1.cross(v2)).normalize();

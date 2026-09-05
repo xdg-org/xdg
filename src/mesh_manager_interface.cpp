@@ -1,6 +1,7 @@
 #include "xdg/mesh_manager_interface.h"
 
 #include <array>
+#include <cmath>
 #include <set>
 
 #include "xdg/config.h"
@@ -9,6 +10,9 @@
 #include "xdg/geometry/measure.h"
 #include "xdg/geometry/face_common.h"
 #include "xdg/element_face_accessor.h"
+#include "xdg/error.h"
+#include "xdg/geometry/face_common.h"
+#include "xdg/geometry/plucker.h"
 
 namespace xdg {
 
@@ -27,7 +31,7 @@ MeshManager::create_implicit_complement()
   for (auto surface : this->surfaces()) {
     auto parent_vols = this->get_parent_volumes(surface);
 
-  if (parent_vols.first == ID_NONE)
+    if (parent_vols.first == ID_NONE)
       this->add_surface_to_volume(ipc_volume, surface, Sense::FORWARD);
 
     if (parent_vols.second == ID_NONE)
@@ -46,20 +50,21 @@ MeshManager::create_implicit_complement()
   return ipc_volume;
 }
 
-MeshID MeshManager::next_volume_id() const
-{
+MeshID
+MeshManager::next_volume_id() const {
   if (volumes().empty()) return 1;
   return *std::max_element(volumes().begin(), volumes().end()) + 1;
 }
 
-MeshID MeshManager::next_surface_id() const
-{
+MeshID
+MeshManager::next_surface_id() const {
   if (surfaces().empty()) return 1;
   return *std::max_element(surfaces().begin(), surfaces().end()) + 1;
 }
 
 bool
-MeshManager::volume_has_property(MeshID volume, PropertyType type) const
+MeshManager::volume_has_property(MeshID volume,
+                                 PropertyType type) const
 {
   return volume_metadata_.count({volume, type}) > 0;
 }
@@ -86,19 +91,22 @@ MeshManager::get_volume_faces(MeshID volume) const
 }
 
 bool
-MeshManager::surface_has_property(MeshID surface, PropertyType type) const
+MeshManager::surface_has_property(MeshID surface,
+                                  PropertyType type) const
 {
   return surface_metadata_.count({surface, type}) > 0;
 }
 
 Property
-MeshManager::get_volume_property(MeshID volume, PropertyType type) const
+MeshManager::get_volume_property(MeshID volume,
+                                 PropertyType type) const
 {
   return volume_metadata_.at({volume, type});
 }
 
 Property
-MeshManager::get_surface_property(MeshID surface, PropertyType type) const
+MeshManager::get_surface_property(MeshID surface,
+                                  PropertyType type) const
 {
   if (surface_metadata_.count({surface, type}) == 0)
     return {PropertyType::BOUNDARY_CONDITION, "transmission"};
@@ -117,15 +125,21 @@ MeshManager::walk_elements(MeshID starting_element,
 
   MeshID elem = starting_element;
   while (distance > 0) {
-    // find the exit point from the current element and determine the next element
-    // if one exists
+    // find the exit point from the current element and determine the next
+    // element if one exists
     auto exit = next_element(elem, r, u);
+    if (exit.second == INFTY && distance > 0) {
+      // TODO: Update to fatal_error once configurable error handling is implemented
+      warning(fmt::format("Unable to find finite exit point from element {}. Exiting walk_elements with {} distance unaccounted for.", elem, distance));
+      break;
+    }
     // ensure we are not traveling beyond the end of the ray
     exit.second = std::min(exit.second, distance);
     distance -= exit.second;
     // only add to the result if the distance is greater than 0
     result.push_back({elem, exit.second});
     r += exit.second * u;
+
     elem = exit.first;
 
     // if there is no next element, we're exiting the mesh
@@ -150,32 +164,30 @@ MeshManager::walk_elements(MeshID starting_element,
 
 std::pair<MeshID, double>
 MeshManager::next_element(MeshID current_element,
-                           const Position& r,
-                           const Position& u) const
+                          const Position& r,
+                          const Position& u) const
 {
+  struct FaceCandidate {
+    MeshID element {ID_NONE};
+    double distance;
+    double exiting_dot;
+  };
+
   auto element_face_accessor = ElementFaceAccessor::create(this, current_element);
+  std::vector<FaceCandidate> candidates;
+  const auto element_vertices = this->element_vertices(current_element);
+
   const int num_faces = element_face_accessor->num_faces();
-  std::vector<double> dists(num_faces, INFTY);
-  std::vector<bool> hit_types(num_faces, false);
 
   for (int i = 0; i < num_faces; i++) {
     auto coords = element_face_accessor->face_vertices(i);
-
-    // exiting hit only, assumes face normals point outward
-    // with respect to the element
-    int orientation = 1;
-
+    double exiting_dot;
+    PluckerIntersectionResult result {false, INFTY};
     if (coords.size() == 3) {
-      std::array<Vertex, 3> tri {coords[0], coords[1], coords[2]};
-      auto result = plucker_ray_tri_intersect(tri.data(),
-                                               r,
-                                               u,
-                                               INFTY,
-                                               0.0,
-                                               true,
-                                               orientation);
-      hit_types[i] = result.hit;
-      if (hit_types[i]) dists[i] = result.t;
+      exiting_dot = u.dot(triangle_normal(coords));
+      if (exiting_dot < 0) continue;
+      result = plucker_ray_tri_intersect(
+          coords.data(), r, u, INFTY, -1e-10, false, 0);
     } else if (coords.size() == 4) {
       std::array<Vertex, 3> tri0;
       std::array<Vertex, 3> tri1;
@@ -186,52 +198,82 @@ MeshManager::next_element(MeshID current_element,
         tri0 = {coords[1], coords[2], coords[3]};
         tri1 = {coords[1], coords[3], coords[0]};
       }
-      auto result0 = plucker_ray_tri_intersect(tri0.data(),
-                                               r,
-                                               u,
-                                               INFTY,
-                                               0.0,
-                                               true,
-                                               orientation);
-      auto result1 = plucker_ray_tri_intersect(tri1.data(),
-                                               r,
-                                               u,
-                                               INFTY,
-                                               0.0,
-                                               true,
-                                               orientation);
-      bool hit0 = result0.hit;
-      bool hit1 = result1.hit;
-      double dist0 = result0.t;
-      double dist1 = result1.t;
-      if (hit0 || hit1) {
-        hit_types[i] = true;
-        if (hit0 && hit1) dists[i] = std::min(dist0, dist1);
-        else dists[i] = hit0 ? dist0 : dist1;
+      PluckerIntersectionResult result0, result1;
+      double exiting_dot0 = u.dot(triangle_normal(tri0));
+      if (exiting_dot0 >= 0.0) {
+        result0 = plucker_ray_tri_intersect(tri0.data(),
+                                            r,
+                                            u,
+                                            INFTY,
+                                            -1e-10,
+                                            false,
+                                            0);
+      }
+
+      double exiting_dot1 = u.dot(triangle_normal(tri1));
+      if (exiting_dot1 >= 0.0) {
+        result1 = plucker_ray_tri_intersect(tri1.data(),
+                                            r,
+                                            u,
+                                            INFTY,
+                                            -1e-10,
+                                            false,
+                                            0);
+      }
+      if (!result0.hit && !result1.hit) continue;
+      // we hit one or both triangles, so we will return a hit
+      result.hit = true;
+      // if we hit both triangles, use the closer triangle distance
+      if (result0.hit) {
+        result.t = result0.t;
+        exiting_dot = exiting_dot0;
+      }
+      if (result1.hit && result1.t < result.t) {
+        result.t = result1.t;
+        exiting_dot = exiting_dot1;
       }
     } else {
       fatal_error("Unsupported face vertex count {} in next_element", coords.size());
     }
 
-    // set distance and ensure it is non-negative
-    dists[i] = std::max(0.0, dists[i]);
+    if (!result.hit) continue;
+    if (exiting_dot < 0.0) continue;
+
+    MeshID next_element = this->adjacent_element(current_element, i);
+
+    candidates.push_back({next_element,
+                          std::max(0.0, result.t),
+                          exiting_dot});
   }
 
-  // determine the minimum distance to exit and the face number
-  int idx_out = ID_NONE;
+  if (candidates.empty()) return {ID_NONE, INFTY};
+
+  if (candidates.size() == 1) return {candidates.front().element, candidates.front().distance};
+
+  // find the minimum distance among candidate hits
   double min_dist = INFTY;
-  // choose the exiting face based on the minimum distance,
-  // if all distances are INFTY (no hit), then the index will
-  // not be updated
-  for (int i = 0; i < dists.size(); i++) {
-    if (dists[i] < min_dist) {
-      min_dist = dists[i];
-      idx_out = i;
-    }
+  for (const auto &candidate : candidates) {
+    min_dist = std::min(min_dist, candidate.distance);
   }
 
-  MeshID next_element = this->adjacent_element(current_element, idx_out);
-  return {next_element, min_dist};
+  // find all candidates that are tied for the minimum distance
+  // break ties by selecting the face most aligned with the query direction
+  const double tie_tol = TINY_BIT * std::max(1.0, std::abs(min_dist));
+  std::vector<const FaceCandidate *> tied_candidates;
+  for (const auto &candidate : candidates) {
+    if (std::abs(candidate.distance - min_dist) > tie_tol)
+      continue;
+    tied_candidates.push_back(&candidate);
+  }
+
+  if (tied_candidates.size() == 1)
+    return {tied_candidates.front()->element, tied_candidates.front()->distance};
+
+  const auto selected = *std::max_element(
+    tied_candidates.begin(), tied_candidates.end(),
+    [](const auto a, const auto b) { return a->exiting_dot < b->exiting_dot; });
+
+  return {selected->element, selected->distance};
 }
 
 MeshID MeshManager::next_volume(MeshID current_volume, MeshID surface) const
