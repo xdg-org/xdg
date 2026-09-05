@@ -5,16 +5,20 @@
 
 namespace xdg {
 
-#ifdef __SLANG__
-    // --- Slang Configuration ---
-    #define TEMPLATE_TYPE(...) __generic<__VA_ARGS__>
-    #define TEMPLATE_FUNC
-
-#elif defined(__cplusplus)
-    // --- GCC / C++ Configuration ---
-    #define TEMPLATE_TYPE(...) template<__VA_ARGS__>
-    #define TEMPLATE_FUNC inline
-#endif
+/*
+ * Triangle vertex ordering convention:
+ *
+ *      v2
+ *     /  \
+ *    /    \
+ *   /      \
+ *  /        \
+ * v0--------v1
+ *
+ * The vertices are ordered counter-clockwise when viewed from the front face
+ * (normal pointing out of the plane). This ordering is based on the reference:
+ * https://doi.org/10.1002/cnm.1237
+ */
 
 struct PluckerIntersectionResult {
   bool hit = false;    // Whether an intersection occurred
@@ -56,21 +60,6 @@ inline double plucker_edge_test(dp::vec3 vertexa, dp::vec3 vertexb,
     pip = 0.0;
   return pip;
 }
-
-/*
- * Triangle vertex ordering convention:
- *
- *      v2
- *     /  \
- *    /    \
- *   /      \
- *  /        \
- * v0--------v1
- *
- * The vertices are ordered counter-clockwise when viewed from the front face
- * (normal pointing out of the plane). This ordering is based on the reference:
- * https://doi.org/10.1002/cnm.1237
- */
 
 //! \brief Determine if a ray intersects a triangle using Plücker coordinates
 //! \param triangle The triangle vertices
@@ -170,7 +159,7 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(dp::vec3 vertices[3],
   double v = plucker_coord0 * inverse_sum;
 
   // Barycentric coords check
-  if (u < -PLUCKER_ZERO_TOL || v < -PLUCKER_ZERO_TOL || (u + v) > 1.0 + PLUCKER_ZERO_TOL) {
+  if (u < -dp::DBL_ZERO_TOL || v < - dp::DBL_ZERO_TOL || (u + v) > 1.0 + dp::DBL_ZERO_TOL) {
       dist_out = -1.0;
   }
 
@@ -185,13 +174,12 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(dp::vec3 vertices[3],
 //! \param origin The ray origin
 //! \param direction The ray direction
 //! \return True if the ray intersects the triangle, false otherwise
-TEMPLATE_TYPE(typename T, typename P, typename D)
-TEMPLATE_FUNC bool plucker_line_intersects_triangle(const T triangle,
-                                                    const P origin,
-                                                    const D direction)
+inline bool plucker_line_intersects_triangle(dp::vec3 triangle[3],
+                                             dp::vec3 origin,
+                                             dp::vec3 direction)
 {
-  const D ray = direction;
-  const D ray_normal = cross(direction, origin);
+  const dp::vec3 ray = direction;
+  const dp::vec3 ray_normal = dp::cross(direction, origin);
 
   const double plucker_coord0 =
     plucker_edge_test(triangle[0], triangle[1], ray, ray_normal);
