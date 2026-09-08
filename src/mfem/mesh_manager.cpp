@@ -391,7 +391,7 @@ void MfemMeshManager::parse_metadata() {
   }
 }
 
-// This is not quite correct. mfem does support mixed meshes.
+// TODO: This is not quite correct. mfem does support mixed meshes.
 // The intention of the caller is that the argument (surface) corresponds
 // to the sideset. So we need to find a typical element from the sideset
 // that is marked by the argument surface. For now, this will do
@@ -400,13 +400,13 @@ SurfaceFaceType MfemMeshManager::get_surface_face_type(MeshID surface) const {
 
   switch(geom) {
     case mfem::Geometry::TRIANGLE:     return SurfaceFaceType::TRI;
-    case mfem::Geometry::TETRAHEDRON : return SurfaceFaceType::QUAD;
+    case mfem::Geometry::SQUARE : return SurfaceFaceType::QUAD;
     default:
       fatal_error("Unsupported geom");
   }
 }
 
-// Same problem as above. Volume is supposed to be a block_id, and this
+// TODO: Same problem as above. Volume is supposed to be a block_id, and this
 // function is interpreting it as an element index. We should have a LOT more
 // elements than blocks, so it's safe, but wrong. When dealing with a mixed
 // mesh, it will fail tests
@@ -415,7 +415,7 @@ VolumeElementType MfemMeshManager::get_volume_element_type(MeshID volume) const 
 
   switch (geom) {
     case mfem::Geometry::TETRAHEDRON: return VolumeElementType::TET;
-    case mfem::Geometry::TRIANGLE:    return VolumeElementType::HEX;
+    case mfem::Geometry::CUBE: return VolumeElementType::HEX;
     default: 
       fatal_error("Unsupported geom");
   }

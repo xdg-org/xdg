@@ -184,19 +184,42 @@ struct MfemMeshElementFaceAccessor : public ElementFaceAccessor {
     mfem::Array<int> ori; // don't care abour ori
     mesh->GetElementFaces(element_, faces_, ori);
 
-    // TODO: Fix hardcoded 4 faces
-    for (int f=0; f<4; f++) {
+    // before, face_vertices_ was a stack array with compile-time
+    // size of 4*3=12 elements (i.e. 4 faces, each with 3 vertices
+    // since they are triangles). Now we need to support 6 faces
+    // with 4 vertices each.
+    //
+    // First, reserve enough space for that
+    int faces_per_el = num_faces();
+    // we also need the number of vertices per face,
+    // for which we can query the mesh. All of this
+    // stuff gets repeated below, but that's ok.
+    int face_no = faces_[0];
+    auto face_obj = mesh->GetFace(face_no);
+    // populate vertex_indices_ array
+    face_obj->GetVertices(vertex_indices_);
+    // finally, take the size of this array; store it in the
+    // member variable
+    vertices_per_face_ = vertex_indices_.Size();
+
+    // reserve space in face_vertices_ vector
+    face_vertices_.resize( faces_per_el * vertices_per_face_ );
+
+    for (int f=0; f<faces_per_el; f++) {
       int face_no = faces_[f];
 
       // pointer to the element object that defines this face
       auto face_obj = mesh->GetFace(face_no);
       face_obj->GetVertices(vertex_indices_);
 
-      for (int v=0; v<vertex_indices_.Size(); v++) {
-        face_vertices_[f][v].a = 0.0;
+      for (int v=0; v<vertices_per_face_; v++) {
+        // face_vertices_ was previously declared with face_vertices_[4][3] and accessed
+        // with face_vertices[f][v].a
+        // Now we need to manually index
+        face_vertices_[f*vertices_per_face_ + v].a = 0.0;
         const double* vertices = mesh->GetVertex( vertex_indices_[v] );
         for (int d=0; d<mesh->SpaceDimension(); d++)
-          face_vertices_[f][v][d] = vertices[d];
+          face_vertices_[f*vertices_per_face_ + v][d] = vertices[d];
       }
     }
   }
@@ -212,7 +235,9 @@ struct MfemMeshElementFaceAccessor : public ElementFaceAccessor {
 
     // we have already gathered the vertices for this face.
     // copy them into the output array
-    std::copy(face_vertices_[i], face_vertices_[i+1], std::back_inserter(output));
+    auto begin = face_vertices_.begin() + i * vertices_per_face_;
+    auto end = begin + vertices_per_face_;
+    std::copy(begin, end, std::back_inserter(output));
 
     // we need mesh_->GetFaceElementTransformations
     auto& mesh = mesh_manager_->mfem_mesh();
@@ -248,8 +273,9 @@ struct MfemMeshElementFaceAccessor : public ElementFaceAccessor {
   // data members
   const MfemMeshManager* mesh_manager_;
 
-  // 4 faces, 3 vertices each
-  Vertex face_vertices_[4][3];
+  // flattened as total_faces * vertices_per_face_ entries
+  std::vector<Vertex> face_vertices_;
+  int vertices_per_face_ = 0;
   // indices for each of the faces on this element
   mfem::Array<int> faces_;
   mfem::Array<int> vertex_indices_;
