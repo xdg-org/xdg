@@ -194,20 +194,14 @@ std::vector<MeshID> MfemMeshManager::face_vertices(MeshID element) const {
     MeshID bdr_element = element - num_interior_faces_;
     mesh_->GetBdrElementVertices(bdr_element, index_array);
 
-    mfem::Element* bdr_el = mesh_->GetBdrElement(bdr_element);
-    int* vertices = bdr_el->GetVertices();
+    // mfem::Element* bdr_el = mesh_->GetBdrElement(bdr_element);
+    // int* vertices = bdr_el->GetVertices();
   }
 
   else {
     // index_array gets populated with the indices of the vertices itself
     mesh_->GetFaceVertices(element, index_array);
   }
-
-  // for (int i=0; i<index_array.Size(); i++) {
-  //   const double* vertices = mesh_->GetVertex( index_array[i] );
-
-  //   for (int d=0; d<mesh_->SpaceDimension(); d++) output[i][d] = vertices[d];
-  // }
 
   // copy these indices into std::vector and return it
   std::vector<MeshID> output( index_array.GetData(), index_array.GetData() + index_array.Size() );

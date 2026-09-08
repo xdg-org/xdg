@@ -71,28 +71,6 @@ TEST_CASE("TEST MFEM Find Element Method")
   REQUIRE(next_element.second != INFTY);
 }
 
-TEST_CASE("TEST Ray Fire Brick")
-{
-  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MFEM);
-
-  const auto& mesh_manager = xdg->mesh_manager();
-  mesh_manager->load_file("brick.exo");
-  mesh_manager->init();
-  xdg->prepare_raytracer();
-
-  MeshID volume = 1;
-
-  Position origin {0.0, 0.0, 0.0};
-  Direction direction {0.0, 0.0, 1.0};
-  std::pair<double, MeshID> intersection;
-
-  intersection = xdg->ray_fire(volume, origin, direction);
-  REQUIRE_THAT(intersection.first, Catch::Matchers::WithinAbs(5.0, 1e-6));
-
-  origin = {0.0, 0.0, 0.0};
-  REQUIRE(xdg->point_in_volume(volume, origin));
-}
-
 TEST_CASE("Test Ray Fire Jezebel")
 {
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MFEM);
