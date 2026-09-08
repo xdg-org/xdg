@@ -32,7 +32,11 @@ if (XDG_ENABLE_LIBMESH)
     list(APPEND TEST_NAMES test_libmesh)
 endif()
 
-if (XDG_ENABLE_MOAB AND XDG_ENABLE_LIBMESH)
+if (XDG_ENABLE_MFEM)
+    list(APPEND TEST_NAMES test_mfem)
+endif()
+
+if (XDG_ENABLE_MOAB AND XDG_ENABLE_LIBMESH AND XDG_ENABLE_MFEM)
     list(APPEND TEST_NAMES test_mesh_library_cross_check)
 endif()
 
@@ -43,6 +47,7 @@ endif()
 if (XDG_ENABLE_MOAB AND XDG_BUILD_TOOLS)
     list(APPEND TEST_NAMES test_overlap_check)
 endif()
+
 
 foreach(test ${TEST_NAMES})
     add_executable(${test} test_main.cpp ${test}.cpp)

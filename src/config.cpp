@@ -44,33 +44,7 @@ void XDGConfig::initialize() {
   #endif
   }
 
-#ifdef XDG_ENABLE_LIBMESH
-  // libmesh requires the program name, so at least one argument is needed
-  if (!config::external_libmesh_comm) {
-    int argc = 1;
-    const std::string argv{"XDG"};
-    const char *argv_cstr = argv.c_str();
-    // in one version of the LibMeshInit constructor, MPI_Comm is an int and in
-    // another, it is MPI_Comm (which is not compatible with int for some MPI
-    // implementations), so we need to handle both cases here.
-    #ifdef LIBMESH_HAVE_MPI
-    config::xdg_libmesh_init =
-      std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, MPI_COMM_WORLD, n_threads());
-    #else
-    config::xdg_libmesh_init =
-      std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, 0, n_threads());
-    #endif
-  }
-  // register for cleanup at program exit
-
-  // libMesh expects to be able to clean some static objects up at exit if they
-  // aren't present, so we register this cleanup function to be called at exit
-  // before those objects are deleted by libMesh. Otherwise, a double-free can
-  // occur.
-  std::atexit(cleanup_libmesh_at_exit);
-#endif
-
-initialized_ = true;
+  initialized_ = true;
 }
 
 void XDGConfig::set_n_threads(int n_threads) {
@@ -95,6 +69,23 @@ XDGConfig::libmesh_init() {
   }
   if (config::external_libmesh_init != nullptr) {
     return config::external_libmesh_init;
+  }
+
+  if (!config::xdg_libmesh_init) {
+    int argc = 1;
+    const std::string argv{"XDG"};
+    const char *argv_cstr = argv.c_str();
+    // in one version of the LibMeshInit constructor, MPI_Comm is an int and in
+    // another, it is MPI_Comm (which is not compatible with int for some MPI
+    // implementations), so we need to handle both cases here.
+    #ifdef LIBMESH_HAVE_MPI
+    config::xdg_libmesh_init =
+      std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, MPI_COMM_WORLD, n_threads());
+    #else
+    config::xdg_libmesh_init =
+      std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, 0, n_threads());
+    #endif
+    std::atexit(cleanup_libmesh_at_exit);
   }
   return config::xdg_libmesh_init.get();
 }
