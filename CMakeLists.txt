@@ -425,7 +425,7 @@ target_link_libraries(xdg PRIVATE fmt::fmt)
 # ==========================
 
 if (XDG_ENABLE_EMBREE)
-  target_link_libraries(xdg PRIVATE embree)
+  target_link_libraries(xdg PUBLIC embree)
 endif()
 
 if (XDG_ENABLE_GPRT)
