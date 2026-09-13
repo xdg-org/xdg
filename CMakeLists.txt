@@ -22,10 +22,18 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(XDG_ENABLE_CUBQL)
-  enable_language(CUDA)
-  if(NOT CMAKE_CUDA_ARCHITECTURES)
-    set(CMAKE_CUDA_ARCHITECTURES native CACHE STRING
-        "CUDA architecture for the cuBQL builder" FORCE)
+  option(CUBQL_USE_HIP "Build cuBQL GPU code with HIP for AMD GPUs" OFF)
+  if(CUBQL_USE_HIP)
+    if(CMAKE_VERSION VERSION_LESS 3.21)
+      message(FATAL_ERROR "The cuBQL HIP builder requires CMake 3.21 or newer")
+    endif()
+    enable_language(HIP)
+  else()
+    enable_language(CUDA)
+    if(NOT CMAKE_CUDA_ARCHITECTURES)
+      set(CMAKE_CUDA_ARCHITECTURES native CACHE STRING
+          "CUDA architecture for the cuBQL builder" FORCE)
+    endif()
   endif()
 endif()
 
@@ -255,8 +263,13 @@ list(APPEND xdg_sources
 src/cuBQL/triangles.cpp
 src/cuBQL/intersection.cpp
 src/cuBQL/ray_tracer.cpp
-src/cuBQL/cuda_builder_bridge.cu
 )
+
+if(CUBQL_USE_HIP)
+  list(APPEND xdg_sources src/cuBQL/hip_builder_bridge.hip)
+else()
+  list(APPEND xdg_sources src/cuBQL/cuda_builder_bridge.cu)
+endif()
 
 # We need a precompile definition to switch to using the cuBQL math types in the shared
 # plucker intersection code. The compile definition is used in dp__math.h
@@ -315,12 +328,25 @@ endif()
 add_library(xdg SHARED ${xdg_sources})
 
 if(XDG_ENABLE_CUBQL)
-  message(STATUS "cuBQL BVHs will be built with CUDA and traversed with OpenMP")
-  set_target_properties(xdg PROPERTIES
-    CUDA_STANDARD 17
-    CUDA_STANDARD_REQUIRED YES
-    CUDA_EXTENSIONS NO
-  )
+  if(CUBQL_USE_HIP)
+    message(STATUS "cuBQL BVHs will be built with HIP and traversed with OpenMP")
+    target_compile_definitions(xdg PRIVATE XDG_CUBQL_USE_HIP)
+    # Keep the OpenMP offload flags from CMAKE_CXX_FLAGS on the final link.
+    # CMake supplies the HIP runtime for the HIP object in this mixed target.
+    set_target_properties(xdg PROPERTIES
+      LINKER_LANGUAGE CXX
+      HIP_STANDARD 17
+      HIP_STANDARD_REQUIRED YES
+      HIP_EXTENSIONS NO
+    )
+  else()
+    message(STATUS "cuBQL BVHs will be built with CUDA and traversed with OpenMP")
+    set_target_properties(xdg PROPERTIES
+      CUDA_STANDARD 17
+      CUDA_STANDARD_REQUIRED YES
+      CUDA_EXTENSIONS NO
+    )
+  endif()
 endif()
 
 if(XDG_ENABLE_EMBREE)

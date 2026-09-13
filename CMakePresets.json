@@ -62,6 +62,8 @@
       "displayName": "cuBQL LLVM OpenMP offload AMD MI300X",
       "cacheVariables": {
         "XDG_ENABLE_CUBQL": "ON",
+        "CUBQL_USE_HIP": "ON",
+        "CMAKE_HIP_ARCHITECTURES": "gfx942",
         "OpenMP_CXX_FLAGS": "-fopenmp",
         "OpenMP_CXX_LIB_NAMES": "omp",
         "OpenMP_omp_LIBRARY": "$env{LLVM_OPENMP_RUNTIME_DIR}/libomp.so"
@@ -78,6 +80,8 @@
       "displayName": "cuBQL LLVM OpenMP offload AMD MI355X",
       "cacheVariables": {
         "XDG_ENABLE_CUBQL": "ON",
+        "CUBQL_USE_HIP": "ON",
+        "CMAKE_HIP_ARCHITECTURES": "gfx950",
         "OpenMP_CXX_FLAGS": "-fopenmp",
         "OpenMP_CXX_LIB_NAMES": "omp",
         "OpenMP_omp_LIBRARY": "$env{LLVM_OPENMP_RUNTIME_DIR}/libomp.so"

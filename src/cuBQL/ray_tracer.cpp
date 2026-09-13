@@ -4,7 +4,11 @@
 #include "xdg/geometry/plucker.h"
 #include "xdg/available_device_probe.h"
 
+#ifdef XDG_CUBQL_USE_HIP
+#include "hip_builder_bridge.h"
+#else
 #include "cuda_builder_bridge.h"
+#endif
 
 #include <omp.h>
 #include "cuBQL/math/Ray.h"
@@ -279,8 +283,12 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
     context_.hostID,
     context_.gpuID);
   
-  // Call the thin CUDA wrapper which builds BVH via CUDA and returns the host-side BVH data.
+  // Build with the selected GPU backend and return the BVH in host storage.
+#ifdef XDG_CUBQL_USE_HIP
+  auto host_bvh = cubql::build_hip_bvh(host_aabbs, build_params, context_.gpuID);
+#else
   auto host_bvh = cubql::build_cuda_bvh(host_aabbs, build_params, context_.gpuID);
+#endif
   
   // upload the BVH to openmp device
   volume_group.bvh.nodes = static_cast<cuBQL::bvh3f::node_t*>(
@@ -545,7 +553,11 @@ void CuBQLRayTracer::bvh_diagnostics(MeshID volume) const
   std::cout << "\n ----------------------------------------------- \n"
             << "BVH diagnostics for Volume = " << volume << "\n"
             << " TreeID = " << tree << "\n"
+#ifdef XDG_CUBQL_USE_HIP
+            << " builder = HIP (copied into OpenMP-owned storage)\n"
+#else
             << " builder = CUDA (copied into OpenMP-owned storage)\n"
+#endif
             << " num_surfaces (populated by mesh_manager) = "
             << volume_group.num_surfaces << "\n"
             << " num_primitives (populated by mesh_manager) = "
