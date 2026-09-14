@@ -36,7 +36,7 @@ int main(int argc, char** argv)
     .scan<'i', int>();
 
   args.add_argument("-n", "--num-rays")
-    .default_value<std::uint32_t>(10'000'000)
+    .default_value<std::uint32_t>(50'000'000)
     .help("Number of rays to cast for the benchmark")
     .scan<'u', std::uint32_t>();
 
@@ -48,6 +48,11 @@ int main(int argc, char** argv)
   args.add_argument("--warmup-rays")
     .default_value<std::uint32_t>(100'000)
     .help("Number of rays in an untimed warm-up launch; zero disables warm-up")
+    .scan<'u', std::uint32_t>();
+
+  args.add_argument("--trace-repetitions")
+    .default_value<std::uint32_t>(1)
+    .help("Number of timed launches of the same ray batch")
     .scan<'u', std::uint32_t>();
 
   args.add_argument("-o", "-p", "--origin", "--position")
@@ -126,6 +131,8 @@ int main(int argc, char** argv)
   const std::size_t num_rays = args.get<std::uint32_t>("--num-rays");
   const std::size_t requested_warmup_rays =
     args.get<std::uint32_t>("--warmup-rays");
+  const std::uint32_t trace_repetitions =
+    args.get<std::uint32_t>("--trace-repetitions");
   const std::uint32_t seed = args.get<std::uint32_t>("--seed");
   const double source_radius = args.get<double>("--source-radius");
   const std::string output_format = args.get<std::string>("--format");
@@ -189,11 +196,15 @@ int main(int argc, char** argv)
   const auto num_faces = mesh_manager->num_volume_faces(volume);
   std::size_t num_hits = 0;
   if (num_rays < 1) fatal_error("Number of rays must be greater than 0");
+  if (trace_repetitions < 1) {
+    fatal_error("Number of trace repetitions must be greater than 0");
+  }
   const std::size_t warmup_rays = std::min(num_rays, requested_warmup_rays);
+  const std::uint64_t total_ray_queries =
+    static_cast<std::uint64_t>(num_rays) * trace_repetitions;
 
-  // Generate one host-side ray workload for every backend. Accelerator
-  // backends upload these records through XDG's common batch API, ensuring
-  // that GPRT and cuBQL receive the same rays.
+  // Generate one host-side ray workload. Timed repetitions replay this batch
+  // so the measurement isolates steady-state traversal from ray generation.
   generation_timer.start();
   std::vector<XDGRayHit> ray_hits(num_rays);
 
@@ -243,15 +254,19 @@ int main(int argc, char** argv)
     }
 
     trace_timer.start();
-    #pragma omp parallel for schedule(runtime)
-    for (std::size_t i = 0; i < num_rays; ++i) {
-      auto& ray_hit = ray_hits[i];
-      const auto hit = xdg->ray_fire(
-        volume,
-        Position(ray_hit.origin[0], ray_hit.origin[1], ray_hit.origin[2]),
-        Direction(ray_hit.direction[0], ray_hit.direction[1], ray_hit.direction[2]));
-      ray_hit.distance = hit.first;
-      ray_hit.surface = hit.second;
+    for (std::uint32_t repetition = 0;
+         repetition < trace_repetitions;
+         ++repetition) {
+      #pragma omp parallel for schedule(runtime)
+      for (std::size_t i = 0; i < num_rays; ++i) {
+        auto& ray_hit = ray_hits[i];
+        const auto hit = xdg->ray_fire(
+          volume,
+          Position(ray_hit.origin[0], ray_hit.origin[1], ray_hit.origin[2]),
+          Direction(ray_hit.direction[0], ray_hit.direction[1], ray_hit.direction[2]));
+        ray_hit.distance = hit.first;
+        ray_hit.surface = hit.second;
+      }
     }
     trace_timer.stop();
 
@@ -277,7 +292,11 @@ int main(int argc, char** argv)
     }
 
     trace_timer.start();
-    xdg->ray_fire_batch(device_ray_hits);
+    for (std::uint32_t repetition = 0;
+         repetition < trace_repetitions;
+         ++repetition) {
+      xdg->ray_fire_batch(device_ray_hits);
+    }
     trace_timer.stop();
 
     download_timer.start();
@@ -306,13 +325,13 @@ int main(int argc, char** argv)
                                       + trace_time + download_time;
   const double setup_time = setup_timer.elapsed();
   const double trace_only_rps = trace_time > 0.0
-    ? static_cast<double>(num_rays) / trace_time
+    ? static_cast<double>(total_ray_queries) / trace_time
     : 0.0;
   const double end_to_end_rps = end_to_end_time > 0.0
-    ? static_cast<double>(num_rays) / end_to_end_time
+    ? static_cast<double>(total_ray_queries) / end_to_end_time
     : 0.0;
   const double transfer_inclusive_rps = transfer_inclusive_time > 0.0
-    ? static_cast<double>(num_rays) / transfer_inclusive_time
+    ? static_cast<double>(total_ray_queries) / transfer_inclusive_time
     : 0.0;
 
   wall_timer.stop();
@@ -326,6 +345,8 @@ int main(int argc, char** argv)
     "num_faces",
     "num_rays",
     "warmup_rays",
+    "trace_repetitions",
+    "total_ray_queries",
     "num_hits",
     "num_misses",
     "hit_fraction",
@@ -356,6 +377,8 @@ int main(int argc, char** argv)
     fmt::format("{}", num_faces),
     fmt::format("{}", num_rays),
     fmt::format("{}", warmup_rays),
+    fmt::format("{}", trace_repetitions),
+    fmt::format("{}", total_ray_queries),
     fmt::format("{}", num_hits),
     fmt::format("{}", num_misses),
     fmt::format("{}", hit_fraction),
@@ -390,8 +413,10 @@ int main(int argc, char** argv)
     std::cout << "Volume                : " << volume << "\n";
     std::cout << "Volume faces          : " << num_faces << "\n";
     std::cout << "Seed                  : " << seed << "\n";
-    std::cout << "Rays                  : " << num_rays << "\n";
+    std::cout << "Rays per batch        : " << num_rays << "\n";
     std::cout << "Warm-up rays          : " << warmup_rays << " (untimed)\n";
+    std::cout << "Trace repetitions     : " << trace_repetitions << "\n";
+    std::cout << "Total ray queries     : " << total_ray_queries << "\n";
     if (source_radius != 0.0) {
       std::cout << "Source center         : "
                 << origin.x << ", " << origin.y << ", " << origin.z << "\n";

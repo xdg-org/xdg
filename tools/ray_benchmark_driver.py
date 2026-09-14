@@ -19,8 +19,9 @@ MESH = "./dagmc_xdg_test.h5m"
 VOLUME = 2
 BACKEND = "EMBREE"
 NUM_RAYS = 50_000_000
-WARMUP_RAYS = 100_000
-RUNS = 10
+WARMUP_RAYS = 1_000_000
+TRACE_REPETITIONS = 20
+RUNS = 30
 SEED = 12_345
 SOURCE_RADIUS = 0.0
 ORIGIN = None  # None selects the center of VOLUME; otherwise use (x, y, z).
@@ -38,6 +39,8 @@ BENCHMARK_COLUMNS = [
     "num_faces",
     "num_rays",
     "warmup_rays",
+    "trace_repetitions",
+    "total_ray_queries",
     "num_hits",
     "num_misses",
     "hit_fraction",
@@ -82,6 +85,9 @@ def parse_args():
     )
     parser.add_argument("-n", "--num-rays", type=int, default=NUM_RAYS)
     parser.add_argument("--warmup-rays", type=int, default=WARMUP_RAYS)
+    parser.add_argument(
+        "--trace-repetitions", type=int, default=TRACE_REPETITIONS
+    )
     parser.add_argument("-r", "--runs", type=int, default=RUNS)
     parser.add_argument("--seed", type=int, default=SEED)
     parser.add_argument("--source-radius", type=float, default=SOURCE_RADIUS)
@@ -106,6 +112,8 @@ def validate_args(args):
         raise SystemExit("--num-rays must be at least one.")
     if args.warmup_rays < 0:
         raise SystemExit("--warmup-rays cannot be negative.")
+    if args.trace_repetitions < 1:
+        raise SystemExit("--trace-repetitions must be at least one.")
     if args.omp_threads is not None and args.omp_threads < 1:
         raise SystemExit("--omp-threads must be at least one.")
 
@@ -132,6 +140,8 @@ def benchmark_command(args):
         str(args.num_rays),
         "--warmup-rays",
         str(args.warmup_rays),
+        "--trace-repetitions",
+        str(args.trace_repetitions),
         "--seed",
         str(args.seed),
         "--source-radius",
