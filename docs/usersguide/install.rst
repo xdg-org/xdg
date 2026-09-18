@@ -45,6 +45,27 @@ in the user's home directory, for example:
 
    cmake -S . -B build -DCMAKE_PREFIX_PATH=$HOME/opt/moab -DXDG_ENABLE_MOAB=ON -DCMAKE_INSTALL_PREFIX=$HOME/opt/xdg
 
+cuBQL GPU builder
+-----------------
+
+With ``XDG_ENABLE_CUBQL=ON``, XDG builds BVHs on the GPU and copies them into
+OpenMP-owned storage for traversal. CUDA is the default builder. For AMD GPUs,
+set ``CUBQL_USE_HIP=ON`` and ``CMAKE_HIP_ARCHITECTURES`` to the target GPU
+architecture. HIP builds require CMake 3.21 or newer and a ROCm HIP toolchain.
+
+The ``cubql_llvm_mi300x`` and ``cubql_llvm_mi355x`` presets select HIP with
+``gfx942`` and ``gfx950``, respectively, and set the matching OpenMP offload
+flags. For example, with the LLVM OpenMP runtime directory supplied through
+``LLVM_OPENMP_RUNTIME_DIR``:
+
+.. code-block:: bash
+
+   cmake --preset cubql_llvm_mi300x -DCMAKE_PREFIX_PATH="$HOME/opt/moab"
+   cmake --build --preset cubql_llvm_mi300x
+
+If CMake cannot locate the HIP compiler, set ``CMAKE_HIP_COMPILER`` to the
+ROCm Clang compiler (for example, ``/opt/rocm/llvm/bin/clang++``).
+
 Installation
 ------------
 

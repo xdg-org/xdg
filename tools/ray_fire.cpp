@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
       .default_value("MOAB");
 
   args.add_argument("-r", "--rt-library")
-      .help("Ray tracing library to use. One of (EMBREE, GPRT)")
+      .help("Ray tracing library to use. One of (EMBREE, GPRT, CUBQL)")
       .default_value("EMBREE");
 
   try {
@@ -60,6 +60,8 @@ if (rt_str == "EMBREE")
   rt_lib = RTLibrary::EMBREE;
 else if (rt_str == "GPRT")
   rt_lib = RTLibrary::GPRT;
+else if (rt_str == "CUBQL")
+  rt_lib = RTLibrary::CUBQL;
 else
   fatal_error("Invalid ray tracing library '{}' specified", rt_str);
 
@@ -68,7 +70,7 @@ if (mesh_str == "MOAB")
   mesh_lib = MeshLibrary::MOAB;
 else if (mesh_str == "LIBMESH") {
   mesh_lib = MeshLibrary::LIBMESH;
-  if (rt_lib == RTLibrary::GPRT)
+  if (rt_lib == RTLibrary::GPRT || rt_lib == RTLibrary::CUBQL)
     fatal_error("LibMesh is not currently supported with GPRT");
 }
 else
