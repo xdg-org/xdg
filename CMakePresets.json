@@ -48,7 +48,8 @@
       ],
       "displayName": "cuBQL LLVM OpenMP offload NVIDIA A100",
       "cacheVariables": {
-        "XDG_ENABLE_CUBQL": "ON"
+        "XDG_ENABLE_CUBQL": "ON",
+        "CMAKE_CUDA_ARCHITECTURES": "80"
       },
       "environment": {
         "PRESET_CXX_FLAGS": "-fopenmp-cuda-mode -fopenmp-targets=nvptx64 -Xopenmp-target=nvptx64 -march=sm_80"
