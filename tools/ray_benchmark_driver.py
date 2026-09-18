@@ -15,13 +15,13 @@ from pathlib import Path
 # command line. Each repetition uses the same seed so backend timings are taken
 # from identical ray workloads.
 BENCHMARK = "./build/cubql_llvm_ada/tools/ray-benchmark"
-MESH = "./dagmc_xdg_test.h5m"
-VOLUME = 2
+MESH = "./atr.h5m"
+VOLUME = 38
 BACKEND = "EMBREE"
-NUM_RAYS = 50_000_000
+NUM_RAYS = 10_000_000
 WARMUP_RAYS = 1_000_000
-TRACE_REPETITIONS = 20
-RUNS = 30
+TRACE_REPETITIONS = 100
+RUNS = 10
 SEED = 12_345
 SOURCE_RADIUS = 0.0
 ORIGIN = None  # None selects the center of VOLUME; otherwise use (x, y, z).
