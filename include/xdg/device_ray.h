@@ -6,6 +6,16 @@
 
 namespace xdg {
 
+// Slang does not support STL types so we typedef depending on whether compiling for C++ or Slang
+#ifdef __SLANG__
+typedef int int32;
+#else
+using int32 = std::int32_t;
+#endif
+
+
+// TODO - Try converting to SoA rather than AoS for better memory coalescing on GPU. This would require a more complex buffer management system, but could yield performance improvements for large ray batches.
+//! C++/Slang compilable struct representing a ray and its associated hit information.
 struct XDGRayHit {
   double origin[3];
   double direction[3];
