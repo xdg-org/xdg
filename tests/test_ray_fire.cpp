@@ -16,9 +16,7 @@ using namespace xdg::test;
 
 // ------- single test, multiple sections (one per built backend) --------------
 
-TEMPLATE_TEST_CASE("Ray Fire on MockedTriTetMesh (per-backend sections)", "[rayfire][mock]",
-                   Embree_Raytracer,
-                   GPRT_Raytracer)
+TEMPLATE_LIST_TEST_CASE("Ray Fire on MockedTriTetMesh (per-backend sections)", "[rayfire][mock]", RayTracerBackends)
 {
   // Generate one test run per enabled backend
   constexpr auto rt_backend = TestType::value;
