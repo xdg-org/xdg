@@ -3,6 +3,7 @@
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <tuple>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -41,9 +42,20 @@ inline XDGBackendFixture make_xdg_backend_fixture(
 
 using MOAB_Interface = std::integral_constant<MeshLibrary, MeshLibrary::MOAB>;
 using LibMesh_Interface = std::integral_constant<MeshLibrary, MeshLibrary::LIBMESH>;
-
 using Embree_Raytracer = std::integral_constant<RTLibrary, RTLibrary::EMBREE>;
 using GPRT_Raytracer = std::integral_constant<RTLibrary, RTLibrary::GPRT>;
+
+// Every public mesh backend must be enrolled here. This will ensure that any tests
+// that are run on all mesh backends will be instantiated for each backend.
+using MeshManagerBackends = std::tuple<
+    MOAB_Interface,
+    LibMesh_Interface>;
+
+// Every public RayTracer backend must be enrolled here. This will ensure that any tests 
+// that are run on all RayTracer backends will be instantiated for each backend.
+using RayTracerBackends = std::tuple<
+    Embree_Raytracer,
+    GPRT_Raytracer>;
 
 } // namespace xdg::test
 
