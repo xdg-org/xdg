@@ -14,7 +14,8 @@ using namespace xdg::test;
 
 // ---------- single test, sections per backend --------------------------------
 
-TEMPLATE_LIST_TEST_CASE("Point-in-volume on MockedTriTetMesh", "[piv][mock]", RayTracerBackends) 
+TEMPLATE_TEST_CASE("Point-in-volume on MockedTriTetMesh", "[piv][mock]",
+                   XDG_RAY_TRACER_BACKENDS)
 {
   constexpr auto rt_backend = TestType::value;
 

@@ -58,7 +58,8 @@ const std::array<ExpectedVertexCoordinate, 21> SAMPLE_COORDINATES = {{
   {1080, {6.276147641, 6.66300095, 4.509159822}}
 }};
 
-TEMPLATE_LIST_TEST_CASE("Test Mesh Without Geometry", "[mesh]", MeshManagerBackends)
+TEMPLATE_TEST_CASE("Test Mesh Without Geometry", "[mesh]",
+                   XDG_MESH_MANAGER_BACKENDS)
 {
   constexpr auto mesh_backend = TestType::value;
 

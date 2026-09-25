@@ -144,7 +144,8 @@ TEST_CASE("Test Random Jezebel Quad Tally Segments")
   tally_segments(context);
 }
 
-TEMPLATE_LIST_TEST_CASE("Test Single-Tet Glancing Vertex Intersection Tracks", "[tracks]", MeshManagerBackends)
+TEMPLATE_TEST_CASE("Test Single-Tet Glancing Vertex Intersection Tracks",
+                   "[tracks]", XDG_MESH_MANAGER_BACKENDS)
 {
   constexpr auto mesh_backend = TestType::value;
 
@@ -219,7 +220,8 @@ TEMPLATE_LIST_TEST_CASE("Test Single-Tet Glancing Vertex Intersection Tracks", "
   }
 }
 
-TEMPLATE_LIST_TEST_CASE("Test Single-Tet Vertex Intersection Tracks", "[tracks]", MeshManagerBackends)
+TEMPLATE_TEST_CASE("Test Single-Tet Vertex Intersection Tracks", "[tracks]",
+                   XDG_MESH_MANAGER_BACKENDS)
 {
   constexpr auto mesh_backend = TestType::value;
 
