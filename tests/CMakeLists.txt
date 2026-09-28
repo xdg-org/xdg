@@ -22,6 +22,7 @@ test_walk_elements
 test_tally_segments
 test_mesh_connectivity
 test_regressions
+test_mesh_library_cross_check
 )
 
 if (XDG_ENABLE_MOAB)
@@ -30,10 +31,6 @@ endif()
 
 if (XDG_ENABLE_LIBMESH)
     list(APPEND TEST_NAMES test_libmesh)
-endif()
-
-if (XDG_ENABLE_MOAB AND XDG_ENABLE_LIBMESH)
-    list(APPEND TEST_NAMES test_mesh_library_cross_check)
 endif()
 
 if (XDG_ENABLE_MOAB)

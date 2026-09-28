@@ -1,3 +1,4 @@
+#include <memory>
 #include <random>
 #include <string>
 #include <type_traits>
@@ -9,8 +10,34 @@
 #include "xdg/ray_tracers.h"
 #include "xdg/mesh_managers.h"
 #include "xdg/gprt/vulkan_probe.h"
+#include "xdg/xdg.h"
 
 namespace xdg::test {
+
+struct XDGBackendFixture {
+  MeshLibrary mesh_library;
+  RTLibrary rt_library;
+  std::shared_ptr<XDG> xdg;
+
+  std::string label() const {
+    return MESH_LIB_TO_STR.at(mesh_library) + "/" +
+           RT_LIB_TO_STR.at(rt_library);
+  }
+};
+
+inline XDGBackendFixture make_xdg_backend_fixture(
+  MeshLibrary mesh_library,
+  RTLibrary rt_library,
+  const std::string& filename)
+{
+  auto xdg = XDG::create(mesh_library, rt_library);
+  xdg->mesh_manager()->load_file(filename);
+  xdg->mesh_manager()->init();
+  xdg->mesh_manager()->parse_metadata();
+  xdg->prepare_raytracer();
+
+  return {mesh_library, rt_library, xdg};
+}
 
 using MOAB_Interface = std::integral_constant<MeshLibrary, MeshLibrary::MOAB>;
 using LibMesh_Interface = std::integral_constant<MeshLibrary, MeshLibrary::LIBMESH>;
