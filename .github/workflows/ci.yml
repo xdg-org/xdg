@@ -192,6 +192,7 @@ jobs:
           # before building omega_h we need to compile seacas on which omega_h depends
           # for interacting with exodus mesh API
           cd ~/seacas
+          git checkout v2026-08-11
           mkdir build
           cd build
           cmake .. \
