@@ -1,5 +1,5 @@
-#ifndef XDG_TETRAHEDRON_INTERSECT_H
-#define XDG_TETRAHEDRON_INTERSECT_H
+#ifndef XDG_GEOMETRY_TETRAHEDRON_CONTAIN_H
+#define XDG_GEOMETRY_TETRAHEDRON_CONTAIN_H
 
 
 #include "xdg/vec3da.h"
@@ -33,11 +33,6 @@ bool tet_containment_test(const Position& point,
                           const Vertex& v1,
                           const Vertex& v2,
                           const Vertex& v3);
-
-// Embree call back functions for element search
-void VolumeElementBoundsFunc(RTCBoundsFunctionArguments* args);
-void TetrahedronIntersectionFunc(RTCIntersectFunctionNArguments* args);
-void TetrahedronOcclusionFunc(RTCOccludedFunctionNArguments* args);
 
 } // namespace xdg
 

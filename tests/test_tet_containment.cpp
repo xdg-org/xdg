@@ -7,7 +7,7 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 #include "xdg/ray_tracing_interface.h"
-#include "xdg/tetrahedron_contain.h"
+#include "xdg/geometry/tetrahedron_contain.h"
 #include "xdg/vec3da.h"
 
 #include "mesh_mocks.h"

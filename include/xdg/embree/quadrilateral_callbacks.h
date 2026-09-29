@@ -1,7 +1,7 @@
-#ifndef XDG_QUADRILATERAL_INTERSECTION_H
-#define XDG_QUADRILATERAL_INTERSECTION_H
+#ifndef XDG_EMBREE_QUADRILATERAL_CALLBACKS_H
+#define XDG_EMBREE_QUADRILATERAL_CALLBACKS_H
 
-#include "xdg/embree_interface.h"
+#include "xdg/embree/embree_interface.h"
 
 namespace xdg {
 
@@ -15,4 +15,4 @@ bool SurfaceClosestFunc(RTCPointQueryFunctionArguments* args);
 
 } // namespace xdg
 
-#endif // XDG_QUADRILATERAL_INTERSECTION_H
+#endif // XDG_EMBREE_QUADRILATERAL_CALLBACKS_H
