@@ -101,9 +101,9 @@ inline bool mesh_library_available(xdg::MeshLibrary mesh) {
         #endif
     case xdg::MeshLibrary::OMEGA_H:
         #ifdef XDG_ENABLE_OMEGA_H
-                  return true;
+          return true;
         #else
-                  return false;
+          return false;
         #endif
   }
 
