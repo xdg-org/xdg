@@ -67,7 +67,7 @@ RUN make install
 ENV SEACAS_INSTALL_PATH=/XDG_TEST_SYSTEM/seacas_install_dir
 
 # build omega_h
-RUN git clone https://github.com/SCOREC/omega_h.git /XDG_TEST_SYSTEM/omega_h
+RUN git clone --version scorec-v11.2.0 https://github.com/SCOREC/omega_h.git /XDG_TEST_SYSTEM/omega_h
 WORKDIR /XDG_TEST_SYSTEM/omega_h/build
 RUN cmake .. \
     -DCMAKE_INSTALL_PREFIX=/XDG_TEST_SYSTEM/omega_h_install_dir \

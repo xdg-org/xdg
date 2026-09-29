@@ -211,6 +211,7 @@ jobs:
         shell: bash
         run: |
           cd ~/omega_h
+          git checkout scorec-v11.2.0
           mkdir build
           cd build
           cmake .. \
