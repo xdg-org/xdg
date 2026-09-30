@@ -57,8 +57,6 @@ void MfemMeshManager::init() {
     // its immediate neighbour on the interior of the mesh. We query
     // this neighbour for which volume it's a member of, and register
     // this sideset as a member of that volume.
-    // We want each sideset to be a member of exactly one volume, but
-    // that's probably too much to ask.
     int elem_no, info;
     mesh_->GetBdrElementAdjacentElement(i, elem_no, info);
 
@@ -116,7 +114,6 @@ void MfemMeshManager::init() {
   create_implicit_complement();
 }
 
-// TODO: very slow, and could be done during init()
 std::vector<MeshID> MfemMeshManager::get_volume_elements(MeshID volume) const {
   std::vector<MeshID> output;
   
@@ -133,23 +130,19 @@ std::vector<MeshID> MfemMeshManager::get_volume_elements(MeshID volume) const {
     if (std::find(volumes_.begin(), volumes_.end(), volume) == volumes_.end()) {
       // This is an error now. It's not a true volume
       // or the implicit complement
-      std::ostringstream output;
-      output << "Couldn't find volume " << volume << "\n";
-      fatal_error(output.str());
+      std::ostringstream error_message;
+      error_message << "Couldn't find volume " << volume << "\n";
+      fatal_error(error_message.str());
     }
 
-    // simply return the empty vector if this is the implicit
-    // complement
+    // simply return the empty vector if this is the implicit complement
     return output;
   }
 
-  // gather all the element IDs that have this attribute
-  // this method is absolutely criminal. Could be done at the start
-  // when we run over all the elements anyway...
-  for (int i=0; i<mesh_->GetNE(); i++) {
-    if ( mesh_->GetAttribute(i) == volume ) output.push_back(i);
-  }
-
+  // gather the set from volume_to_element_map_ and copy it into
+  // the vector we want to return
+  auto volume_set = volume_to_element_map_.at(volume);
+  std::copy(volume_set.begin(), volume_set.end(), std::back_inserter(output));
   return output;
 }
 
@@ -209,10 +202,6 @@ std::vector<MeshID> MfemMeshManager::face_vertices(MeshID element) const {
 }
 
 std::pair<int, int> MfemMeshManager::surface_senses(MeshID surface) const {
-
-  // TODO: make the second value one more than the largest volume ID we've seen
-  // i.e. since the only volume in the jezebel/brick is 1, the second id must be 2,
-  // to denote the implicit complement
   return surface_senses_.at(surface);
 }
 
@@ -385,10 +374,6 @@ void MfemMeshManager::parse_metadata() {
   }
 }
 
-// TODO: This is not quite correct. mfem does support mixed meshes.
-// The intention of the caller is that the argument (surface) corresponds
-// to the sideset. So we need to find a typical element from the sideset
-// that is marked by the argument surface. For now, this will do
 SurfaceFaceType MfemMeshManager::get_surface_face_type(MeshID surface) const {
   mfem::Geometry::Type geom = mesh_->GetFaceGeometry(surface);
 
@@ -400,10 +385,6 @@ SurfaceFaceType MfemMeshManager::get_surface_face_type(MeshID surface) const {
   }
 }
 
-// TODO: Same problem as above. Volume is supposed to be a block_id, and this
-// function is interpreting it as an element index. We should have a LOT more
-// elements than blocks, so it's safe, but wrong. When dealing with a mixed
-// mesh, it will fail tests
 VolumeElementType MfemMeshManager::get_volume_element_type(MeshID volume) const {
   mfem::Geometry::Type geom = mesh_->GetElementBaseGeometry(volume);
 
