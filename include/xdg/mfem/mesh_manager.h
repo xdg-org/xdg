@@ -75,6 +75,7 @@ public:
   virtual std::vector<MeshID> get_surface_faces(MeshID surface) const override;
 
   virtual std::vector<Vertex> element_vertices(MeshID element) const override;
+
   std::vector<Vertex> bdr_element_vertices(MeshID element) const;
 
   virtual std::vector<MeshID> face_vertices(MeshID element) const override;
@@ -114,7 +115,7 @@ public:
   }
 
   virtual std::vector<MeshID> face_connectivity(MeshID face) const override {
-    fatal_error("MfemMeshManager::face_connectivity() not implemented yet");
+    return face_vertices(face);
   }
 
   // Topology
@@ -168,7 +169,7 @@ private:
   int num_boundary_faces_;
 
   //! Mapping of surfaces to the volumes on either side. Volumes are ordered
-  //! based on their sense with respect to the surface triangles. We reuase
+  //! based on their sense with respect to the surface triangles. We reuse
   //! whichever ordering mfem decides on when the mesh is constructed.
   std::unordered_map<MeshID, std::pair<MeshID, MeshID>> surface_senses_;
 };
