@@ -17,7 +17,7 @@ using namespace xdg;
 using namespace xdg::test;
 
 TEMPLATE_TEST_CASE("Test Element and Face Types Jezebel Tets", "[elements][faces][types][tets][tris]",
-                   LibMesh_Interface, MOAB_Interface)
+                   XDG_MESH_MANAGER_BACKENDS)
 {
   constexpr auto mesh_backend = TestType::value;
   // skip if backend not enabled at configuration time
@@ -50,7 +50,7 @@ TEMPLATE_TEST_CASE("Test Element and Face Types Jezebel Tets", "[elements][faces
 }
 
 TEMPLATE_TEST_CASE("Test Element and Face Types Jezebel Quads", "[elements][faces][types][quads][hexes]",
-                   LibMesh_Interface, MOAB_Interface)
+                   XDG_MESH_MANAGER_BACKENDS)
 {
   constexpr auto mesh_backend = TestType::value;
   // skip if backend not enabled at configuration time
