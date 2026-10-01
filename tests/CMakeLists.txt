@@ -5,6 +5,7 @@ test_boundary_faces
 test_bvh
 test_config
 test_closest
+test_element_and_face_types
 test_find_element
 test_mesh_internal
 test_occluded
