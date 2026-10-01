@@ -59,8 +59,7 @@ const std::array<ExpectedVertexCoordinate, 21> SAMPLE_COORDINATES = {{
 }};
 
 TEMPLATE_TEST_CASE("Test Mesh Without Geometry", "[mesh]",
-                   MOAB_Interface,
-                   LibMesh_Interface)
+                   XDG_MESH_MANAGER_BACKENDS)
 {
   constexpr auto mesh_backend = TestType::value;
 

@@ -41,9 +41,21 @@ inline XDGBackendFixture make_xdg_backend_fixture(
 
 using MOAB_Interface = std::integral_constant<MeshLibrary, MeshLibrary::MOAB>;
 using LibMesh_Interface = std::integral_constant<MeshLibrary, MeshLibrary::LIBMESH>;
-
 using Embree_Raytracer = std::integral_constant<RTLibrary, RTLibrary::EMBREE>;
 using GPRT_Raytracer = std::integral_constant<RTLibrary, RTLibrary::GPRT>;
+
+// Every public mesh backend must be enrolled here. Shared mesh backend tests use
+// this list so that adding a backend does not require updating each test case.
+#define XDG_MESH_MANAGER_BACKENDS \
+  MOAB_Interface,                 \
+  LibMesh_Interface
+
+// Every public ray tracer backend must be enrolled here. Shared ray tracer
+// tests use this list so that adding a backend does not require updating each
+// test case.
+#define XDG_RAY_TRACER_BACKENDS \
+  Embree_Raytracer,             \
+  GPRT_Raytracer
 
 } // namespace xdg::test
 
