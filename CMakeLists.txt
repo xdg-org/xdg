@@ -9,6 +9,7 @@ option(XDG_ENABLE_EMBREE  "Enable support for the Embree ray tracing library" ON
 option(XDG_ENABLE_GPRT    "Enable support for the GPRT ray tracing library"  OFF)
 option(XDG_BUILD_TESTS    "Enable C++ unit testing"                           ON)
 option(XDG_BUILD_TOOLS    "Enable tools and miniapps"                         ON)
+option(XDG_BUILD_EXAMPLES "Enable C++ examples"                               ON)
 
 # Set version numbers
 set(XDG_VERSION_MAJOR 0)
@@ -25,6 +26,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Set module path
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
+
 
 #===============================================================================
 # libMesh
@@ -68,6 +70,13 @@ if (XDG_ENABLE_EMBREE)
 
   message(STATUS "Found Embree ${EMBREE_VERSION} at ${EMBREE_ROOT_DIR}")
 endif()
+
+#============================================================================
+# If we want to build examples
+#============================================================================
+if(XDG_BUILD_EXAMPLES)
+  add_subdirectory(examples)
+endif ()
 
 #===============================================================================
 # Update git submodules as needed (borrowed from OpenMC)
@@ -323,7 +332,7 @@ if (XDG_ENABLE_GPRT)
   target_link_options(xdg PRIVATE -Wl,--unresolved-symbols=ignore-in-shared-libs)
 endif()
 
-target_link_libraries(xdg PRIVATE fmt::fmt)
+target_link_libraries(xdg PUBLIC fmt::fmt)
 
 # ==========================
 # Link ray tracing libraries
