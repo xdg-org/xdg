@@ -1,5 +1,5 @@
 #define CUBQL_GPU_BUILDER_IMPLEMENTATION 1
-#include "hip_builder_bridge.h"
+#include "device_bvh_builder_bridge.h"
 
 #include <hip/hip_runtime.h>
 
@@ -8,9 +8,9 @@
 #include "cuBQL/builder/cuda.h"
 
 namespace xdg::cubql {
-HostBVH build_hip_bvh(const std::vector<cuBQL::box3f>& boxes,
-                      cuBQL::BuildConfig config,
-                      int device)
+HostBVH build_bvh(const std::vector<cuBQL::box3f>& boxes,
+                  cuBQL::BuildConfig config,
+                  int device)
 {
   hipSetDevice(device);
 

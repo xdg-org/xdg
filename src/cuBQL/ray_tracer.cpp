@@ -4,11 +4,7 @@
 #include "xdg/geometry/plucker.h"
 #include "xdg/available_device_probe.h"
 
-#ifdef XDG_CUBQL_USE_HIP
-#include "hip_builder_bridge.h"
-#else
-#include "cuda_builder_bridge.h"
-#endif
+#include "device_bvh_builder_bridge.h"
 
 #include <omp.h>
 #include "cuBQL/math/Ray.h"
@@ -284,11 +280,7 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
     context_.gpuID);
   
   // Build with the selected GPU backend and return the BVH in host storage.
-#ifdef XDG_CUBQL_USE_HIP
-  auto host_bvh = cubql::build_hip_bvh(host_aabbs, build_params, context_.gpuID);
-#else
-  auto host_bvh = cubql::build_cuda_bvh(host_aabbs, build_params, context_.gpuID);
-#endif
+  auto host_bvh = cubql::build_bvh(host_aabbs, build_params, context_.gpuID);
   
   // upload the BVH to openmp device
   volume_group.bvh.nodes = static_cast<cuBQL::bvh3f::node_t*>(
