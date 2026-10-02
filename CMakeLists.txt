@@ -266,9 +266,9 @@ src/cuBQL/ray_tracer.cpp
 )
 
 if(CUBQL_USE_HIP)
-  list(APPEND xdg_sources src/cuBQL/hip_builder_bridge.hip)
+  list(APPEND xdg_sources src/cuBQL/hip_bvh_builder_bridge.hip)
 else()
-  list(APPEND xdg_sources src/cuBQL/cuda_builder_bridge.cu)
+  list(APPEND xdg_sources src/cuBQL/cuda_bvh_builder_bridge.cu)
 endif()
 
 # We need a precompile definition to switch to using the cuBQL math types in the shared
