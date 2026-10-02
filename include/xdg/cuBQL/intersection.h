@@ -1,12 +1,6 @@
 #ifndef _XDG_CUBQL_INTERSECTION_H
 #define _XDG_CUBQL_INTERSECTION_H
 
-// Guards to prevent CUDA headers from being included in host code, which causes
-// failed compilation with LLVM-clang.
-#if defined(__CUDA_ARCH__) && !defined(__CUDACC__)
-#undef __CUDA_ARCH__
-#endif
-
 #include <cstddef>
 #include <vector>
 
