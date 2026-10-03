@@ -45,7 +45,7 @@ public:
 
   // Required overloads
   void load_file(const std::string& file_name) override {}
-  void init() override {}
+  void init(const std::set<MeshID> & included_volumes = std::set<MeshID>()) override {}
 
   // Counts
   virtual int num_volumes() const override {
@@ -368,7 +368,7 @@ public:
   }
 
   void load_file(const std::string& /*file_name*/) override {}
-  void init() override {}
+  void init(const std::set<MeshID> & included_volumes = std::set<MeshID>()) override {}
 
   int num_volumes() const override { return 1; }
   int num_surfaces() const override { return static_cast<int>(surfaces_.size()); }
