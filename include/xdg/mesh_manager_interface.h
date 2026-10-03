@@ -28,7 +28,7 @@ public:
   // Setup
   virtual void load_file(const std::string& filepath) = 0;
 
-  virtual void init(const std::set<MeshID> & included_volumes = std::set<MeshID>()) = 0;
+  virtual void init(const std::unordered_set<MeshID> & included_volumes = std::unordered_set<MeshID>()) = 0;
 
   // Geometry
   virtual int num_volumes() const = 0;
@@ -244,7 +244,7 @@ protected:
   std::vector<MeshID> surfaces_;
 
   //! Volumes to treat as the implicit compliment during mesh operations
-  std::set<MeshID> included_volumes_;
+  std::unordered_set<MeshID> included_volumes_;
 
   //! Block ID mapping from element IDs to contiguous index space
   IDBlockMapping<MeshID> volume_element_id_map_;

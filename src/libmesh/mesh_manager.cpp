@@ -27,7 +27,7 @@ void LibMeshManager::load_file(const std::string &filepath) {
   mesh_ = managed_mesh_.get();
 }
 
-void LibMeshManager::init(const std::set<MeshID> & included_volumes) {
+void LibMeshManager::init(const std::unordered_set<MeshID> & included_volumes) {
   included_volumes_ = included_volumes;
 
   // ensure that the mesh is 3-dimensional, for our use case this is expected

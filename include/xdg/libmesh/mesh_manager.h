@@ -58,7 +58,7 @@ public:
 
   void load_file(const std::string& filepath) override;
 
-  void init(const std::set<MeshID> & included_volumes = std::set<MeshID>()) override;
+  void init(const std::unordered_set<MeshID> & included_volumes = std::unordered_set<MeshID>()) override;
 
   void parse_metadata() override;
 
