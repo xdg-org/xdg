@@ -253,7 +253,9 @@ void LibMeshManager::map_id_spaces() {
   std::vector<MeshID> volume_element_ids;
   volume_element_ids.reserve(mesh()->n_active_elem());
   for (const auto *elem : mesh()->active_element_ptr_range()) {
-    volume_element_ids.push_back(elem->id());
+    if (included_volumes_.count(elem->subdomain_id())) {
+      volume_element_ids.push_back(elem->id());
+    }
   }
   volume_element_id_map_ = IDBlockMapping<MeshID>(volume_element_ids);
 
