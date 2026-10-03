@@ -40,7 +40,7 @@ public:
 
   void load_file(const std::string& filepath);
 
-  void init() override;
+  void init(const std::set<MeshID> & included_volumes = std::set<MeshID>()) override;
 
   // Geometry
   int num_volumes() const override;

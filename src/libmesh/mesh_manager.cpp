@@ -27,35 +27,42 @@ void LibMeshManager::load_file(const std::string &filepath) {
   mesh_ = managed_mesh_.get();
 }
 
-void LibMeshManager::init() {
+void LibMeshManager::init(const std::set<MeshID> & included_volumes) {
+  included_volumes_ = included_volumes;
+
   // ensure that the mesh is 3-dimensional, for our use case this is expected
   if (mesh()->mesh_dimension() != 3) {
     fatal_error("Mesh must be 3-dimensional");
   }
 
-  num_elements_ = mesh()->n_active_elem();
+  num_elements_ = 0;
 
   auto libmesh_bounding_box = libMesh::MeshTools::create_bounding_box(*mesh());
 
   // identify all subdomain IDs in the mesh, these represent volumes
   std::set<libMesh::subdomain_id_type> subdomain_ids;
   mesh()->subdomain_ids(subdomain_ids);
-  for (auto id : subdomain_ids) {
-    volumes_.push_back(id);
+  // If 'included_volumes' is empty, use all subdomains.
+  if (included_volumes_.size() == 0) {
+    included_volumes_.insert(subdomain_ids.begin(), subdomain_ids.end());
   }
-
-  // identify all sideset IDs in the mesh, these represent surfaces
-  std::set<MeshID> boundary_ids;
-  auto boundary_info = mesh()->get_boundary_info();
-  for (auto entry : boundary_info.get_sideset_name_map()) {
-    boundary_ids.insert(entry.first);
+  for (auto id : subdomain_ids) {
+    // Check to see if this subdomain should be included or not.
+    if (included_volumes_.count(id)) {
+      volumes_.push_back(id);
+      num_elements_ += std::distance(mesh()->active_subdomain_set_elements_begin({id}),
+                                     mesh()->active_subdomain_set_elements_end({id}));
+    }
   }
 
   // invert the boundary info sideset map so that we can identify
   // the elements associated with each sideset
+  auto boundary_info = mesh()->get_boundary_info();
   for (auto entry : boundary_info.get_sideset_map()) {
-    const libMesh::Elem* other_elem = entry.first->neighbor_ptr(entry.second.first);
-    sideset_face_map_[entry.second.second].push_back(sidepair_id({entry.first, entry.second.first}));
+    // Only add boundary elements if they're in subdomains we include.
+    if (included_volumes_.count(entry.first->subdomain_id())) {
+      sideset_face_map_[entry.second.second].push_back(sidepair_id({entry.first, entry.second.first}));
+    }
   }
 
   // search for any implicit sidesets (faces that are the boundary between two
@@ -135,6 +142,7 @@ MeshID LibMeshManager::adjacent_element(MeshID element, int face) const {
   if (!elem_ptr) return ID_NONE;
   auto neighbor = elem_ptr->neighbor_ptr(face);
   if (!neighbor) return ID_NONE;
+  if (!included_volumes_.count(neighbor->id())) return ID_NONE;
   return neighbor->id();
 }
 
@@ -268,10 +276,19 @@ void LibMeshManager::discover_surface_elements() {
   // for any active local elements, identify element faces
   // where the subdomain IDs are different on either side
   for (const auto *elem : mesh()->active_element_ptr_range()) {
+    // Skip volume elements that aren't in 'included_volumes_'.
+    if (!included_volumes_.count(elem->subdomain_id())) {
+      continue;
+    }
+
     volume_element_ids.push_back(elem->id());
     MeshID subdomain_id = elem->subdomain_id();
     for (int i = 0; i < elem->n_sides(); i++) {
       auto neighbor = elem->neighbor_ptr(i);
+      // Treat neighbors as if they don't exist if they aren't in 'included_volumes_'.
+      if (!included_volumes_.count(neighbor->subdomain_id())) {
+        neighbor = nullptr;
+      }
       // get the subdomain ID of the neighbor, if it exists
       // otherwise set to ID_NONE
       MeshID neighbor_id = neighbor ? neighbor->subdomain_id() : ID_NONE;
@@ -500,16 +517,16 @@ void LibMeshManager::create_surfaces_from_sidesets_and_interfaces() {
   }
 }
 
-  // now that the boundary faces have been identified, we need to ensure that
-  // the normals are consistent for each sideset. The normals of element faces
-  // depend on which element is being used to reference the face. This extends
-  // to the sideset faces as well, so we need to ensure that the normals are
-  // consistent for each sideset. This is done by using the first face for each
-  // sideset and treating the first element as the "cannonical" element for the
-  // set. This means that all faces in the set should reference elements within
-  // the same mesh block to ensure that the orientation of the normals is consistent
-  // with respect to that block. Senses in the mesh data structures will be updated
-  // accordingly
+// now that the boundary faces have been identified, we need to ensure that
+// the normals are consistent for each sideset. The normals of element faces
+// depend on which element is being used to reference the face. This extends
+// to the sideset faces as well, so we need to ensure that the normals are
+// consistent for each sideset. This is done by using the first face for each
+// sideset and treating the first element as the "cannonical" element for the
+// set. This means that all faces in the set should reference elements within
+// the same mesh block to ensure that the orientation of the normals is consistent
+// with respect to that block. Senses in the mesh data structures will be updated
+// accordingly
 void LibMeshManager::determine_surface_senses() {
   write_message("Ensuring consistent normals for sideset faces...");
   for (auto &[surface_id, surface_faces] : surface_map_) {

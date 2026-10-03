@@ -3,6 +3,7 @@
 
 #include <map>
 #include <memory>
+#include <set>
 
 #include "xdg/constants.h"
 #include "xdg/element_face_accessor.h"
@@ -57,7 +58,7 @@ public:
 
   void load_file(const std::string& filepath) override;
 
-  void init() override;
+  void init(const std::set<MeshID> & included_volumes = std::set<MeshID>()) override;
 
   void parse_metadata() override;
 
