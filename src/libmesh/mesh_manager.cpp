@@ -142,7 +142,7 @@ MeshID LibMeshManager::adjacent_element(MeshID element, int face) const {
   if (!elem_ptr) return ID_NONE;
   auto neighbor = elem_ptr->neighbor_ptr(face);
   if (!neighbor) return ID_NONE;
-  if (!included_volumes_.count(neighbor->id())) return ID_NONE;
+  if (!included_volumes_.count(neighbor->subdomain_id())) return ID_NONE;
   return neighbor->id();
 }
 
