@@ -285,13 +285,14 @@ void LibMeshManager::discover_surface_elements() {
     MeshID subdomain_id = elem->subdomain_id();
     for (int i = 0; i < elem->n_sides(); i++) {
       auto neighbor = elem->neighbor_ptr(i);
-      // Treat neighbors as if they don't exist if they aren't in 'included_volumes_'.
-      if (!included_volumes_.count(neighbor->subdomain_id())) {
-        neighbor = nullptr;
-      }
       // get the subdomain ID of the neighbor, if it exists
       // otherwise set to ID_NONE
       MeshID neighbor_id = neighbor ? neighbor->subdomain_id() : ID_NONE;
+      // Treat neighbors as if they don't exist if they aren't in 'included_volumes_'.
+      if (neighbor) {
+        neighbor_id = !included_volumes_.count(neighbor->subdomain_id()) ? ID_NONE : neighbor_id;
+      }
+
       // if these IDs are different, then this is an interface element
       if (neighbor_id == subdomain_id) continue;
       // ensure that there is only one interface between each block pair
