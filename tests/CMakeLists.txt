@@ -109,6 +109,8 @@ regularized_tet_mesh.exo
 regularized_tet_mesh.h5m
 regularized_hex_mesh.exo
 regularized_hex_mesh.h5m
+two_region_hex.exo
+two_region_hex.h5m
 )
 
 foreach(file ${TEST_FILES})
