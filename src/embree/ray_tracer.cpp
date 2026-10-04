@@ -1,11 +1,12 @@
 #include "xdg/embree/ray_tracer.h"
+#include "xdg/embree/triangle_callbacks.h"
 #include "xdg/error.h"
 #include "xdg/geometry_data.h"
-#include "xdg/quadrilateral_intersection.h"
-#include "xdg/bounding_functions.h"
-#include "xdg/ray.h"
-#include "xdg/tetrahedron_contain.h"
-#include "xdg/hexahedron_contain.h"
+#include "xdg/embree/quadrilateral_callbacks.h"
+#include "xdg/embree/bounding_functions.h"
+#include "xdg/embree/ray.h"
+#include "xdg/embree/tetrahedron_callbacks.h"
+#include "xdg/embree/hexahedron_callbacks.h"
 
 
 namespace xdg {

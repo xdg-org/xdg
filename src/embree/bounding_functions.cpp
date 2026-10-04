@@ -1,6 +1,6 @@
 
 #include "xdg/bbox.h"
-#include "xdg/bounding_functions.h"
+#include "xdg/embree/bounding_functions.h"
 #include "xdg/geometry_data.h"
 #include "xdg/primitive_ref.h"
 #include "xdg/mesh_manager_interface.h"
