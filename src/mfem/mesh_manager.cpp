@@ -67,35 +67,6 @@ void MfemMeshManager::init() {
     sideset_ids.insert(sideset);
   }
   
-  /*
-  // we wanna check how many implicit boundaries we detect. So let's
-  // create a set to collect them
-  std::set< std::pair<int,int> > implicit_bdr;
-  for (int f=0; f<mesh_->GetNumFaces(); f++) {
-    int e1, e2;
-    mesh_->GetFaceElements(f, &e1, &e2);
-
-    // if the el index is -1, then just set the volume id to -1.
-    // this means the outside
-    int vol1 = (e1==-1) ? -1 : mesh_->GetAttribute(e1);
-    int vol2 = (e2==-1) ? -1 : mesh_->GetAttribute(e2);
-
-    if (vol1!=vol2) {
-      // we have found implicit boundary. add to list!
-      if (vol1<vol2) implicit_bdr.insert( {vol1, vol2} );
-      else           implicit_bdr.insert( {vol2, vol1} );
-    }
-
-  }
-
-  // let's see what we got
-  std::cout << "\n\nPrinting the boundaries we discovered!!!\n";
-  auto iter = implicit_bdr.begin();
-  for (; iter!=implicit_bdr.end(); iter++) {
-    std::cout << "detected bdr between vol " << iter->first << " and " << iter->second << "\n";
-  }
-  */
-
   // We've read in the mesh and counted all the attributes, i.e. a unique
   // list of all the attributes we've seen. Let's copy the contents of
   // attributes_ into volumes_, so the base class has access to the list

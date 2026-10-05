@@ -47,9 +47,8 @@ public:
     }
   }
 
-  // I think we need to count the number of elements with the attribute "volume"
   int num_volume_elements(MeshID volume) const override {
-    fatal_error("MfemMeshManager::num_volume_elements() not implemented yet");
+    return volume_to_element_map_.at(volume).size();
   }
 
   int num_volume_elements() const override {
@@ -66,7 +65,7 @@ public:
   }
 
   int num_surface_faces(MeshID surface) const override {
-    fatal_error("MfemMeshManager::num_surface_faces() not implemented yet");
+    return sideset_to_element_map_.at(surface).size();
   }
 
   // get all of the elements in this volume

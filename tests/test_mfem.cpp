@@ -57,6 +57,9 @@ TEST_CASE("TEST MFEM Find Element Method")
   size_t num_elements = mesh_manager->num_volume_elements();
   REQUIRE(num_elements == 10333);
 
+  // check the overload for volume index works too
+  REQUIRE(mesh_manager->num_volume_elements(1) == 10333);
+
   xdg->prepare_raytracer();
 
   MeshID volume = 1;
@@ -362,10 +365,14 @@ TEST_CASE("Test Volume Element Count Cylinder-Brick")
   MeshID volume = 1;
   auto elements = mesh_manager->get_volume_elements(volume);
   REQUIRE(elements.size() == 7587);
+  auto num_volume_elements = mesh_manager->num_volume_elements(volume);
+  REQUIRE(num_volume_elements == 7587);
 
   volume = 2;
   elements = mesh_manager->get_volume_elements(volume);
   REQUIRE(elements.size() == 9037);
+  num_volume_elements = mesh_manager->num_volume_elements(volume);
+  REQUIRE(num_volume_elements == 9037);
 }
 
 TEST_CASE("Test Find Element Brick")
