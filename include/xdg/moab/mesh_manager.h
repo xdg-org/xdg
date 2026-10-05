@@ -40,7 +40,7 @@ public:
 
   void load_file(const std::string& filepath);
 
-  void init(const std::unordered_set<MeshID> & included_volumes = std::unordered_set<MeshID>()) override;
+  void init(const std::unordered_set<MeshID> & to_include = std::unordered_set<MeshID>()) override;
 
   // Geometry
   int num_volumes() const override;

@@ -34,8 +34,8 @@ MOABMeshManager::MOABMeshManager(moab::Interface* mbi) : moab_raw_ptr_(mbi)
   mdam_ = std::make_shared<MBDirectAccess>(mbi);
 };
 
-void MOABMeshManager::init(const std::unordered_set<MeshID> & included_volumes) {
-  included_volumes_ = included_volumes;
+void MOABMeshManager::init(const std::unordered_set<MeshID> & to_include) {
+  included_volumes() = to_include;
 
   // initialize the direct access manager
   this->mb_direct()->setup();

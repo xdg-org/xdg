@@ -27,8 +27,8 @@ void LibMeshManager::load_file(const std::string &filepath) {
   mesh_ = managed_mesh_.get();
 }
 
-void LibMeshManager::init(const std::unordered_set<MeshID> & included_volumes) {
-  included_volumes_ = included_volumes;
+void LibMeshManager::init(const std::unordered_set<MeshID> & to_include) {
+  included_volumes() = to_include;
 
   // ensure that the mesh is 3-dimensional, for our use case this is expected
   if (mesh()->mesh_dimension() != 3) {
@@ -43,12 +43,12 @@ void LibMeshManager::init(const std::unordered_set<MeshID> & included_volumes) {
   std::set<libMesh::subdomain_id_type> subdomain_ids;
   mesh()->subdomain_ids(subdomain_ids);
   // If 'included_volumes' is empty, use all subdomains.
-  if (included_volumes_.size() == 0) {
-    included_volumes_.insert(subdomain_ids.begin(), subdomain_ids.end());
+  if (included_volumes().size() == 0) {
+    included_volumes().insert(subdomain_ids.begin(), subdomain_ids.end());
   }
   for (auto id : subdomain_ids) {
     // Check to see if this subdomain should be included or not.
-    if (included_volumes_.count(id)) {
+    if (including_vol(id)) {
       volumes_.push_back(id);
       num_elements_ += std::distance(mesh()->active_subdomain_set_elements_begin({id}),
                                      mesh()->active_subdomain_set_elements_end({id}));
@@ -60,8 +60,8 @@ void LibMeshManager::init(const std::unordered_set<MeshID> & included_volumes) {
   auto boundary_info = mesh()->get_boundary_info();
   for (auto entry : boundary_info.get_sideset_map()) {
     // Only add boundary elements if they're in subdomains we include.
-    if (included_volumes_.count(entry.first->subdomain_id())) {
-      sideset_face_map_[entry.second.second].push_back(sidepair_id({entry.first, entry.second.first}));
+    if (including_vol(entry.first->subdomain_id())) {
+      sideset_face_map_[entry.second.second].push_back(sidepair_id(SidePair({entry.first, entry.second.first}, false)));
     }
   }
 
@@ -142,7 +142,7 @@ MeshID LibMeshManager::adjacent_element(MeshID element, int face) const {
   if (!elem_ptr) return ID_NONE;
   auto neighbor = elem_ptr->neighbor_ptr(face);
   if (!neighbor) return ID_NONE;
-  if (!included_volumes_.count(neighbor->subdomain_id())) return ID_NONE;
+  if (excluding_vol(neighbor->subdomain_id())) return ID_NONE;
   return neighbor->id();
 }
 
@@ -253,7 +253,7 @@ void LibMeshManager::map_id_spaces() {
   std::vector<MeshID> volume_element_ids;
   volume_element_ids.reserve(mesh()->n_active_elem());
   for (const auto *elem : mesh()->active_element_ptr_range()) {
-    if (included_volumes_.count(elem->subdomain_id())) {
+    if (including_vol(elem->subdomain_id())) {
       volume_element_ids.push_back(elem->id());
     }
   }
@@ -269,45 +269,35 @@ void LibMeshManager::map_id_spaces() {
 }
 
 void LibMeshManager::discover_surface_elements() {
-  // as part of this process, we will also build a vector of all
-  // volumetric element IDs
-  std::vector<MeshID> volume_element_ids;
-  volume_element_ids.reserve(mesh()->n_active_elem());
-
   subdomain_interface_map_.clear();
   // for any active local elements, identify element faces
   // where the subdomain IDs are different on either side
   for (const auto *elem : mesh()->active_element_ptr_range()) {
     // Skip volume elements that aren't in 'included_volumes_'.
-    if (!included_volumes_.count(elem->subdomain_id())) {
+    if (excluding_vol(elem->subdomain_id())) {
       continue;
     }
 
-    volume_element_ids.push_back(elem->id());
     MeshID subdomain_id = elem->subdomain_id();
     for (int i = 0; i < elem->n_sides(); i++) {
       auto neighbor = elem->neighbor_ptr(i);
       // get the subdomain ID of the neighbor, if it exists
       // otherwise set to ID_NONE
       MeshID neighbor_id = neighbor ? neighbor->subdomain_id() : ID_NONE;
-      // Treat neighbors as if they don't exist if they aren't in 'included_volumes_'.
-      if (neighbor) {
-        neighbor_id = !included_volumes_.count(neighbor->subdomain_id()) ? ID_NONE : neighbor_id;
-      }
+      const bool exclude_neighbor = excluding_vol(neighbor_id);
+      if (exclude_neighbor)
+        neighbor_id = ID_NONE;
 
       // if these IDs are different, then this is an interface element
       if (neighbor_id == subdomain_id) continue;
       // ensure that there is only one interface between each block pair
       if (subdomain_interface_map_.count({neighbor_id, subdomain_id}) != 0) {
-        subdomain_interface_map_[{neighbor_id, subdomain_id}].insert(sidepair_id({elem, i}));
+        subdomain_interface_map_[{neighbor_id, subdomain_id}].insert(sidepair_id({elem, i, exclude_neighbor}));
       } else {
-        subdomain_interface_map_[{subdomain_id, neighbor_id}].insert(sidepair_id({elem, i}));
+        subdomain_interface_map_[{subdomain_id, neighbor_id}].insert(sidepair_id({elem, i, exclude_neighbor}));
       }
     }
   }
-
-  // build the BlockMapping for volume elements
-  volume_element_id_map_ = IDBlockMapping<MeshID>(volume_element_ids);
 }
 
 void LibMeshManager::map_sidesets_to_discovered_interfaces() {
