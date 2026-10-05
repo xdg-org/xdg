@@ -1,6 +1,6 @@
 #include "xdg/gprt/ray_tracer.h"
 #include "gprt/gprt.h"
-#include "xdg/gprt/vulkan_probe.h"
+#include "xdg/available_device_probe.h"
 
 namespace xdg {
 

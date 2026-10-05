@@ -20,3 +20,6 @@
 [submodule "vendor/GPRT"]
 	path = vendor/GPRT
 	url = https://github.com/gprt-org/GPRT.git
+[submodule "vendor/cuBQL"]
+	path = vendor/cuBQL
+	url = https://github.com/NVIDIA/cuBQL
