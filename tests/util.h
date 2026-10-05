@@ -12,7 +12,6 @@
 #include "xdg/available_device_probe.h"
 #include "xdg/xdg.h"
 
-
 namespace xdg::test {
 
 struct XDGBackendFixture {

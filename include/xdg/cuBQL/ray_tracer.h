@@ -86,16 +86,15 @@ private:
   register_surface(const std::shared_ptr<MeshManager>& mesh_manager,
                    MeshID surface_id);
 
-  void upload_volume_to_group_table_();
+  void upload_volume_to_group_table();
 
-  cubql::Context context_;
+  xdg::cubql::Context context_;
 
   std::unordered_map<TreeID, CuBQLVolumeGroup> tree_to_volume_group_;
   std::unordered_map<MeshID, CuBQLSurfaceMesh> surface_to_mesh_;
 
   std::vector<CuBQLVolumeGroup::DD> volume_to_group_;
   CuBQLVolumeGroup::DD* d_volume_to_group_ {nullptr};
-  bool initialized_ {false};
 };
 
 } // namespace xdg

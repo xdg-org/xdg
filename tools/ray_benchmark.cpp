@@ -196,12 +196,9 @@ int main(int argc, char** argv)
   const auto num_faces = mesh_manager->num_volume_faces(volume);
   std::size_t num_hits = 0;
   if (num_rays < 1) fatal_error("Number of rays must be greater than 0");
-  if (trace_repetitions < 1) {
-    fatal_error("Number of trace repetitions must be greater than 0");
-  }
+  if (trace_repetitions < 1) fatal_error("Number of trace repetitions must be greater than 0");  
   const std::size_t warmup_rays = std::min(num_rays, requested_warmup_rays);
-  const std::uint64_t total_ray_queries =
-    static_cast<std::uint64_t>(num_rays) * trace_repetitions;
+  const std::uint64_t total_ray_queries = static_cast<std::uint64_t>(num_rays) * trace_repetitions;
 
   // Generate one host-side ray workload. Timed repetitions replay this batch
   // so the measurement isolates steady-state traversal from ray generation.
@@ -212,10 +209,10 @@ int main(int argc, char** argv)
   for (std::size_t i = 0; i < num_rays; ++i) {
     std::uint32_t state = seed ^ static_cast<std::uint32_t>(i);
     const auto sample = tools::benchmark::random_spherical_source(origin.x,
-                                                                   origin.y,
-                                                                   origin.z,
-                                                                   state,
-                                                                   source_radius);
+                                                                  origin.y,
+                                                                  origin.z,
+                                                                  state,
+                                                                  source_radius);
 
     XDGRayHit ray_hit {};
     ray_hit.origin[0] = sample.position[0];
@@ -239,31 +236,25 @@ int main(int argc, char** argv)
   generation_timer.stop();
 
   if (rt_lib == RTLibrary::EMBREE) {
-    rt_label += " (" + std::to_string(XDGConfig::config().n_threads())
-             + " CPU threads)";
+    rt_label += " (" + std::to_string(XDGConfig::config().n_threads()) + " CPU threads)";
 
-    // Warm the worker threads and geometry cache without including this work
-    // in the reported trace time.
+    // Equivalent CPU warmup since we do so with the GPU backends
     #pragma omp parallel for schedule(runtime)
     for (std::size_t i = 0; i < warmup_rays; ++i) {
       const auto& ray_hit = ray_hits[i];
-      xdg->ray_fire(
-        volume,
-        Position(ray_hit.origin[0], ray_hit.origin[1], ray_hit.origin[2]),
-        Direction(ray_hit.direction[0], ray_hit.direction[1], ray_hit.direction[2]));
+      const Position ray_origin = {ray_hit.origin[0], ray_hit.origin[1], ray_hit.origin[2]};
+      const Direction ray_direction = {ray_hit.direction[0], ray_hit.direction[1], ray_hit.direction[2]};
+      xdg->ray_fire(volume, ray_origin, ray_direction);
     }
 
     trace_timer.start();
-    for (std::uint32_t repetition = 0;
-         repetition < trace_repetitions;
-         ++repetition) {
+    for (std::uint32_t n = 0; n < trace_repetitions; ++n) {
       #pragma omp parallel for schedule(runtime)
       for (std::size_t i = 0; i < num_rays; ++i) {
         auto& ray_hit = ray_hits[i];
-        const auto hit = xdg->ray_fire(
-          volume,
-          Position(ray_hit.origin[0], ray_hit.origin[1], ray_hit.origin[2]),
-          Direction(ray_hit.direction[0], ray_hit.direction[1], ray_hit.direction[2]));
+        const Position ray_origin = {ray_hit.origin[0], ray_hit.origin[1], ray_hit.origin[2]};
+        const Direction ray_direction = {ray_hit.direction[0], ray_hit.direction[1], ray_hit.direction[2]};
+        const auto hit = xdg->ray_fire(volume, ray_origin, ray_direction);
         ray_hit.distance = hit.first;
         ray_hit.surface = hit.second;
       }
@@ -275,6 +266,8 @@ int main(int argc, char** argv)
       if (ray_hit.surface != ID_NONE) num_hits++;
     }
   }
+  // Exercise the same XDG GPU API across GPRT and cuBQL 
+  // GPRT will currently fail but I have a local branch where is works with this tool
   else if (rt_lib == RTLibrary::GPRT || rt_lib == RTLibrary::CUBQL) {
     XDGRayHitBuffer device_ray_hits = xdg->allocate_ray_hits(num_rays);
 
@@ -282,9 +275,7 @@ int main(int argc, char** argv)
     xdg->upload_ray_hits(device_ray_hits, ray_hits.data(), ray_hits.size());
     upload_timer.stop();
 
-    // The first GPRT batch binds the device buffer into the shader binding
-    // table. Performing a small launch here keeps that one-time work, along
-    // with normal device warm-up, outside the traversal measurement.
+    // Warm up ray fire to catch any initial first time setup costs incurred by the GPU backend
     if (warmup_rays > 0) {
       XDGRayHitBuffer warmup_buffer = device_ray_hits;
       warmup_buffer.count = warmup_rays;
@@ -292,9 +283,7 @@ int main(int argc, char** argv)
     }
 
     trace_timer.start();
-    for (std::uint32_t repetition = 0;
-         repetition < trace_repetitions;
-         ++repetition) {
+    for (std::uint32_t n = 0; n < trace_repetitions; ++n) {
       xdg->ray_fire_batch(device_ray_hits);
     }
     trace_timer.stop();

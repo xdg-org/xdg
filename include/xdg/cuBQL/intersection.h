@@ -56,7 +56,7 @@ Wrapper for launching a single ray intersection query against the surface tree, 
 Performs host side staging and transfer hit data back to host after device side traversal
 */
 void
-intersect_surface_tree_scalar(const cubql::Context& context,
+intersect_surface_tree_scalar(const xdg::cubql::Context& context,
                               const CuBQLVolumeGroup& volume_group,
                               const CuBQLRay& ray,
                               CuBQLSurfaceHit& hit,
@@ -65,7 +65,7 @@ intersect_surface_tree_scalar(const cubql::Context& context,
 
 
 void
-intersect_surface_tree_batch(const cubql::Context& context,
+intersect_surface_tree_batch(const xdg::cubql::Context& context,
                              const CuBQLVolumeGroup::DD* d_volume_to_group,
                              XDGRayHit* d_ray_hits,
                              std::size_t num_rays,

@@ -9,14 +9,12 @@
 
 namespace xdg {
 
-// Core traversal and intersection routine for a single ray against a flattened
-// volume group.
 #pragma omp declare target
 static inline float reject_candidate(const cuBQL::ray3f& traversal_ray)
 {
   return traversal_ray.tMax;
 }
-
+// Core traversal and intersection routine for a single ray against a flattened volume group/tree
 static inline void intersect_surface_tree(CuBQLVolumeGroup::DD volume_group,
                                           CuBQLRay intersection_ray,
                                           CuBQLSurfaceHit* hit,
@@ -112,7 +110,7 @@ static inline void intersect_surface_tree(CuBQLVolumeGroup::DD volume_group,
 #pragma omp end declare target
 
 void
-intersect_surface_tree_scalar(const cubql::Context& context,
+intersect_surface_tree_scalar(const xdg::cubql::Context& context,
                               const CuBQLVolumeGroup& volume_group,
                               const CuBQLRay& ray,
                               CuBQLSurfaceHit& surface_hit,
@@ -182,7 +180,7 @@ intersect_surface_tree_scalar(const cubql::Context& context,
 }
 
 void
-intersect_surface_tree_batch(const cubql::Context& context,
+intersect_surface_tree_batch(const xdg::cubql::Context& context,
                              const CuBQLVolumeGroup::DD* d_volume_to_group,
                              XDGRayHit* d_ray_hits,
                              std::size_t num_rays,

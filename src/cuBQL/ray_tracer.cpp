@@ -46,11 +46,10 @@ CuBQLRayTracer::~CuBQLRayTracer()
 
 void CuBQLRayTracer::init()
 {
-  upload_volume_to_group_table_();
-  initialized_ = true;
+  upload_volume_to_group_table();
 }
 
-void CuBQLRayTracer::upload_volume_to_group_table_()
+void CuBQLRayTracer::upload_volume_to_group_table()
 {
   if (d_volume_to_group_) {
     omp_target_free(d_volume_to_group_, context_.gpuID);
@@ -62,8 +61,7 @@ void CuBQLRayTracer::upload_volume_to_group_table_()
   }
 
   d_volume_to_group_ = static_cast<CuBQLVolumeGroup::DD*>
-    (omp_target_alloc(volume_to_group_.size() * sizeof(CuBQLVolumeGroup::DD),
-                      context_.gpuID));
+    (omp_target_alloc(volume_to_group_.size() * sizeof(CuBQLVolumeGroup::DD), context_.gpuID));
   omp_target_memcpy(d_volume_to_group_,
                     volume_to_group_.data(),
                     volume_to_group_.size() * sizeof(CuBQLVolumeGroup::DD),
@@ -99,7 +97,7 @@ CuBQLRayTracer::register_surface(const std::shared_ptr<MeshManager>& mesh_manage
 
   std::vector<cuBQL::vec3i> h_indices;
   h_indices.reserve(indices.size() / 3);
-  for (size_t i = 0; i < indices.size(); i += 3) {
+  for (std::size_t i = 0; i < indices.size(); i += 3) {
     h_indices.emplace_back(indices[i], indices[i + 1], indices[i + 2]);
   }
 
@@ -215,11 +213,9 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
   }
 
   auto* d_aabbs = static_cast<cuBQL::box3f*>
-    (omp_target_alloc(h_prim_refs.size() * sizeof(cuBQL::box3f),
-                      context_.gpuID));
+    (omp_target_alloc(h_prim_refs.size() * sizeof(cuBQL::box3f), context_.gpuID));
   auto* d_surfaces = static_cast<CuBQLVolumeGroup::SurfaceDD*>
-    (omp_target_alloc(h_surfaces.size() * sizeof(CuBQLVolumeGroup::SurfaceDD),
-                      context_.gpuID));
+    (omp_target_alloc(h_surfaces.size() * sizeof(CuBQLVolumeGroup::SurfaceDD), context_.gpuID));
   omp_target_memcpy(d_surfaces,
                     h_surfaces.data(),
                     h_surfaces.size() * sizeof(CuBQLVolumeGroup::SurfaceDD),
@@ -229,8 +225,7 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
                     context_.hostID);
 
   auto* d_prim_refs = static_cast<CuBQLVolumeGroup::PrimRef*>
-    (omp_target_alloc(h_prim_refs.size() * sizeof(CuBQLVolumeGroup::PrimRef),
-                      context_.gpuID));
+    (omp_target_alloc(h_prim_refs.size() * sizeof(CuBQLVolumeGroup::PrimRef), context_.gpuID));
   omp_target_memcpy(d_prim_refs,
                     h_prim_refs.data(),
                     h_prim_refs.size() * sizeof(CuBQLVolumeGroup::PrimRef),
@@ -243,8 +238,8 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
   const int gpu_id = context_.gpuID;
   #pragma omp target teams distribute parallel for device(gpu_id) \
     is_device_ptr(d_aabbs, d_surfaces, d_prim_refs)
-  for (std::uint32_t primID = 0; primID < num_primitives; ++primID) {
-    const auto primitive = d_prim_refs[primID];
+  for (std::uint32_t prim_id = 0; prim_id < num_primitives; ++prim_id) {
+    const auto primitive = d_prim_refs[prim_id];
     const auto surface = d_surfaces[primitive.surface_index];
     const auto mesh = surface.mesh;
     const auto indices = mesh.indices[primitive.primitive_index];
@@ -257,7 +252,7 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
     const cuBQL::vec3d bump(mesh.max_parent_volume_bump);
     aabb.lower = aabb.lower - bump;
     aabb.upper = aabb.upper + bump;
-    d_aabbs[primID] = cuBQL::box3f(aabb);
+    d_aabbs[prim_id] = cuBQL::box3f(aabb);
   }
 
   CuBQLVolumeGroup volume_group;
@@ -279,17 +274,13 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
     context_.gpuID);
   
   // Build with the selected GPU backend and return the BVH in host storage.
-  auto host_bvh = cubql::build_bvh(host_aabbs, build_params, context_.gpuID);
+  auto host_bvh = xdg::cubql::build_bvh(host_aabbs, build_params, context_.gpuID);
   
-  // upload the BVH to openmp device
+  // Upload the BVH to openmp device
   volume_group.bvh.nodes = static_cast<cuBQL::bvh3f::node_t*>(
-    omp_target_alloc(host_bvh.nodes.size() *
-                       sizeof(cuBQL::bvh3f::node_t),
-                     context_.gpuID));
+    omp_target_alloc(host_bvh.nodes.size() * sizeof(cuBQL::bvh3f::node_t), context_.gpuID));
   volume_group.bvh.primIDs = static_cast<std::uint32_t*>(
-    omp_target_alloc(host_bvh.prim_ids.size() *
-                       sizeof(std::uint32_t),
-                     context_.gpuID));
+    omp_target_alloc(host_bvh.prim_ids.size() * sizeof(std::uint32_t), context_.gpuID));
 
   omp_target_memcpy(
     volume_group.bvh.nodes,
@@ -318,15 +309,11 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
   auto it = result.first;
 
   // Keep a dense host-side MeshID -> group device-data table for batch queries.
-  const auto volume_index = static_cast<size_t>(volume_id);
+  const auto volume_index = static_cast<std::size_t>(volume_id);
   if (volume_index >= volume_to_group_.size()) {
     volume_to_group_.resize(volume_index + 1);
   }
   volume_to_group_[volume_index] = it->second.get_device_data();
-
-  if (initialized_) {
-    upload_volume_to_group_table_();
-  }
   
   return tree;
 }
