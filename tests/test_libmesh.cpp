@@ -660,6 +660,11 @@ TEST_CASE("LibMesh include blocks")
   auto tracks_bw = xdg->segments({0.0, 0.0, 0.75}, {0.0, 0.0, -1.0});
   REQUIRE(tracks_bw.size() == 1);
   REQUIRE_THAT(tracks_bw.back().second, Catch::Matchers::WithinAbs(0.5, 1e-6));
+
+  // Should miss when firing this ray. This checks to make sure we're
+  // ignoring boundary surfaces of volume 1 when constructing the implicit compliment.
+  auto miss_ipc = xdg->ray_fire(ipc, {-0.75, 0.0, 0.0}, {1.0, 0.0, 0.0}, INFTY, HitOrientation::EXITING);
+  REQUIRE(miss_ipc.second == -1);
 }
 
 TEMPLATE_TEST_CASE("TEST libMesh Raytrace Quads", "[libMesh][faces][quads]",
