@@ -64,6 +64,9 @@ std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib
     #ifdef XDG_ENABLE_LIBMESH
     if (mesh_lib == MeshLibrary::LIBMESH) return std::make_shared<LibMeshManager>();
     #endif
+    #ifdef XDG_ENABLE_MFEM
+    if (mesh_lib == MeshLibrary::MFEM) return std::make_shared<MfemMeshManager>();
+    #endif
 
     // If no supported mesh library throw an error
     std::string msg = fmt::format("Invalid mesh library '{}'. Supported:", MESH_LIB_TO_STR.at(mesh_lib));
@@ -72,6 +75,9 @@ std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib
     #endif
     #ifdef XDG_ENABLE_LIBMESH
     msg += " LIBMESH";
+    #endif
+    #ifdef XDG_ENABLE_MFEM
+    msg += " MFEM";
     #endif
     fatal_error(msg);
   };
