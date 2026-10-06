@@ -81,7 +81,11 @@ public:
 
   SurfaceFaceType get_surface_face_type(MeshID surface) const override;
 
+  SurfaceFaceType face_type(MeshID face) const override;
+
   VolumeElementType get_volume_element_type(MeshID volume) const override;
+
+  VolumeElementType element_type(MeshID element) const override;
 
   // The table works wonders for this
   virtual MeshID adjacent_element(MeshID element, int face) const override;
@@ -261,7 +265,7 @@ struct MfemMeshElementFaceAccessor : public ElementFaceAccessor {
 
   int num_faces() const override {
     // first, look up the geom type
-    auto geom = mesh_manager_->get_volume_element_type(element_);
+    auto geom = mesh_manager_->element_type(element_);
 
     switch (geom) {
       case VolumeElementType::TET: return 4;

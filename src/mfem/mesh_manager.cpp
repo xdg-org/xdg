@@ -346,27 +346,46 @@ void MfemMeshManager::parse_metadata() {
 }
 
 SurfaceFaceType MfemMeshManager::get_surface_face_type(MeshID surface) const {
-  mfem::Geometry::Type geom = mesh_->GetFaceGeometry(surface);
-
-  switch(geom) {
-    case mfem::Geometry::TRIANGLE:     return SurfaceFaceType::TRI;
-    case mfem::Geometry::SQUARE : return SurfaceFaceType::QUAD;
-    default:
-      fatal_error("Unsupported geom");
+  auto faces = this->get_surface_faces(surface);
+  if (faces.empty()) {
+    fatal_error("Surface {} has no faces; cannot determine face type", surface);
   }
+  return face_type(faces.front());
+}
+
+SurfaceFaceType MfemMeshManager::face_type(MeshID face) const {
+  // face IDs >= num_interior_faces_ are boundary elements (see get_surface_faces)
+  mfem::Geometry::Type geom = face < num_interior_faces_
+    ? mesh_->GetFaceGeometry(face)
+    : mesh_->GetBdrElementGeometry(face - num_interior_faces_);
+
+  switch (geom) {
+    case mfem::Geometry::TRIANGLE: return SurfaceFaceType::TRI;
+    case mfem::Geometry::SQUARE:   return SurfaceFaceType::QUAD;
+    default:
+      fatal_error("Unsupported MFEM face geometry for face {}", face);
+  }
+  return SurfaceFaceType::UNSUPPORTED;
 }
 
 VolumeElementType MfemMeshManager::get_volume_element_type(MeshID volume) const {
-  mfem::Geometry::Type geom = mesh_->GetElementBaseGeometry(volume);
+  auto elements = this->get_volume_elements(volume);
+  if (elements.empty()) {
+    fatal_error("Volume {} has no elements; cannot determine element type", volume);
+  }
+  return element_type(elements.front());
+}
+
+VolumeElementType MfemMeshManager::element_type(MeshID element) const {
+  mfem::Geometry::Type geom = mesh_->GetElementBaseGeometry(element);
 
   switch (geom) {
     case mfem::Geometry::TETRAHEDRON: return VolumeElementType::TET;
-    case mfem::Geometry::CUBE: return VolumeElementType::HEX;
-    default: 
-      fatal_error("Unsupported geom");
+    case mfem::Geometry::CUBE:        return VolumeElementType::HEX;
+    default:
+      fatal_error("Unsupported MFEM element geometry for element {}", element);
   }
-
-  return VolumeElementType::TET;
+  return VolumeElementType::UNSUPPORTED;
 }
 
 

@@ -72,18 +72,18 @@ XDGConfig::libmesh_init() {
   }
 
   if (!config::xdg_libmesh_init) {
-    int argc = 1;
-    const std::string argv{"XDG"};
-    const char *argv_cstr = argv.c_str();
+    int argc = 2;
+    // avoid heap corruption: ~LibMeshInit runs at exit, after libMesh's thread_local output buffers are gone
+    const char* argv[] = {"XDG", "--disable-thread-safe-output"};
     // in one version of the LibMeshInit constructor, MPI_Comm is an int and in
     // another, it is MPI_Comm (which is not compatible with int for some MPI
     // implementations), so we need to handle both cases here.
     #ifdef LIBMESH_HAVE_MPI
     config::xdg_libmesh_init =
-      std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, MPI_COMM_WORLD, n_threads());
+      std::make_unique<libMesh::LibMeshInit>(argc, argv, MPI_COMM_WORLD, n_threads());
     #else
     config::xdg_libmesh_init =
-      std::make_unique<libMesh::LibMeshInit>(argc, &argv_cstr, 0, n_threads());
+      std::make_unique<libMesh::LibMeshInit>(argc, argv, 0, n_threads());
     #endif
     std::atexit(cleanup_libmesh_at_exit);
   }
