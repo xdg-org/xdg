@@ -76,8 +76,7 @@ TEST_CASE("Test MOAB Initialization")
 }
 
 TEMPLATE_TEST_CASE("Test BVH Build", "[moab][bvh]",
-                   Embree_Raytracer,
-                   GPRT_Raytracer)
+                   XDG_RAY_TRACER_BACKENDS)
 {
   std::shared_ptr<MeshManager> mesh_manager = std::make_shared<MOABMeshManager>();
 
@@ -101,9 +100,8 @@ TEMPLATE_TEST_CASE("Test BVH Build", "[moab][bvh]",
 }
 
 
-TEMPLATE_TEST_CASE("Test Ray Fire MOAB (all built backends)", "[ray_tracer][moab]",
-                   Embree_Raytracer,
-                   GPRT_Raytracer)
+TEMPLATE_TEST_CASE("Test Ray Fire MOAB (all built backends)",
+                   "[ray_tracer][moab]", XDG_RAY_TRACER_BACKENDS)
 {
   constexpr auto rt_backend = TestType::value;
 
@@ -153,9 +151,14 @@ TEST_CASE("MOAB Element Types")
 }
 
 TEMPLATE_TEST_CASE("TEST MOAB Find Element Method", "[moab][elements]",
-                   Embree_Raytracer)
+                   XDG_RAY_TRACER_BACKENDS)
 {
   constexpr auto rt_backend = TestType::value;
+  if (rt_backend == RTLibrary::GPRT) {
+    // GPRT does not currently support the find_element method, so skip this test for that backend
+    return;
+  }
+
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
@@ -196,9 +199,14 @@ TEMPLATE_TEST_CASE("TEST MOAB Find Element Method", "[moab][elements]",
 }
 
 TEMPLATE_TEST_CASE("TEST MOAB Raytrace Quads", "[moab][faces][quads]",
-                   Embree_Raytracer)
+                   XDG_RAY_TRACER_BACKENDS)
 {
   constexpr auto rt_backend = TestType::value;
+
+  if (rt_backend == RTLibrary::GPRT) {
+    // GPRT does not currently support quads, so skip this test for that backend
+    return;
+  }
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
