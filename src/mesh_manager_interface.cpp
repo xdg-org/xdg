@@ -101,6 +101,8 @@ Property
 MeshManager::get_volume_property(MeshID volume,
                                  PropertyType type) const
 {
+  if (surface_metadata_.count({volume, type}) == 0) 
+    return PROPERTY_NOT_FOUND;
   return volume_metadata_.at({volume, type});
 }
 
@@ -108,7 +110,7 @@ Property
 MeshManager::get_surface_property(MeshID surface,
                                   PropertyType type) const
 {
-  if (surface_metadata_.count({surface, type}) == 0)
+  if (surface_metadata_.count({surface, type}) == 0) 
     return {PropertyType::BOUNDARY_CONDITION, "transmission"};
   return surface_metadata_.at({surface, type});
 }
