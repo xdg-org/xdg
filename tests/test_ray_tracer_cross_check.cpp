@@ -20,27 +20,16 @@ using namespace xdg::test;
 
 namespace {
 
-struct RTCase {
-  RTLibrary library;
-  std::string name;
-  std::shared_ptr<XDG> xdg;
-};
-
-std::vector<RTCase> make_rt_cases(const std::string& filename)
+std::vector<XDGBackendFixture> make_rt_cases(
+  const std::string& filename,
+  MeshLibrary mesh_library = MeshLibrary::MOAB)
 {
-  auto make_xdg = [&filename](RTLibrary rt_library) {
-    auto xdg = XDG::create(MeshLibrary::MOAB, rt_library);
-    xdg->mesh_manager()->load_file(filename);
-    xdg->mesh_manager()->init();
-    xdg->mesh_manager()->parse_metadata();
-    xdg->prepare_raytracer();
-    return xdg;
-  };
-
-  std::vector<RTCase> rt_cases;
-  for (const auto& [rt_library, name] : RT_LIB_TO_STR) {
+  std::vector<XDGBackendFixture> rt_cases;
+  for (const auto& rt_entry : RT_LIB_TO_STR) {
+    const auto rt_library = rt_entry.first;
     if (ray_tracer_available(rt_library)) {
-      rt_cases.push_back({rt_library, name, make_xdg(rt_library)});
+      rt_cases.push_back(
+        make_xdg_backend_fixture(mesh_library, rt_library, filename));
     }
   }
 
@@ -74,8 +63,8 @@ TEST_CASE("Test Pincell RT libraries Cross-Check ray_fire queries", "[moab][rayf
         const auto& candidate = rt_cases[i];
         const auto candidate_hit = candidate.xdg->ray_fire(volume, origin, direction);
 
-        // Capture should print the name of the backend when test fails
-        CAPTURE(volume, direction, reference_case.name, candidate.name,
+        // Capture should print the backend configuration when the test fails
+        CAPTURE(volume, direction, reference_case.label(), candidate.label(),
                 reference_hit.first, reference_hit.second, candidate_hit.first, candidate_hit.second);
         REQUIRE(candidate_hit.second == reference_hit.second);
         if (reference_hit.second != ID_NONE) {

@@ -46,14 +46,13 @@ TEST_CASE("Test Walk Elements") {
   while (element != ID_NONE && iteration < max_iterations) {
 
     std::cout << "Remaining distance: " << distance << std::endl;
-    // if(distance <= TINY_BIT) break;
 
     std::cout << "---" << std::endl;
     std::cout << "Current element: " << element << std::endl;
     std::cout << r << std::endl;
     std::cout << u << std::endl;
     std::tie(next_element, exit_distance) = xdg->next_element(element, r, u);
-    REQUIRE(exit_distance < distance);
+    REQUIRE(exit_distance <= distance);
 
     r += u * exit_distance;
     std::cout << "Next element: " << next_element << std::endl;

@@ -1,6 +1,8 @@
 // stl includes
 #include <iostream>
 #include <memory>
+#include <string>
+#include <vector>
 
 // testing includes
 #include <catch2/catch_test_macros.hpp>
@@ -12,26 +14,45 @@
 #include "xdg/xdg.h"
 
 #include "particle_sim.h"
+#include "util.h"
 
 using namespace xdg;
+using namespace xdg::test;
+
+struct MeshCaseInput {
+  MeshLibrary mesh_library;
+  std::string filename;
+};
+
+std::vector<XDGBackendFixture> make_mesh_lib_cases(
+  const std::vector<MeshCaseInput>& inputs,
+  RTLibrary rt_library = RTLibrary::EMBREE)
+{
+  std::vector<XDGBackendFixture> mesh_lib_cases;
+  for (const auto& input : inputs) {
+    if (input.mesh_library == MeshLibrary::MOCK ||
+        !mesh_library_available(input.mesh_library)) {
+      continue;
+    }
+
+    mesh_lib_cases.push_back(
+      make_xdg_backend_fixture(input.mesh_library, rt_library, input.filename));
+  }
+
+  return mesh_lib_cases;
+}
 
 class CrossCheck {
 
 public:
-    CrossCheck(std::vector<std::pair<std::string, MeshLibrary>> test_cases) : test_cases_(test_cases) {}
+    CrossCheck(const std::vector<XDGBackendFixture>& test_fixtures) : test_fixtures_(test_fixtures) {}
 
     // Methods
     void transport() {
-      for (const auto& test_case : test_cases_) {
-        std::shared_ptr<XDG> xdg {XDG::create(test_case.second)};
-        xdg->mesh_manager()->load_file(test_case.first);
-        xdg->mesh_manager()->init();
-        xdg->mesh_manager()->parse_metadata();
-        xdg->prepare_raytracer();
-
+      for (const auto& test_fixture : test_fixtures_) {
         SimulationData sim_data;
 
-        sim_data.xdg_ = xdg;
+        sim_data.xdg_ = test_fixture.xdg;
         sim_data.verbose_particles_ = false;
         sim_data.implicit_complement_is_graveyard_ = true;
 
@@ -44,6 +65,7 @@ public:
       auto ref_data_ = sim_data_[0];
       for(int i = 1; i < sim_data_.size(); i++) {
         auto data = sim_data_[i];
+        CAPTURE(test_fixtures_[0].label(), test_fixtures_[i].label());
         for (const auto& [volume, distance] : ref_data_.cell_tracks) {
           REQUIRE_THAT(data.cell_tracks[volume], Catch::Matchers::WithinAbs(ref_data_.cell_tracks[volume], 1e-10));
         }
@@ -54,45 +76,73 @@ public:
 private:
   // Data members
   std::vector<SimulationData> sim_data_;
-  //! A set of test cases (pairs of filenames and mesh libraries) to compare
-  std::vector<std::pair<std::string, MeshLibrary>> test_cases_;
+  //! Prepared XDG backend fixtures to compare
+  std::vector<XDGBackendFixture> test_fixtures_;
 };
 
-TEST_CASE("Test MOAB-libMesh Cross-Check 1 Vol")
+TEST_CASE("Test Cross Check Transport across mesh Backends Jezebel")
 {
-  auto harness = CrossCheck({{"jezebel.exo", MeshLibrary::LIBMESH}, {"jezebel.h5m", MeshLibrary::MOAB}});
+  // Attempt to build all three test fixtures, but skip the test if fewer than two are available
+  const auto test_fixtures = make_mesh_lib_cases({
+    {MeshLibrary::MOAB, "jezebel.h5m"}, // MOAB passed first so it becomes the reference case
+    {MeshLibrary::LIBMESH, "jezebel.exo"},
+  });
+  if (test_fixtures.size() < 2) {
+    SKIP("Fewer than two mesh backends are available; skipping cross-check.");
+  }
+
+  auto harness = CrossCheck(test_fixtures);
   harness.transport();
   harness.check();
 }
 
-TEST_CASE("Test MOAB-libMesh Cross-Check 2 Vol")
+TEST_CASE("Test Cross Check Transport across mesh Backends cyl-brick")
 {
-  auto harness = CrossCheck({{"cyl-brick.exo", MeshLibrary::LIBMESH}, {"cyl-brick.h5m", MeshLibrary::MOAB}});
+  // Attempt to build all three test fixtures, but skip the test if fewer than two are available
+  const auto test_fixtures = make_mesh_lib_cases({
+    {MeshLibrary::MOAB, "cyl-brick.h5m"}, // MOAB passed first so it becomes the reference case
+    {MeshLibrary::LIBMESH, "cyl-brick.exo"},
+  });
+  if (test_fixtures.size() < 2) {
+    SKIP("Fewer than two mesh backends are available; skipping cross-check.");
+  }
+
+  auto harness = CrossCheck(test_fixtures);
   harness.transport();
   harness.check();
 }
 
-TEST_CASE("Test MOAB-libMesh Cross-Check Pincell -- Implicit libMesh Boundaries")
+TEST_CASE("Test Cross Check Transport across Backends Pincell -- Implicit libMesh Boundaries")
 {
-  auto harness = CrossCheck({{"pincell-implicit.exo", MeshLibrary::LIBMESH}, {"pincell.h5m", MeshLibrary::MOAB}});
+  // Attempt to build all supported test fixtures, but skip the test if fewer than two are available
+  const auto test_fixtures = make_mesh_lib_cases({
+    {MeshLibrary::MOAB, "pincell.h5m"}, // MOAB passed first so it becomes the reference case
+    {MeshLibrary::LIBMESH, "pincell-implicit.exo"}
+  });
+  if (test_fixtures.size() < 2) {
+    SKIP("Fewer than two mesh backends are available; skipping cross-check.");
+  }
+
+  auto harness = CrossCheck(test_fixtures);
   harness.transport();
   harness.check();
 }
 
 
-TEST_CASE("Test MOAB-libMesh Cross-Check Tallies -- Simple Cubes, Tet Mesh")
+TEST_CASE("Test Mesh Backend Cross-Check Tallies -- Simple Cubes, Tet Mesh")
 {
-  auto xdg_moab = XDG::create(MeshLibrary::MOAB);
-  xdg_moab->mesh_manager()->load_file("cube-w-multiblock-sideset.h5m");
-  xdg_moab->mesh_manager()->init();
-  xdg_moab->mesh_manager()->parse_metadata();
-  xdg_moab->prepare_raytracer();
+  // Attempt to build all supported test fixtures, but skip the test if fewer than two are available
+  const auto test_fixtures = make_mesh_lib_cases({
+    {MeshLibrary::MOAB, "cube-w-multiblock-sideset.h5m"}, // MOAB passed first so it becomes the reference case
+    {MeshLibrary::LIBMESH, "cube-w-multiblock-sideset.exo"}
+  });
+  if (test_fixtures.size() < 2) {
+    SKIP("Fewer than two mesh backends are available; skipping cross-check.");
+  }
 
-  auto xdg_libmesh = XDG::create(MeshLibrary::LIBMESH);
-  xdg_libmesh->mesh_manager()->load_file("cube-w-multiblock-sideset.exo");
-  xdg_libmesh->mesh_manager()->init();
-  xdg_libmesh->mesh_manager()->parse_metadata();
-  xdg_libmesh->prepare_raytracer();
+  const auto& xdg_moab = test_fixtures[0].xdg;
+  const auto& xdg_libmesh = test_fixtures[1].xdg;
+  CAPTURE(test_fixtures[0].label(), test_fixtures[1].label());
 
   // check that the global bounding box of the model and various model counts are the same
   REQUIRE(xdg_moab->mesh_manager()->num_vertices() == xdg_libmesh->mesh_manager()->num_vertices());

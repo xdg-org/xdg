@@ -93,15 +93,14 @@ void LibMeshManager::check_face_and_element_types() const {
     }
 
     // get the type of the first face
-    const auto& side_pair = sidepair(faces[0]);
-    SurfaceFaceType type = side_pair.face_type();
+    SurfaceFaceType type = face_type(faces[0]);
 
     // check that all other faces are the same type
     for (const auto face : faces) {
-      const auto& side_pair = sidepair(face);
-      if (side_pair.face_type() != type) {
+      const auto type_to_check = face_type(face);
+      if (type_to_check != type) {
         fatal_error("Surface {} has mixed face types, which is not supported. Face ID {} has type {}, expected type {}.",
-                    surface, face, side_pair.face_type(), type);
+                    surface, face, type_to_check, type);
       }
 
     }
@@ -118,13 +117,11 @@ void LibMeshManager::check_face_and_element_types() const {
     }
 
     // get the type of the first element
-    const auto elem_ptr = mesh()->elem_ptr(elements[0]);
-    VolumeElementType type = get_volume_element_type(volume);
+    VolumeElementType type = element_type(elements[0]);
 
     // check that all other elements are the same type
     for (const auto element : elements) {
-      const auto* elem_ptr = mesh()->elem_ptr(element);
-      VolumeElementType elem_type = _elem_xdg_type(elem_ptr);
+      VolumeElementType elem_type = element_type(element);
       if (elem_type != type) {
         fatal_error("Volume {} has mixed element types, which is not supported. Element ID {} has type {}, expected type {}.",
                     volume, element, elem_type, type);
@@ -626,8 +623,17 @@ LibMeshManager::get_surface_face_type(MeshID surface) const {
   // we've already validated that all faces in the surface have the same type,
   // so we can rely on the type of the first face to determine the surface face
   // type
-  const auto& side_pair = sidepair(faces.front());
-  return side_pair.face_type();
+  return face_type(faces.front());
+}
+
+SurfaceFaceType
+LibMeshManager::face_type(MeshID face) const {
+  const auto& side_pair = sidepair(face);
+  const auto type = side_pair.face_type();
+  if (type == SurfaceFaceType::UNSUPPORTED) {
+    fatal_error("Unsupported libMesh face type for face {}", face);
+  }
+  return type;
 }
 
 VolumeElementType
@@ -640,21 +646,22 @@ LibMeshManager::get_volume_element_type(MeshID volume) const {
   // we already validated that all elements in the volume have the same type, so
   // we can rely on the type of the first element to determine the volume
   // element type
-  const auto elem_ptr = mesh()->elem_ptr(elements.front());
+  return element_type(elements.front());
+}
+
+VolumeElementType
+LibMeshManager::element_type(MeshID element) const {
+  const auto elem_ptr = mesh()->elem_ptr(element);
   if (!elem_ptr) {
-    fatal_error("Invalid element ID {} in get_volume_element_type", elements.front());
+    fatal_error("Invalid element ID {} in element_type", element);
   }
 
-  switch (elem_ptr->type()) {
-    case libMesh::TET4:
-      return VolumeElementType::TET;
-    case libMesh::HEX8:
-      return VolumeElementType::HEX;
-    default:
-      fatal_error("Unsupported libMesh element type {} in get_volume_element_type",
-                  static_cast<int>(elem_ptr->type()));
+  const auto type = _elem_xdg_type(elem_ptr);
+  if (type == VolumeElementType::UNSUPPORTED) {
+    fatal_error("Unsupported libMesh element type {} in element_type",
+                static_cast<int>(elem_ptr->type()));
   }
-  return VolumeElementType::TET;
+  return type;
 }
 
 std::vector<MeshID>

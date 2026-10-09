@@ -5,6 +5,7 @@ test_boundary_faces
 test_bvh
 test_config
 test_closest
+test_element_and_face_types
 test_find_element
 test_mesh_internal
 test_occluded
@@ -21,6 +22,8 @@ test_tracks
 test_walk_elements
 test_tally_segments
 test_mesh_connectivity
+test_regressions
+test_mesh_library_cross_check
 )
 
 if (XDG_ENABLE_MOAB)
@@ -29,10 +32,6 @@ endif()
 
 if (XDG_ENABLE_LIBMESH)
     list(APPEND TEST_NAMES test_libmesh)
-endif()
-
-if (XDG_ENABLE_MOAB AND XDG_ENABLE_LIBMESH)
-    list(APPEND TEST_NAMES test_mesh_library_cross_check)
 endif()
 
 if (XDG_ENABLE_MOAB)
@@ -50,8 +49,14 @@ endif ()
 foreach(test ${TEST_NAMES})
     add_executable(${test} test_main.cpp ${test}.cpp)
     target_link_libraries(${test} PRIVATE xdg fmt::fmt Catch2::Catch2)
+    if (XDG_ENABLE_MOAB)
+        target_link_libraries(${test} PRIVATE MOAB)
+    endif()
     if (XDG_ENABLE_LIBMESH)
         target_link_libraries(${test} PRIVATE ${LIBMESH_LINK_LIBRARIES})
+    endif()
+    if (XDG_ENABLE_EMBREE)
+        target_link_libraries(${test} PRIVATE embree)
     endif()
     if (XDG_ENABLE_GPRT)
         target_link_libraries(${test} PRIVATE $<BUILD_INTERFACE:gprt>)
@@ -111,6 +116,10 @@ small-tet-mesh.exo
 single-tet.h5m
 single-tet.exo
 quad_sphere.h5m
+regularized_tet_mesh.exo
+regularized_tet_mesh.h5m
+regularized_hex_mesh.exo
+regularized_hex_mesh.h5m
 )
 
 foreach(file ${TEST_FILES})
