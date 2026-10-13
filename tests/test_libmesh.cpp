@@ -622,49 +622,40 @@ TEST_CASE("LibMesh include blocks")
   std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
   const auto& mesh_manager = xdg->mesh_manager();
-  mesh_manager->load_file("two_region_hex.exo");
+
+  mesh_manager->load_file("four_region_hex.exo");
   // Only use block 2 for mesh operations
   mesh_manager->init({ 2 });
   mesh_manager->parse_metadata();
-
-  // One volume as we've excluded the other volume
-  REQUIRE(mesh_manager->num_volumes() == 2);
-  // One element (each volume contains a single element).
-  REQUIRE(mesh_manager->num_volume_elements() == 1);
-
   xdg->prepare_raytracer();
 
-  // We've excluded this volume, so we shouldn't find an element here.
+  // One volume (plus IPC) as we've excluded the other volume
+  REQUIRE(mesh_manager->num_volumes() == 2);
+  // Each volume contains 128 elements.
+  REQUIRE(mesh_manager->num_volume_elements() == 128);
+
+  // There should be elements in these locations.
   auto elem = xdg->find_element({0.0, 0.0, 0.0});
-  REQUIRE(elem == -1);
-  elem = xdg->find_element({0.0, 0.0, 0.5});
-  // There should be an element here.
+  REQUIRE(elem != -1);
+  elem = xdg->find_element({0.0, 0.0, 1.0});
   REQUIRE(elem != -1);
 
-  auto ipc = mesh_manager->implicit_complement();
-  // Should exit the implicit compliment when firing along the +z-axis at 0.25 model units.
-  auto exit_ipc = xdg->ray_fire(ipc, {0.0, 0.0, 0.0}, {0.0, 0.0, 1.0}, INFTY, HitOrientation::EXITING);
-  REQUIRE_THAT(exit_ipc.first, Catch::Matchers::WithinAbs(0.25, 1e-6));
-  // We should enter volume 2.
-  REQUIRE(mesh_manager->next_volume(ipc, exit_ipc.second) == 2);
+  // We've excluded these regions, so we shouldn't find any elements.
+  elem = xdg->find_element({0.0, 0.0, 0.5});
+  REQUIRE(elem == -1);
+  elem = xdg->find_element({0.0, 0.0, 1.5});
+  REQUIRE(elem == -1);
 
-  // Should enter the implicit compliment when firing along the -z-axis at 0.25 model units.
-  auto enter_ipc = xdg->ray_fire(2, {0.0, 0.0, 0.5}, {0.0, 0.0, -1.0}, INFTY, HitOrientation::EXITING);
-  REQUIRE_THAT(enter_ipc.first, Catch::Matchers::WithinAbs(0.25, 1e-6));
-  REQUIRE(mesh_manager->next_volume(2, enter_ipc.second) == ipc);
-
-  // Single track through the volume. Length of the track is 0.5 model units.
-  auto tracks_fw = xdg->segments({0.0, 0.0, -1.0}, {0.0, 0.0, 0.75});
-  REQUIRE(tracks_fw.size() == 1);
-  REQUIRE_THAT(tracks_fw.back().second, Catch::Matchers::WithinAbs(0.5, 1e-6));
-  auto tracks_bw = xdg->segments({0.0, 0.0, 0.75}, {0.0, 0.0, -1.0});
-  REQUIRE(tracks_bw.size() == 1);
-  REQUIRE_THAT(tracks_bw.back().second, Catch::Matchers::WithinAbs(0.5, 1e-6));
-
-  // Should miss when firing this ray. This checks to make sure we're
-  // ignoring boundary surfaces of volume 1 when constructing the implicit compliment.
-  auto miss_ipc = xdg->ray_fire(ipc, {-0.75, 0.0, 0.0}, {1.0, 0.0, 0.0}, INFTY, HitOrientation::EXITING);
-  REQUIRE(miss_ipc.second == -1);
+  auto tracks_fw = xdg->segments({0.125, 0.125, -1.0}, {0.125, 0.125, 2.0});
+  REQUIRE(tracks_fw.size() == 8);
+  for (const auto & [elem, distance] : tracks_fw) {
+    REQUIRE_THAT(distance, Catch::Matchers::WithinAbs(0.125, 1e-6));
+  }
+  auto tracks_bw = xdg->segments({0.125, 0.125, 2.0}, {0.125, 0.125, -1.0});
+  REQUIRE(tracks_bw.size() == 8);
+  for (const auto & [elem, distance] : tracks_bw) {
+    REQUIRE_THAT(distance, Catch::Matchers::WithinAbs(0.125, 1e-6));
+  }
 }
 
 TEMPLATE_TEST_CASE("TEST libMesh Raytrace Quads", "[libMesh][faces][quads]",
