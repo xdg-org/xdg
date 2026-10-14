@@ -22,8 +22,7 @@ using namespace xdg;
 using namespace xdg::test;
 
 
-TEMPLATE_TEST_CASE("Test Boundary Face Element Brick", "[boundary_faces]",
-                   XDG_MESH_MANAGER_BACKENDS)
+TEMPLATE_LIST_TEST_CASE("Test Boundary Face Element Brick", "[boundary_faces]", MeshManagerBackends)
 {
   constexpr auto mesh_backend = TestType::value;
 

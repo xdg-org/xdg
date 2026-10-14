@@ -3,6 +3,7 @@
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <tuple>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -44,18 +45,17 @@ using LibMesh_Interface = std::integral_constant<MeshLibrary, MeshLibrary::LIBME
 using Embree_Raytracer = std::integral_constant<RTLibrary, RTLibrary::EMBREE>;
 using GPRT_Raytracer = std::integral_constant<RTLibrary, RTLibrary::GPRT>;
 
-// Every public mesh backend must be enrolled here. Shared mesh backend tests use
-// this list so that adding a backend does not require updating each test case.
-#define XDG_MESH_MANAGER_BACKENDS \
-  MOAB_Interface,                 \
-  LibMesh_Interface
+// Every public mesh backend must be enrolled here. This will ensure that any tests
+// that are run on all mesh backends will be instantiated for each backend.
+using MeshManagerBackends = std::tuple<
+    MOAB_Interface,
+    LibMesh_Interface>;
 
-// Every public ray tracer backend must be enrolled here. Shared ray tracer
-// tests use this list so that adding a backend does not require updating each
-// test case.
-#define XDG_RAY_TRACER_BACKENDS \
-  Embree_Raytracer,             \
-  GPRT_Raytracer
+// Every public RayTracer backend must be enrolled here. This will ensure that any tests
+// that are run on all RayTracer backends will be instantiated for each backend.
+using RayTracerBackends = std::tuple<
+    Embree_Raytracer,
+    GPRT_Raytracer>;
 
 } // namespace xdg::test
 

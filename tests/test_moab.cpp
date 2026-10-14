@@ -75,8 +75,7 @@ TEST_CASE("Test MOAB Initialization")
   }
 }
 
-TEMPLATE_TEST_CASE("Test BVH Build", "[moab][bvh]",
-                   XDG_RAY_TRACER_BACKENDS)
+TEMPLATE_LIST_TEST_CASE("Test BVH Build", "[moab][bvh]", RayTracerBackends)
 {
   std::shared_ptr<MeshManager> mesh_manager = std::make_shared<MOABMeshManager>();
 
@@ -100,8 +99,7 @@ TEMPLATE_TEST_CASE("Test BVH Build", "[moab][bvh]",
 }
 
 
-TEMPLATE_TEST_CASE("Test Ray Fire MOAB (all built backends)",
-                   "[ray_tracer][moab]", XDG_RAY_TRACER_BACKENDS)
+TEMPLATE_LIST_TEST_CASE("Test Ray Fire MOAB (all built backends)", "[ray_tracer][moab]", RayTracerBackends)
 {
   constexpr auto rt_backend = TestType::value;
 
@@ -150,8 +148,7 @@ TEST_CASE("MOAB Element Types")
   }
 }
 
-TEMPLATE_TEST_CASE("TEST MOAB Find Element Method", "[moab][elements]",
-                   XDG_RAY_TRACER_BACKENDS)
+TEMPLATE_LIST_TEST_CASE("TEST MOAB Find Element Method", "[moab][elements]", RayTracerBackends)
 {
   constexpr auto rt_backend = TestType::value;
   if (rt_backend == RTLibrary::GPRT) {
@@ -198,8 +195,7 @@ TEMPLATE_TEST_CASE("TEST MOAB Find Element Method", "[moab][elements]",
   }
 }
 
-TEMPLATE_TEST_CASE("TEST MOAB Raytrace Quads", "[moab][faces][quads]",
-                   XDG_RAY_TRACER_BACKENDS)
+TEMPLATE_LIST_TEST_CASE("TEST MOAB Raytrace Quads", "[moab][faces][quads]", RayTracerBackends)
 {
   constexpr auto rt_backend = TestType::value;
 
