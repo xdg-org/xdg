@@ -20,31 +20,34 @@ TEMPLATE_LIST_TEST_CASE("Test Element and Face Types Jezebel Tets", "[elements][
                         MeshManagerBackends)
 {
   constexpr auto mesh_backend = TestType::value;
-  // skip if backend not enabled at configuration time
-  check_mesh_library_supported(mesh_backend);
-  std::string filename = mesh_backend == MeshLibrary::MOAB ? "jezebel.h5m" : "jezebel.exo";
-  std::shared_ptr<XDG> xdg = XDG::create(mesh_backend);
-  REQUIRE(xdg->mesh_manager()->mesh_library() == mesh_backend);
-  const auto& mesh_manager = xdg->mesh_manager();
-  mesh_manager->load_file(filename);
-  mesh_manager->init();
 
-  for (const auto& volume : mesh_manager->volumes()) {
-    auto elements = mesh_manager->get_volume_elements(volume);
-    if (volume == mesh_manager->implicit_complement()) {
-      continue;
-    }
-    REQUIRE(!elements.empty());
-    for (const auto& element : elements) {
-      REQUIRE(mesh_manager->element_type(element) == VolumeElementType::TET);
-    }
-  }
+  DYNAMIC_SECTION(fmt::format("Backend = {}", mesh_backend)) {
+    // skip if backend not enabled at configuration time
+    check_mesh_library_supported(mesh_backend);
+    std::string filename = mesh_backend == MeshLibrary::MOAB ? "jezebel.h5m" : "jezebel.exo";
+    std::shared_ptr<XDG> xdg = XDG::create(mesh_backend);
+    REQUIRE(xdg->mesh_manager()->mesh_library() == mesh_backend);
+    const auto& mesh_manager = xdg->mesh_manager();
+    mesh_manager->load_file(filename);
+    mesh_manager->init();
 
-  for (const auto& surface : mesh_manager->surfaces()) {
-    auto faces = mesh_manager->get_surface_faces(surface);
-    REQUIRE(!faces.empty());
-    for (const auto& face : faces) {
-      REQUIRE(mesh_manager->face_type(face) == SurfaceFaceType::TRI);
+    for (const auto& volume : mesh_manager->volumes()) {
+      auto elements = mesh_manager->get_volume_elements(volume);
+      if (volume == mesh_manager->implicit_complement()) {
+        continue;
+      }
+      REQUIRE(!elements.empty());
+      for (const auto& element : elements) {
+        REQUIRE(mesh_manager->element_type(element) == VolumeElementType::TET);
+      }
+    }
+
+    for (const auto& surface : mesh_manager->surfaces()) {
+      auto faces = mesh_manager->get_surface_faces(surface);
+      REQUIRE(!faces.empty());
+      for (const auto& face : faces) {
+        REQUIRE(mesh_manager->face_type(face) == SurfaceFaceType::TRI);
+      }
     }
   }
 }
@@ -53,31 +56,34 @@ TEMPLATE_LIST_TEST_CASE("Test Element and Face Types Jezebel Quads", "[elements]
                         MeshManagerBackends)
 {
   constexpr auto mesh_backend = TestType::value;
-  // skip if backend not enabled at configuration time
-  check_mesh_library_supported(mesh_backend);
-  std::string filename = mesh_backend == MeshLibrary::MOAB ? "jezebel-quads.h5m" : "jezebel-quads.exo";
-  std::shared_ptr<XDG> xdg = XDG::create(mesh_backend);
-  REQUIRE(xdg->mesh_manager()->mesh_library() == mesh_backend);
-  const auto& mesh_manager = xdg->mesh_manager();
-  mesh_manager->load_file(filename);
-  mesh_manager->init();
 
-  for (const auto& volume : mesh_manager->volumes()) {
-    auto elements = mesh_manager->get_volume_elements(volume);
-    if (volume == mesh_manager->implicit_complement()) {
-      continue;
-    }
-    REQUIRE(!elements.empty());
-    for (const auto& element : elements) {
-      REQUIRE(mesh_manager->element_type(element) == VolumeElementType::HEX);
-    }
-  }
+  DYNAMIC_SECTION(fmt::format("Backend = {}", mesh_backend)) {
+    // skip if backend not enabled at configuration time
+    check_mesh_library_supported(mesh_backend);
+    std::string filename = mesh_backend == MeshLibrary::MOAB ? "jezebel-quads.h5m" : "jezebel-quads.exo";
+    std::shared_ptr<XDG> xdg = XDG::create(mesh_backend);
+    REQUIRE(xdg->mesh_manager()->mesh_library() == mesh_backend);
+    const auto& mesh_manager = xdg->mesh_manager();
+    mesh_manager->load_file(filename);
+    mesh_manager->init();
 
-  for (const auto& surface : mesh_manager->surfaces()) {
-    auto faces = mesh_manager->get_surface_faces(surface);
-    REQUIRE(!faces.empty());
-    for (const auto& face : faces) {
-      REQUIRE(mesh_manager->face_type(face) == SurfaceFaceType::QUAD);
+    for (const auto& volume : mesh_manager->volumes()) {
+      auto elements = mesh_manager->get_volume_elements(volume);
+      if (volume == mesh_manager->implicit_complement()) {
+        continue;
+      }
+      REQUIRE(!elements.empty());
+      for (const auto& element : elements) {
+        REQUIRE(mesh_manager->element_type(element) == VolumeElementType::HEX);
+      }
+    }
+
+    for (const auto& surface : mesh_manager->surfaces()) {
+      auto faces = mesh_manager->get_surface_faces(surface);
+      REQUIRE(!faces.empty());
+      for (const auto& face : faces) {
+        REQUIRE(mesh_manager->face_type(face) == SurfaceFaceType::QUAD);
+      }
     }
   }
 }
