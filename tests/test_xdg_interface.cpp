@@ -20,12 +20,7 @@ TEST_CASE("XDG Interface") {
   REQUIRE(xdg->mesh_manager() == nullptr);
 }
 
-TEMPLATE_PRODUCT_TEST_CASE("XDG Factory Creation", "[xdg][factory]",
-                           (std::pair),
-                           ((MOAB_Interface, Embree_Raytracer),
-                            (MOAB_Interface, GPRT_Raytracer),
-                            (LibMesh_Interface, Embree_Raytracer),
-                            (LibMesh_Interface, GPRT_Raytracer))) {
+TEMPLATE_LIST_TEST_CASE("XDG Factory Creation", "[xdg][factory]", XDGBackends) {
   using MeshTag = typename TestType::first_type;
   using RayTag = typename TestType::second_type;
   constexpr auto mesh_backend = MeshTag::value;
@@ -73,12 +68,7 @@ TEMPLATE_PRODUCT_TEST_CASE("XDG Factory Creation", "[xdg][factory]",
   }
 }
 
-TEMPLATE_PRODUCT_TEST_CASE("XDG Constructor", "[xdg][constructor]",
-                           (std::pair),
-                           ((MOAB_Interface, Embree_Raytracer),
-                            (MOAB_Interface, GPRT_Raytracer),
-                            (LibMesh_Interface, Embree_Raytracer),
-                            (LibMesh_Interface, GPRT_Raytracer))) {
+TEMPLATE_LIST_TEST_CASE("XDG Constructor", "[xdg][constructor]", XDGBackends) {
   using MeshTag = typename TestType::first_type;
   using RayTag = typename TestType::second_type;
   constexpr auto mesh_backend = MeshTag::value;
@@ -123,12 +113,8 @@ TEMPLATE_PRODUCT_TEST_CASE("XDG Constructor", "[xdg][constructor]",
   }
 }
 
-TEMPLATE_PRODUCT_TEST_CASE("XDG Query API", "[xdg][queries][rayfire][point_in_volume]",
-                           (std::pair),
-                           ((MOAB_Interface, Embree_Raytracer),
-                            (MOAB_Interface, GPRT_Raytracer),
-                            (LibMesh_Interface, Embree_Raytracer),
-                            (LibMesh_Interface, GPRT_Raytracer))) {
+TEMPLATE_LIST_TEST_CASE("XDG Query API", "[xdg][queries][rayfire][point_in_volume]",
+                        XDGBackends) {
   using MeshTag = typename TestType::first_type;
   using RayTag = typename TestType::second_type;
   constexpr auto mesh_backend = MeshTag::value;
