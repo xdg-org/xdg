@@ -20,10 +20,10 @@ TEMPLATE_LIST_TEST_CASE("Ray Fire on MockedTriTetMesh (per-backend sections)", "
 {
   // Generate one test run per enabled backend
   constexpr auto rt_backend = TestType::value;
-  check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend))
   {
+    check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
     auto rti = create_raytracer(rt_backend);
     REQUIRE(rti);
 
