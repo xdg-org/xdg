@@ -6,8 +6,6 @@
 #include <limits>
 #include <string>
 
-#include "fmt/format.h"
-
 #include "xdg/shared_enums.h"
 
 namespace xdg {
@@ -149,36 +147,5 @@ static const std::map<VolumeElementType, std::string> VOLUME_ELEMENT_TYPE_TO_STR
 };
 
 } // namespace xdg
-
-namespace fmt {
-  template <>
-struct formatter<xdg::RTLibrary> : fmt::formatter<std::string> {
-  auto format(xdg::RTLibrary lib, fmt::format_context& ctx) const {
-    return fmt::formatter<std::string>::format(xdg::RT_LIB_TO_STR.at(lib), ctx);
-  }
-};
-
-template <>
-struct formatter<xdg::MeshLibrary> : fmt::formatter<std::string> {
-  auto format(xdg::MeshLibrary lib, fmt::format_context& ctx) const {
-    return fmt::formatter<std::string>::format(xdg::MESH_LIB_TO_STR.at(lib), ctx);
-  }
-};
-
-template <>
-struct formatter<xdg::SurfaceFaceType> : fmt::formatter<std::string> {
-  auto format(xdg::SurfaceFaceType type, fmt::format_context& ctx) const {
-    return fmt::formatter<std::string>::format(xdg::SURFACE_FACE_TYPE_TO_STR.at(type), ctx);
-  }
-};
-
-template <>
-struct formatter<xdg::VolumeElementType> : fmt::formatter<std::string> {
-  auto format(xdg::VolumeElementType type, fmt::format_context& ctx) const {
-    return fmt::formatter<std::string>::format(xdg::VOLUME_ELEMENT_TYPE_TO_STR.at(type), ctx);
-  }
-};
-
-}
 
 #endif // include guard
