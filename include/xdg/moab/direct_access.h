@@ -10,6 +10,7 @@
 #include "moab/CartVect.hpp"
 
 #include "xdg/constants.h"
+#include "xdg/error.h"
 #include "xdg/id_block_map.h"
 #include "xdg/vec3da.h"
 
@@ -262,7 +263,7 @@ private:
 
       // only supporting a single element type per ConnectivityData instance
       if (!entity_range.all_of_type(entity_type)) {
-        fatal_error(fmt::format("Not all elements match the requested type: {}", MOAB_TYPE_TO_XDG_ELEMENT.at(entity_type)));
+        fatal_error(fmt::format("Not all elements match the requested type: {}", VOLUME_ELEMENT_TYPE_TO_STR.at(MOAB_TYPE_TO_XDG_ELEMENT.at(entity_type))));
       }
 
       moab::Range::iterator entity_it = entity_range.begin();

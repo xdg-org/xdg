@@ -1,6 +1,7 @@
 #include "xdg/hexahedron_contain.h"
 
 #include "xdg/constants.h"
+#include "xdg/error.h"
 #include "xdg/geometry/face_common.h"
 #include "xdg/geometry/plucker.h"
 #include "xdg/ray_tracing_interface.h"

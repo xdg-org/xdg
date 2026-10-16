@@ -17,8 +17,6 @@
 #define __forceinline inline __attribute__((always_inline))
 #endif
 
-#include <fmt/format.h>
-
 #include "xdg/constants.h"
 
 namespace xdg {
@@ -176,18 +174,5 @@ inline Direction rand_dir() {
 }
 
 } // end namespace xdg
-
-namespace fmt {
-template<>
-struct formatter<xdg::Vec3da> : formatter<std::string> {
-  template<typename FormatContext>
-  auto format(const xdg::Vec3da& v, FormatContext& ctx)
-  {
-    return formatter<std::string>::format(
-      fmt::format("({}, {}, {})", v.x, v.y, v.z), ctx);
-  }
-};
-
-} // end namespace fmt
 
 #endif // include guard
