@@ -1,6 +1,8 @@
 #include <fstream>
 #include <map>
 
+#include <fmt/format.h>
+
 #include "progress_bars.h"
 #include "overlap.h"
 

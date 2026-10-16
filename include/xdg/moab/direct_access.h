@@ -10,6 +10,7 @@
 #include "moab/CartVect.hpp"
 
 #include "xdg/constants.h"
+#include "xdg/error.h"
 #include "xdg/id_block_map.h"
 #include "xdg/vec3da.h"
 
