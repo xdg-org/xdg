@@ -2,6 +2,8 @@
 #include <iostream>
 #include <iomanip>
 
+#include "xdg/error.h"
+
 void output(const std::string& message, std::ostream& out, int indent)
 {
   // Set line wrapping and indentation
@@ -38,8 +40,15 @@ void write_message(const std::string& message)
     output(message, std::cout, 1);
 }
 
-[[noreturn]] void fatal_error(const std::string& message, int err)
+void warning(const std::string& message)
 {
+  write_message("Warning: " + message);
+}
+
+[[noreturn]] void fatal_error(const std::string& message)
+{
+  constexpr int err = -1;
+
 #ifdef _POSIX_VERSION
   // Make output red if user is in a terminal
   if (isatty(STDERR_FILENO)) {
