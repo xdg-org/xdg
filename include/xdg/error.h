@@ -2,7 +2,7 @@
 #define _XDG_ERROR_H
 
 #include <string>
-#include <iostream>
+#include <utility>
 
 #include <fmt/format.h>
 
@@ -10,24 +10,26 @@
 
 void write_message(const std::string& message);
 
-template<typename... Params>
-void write_message(const std::string& message, const Params&... fmt_args)
+template<typename... Args>
+void write_message(fmt::format_string<Args...> fstring, Args&&... args)
 {
-  write_message(fmt::format(message, fmt_args...));
+  write_message(fmt::format(fstring, std::forward<Args>(args)...));
 }
 
-[[noreturn]] void fatal_error(const std::string& message, int err=-1);
+[[noreturn]] void fatal_error(const std::string& message);
 
-template<typename... Params>
-void warning(const std::string& message, const Params&... fmt_args)
+void warning(const std::string& message);
+
+template<typename... Args>
+void warning(fmt::format_string<Args...> fstring, Args&&... args)
 {
-  write_message(fmt::format("Warning: {}", message, fmt_args...));
+  warning(fmt::format(fstring, std::forward<Args>(args)...));
 }
 
-template<typename... Params>
-void fatal_error(const std::string& message, const Params&... fmt_args)
+template<typename... Args>
+[[noreturn]] void fatal_error(fmt::format_string<Args...> fstring, Args&&... args)
 {
-    fatal_error(fmt::format(message, fmt_args...));
+  fatal_error(fmt::format(fstring, std::forward<Args>(args)...));
 }
 
-#endif
+#endif // _XDG_ERROR_H

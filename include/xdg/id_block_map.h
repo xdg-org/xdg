@@ -2,6 +2,8 @@
 #ifndef BLOCK_MAPPING_HPP
 #define BLOCK_MAPPING_HPP
 
+#include <cstdlib>
+#include <iostream>
 #include <vector>
 #include <algorithm>
 #include <functional>
@@ -12,7 +14,6 @@
 #include <type_traits>
 
 #include "xdg/constants.h"
-#include "xdg/error.h"
 
 namespace xdg {
 
@@ -60,7 +61,8 @@ public:
           block_start = i;
         }
         if (i < n && converter(ids[i]) <= converter(ids[i-1])) {
-          fatal_error("IDs must be unique and monotonically increasing");
+          std::cerr << "Error: IDs must be unique and monotonically increasing" << std::endl;
+          std::exit(EXIT_FAILURE);
         }
       }
     }

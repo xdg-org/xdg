@@ -27,7 +27,7 @@ Particle(std::shared_ptr<XDG> xdg, uint32_t id, uint32_t max_events, bool verbos
 template<typename... Params>
 void log (const std::string& msg, const Params&... fmt_args) {
   if (!verbose_) return;
-  write_message(msg, fmt_args...);
+  write_message(fmt::format(fmt::runtime(msg), fmt_args...));
 }
 
 void initialize() {

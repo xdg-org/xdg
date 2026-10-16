@@ -423,8 +423,3 @@ install(FILES
 )
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-
-if (NOT fmt_FOUND)
-  install(DIRECTORY ${CMAKE_SOURCE_DIR}/vendor/fmt/include/
-          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-endif()
