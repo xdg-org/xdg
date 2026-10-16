@@ -1,8 +1,6 @@
 #ifndef _XDG_BOUNDING_BOX_H
 #define _XDG_BOUNDING_BOX_H
 
-#include <fmt/format.h>
-
 #include "xdg/constants.h"
 #include "xdg/vec3da.h"
 #include "xdg/util/rng.h"
@@ -123,23 +121,5 @@ inline std::ostream& operator <<(std::ostream& os, const BoundingBox& bbox) {
 }
 
 } // namespace xdg
-
-namespace fmt {
-template <>
-struct formatter<xdg::BoundingBox> {
-    template <typename ParseContext>
-    constexpr auto parse(ParseContext& ctx) {
-        return ctx.begin();
-    }
-
-    template <typename FormatContext>
-    auto format(const xdg::BoundingBox& box, FormatContext& ctx) const {
-        return fmt::format_to(ctx.out(), "[Lower left: {}, Upper right: {}]",
-            fmt::format("[{}, {}, {}]", box.min_x, box.min_y, box.min_z),
-            fmt::format("[{}, {}, {}]", box.max_x, box.max_y, box.max_z));
-    }
-};
-
-}
 
 #endif // include guard

@@ -12,6 +12,8 @@
 
 #include "xdg/xdg.h"
 
+#include "fmt_formatters.h"
+
 using namespace xdg;
 
 struct WalkElementsContext {
