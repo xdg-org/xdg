@@ -35,6 +35,7 @@ TEST_CASE("MockedQuadHexMesh Face Representation")
   REQUIRE(mm->get_volume_elements(0) == std::vector<MeshID> {0, 1});
   REQUIRE(mm->element_connectivity(0) == std::vector<MeshID> {0, 1, 2, 3, 4, 5, 6, 7});
   REQUIRE(mm->element_connectivity(1) == std::vector<MeshID> {1, 8, 9, 2, 5, 10, 11, 6});
+  REQUIRE(mm->element_type(0) == VolumeElementType::HEX);
   REQUIRE(mm->adjacent_element(0, 3) == 1);
   REQUIRE(mm->adjacent_element(1, 5) == 0);
 
@@ -62,6 +63,7 @@ TEST_CASE("MockedQuadHexMesh Face Representation")
     const auto faces = mm->get_surface_faces(surface);
     REQUIRE(mm->get_surface_connectivity(surface).size() == faces.size() * 4);
     for (const auto face : faces) {
+      REQUIRE(mm->face_type(face) == SurfaceFaceType::QUAD);
       REQUIRE(mm->face_vertices(face).size() == 4);
 
       const auto normal = mm->face_normal(face);

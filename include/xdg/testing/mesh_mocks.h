@@ -196,9 +196,20 @@ public:
     return SurfaceFaceType::TRI; // hardcoded to Tri for this mock
   }
 
+  virtual SurfaceFaceType face_type(MeshID face) const override {
+    return SurfaceFaceType::TRI; // hardcoded to Tri for this mock
+  }
+
   virtual VolumeElementType get_volume_element_type(MeshID volume) const override {
     if (get_volume_elements(volume).empty()) {
       fatal_error("MockedTriTetMesh volume {} has no elements; cannot determine element type", volume);
+    }
+    return VolumeElementType::TET; // hardcoded to Tet for this mock
+  }
+
+  virtual VolumeElementType element_type(MeshID element) const override {
+    if (!volumetric_elements_) {
+      fatal_error("MockedTriTetMesh has no volumetric elements; cannot determine element type");
     }
     return VolumeElementType::TET; // hardcoded to Tet for this mock
   }
@@ -409,15 +420,23 @@ public:
   SurfaceFaceType get_surface_face_type(MeshID surface) const override {
     auto faces = get_surface_faces(surface);
     for (const auto& face : faces) {
-      if (face_connectivity_.at(face).size() == 4) return SurfaceFaceType::QUAD;
+      if (face_type(face) == SurfaceFaceType::QUAD) return SurfaceFaceType::QUAD;
     }
     return SurfaceFaceType::TRI;
+  }
+
+  SurfaceFaceType face_type(MeshID face) const override {
+    return face_connectivity_.at(face).size() == 4 ? SurfaceFaceType::QUAD : SurfaceFaceType::TRI;
   }
 
   VolumeElementType get_volume_element_type(MeshID volume) const override {
     if (get_volume_elements(volume).empty()) {
       fatal_error("MockedQuadHexMesh volume {} has no elements; cannot determine element type", volume);
     }
+    return VolumeElementType::HEX;
+  }
+
+  VolumeElementType element_type(MeshID element) const override {
     return VolumeElementType::HEX;
   }
 

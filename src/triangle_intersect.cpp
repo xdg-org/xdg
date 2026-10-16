@@ -40,7 +40,7 @@ void TriangleIntersectionFunc(RTCIntersectFunctionNArguments* args) {
 
   if (plucker_dist > rayhit->ray.dtfar) return;
 
-  Direction normal = triangle_normal({face_vertices[0], face_vertices[1], face_vertices[2]});
+  Direction normal = triangle_normal(face_vertices);
 
   // Check if ray is entering or exiting the volume it was fired against
   // if this is a normal ray fire, flip the normal as needed

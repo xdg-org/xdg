@@ -30,13 +30,13 @@ static constexpr PluckerIntersectionResult EXIT_EARLY = {false, 0.0};
 /* Function to return the vertex with the lowest coordinates. To force the same
   ray-edge computation, the Plücker test needs to use consistent edge
   representation. This would be more simple with MOAB handles instead of
-  coordinates... 
+  coordinates...
 */
 inline bool first(dp::vec3 a, dp::vec3 b) {
-  if (a[0] < b[0]) return true;  
+  if (a[0] < b[0]) return true;
   if (a[0] > b[0]) return false;
 
-  if (a[1] < b[1]) return true;  
+  if (a[1] < b[1]) return true;
   if (a[1] > b[1]) return false;
 
   return a[2] < b[2];
@@ -61,13 +61,22 @@ inline double plucker_edge_test(dp::vec3 vertexa, dp::vec3 vertexb,
   return pip;
 }
 
+//! \brief Determine if a ray intersects a triangle using Plücker coordinates
+//! \param triangle The triangle vertices
+//! \param origin The ray origin
+//! \param direction The ray direction
+//! \param tMax The maximum distance along the ray to consider for intersection
+//! \param tMin The minimum distance along the ray to consider for intersection
+//! \param useOrientation Whether to use orientation checks for the intersection
+//! \param orientation The expected orientation of the triangle relative to the ray
+//! \return A PluckerIntersectionResult indicating whether an intersection occurred and the distance to the intersection
 inline PluckerIntersectionResult plucker_ray_tri_intersect(dp::vec3 vertices[3],
-                                dp::vec3 origin,
-                                dp::vec3 direction,
-                                double tMax,
-                                double tMin,
-                                bool useOrientation,
-                                int orientation)
+                                                           dp::vec3 origin,
+                                                           dp::vec3 direction,
+                                                           double tMax,
+                                                           double tMin,
+                                                           bool useOrientation,
+                                                           int orientation)
 {
   double dist_out = dp::INFTY;
 
@@ -150,7 +159,7 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(dp::vec3 vertices[3],
   double v = plucker_coord0 * inverse_sum;
 
   // Barycentric coords check
-  if (u < 0.0 || v < 0.0 || (u + v) > 1.0) {
+  if (u < -dp::DBL_ZERO_TOL || v < - dp::DBL_ZERO_TOL || (u + v) > 1.0 + dp::DBL_ZERO_TOL) {
       dist_out = -1.0;
   }
 
@@ -158,6 +167,46 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(dp::vec3 vertices[3],
   if (dist_out < tMin || dist_out > tMax) return EXIT_EARLY;
 
   return {true, dist_out};
+}
+
+//! \brief Determine if a ray intersects a triangle using Plücker coordinates
+//! \param triangle The triangle vertices
+//! \param origin The ray origin
+//! \param direction The ray direction
+//! \return True if the ray intersects the triangle, false otherwise
+inline bool plucker_line_intersects_triangle(dp::vec3 triangle[3],
+                                             dp::vec3 origin,
+                                             dp::vec3 direction)
+{
+  const dp::vec3 ray = direction;
+  const dp::vec3 ray_normal = dp::cross(direction, origin);
+
+  const double plucker_coord0 =
+    plucker_edge_test(triangle[0], triangle[1], ray, ray_normal);
+  const double plucker_coord1 =
+    plucker_edge_test(triangle[1], triangle[2], ray, ray_normal);
+
+  if ((plucker_coord0 < 0.0 && plucker_coord1 > 0.0) ||
+      (plucker_coord0 > 0.0 && plucker_coord1 < 0.0)) {
+    return false;
+  }
+
+  const double plucker_coord2 =
+    plucker_edge_test(triangle[2], triangle[0], ray, ray_normal);
+
+  if ((plucker_coord1 < 0.0 && plucker_coord2 > 0.0) ||
+      (plucker_coord1 > 0.0 && plucker_coord2 < 0.0)) {
+    return false;
+  }
+
+  if ((plucker_coord0 < 0.0 && plucker_coord2 > 0.0) ||
+      (plucker_coord0 > 0.0 && plucker_coord2 < 0.0)) {
+    return false;
+  }
+
+  return !(plucker_coord0 == 0.0 &&
+           plucker_coord1 == 0.0 &&
+           plucker_coord2 == 0.0);
 }
 
 } // namespace xdg

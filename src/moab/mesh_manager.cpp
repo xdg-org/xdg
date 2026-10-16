@@ -369,39 +369,20 @@ MOABMeshManager::get_surface_faces(MeshID surface) const
 std::vector<Vertex> MOABMeshManager::element_vertices(MeshID element) const
 {
   moab::EntityHandle element_handle;
-  auto rval = this->moab_interface()->handle_from_id(moab::MBTET, element, element_handle);
-  if (rval == moab::MB_SUCCESS) {
-    auto out = this->mb_direct()->get_element_coords(element_handle, VolumeElementType::TET);
-    return std::vector<Vertex>(out.begin(), out.end());
-  }
-
-  rval = this->moab_interface()->handle_from_id(moab::MBHEX, element, element_handle);
-  if (rval == moab::MB_SUCCESS) {
-    auto out = this->mb_direct()->get_element_coords(element_handle, VolumeElementType::HEX);
-    return std::vector<Vertex>(out.begin(), out.end());
-  }
-
-  fatal_error("Unsupported MOAB element type for element {}", element);
-  return {};
+  const auto type = element_type(element);
+  const auto moab_type = type == VolumeElementType::TET ? moab::MBTET : moab::MBHEX;
+  this->moab_interface()->handle_from_id(moab_type, element, element_handle);
+  auto out = this->mb_direct()->get_element_coords(element_handle, type);
+  return std::vector<Vertex>(out.begin(), out.end());
 }
 
-std::vector<MeshID> MOABMeshManager::face_vertices(MeshID element) const
+std::vector<MeshID> MOABMeshManager::face_vertices(MeshID face) const
 {
-  // Try triangle first, then quad
   moab::EntityHandle face_handle;
-  SurfaceFaceType face_type = SurfaceFaceType::UNSUPPORTED;
-  for (auto type : {moab::MBTRI, moab::MBQUAD}) {
-    auto rval = this->moab_interface()->handle_from_id(type, element, face_handle);
-    if (rval == moab::MB_SUCCESS) {
-      if (type == moab::MBTRI) face_type = SurfaceFaceType::TRI;
-      else if (type == moab::MBQUAD) face_type = SurfaceFaceType::QUAD;
-      break;
-    }
-  }
-  if (face_type == SurfaceFaceType::UNSUPPORTED) {
-    fatal_error("Unsupported MOAB face type for face {}", element);
-  }
-  return this->mb_direct()->get_face_connectivity(face_handle, face_type);
+  const auto type = face_type(face);
+  const auto moab_type = type == SurfaceFaceType::TRI ? moab::MBTRI : moab::MBQUAD;
+  this->moab_interface()->handle_from_id(moab_type, face, face_handle);
+  return this->mb_direct()->get_face_connectivity(face_handle, type);
 }
 
 std::pair<MeshID, MeshID>
@@ -463,19 +444,27 @@ SurfaceFaceType
 MOABMeshManager::get_surface_face_type(MeshID surface) const
 {
   auto faces = this->get_surface_faces(surface);
+  if (faces.empty()) {
+    fatal_error("Surface {} has no faces; cannot determine face type", surface);
+  }
+  return face_type(faces.front());
+}
 
+SurfaceFaceType
+MOABMeshManager::face_type(MeshID face) const
+{
   moab::EntityHandle face_handle;
-  auto rval = this->moab_interface()->handle_from_id(moab::MBTRI, faces.front(), face_handle);
+  auto rval = this->moab_interface()->handle_from_id(moab::MBTRI, face, face_handle);
   if (rval == moab::MB_SUCCESS) {
     return SurfaceFaceType::TRI;
   }
 
-  rval = this->moab_interface()->handle_from_id(moab::MBQUAD, faces.front(), face_handle);
+  rval = this->moab_interface()->handle_from_id(moab::MBQUAD, face, face_handle);
   if (rval == moab::MB_SUCCESS) {
     return SurfaceFaceType::QUAD;
   }
 
-  fatal_error("Unsupported MOAB face type for face {}", faces.front());
+  fatal_error("Unsupported MOAB face type for face {}", face);
   return SurfaceFaceType::UNSUPPORTED;
 }
 
@@ -489,18 +478,24 @@ MOABMeshManager::get_volume_element_type(MeshID volume) const
 
   // we already validated that all elements in the volume have the same type, so
   // we can rely on the type of the first element to determine the volume
+  return element_type(elements.front());
+}
+
+VolumeElementType
+MOABMeshManager::element_type(MeshID element) const
+{
   moab::EntityHandle element_handle;
-  auto rval = this->moab_interface()->handle_from_id(moab::MBTET, elements.front(), element_handle);
+  auto rval = this->moab_interface()->handle_from_id(moab::MBTET, element, element_handle);
   if (rval == moab::MB_SUCCESS) {
     return VolumeElementType::TET;
   }
 
-  rval = this->moab_interface()->handle_from_id(moab::MBHEX, elements.front(), element_handle);
+  rval = this->moab_interface()->handle_from_id(moab::MBHEX, element, element_handle);
   if (rval == moab::MB_SUCCESS) {
     return VolumeElementType::HEX;
   }
 
-  fatal_error("Unsupported MOAB element type for element {}", elements.front());
+  fatal_error("Unsupported MOAB element type for element {}", element);
   return VolumeElementType::UNSUPPORTED;
 }
 

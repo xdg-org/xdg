@@ -2,6 +2,7 @@
 
 #include "xdg/constants.h"
 #include "xdg/geometry/face_common.h"
+#include "xdg/geometry/plucker.h"
 #include "xdg/ray_tracing_interface.h"
 #include "xdg/ray.h"
 #include "xdg/vec3da.h"
@@ -34,17 +35,33 @@ bool hex_containment_test(const Position& point,
   }
   centroid = centroid / 8.0;
 
-  auto outside_triangle = [&](int i0, int i1, int i2) {
-    const auto& v0 = verts[i0];
-    const auto& v1 = verts[i1];
-    const auto& v2 = verts[i2];
-    Direction normal = (v1 - v0).cross(v2 - v0);
-    if (normal.dot(centroid - v0) > 0.0) {
+  Direction direction = centroid - point;
+  const double distance_to_centroid = direction.length();
+  if (distance_to_centroid <= TINY_BIT) {
+    return true;
+  }
+  direction /= distance_to_centroid;
+
+  auto crosses_boundary_triangle = [&](int i0, int i1, int i2) {
+    std::array<Vertex, 3> triangle {verts[i0], verts[i1], verts[i2]};
+
+    Direction normal = (triangle[1] - triangle[0]).cross(triangle[2] - triangle[0]);
+    if (normal.dot(centroid - triangle[0]) > 0.0) {
       normal = -normal;
     }
 
-    const double dist = normal.dot(point - v0);
-    return dist > PLUCKER_ZERO_TOL;
+    const double point_side = normal.dot(point - triangle[0]);
+    const double centroid_side = normal.dot(centroid - triangle[0]);
+
+    if (point_side <= dp::DBL_ZERO_TOL || centroid_side >= -dp::DBL_ZERO_TOL) {
+      return false;
+    }
+
+    if (!plucker_line_intersects_triangle(triangle.data(), point, direction)) {
+      return false;
+    }
+
+    return true;
   };
 
   for (const auto& face : k_hex_faces) {
@@ -52,13 +69,13 @@ bool hex_containment_test(const Position& point,
     // of vertex coordinates so diagonals are chosen consistently
     // regardless of face connectivity ordering
     if (select_diagonal(verts, face)) {
-      if (outside_triangle(face[0], face[1], face[2]) ||
-          outside_triangle(face[0], face[2], face[3])) {
+      if (crosses_boundary_triangle(face[0], face[1], face[2]) ||
+          crosses_boundary_triangle(face[0], face[2], face[3])) {
         return false;
       }
     } else {
-      if (outside_triangle(face[1], face[2], face[3]) ||
-          outside_triangle(face[1], face[3], face[0])) {
+      if (crosses_boundary_triangle(face[1], face[2], face[3]) ||
+          crosses_boundary_triangle(face[1], face[3], face[0])) {
         return false;
       }
     }
