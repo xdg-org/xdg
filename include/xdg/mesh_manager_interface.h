@@ -8,6 +8,7 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <set>
 
 #include "xdg/bbox.h"
 #include "xdg/constants.h"
@@ -27,7 +28,7 @@ public:
   // Setup
   virtual void load_file(const std::string& filepath) = 0;
 
-  virtual void init() = 0;
+  virtual void init(const std::unordered_set<MeshID> & to_include = std::unordered_set<MeshID>()) = 0;
 
   // Geometry
   virtual int num_volumes() const = 0;
@@ -215,6 +216,10 @@ public:
 
   MeshID create_implicit_complement();
 
+  // Whether or not we're operating on a given volume.
+  bool including_vol(MeshID volume) const { return included_volumes_.count(volume); }
+  bool excluding_vol(MeshID volume) const { return !including_vol(volume); }
+
   // Metadata methods
   virtual void parse_metadata() = 0;
 
@@ -225,10 +230,15 @@ public:
   Property get_surface_property(MeshID surface, PropertyType type) const;
 
   // Accessors
+  const std::unordered_set<MeshID> & included_volumes() const { return included_volumes_; }
+  std::unordered_set<MeshID> & included_volumes() { return included_volumes_; }
+
   const std::vector<MeshID>& volumes() const { return volumes_; }
   std::vector<MeshID>& volumes() { return volumes_; }
+
   const std::vector<MeshID>& surfaces() const { return surfaces_; }
   std::vector<MeshID>& surfaces() { return surfaces_; }
+
   MeshID implicit_complement() const { return implicit_complement_; }
 
   virtual MeshLibrary mesh_library() const = 0;
@@ -241,6 +251,9 @@ protected:
 
   std::vector<MeshID> volumes_;
   std::vector<MeshID> surfaces_;
+
+  //! Volumes to consider when performing operations on the mesh.
+  std::unordered_set<MeshID> included_volumes_;
 
   //! Block ID mapping from element IDs to contiguous index space
   IDBlockMapping<MeshID> volume_element_id_map_;

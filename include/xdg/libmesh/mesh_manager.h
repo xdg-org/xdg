@@ -3,6 +3,7 @@
 
 #include <map>
 #include <memory>
+#include <set>
 
 #include "xdg/constants.h"
 #include "xdg/element_face_accessor.h"
@@ -57,7 +58,7 @@ public:
 
   void load_file(const std::string& filepath) override;
 
-  void init() override;
+  void init(const std::unordered_set<MeshID> & to_include = std::unordered_set<MeshID>()) override;
 
   void parse_metadata() override;
 
@@ -150,20 +151,20 @@ public:
   struct SidePair {
     SidePair() = default;
 
-    SidePair(std::pair<const libMesh::Elem*, int> old_side) {
+    SidePair(std::pair<const libMesh::Elem*, int> old_side, bool exclude_neighbor) {
       side.first = old_side.first;
       side_num_ = old_side.second;
-      side.second = old_side.first->neighbor_ptr(side_num_);
+      side.second = exclude_neighbor ? nullptr : old_side.first->neighbor_ptr(side_num_);
       if (side.second != nullptr) {
         set_order();
         set_side_num();
       }
     }
 
-    SidePair(const libMesh::Elem* elem, int side_num) {
+    SidePair(const libMesh::Elem* elem, int side_num, bool exclude_neighbor) {
       side.first = elem;
       side_num_ = side_num;
-      side.second = elem->neighbor_ptr(side_num);
+      side.second = exclude_neighbor ? nullptr : elem->neighbor_ptr(side_num);
       if (side.second != nullptr) {
         set_order();
         set_side_num();
