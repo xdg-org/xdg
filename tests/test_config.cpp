@@ -51,3 +51,19 @@ TEST_CASE("Config set threads")
   xdg::XDGConfig::config().set_n_threads(4);
   REQUIRE(xdg::XDGConfig::config().n_threads() == 4);
 }
+
+TEST_CASE("Config throw on fatal error")
+{
+  xdg::XDGConfig::config().set_throw_on_fatal(true);
+  REQUIRE(xdg::XDGConfig::config().throw_on_fatal() == true);
+  xdg::XDGConfig::config().reset();
+  REQUIRE(xdg::XDGConfig::config().throw_on_fatal() == false);
+
+  // Check to make sure we actually throw on a fatal error.
+  xdg::XDGConfig::config().set_throw_on_fatal(true);
+  try {
+    fatal_error("Error!");
+  } catch (const std::exception & e) {
+    REQUIRE(e.what() == std::string("Error!"));
+  }
+}
