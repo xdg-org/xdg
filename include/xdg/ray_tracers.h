@@ -6,3 +6,7 @@
 #ifdef XDG_ENABLE_GPRT
 #include "xdg/gprt/ray_tracer.h"
 #endif
+
+#ifdef XDG_ENABLE_CUBQL
+#include "xdg/cuBQL/ray_tracer.h"
+#endif

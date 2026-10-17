@@ -1,0 +1,140 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "base",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "$env{PRESET_CXX_FLAGS} $env{LLVM_CXX_FLAGS} $env{COMMON_CXX_FLAGS}",
+        "XDG_CMAKE_PRESET": "${presetName}"
+      },
+      "environment": {
+        "COMMON_CXX_FLAGS": ""
+      }
+    },
+    {
+      "name": "llvm",
+      "inherits": [
+        "base"
+      ],
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      },
+      "environment": {
+        "LLVM_CXX_FLAGS": "-fopenmp"
+      }
+    },
+    {
+      "name": "cubql_llvm_ada",
+      "inherits": [
+        "llvm"
+      ],
+      "displayName": "cuBQL LLVM OpenMP offload RTX 2000 Ada",
+      "cacheVariables": {
+        "XDG_ENABLE_CUBQL": "ON",
+        "CMAKE_CUDA_COMPILER": "/usr/local/cuda-12.6/bin/nvcc",
+        "CMAKE_CUDA_ARCHITECTURES": "89"
+      },
+      "environment": {
+        "PRESET_CXX_FLAGS": "-fopenmp-cuda-mode -fopenmp-targets=nvptx64 -Xopenmp-target=nvptx64 -march=sm_89"
+      }
+    },
+    {
+      "name": "cubql_llvm_a100",
+      "inherits": [
+        "llvm"
+      ],
+      "displayName": "cuBQL LLVM OpenMP offload NVIDIA A100",
+      "cacheVariables": {
+        "XDG_ENABLE_CUBQL": "ON",
+        "CMAKE_CUDA_ARCHITECTURES": "80"
+      },
+      "environment": {
+        "PRESET_CXX_FLAGS": "-fopenmp-cuda-mode -fopenmp-targets=nvptx64 -Xopenmp-target=nvptx64 -march=sm_80"
+      }
+    },
+    {
+      "name": "cubql_llvm_mi300x",
+      "inherits": [
+        "llvm"
+      ],
+      "displayName": "cuBQL LLVM OpenMP offload AMD MI300X",
+      "cacheVariables": {
+        "XDG_ENABLE_CUBQL": "ON",
+        "CUBQL_USE_HIP": "ON",
+        "CMAKE_HIP_ARCHITECTURES": "gfx942",
+        "OpenMP_CXX_FLAGS": "-fopenmp",
+        "OpenMP_CXX_LIB_NAMES": "omp",
+        "OpenMP_omp_LIBRARY": "$env{LLVM_OPENMP_RUNTIME_DIR}/libomp.so"
+      },
+      "environment": {
+        "PRESET_CXX_FLAGS": "-fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx942"
+      }
+    },
+    {
+      "name": "cubql_llvm_mi355x",
+      "inherits": [
+        "llvm"
+      ],
+      "displayName": "cuBQL LLVM OpenMP offload AMD MI355X",
+      "cacheVariables": {
+        "XDG_ENABLE_CUBQL": "ON",
+        "CUBQL_USE_HIP": "ON",
+        "CMAKE_HIP_ARCHITECTURES": "gfx950",
+        "OpenMP_CXX_FLAGS": "-fopenmp",
+        "OpenMP_CXX_LIB_NAMES": "omp",
+        "OpenMP_omp_LIBRARY": "$env{LLVM_OPENMP_RUNTIME_DIR}/libomp.so"
+      },
+      "environment": {
+        "PRESET_CXX_FLAGS": "-fopenmp-targets=amdgcn-amd-amdhsa -Xopenmp-target=amdgcn-amd-amdhsa -march=gfx950"
+      }
+    },
+    {
+      "name": "nvhpc",
+      "inherits": [
+        "base"
+      ],
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "nvc",
+        "CMAKE_CXX_COMPILER": "nvc++"
+      }
+    },
+    {
+      "name": "cubql_nvhpc_ada",
+      "inherits": [
+        "nvhpc"
+      ],
+      "displayName": "cuBQL NVHPC OpenMP offload RTX 2000 Ada",
+      "cacheVariables": {
+        "XDG_ENABLE_CUBQL": "ON"
+      },
+      "environment": {
+        "PRESET_CXX_FLAGS": "-mp=gpu -Minfo=mp -gpu=cc89"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "cubql_llvm_ada",
+      "configurePreset": "cubql_llvm_ada"
+    },
+    {
+      "name": "cubql_llvm_a100",
+      "configurePreset": "cubql_llvm_a100"
+    },
+    {
+      "name": "cubql_llvm_mi300x",
+      "configurePreset": "cubql_llvm_mi300x"
+    },
+    {
+      "name": "cubql_nvhpc_ada",
+      "configurePreset": "cubql_nvhpc_ada"
+    },
+    {
+      "name": "cubql_llvm_mi355x",
+      "configurePreset": "cubql_llvm_mi355x"
+    }
+  ]
+}
