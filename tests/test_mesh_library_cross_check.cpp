@@ -86,6 +86,7 @@ TEST_CASE("Test Cross Check Transport across mesh Backends Jezebel")
   const auto test_fixtures = make_mesh_lib_cases({
     {MeshLibrary::MOAB, "jezebel.h5m"}, // MOAB passed first so it becomes the reference case
     {MeshLibrary::LIBMESH, "jezebel.exo"},
+    {MeshLibrary::MFEM, "jezebel.exo"},
   });
   if (test_fixtures.size() < 2) {
     SKIP("Fewer than two mesh backends are available; skipping cross-check.");
@@ -102,6 +103,7 @@ TEST_CASE("Test Cross Check Transport across mesh Backends cyl-brick")
   const auto test_fixtures = make_mesh_lib_cases({
     {MeshLibrary::MOAB, "cyl-brick.h5m"}, // MOAB passed first so it becomes the reference case
     {MeshLibrary::LIBMESH, "cyl-brick.exo"},
+    {MeshLibrary::MFEM, "cyl-brick.exo"},
   });
   if (test_fixtures.size() < 2) {
     SKIP("Fewer than two mesh backends are available; skipping cross-check.");
@@ -178,6 +180,73 @@ TEST_CASE("Test Mesh Backend Cross-Check Tallies -- Simple Cubes, Tet Mesh")
     for (size_t j = 0; j < moab_tracks.size(); j++) {
       REQUIRE(xdg_moab->mesh_manager()->element_index(moab_tracks[j].first) == xdg_libmesh->mesh_manager()->element_index(libmesh_tracks[j].first));
       REQUIRE_THAT(moab_tracks[j].second, Catch::Matchers::WithinAbs(libmesh_tracks[j].second, 1e-10));
+    }
+  }
+}
+
+TEST_CASE("Test Mesh Backend Cross-Check Tallies -- JEZEBEL")
+{
+  // Attempt to build all supported test fixtures, but skip the test if fewer than two are available
+  const auto test_fixtures = make_mesh_lib_cases({
+    {MeshLibrary::MOAB, "jezebel.h5m"}, // MOAB passed first so it becomes the reference case
+    {MeshLibrary::LIBMESH, "jezebel.exo"},
+    {MeshLibrary::MFEM, "jezebel.exo"},
+  });
+  if (test_fixtures.size() < 2) {
+    SKIP("Fewer than two mesh backends are available; skipping cross-check.");
+  }
+
+  const auto& xdg_ref = test_fixtures[0].xdg;
+  auto ref_bounding_box = xdg_ref->mesh_manager()->global_bounding_box();
+
+  // check that the global bounding box of the model and various model counts are the same
+  for (size_t f = 1; f < test_fixtures.size(); f++) {
+    const auto& xdg_other = test_fixtures[f].xdg;
+    CAPTURE(test_fixtures[0].label(), test_fixtures[f].label());
+
+    REQUIRE(xdg_ref->mesh_manager()->num_vertices() == xdg_other->mesh_manager()->num_vertices());
+    REQUIRE(xdg_ref->mesh_manager()->num_volume_elements() == xdg_other->mesh_manager()->num_volume_elements());
+    REQUIRE(xdg_ref->mesh_manager()->num_volumes() == xdg_other->mesh_manager()->num_volumes());
+
+    auto other_bounding_box = xdg_other->mesh_manager()->global_bounding_box();
+    REQUIRE_THAT(ref_bounding_box.min_x, Catch::Matchers::WithinAbs(other_bounding_box.min_x, 1e-6));
+    REQUIRE_THAT(ref_bounding_box.min_y, Catch::Matchers::WithinAbs(other_bounding_box.min_y, 1e-6));
+    REQUIRE_THAT(ref_bounding_box.min_z, Catch::Matchers::WithinAbs(other_bounding_box.min_z, 1e-6));
+    REQUIRE_THAT(ref_bounding_box.max_x, Catch::Matchers::WithinAbs(other_bounding_box.max_x, 1e-6));
+    REQUIRE_THAT(ref_bounding_box.max_y, Catch::Matchers::WithinAbs(other_bounding_box.max_y, 1e-6));
+    REQUIRE_THAT(ref_bounding_box.max_z, Catch::Matchers::WithinAbs(other_bounding_box.max_z, 1e-6));
+  }
+
+  // sample start and end locations within the bounding box of these models
+  int num_samples = 10000;
+  for (int i = 0; i < num_samples; i++) {
+    Position start = ref_bounding_box.sample_location();
+    Position end = ref_bounding_box.sample_location();
+
+    auto ref_element = xdg_ref->find_element(start);
+    auto ref_tracks = ref_element == ID_NONE ? decltype(xdg_ref->segments(start, end)){}
+                                             : xdg_ref->segments(start, end);
+
+    for (size_t f = 1; f < test_fixtures.size(); f++) {
+      const auto& xdg_other = test_fixtures[f].xdg;
+      CAPTURE(test_fixtures[0].label(), test_fixtures[f].label());
+
+      auto other_element = xdg_other->find_element(start);
+      if (ref_element == ID_NONE) {
+        REQUIRE(other_element == ID_NONE);
+        continue;
+      }
+      REQUIRE(other_element != ID_NONE);
+
+      // check element equivalence by index b/c IDs may be different depending on the library conventions
+      REQUIRE(xdg_ref->mesh_manager()->element_index(ref_element) == xdg_other->mesh_manager()->element_index(other_element));
+
+      auto other_tracks = xdg_other->segments(start, end);
+      REQUIRE(ref_tracks.size() == other_tracks.size());
+      for (size_t j = 0; j < ref_tracks.size(); j++) {
+        REQUIRE(xdg_ref->mesh_manager()->element_index(ref_tracks[j].first) == xdg_other->mesh_manager()->element_index(other_tracks[j].first));
+        REQUIRE_THAT(ref_tracks[j].second, Catch::Matchers::WithinAbs(other_tracks[j].second, 1e-10));
+      }
     }
   }
 }

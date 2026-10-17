@@ -1,6 +1,6 @@
 // Borrowed from MOAB
 #ifndef _XDG_MOABTAG_CONVENTIONS_H
-#define XDG_MOAB_TAG_CONVENTIONS_H
+#define _XDG_MOABTAG_CONVENTIONS_H
 
 namespace xdg {
 

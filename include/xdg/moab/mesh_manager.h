@@ -38,7 +38,7 @@ public:
   // Interface Methods
   MeshLibrary mesh_library() const override { return MeshLibrary::MOAB; }
 
-  void load_file(const std::string& filepath);
+  void load_file(const std::string& filepath) override;
 
   void init() override;
 
