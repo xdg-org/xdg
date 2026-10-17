@@ -1,6 +1,9 @@
 
 #include <iostream>
 #include <iomanip>
+#include <stdexcept>
+
+#include "xdg/config.h"
 
 void output(const std::string& message, std::ostream& out, int indent)
 {
@@ -40,6 +43,10 @@ void write_message(const std::string& message)
 
 [[noreturn]] void fatal_error(const std::string& message, int err)
 {
+  if (xdg::XDGConfig::config().throw_on_fatal()) {
+    throw std::runtime_error(message);
+  }
+
 #ifdef _POSIX_VERSION
   // Make output red if user is in a terminal
   if (isatty(STDERR_FILENO)) {
@@ -56,10 +63,6 @@ void write_message(const std::string& message)
   if (isatty(STDERR_FILENO)) {
     std::cerr << "\033[0m";
   }
-#endif
-
-#ifdef OPENMC_MPI
-  MPI_Abort(mpi::intracomm, err);
 #endif
 
   // Abort the program

@@ -39,6 +39,7 @@ public:
   void reset() {
     initialized_ = false;
     n_threads_ = -1;
+    throw_on_fatal_error_ = false;
     reset_libmesh_init();
   }
 
@@ -57,6 +58,10 @@ public:
   int n_threads() const { return n_threads_; }
 
   void set_n_threads(int n_threads);
+
+  bool throw_on_fatal() const { return throw_on_fatal_error_; }
+
+  void set_throw_on_fatal(bool throw_on_fatal_error);
 
   bool ray_tracer_enabled(RTLibrary rt_lib) const;
 
@@ -103,6 +108,7 @@ public:
 private:
   // Data members
   int n_threads_ {-1};
+  bool throw_on_fatal_error_ {false};
   bool initialized_ {false};
 };
 
