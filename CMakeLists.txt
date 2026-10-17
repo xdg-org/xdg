@@ -4,6 +4,7 @@ project(xdg C CXX)
 option(XDG_ENABLE_MOAB    "Enable support for the MOAB mesh library"          ON)
 option(XDG_ENABLE_MFEM    "Enable support for the MFEM mesh library"         OFF)
 option(XDG_ENABLE_LIBMESH "Enable support for the libMesh mesh library"      OFF)
+option(XDG_ENABLE_OMEGA_H "Enable support for the Omega_h mesh library"      OFF)
 option(XDG_LINK_MPI       "Link with MPI (for dependency compatibility)"     OFF)
 option(XDG_ENABLE_EMBREE  "Enable support for the Embree ray tracing library" ON)
 option(XDG_ENABLE_GPRT    "Enable support for the GPRT ray tracing library"  OFF)
@@ -43,6 +44,20 @@ if (NOT MOAB_USE_HDF5)
 endif()
 endif()
 
+#===============================================================================
+# Omega_h backend
+#===============================================================================
+if (XDG_ENABLE_OMEGA_H)
+  if (NOT OMEGA_H_INSTALL_PATH)
+    set(OMEGA_H_INSTALL_PATH "$ENV{OMEGA_H_INSTALL_PATH}")
+  endif()
+  message(STATUS "OMEGA_H_INSTALL_PATH=${OMEGA_H_INSTALL_PATH}")
+  find_package(Omega_h REQUIRED HINTS "${OMEGA_H_INSTALL_PATH}/lib/cmake/Omega_h")
+endif()
+
+#===============================================================================
+# Embree
+#===============================================================================
 if (XDG_ENABLE_EMBREE)
   # find Embree for CPU ray tracing
 
@@ -148,7 +163,6 @@ if (XDG_BUILD_TESTS)
   message(STATUS "Using Catch2 ${Catch2_VERSION} at ${Catch2_DIR}")
 endif()
 
-
 # fmt
 if (NOT fmt_FOUND)
   set(FMT_INSTALL OFF CACHE BOOL "Generate the fmt install target")
@@ -165,13 +179,13 @@ if(XDG_BUILD_TOOLS)
   add_subdirectory(${CMAKE_SOURCE_DIR}/vendor/indicators)
 endif()
 
-
 # Ensure at least one mesh backend is enabled
-if (NOT XDG_ENABLE_MOAB AND NOT XDG_ENABLE_LIBMESH)
+if (NOT XDG_ENABLE_MOAB AND NOT XDG_ENABLE_LIBMESH AND NOT XDG_ENABLE_OMEGA_H)
   message(FATAL_ERROR
     "No mesh backend enabled. Enable at least one of:\n"
     "  -DXDG_ENABLE_MOAB=ON\n"
-    "  -DXDG_ENABLE_LIBMESH=ON")
+    "  -DXDG_ENABLE_LIBMESH=ON\n"
+    "  -DXDG_ENABLE_OMEGA_H=ON")
 endif()
 
 # Ensure at least one ray tracing backend is enabled
@@ -239,6 +253,12 @@ src/moab/direct_access.cpp
 src/moab/metadata.cpp
 )
 endif()
+
+if (XDG_ENABLE_OMEGA_H)
+  list(APPEND xdg_sources
+  src/omega_h/mesh_manager.cpp
+  )
+endif ()
 
 #===============================================================================
 # RPATH information (from OpenMC)
@@ -318,6 +338,12 @@ if (XDG_ENABLE_EMBREE)
   target_compile_definitions(xdg PUBLIC XDG_ENABLE_EMBREE)
 endif()
 
+
+if (XDG_ENABLE_OMEGA_H)
+  target_compile_definitions(xdg PUBLIC XDG_ENABLE_OMEGA_H)
+endif()
+
+
 if (XDG_ENABLE_GPRT)
   target_compile_definitions(xdg PUBLIC XDG_ENABLE_GPRT)
   target_link_options(xdg PRIVATE -Wl,--unresolved-symbols=ignore-in-shared-libs)
@@ -357,6 +383,11 @@ endif()
 if(XDG_ENABLE_LIBMESH)
   target_link_libraries(xdg PRIVATE PkgConfig::LIBMESH)
 endif()
+
+if(XDG_ENABLE_OMEGA_H)
+  target_link_libraries(xdg PRIVATE Omega_h::omega_h)
+endif()
+
 
 # this provides the ability to link MPI when needed for compatibility with other
 # libraries (e.g., libMesh)
