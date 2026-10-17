@@ -1,14 +1,17 @@
 #include <array>
 
+#include "xdg/embree/triangle_callbacks.h"
+
 #include "xdg/constants.h"
-#include "xdg/embree_interface.h"
+#include "xdg/embree/embree_interface.h"
 #include "xdg/geometry/closest.h"
 #include "xdg/primitive_ref.h"
 #include "xdg/geometry_data.h"
+#include "xdg/mesh_manager_interface.h"
 #include "xdg/geometry/face_common.h"
 #include "xdg/geometry/plucker.h"
-#include "xdg/intersect_common.h"
-#include "xdg/ray.h"
+#include "xdg/embree/intersect_common.h"
+#include "xdg/embree/ray.h"
 
 namespace xdg
 {

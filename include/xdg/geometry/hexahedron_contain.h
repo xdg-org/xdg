@@ -1,13 +1,9 @@
-#ifndef XDG_HEXAHEDRON_CONTAIN_H
-#define XDG_HEXAHEDRON_CONTAIN_H
+#ifndef XDG_GEOMETRY_HEXAHEDRON_CONTAIN_H
+#define XDG_GEOMETRY_HEXAHEDRON_CONTAIN_H
 
 #include <array>
 
 #include "xdg/vec3da.h"
-
-// Forward declarations for Embree callback argument types
-struct RTCIntersectFunctionNArguments;
-struct RTCOccludedFunctionNArguments;
 
 namespace xdg {
 
@@ -22,10 +18,6 @@ namespace xdg {
  */
 bool hex_containment_test(const Position& point,
                           const std::array<Vertex, 8>& verts);
-
-// Embree call back functions for element search
-void HexahedronIntersectionFunc(RTCIntersectFunctionNArguments* args);
-void HexahedronOcclusionFunc(RTCOccludedFunctionNArguments* args);
 
 } // namespace xdg
 

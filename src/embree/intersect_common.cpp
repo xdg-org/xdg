@@ -1,7 +1,7 @@
 
 #include <algorithm>
 
-#include "xdg/intersect_common.h"
+#include "xdg/embree/intersect_common.h"
 
 namespace xdg {
 

@@ -2,7 +2,7 @@
 #define XDG_INTERSECT_COMMON_H
 
 #include "xdg/shared_enums.h"
-#include "xdg/ray.h"
+#include "xdg/embree/ray.h"
 
 namespace xdg {
 

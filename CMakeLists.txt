@@ -192,16 +192,12 @@ list(APPEND xdg_sources
 src/geometry/measure.cpp
 src/geometry/plucker.cpp
 src/geometry/closest.cpp
-src/bounding_functions.cpp
+src/geometry/tetrahedron_contain.cpp
+src/geometry/hexahedron_contain.cpp
 src/error.cpp
-src/intersect_common.cpp
 src/mesh_manager_interface.cpp
 src/ray_tracing_interface.cpp
-src/triangle_intersect.cpp
-src/quadrilateral_intersection.cpp
 src/util/str_utils.cpp
-src/tetrahedron_contain.cpp
-src/hexahedron_contain.cpp
 src/config.cpp
 src/xdg.cpp
 src/element_face_accessor.cpp
@@ -211,6 +207,12 @@ src/xdg.cpp
 
 if (XDG_ENABLE_EMBREE)
 list(APPEND xdg_sources
+src/embree/bounding_functions.cpp
+src/embree/intersect_common.cpp
+src/embree/triangle_callbacks.cpp
+src/embree/quadrilateral_callbacks.cpp
+src/embree/tetrahedron_callbacks.cpp
+src/embree/hexahedron_callbacks.cpp
 src/embree/ray_tracer.cpp
 )
 endif()

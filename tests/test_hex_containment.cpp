@@ -4,7 +4,7 @@
 // testing includes
 #include <catch2/catch_test_macros.hpp>
 
-#include "xdg/hexahedron_contain.h"
+#include "xdg/geometry/hexahedron_contain.h"
 #include "xdg/vec3da.h"
 
 using namespace xdg;

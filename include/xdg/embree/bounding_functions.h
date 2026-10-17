@@ -2,7 +2,7 @@
 #ifndef XDG_BOUNDS_FUNCTIONS_H
 #define XDG_BOUNDS_FUNCTIONS_H
 
-#include "xdg/embree_interface.h"
+#include "xdg/embree/embree_interface.h"
 #include "xdg/vec3da.h"
 
 namespace xdg
