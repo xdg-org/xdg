@@ -87,8 +87,8 @@ void XDGConfig::set_n_threads(int n_threads) {
   n_threads_ = std::max(n_threads, 1);
 }
 
-void XDGConfig::set_throw_on_fatal(bool throw_on_fatal_error) {
-  throw_on_fatal_error_ = throw_on_fatal_error;
+void XDGConfig::set_fatal_error_handling(FatalErrorSetting fatal_error_handling) {
+  fatal_error_handling_ = fatal_error_handling;
 }
 
 #ifdef XDG_ENABLE_LIBMESH
