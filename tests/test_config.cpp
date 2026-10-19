@@ -54,20 +54,20 @@ TEST_CASE("Config set threads")
 
 TEST_CASE("Config throw on fatal error")
 {
-  xdg::XDGConfig::config().set_fatal_error_handling(xdg::FatalErrorSetting::THROW);
-  REQUIRE(xdg::XDGConfig::config().fatal_error_handling() == xdg::FatalErrorSetting::THROW);
-  xdg::XDGConfig::config().set_fatal_error_handling(xdg::FatalErrorSetting::EXIT);
-  REQUIRE(xdg::XDGConfig::config().fatal_error_handling() == xdg::FatalErrorSetting::EXIT);
-  xdg::XDGConfig::config().set_fatal_error_handling(xdg::FatalErrorSetting::NONE);
-  REQUIRE(xdg::XDGConfig::config().fatal_error_handling() == xdg::FatalErrorSetting::NONE);
+  xdg::XDGConfig::config().set_fatal_error_handling(xdg::ErrorPolicy::THROW);
+  REQUIRE(xdg::XDGConfig::config().fatal_error_handling() == xdg::ErrorPolicy::THROW);
+  xdg::XDGConfig::config().set_fatal_error_handling(xdg::ErrorPolicy::EXIT);
+  REQUIRE(xdg::XDGConfig::config().fatal_error_handling() == xdg::ErrorPolicy::EXIT);
+  xdg::XDGConfig::config().set_fatal_error_handling(xdg::ErrorPolicy::NONE);
+  REQUIRE(xdg::XDGConfig::config().fatal_error_handling() == xdg::ErrorPolicy::NONE);
   xdg::XDGConfig::config().reset();
-  REQUIRE(xdg::XDGConfig::config().fatal_error_handling() == xdg::FatalErrorSetting::EXIT);
+  REQUIRE(xdg::XDGConfig::config().fatal_error_handling() == xdg::ErrorPolicy::EXIT);
 
   // Check to make sure we throw on a fatal error.
-  xdg::XDGConfig::config().set_fatal_error_handling(xdg::FatalErrorSetting::THROW);
+  xdg::XDGConfig::config().set_fatal_error_handling(xdg::ErrorPolicy::THROW);
   REQUIRE_THROWS_AS(fatal_error("Error!"), std::runtime_error);
 
   // Check to make sure we do nothing.
-  xdg::XDGConfig::config().set_fatal_error_handling(xdg::FatalErrorSetting::NONE);
+  xdg::XDGConfig::config().set_fatal_error_handling(xdg::ErrorPolicy::NONE);
   fatal_error("Error!");
 }

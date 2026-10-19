@@ -87,7 +87,7 @@ void XDGConfig::set_n_threads(int n_threads) {
   n_threads_ = std::max(n_threads, 1);
 }
 
-void XDGConfig::set_fatal_error_handling(FatalErrorSetting fatal_error_handling) {
+void XDGConfig::set_fatal_error_handling(ErrorPolicy fatal_error_handling) {
   fatal_error_handling_ = fatal_error_handling;
 }
 

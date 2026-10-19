@@ -39,7 +39,7 @@ public:
   void reset() {
     initialized_ = false;
     n_threads_ = -1;
-    fatal_error_handling_ = FatalErrorSetting::EXIT;
+    fatal_error_handling_ = ErrorPolicy::EXIT;
     reset_libmesh_init();
   }
 
@@ -59,9 +59,9 @@ public:
 
   void set_n_threads(int n_threads);
 
-  FatalErrorSetting fatal_error_handling() const { return fatal_error_handling_; }
+  ErrorPolicy fatal_error_handling() const { return fatal_error_handling_; }
 
-  void set_fatal_error_handling(FatalErrorSetting fatal_error_handling);
+  void set_fatal_error_handling(ErrorPolicy fatal_error_handling);
 
   bool ray_tracer_enabled(RTLibrary rt_lib) const;
 
@@ -108,7 +108,7 @@ public:
 private:
   // Data members
   int n_threads_ {-1};
-  FatalErrorSetting fatal_error_handling_ {FatalErrorSetting::EXIT};
+  ErrorPolicy fatal_error_handling_ {ErrorPolicy::EXIT};
   bool initialized_ {false};
 };
 

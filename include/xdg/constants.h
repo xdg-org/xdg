@@ -32,7 +32,7 @@ constexpr double PLUCKER_ZERO_TOL {20 * std::numeric_limits<double>::epsilon()};
 constexpr double TINY_BIT {1e-10};
 
 // How fatal errors should be handled
-enum class FatalErrorSetting {
+enum class ErrorPolicy {
   EXIT  = 0,
   THROW = 1,
   NONE  = 2

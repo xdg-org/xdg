@@ -44,7 +44,7 @@ void write_message(const std::string& message)
 void fatal_error(const std::string& message, int err)
 {
   switch (xdg::XDGConfig::config().fatal_error_handling()) {
-    case xdg::FatalErrorSetting::EXIT:
+    case xdg::ErrorPolicy::EXIT:
     {
 #ifdef _POSIX_VERSION
       // Make output red if user is in a terminal
@@ -65,12 +65,12 @@ void fatal_error(const std::string& message, int err)
       std::exit(err);
       break;
     }
-    case xdg::FatalErrorSetting::THROW:
+    case xdg::ErrorPolicy::THROW:
     {
       throw std::runtime_error(message);
       break;
     }
-    case xdg::FatalErrorSetting::NONE:
+    case xdg::ErrorPolicy::NONE:
     default:
       break;
   }
