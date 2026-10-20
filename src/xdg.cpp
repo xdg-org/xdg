@@ -74,6 +74,7 @@ std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib
     msg += " LIBMESH";
     #endif
     fatal_error(msg);
+    return nullptr;
   };
 
   // Ray tracer factory dispatch
@@ -94,6 +95,7 @@ std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib
     msg += " GPRT";
     #endif
     fatal_error(msg);
+    return nullptr;
   };
 
   xdg->set_mesh_manager_interface(mesh_factory());

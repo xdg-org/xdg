@@ -16,7 +16,7 @@ void write_message(fmt::format_string<Args...> fstring, Args&&... args)
   write_message(fmt::format(fstring, std::forward<Args>(args)...));
 }
 
-[[noreturn]] void fatal_error(const std::string& message);
+void fatal_error(const std::string& message, int err=-1);
 
 void warning(const std::string& message);
 

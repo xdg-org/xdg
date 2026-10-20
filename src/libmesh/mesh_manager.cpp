@@ -102,7 +102,6 @@ void LibMeshManager::check_face_and_element_types() const {
         fatal_error("Surface {} has mixed face types, which is not supported. Face ID {} has type {}, expected type {}.",
                     surface, face, SURFACE_FACE_TYPE_TO_STR.at(type_to_check), SURFACE_FACE_TYPE_TO_STR.at(type));
       }
-
     }
   }
 
@@ -126,6 +125,33 @@ void LibMeshManager::check_face_and_element_types() const {
         fatal_error("Volume {} has mixed element types, which is not supported. Element ID {} has type {}, expected type {}.",
                     volume, element, VOLUME_ELEMENT_TYPE_TO_STR.at(elem_type), VOLUME_ELEMENT_TYPE_TO_STR.at(type));
       }
+    }
+
+    // Check to make sure its a supported element type.
+    if (type == VolumeElementType::UNSUPPORTED || type == VolumeElementType::UNKNOWN) {
+      fatal_error("Volume {} contains unsupported element types. Please ensure your mesh is "
+                  "composed of linear tetrahedral or hexahedral elements.",
+                  volume);
+    }
+  }
+
+  for (auto surface : surfaces_) {
+    const auto& faces = surface_map_.at(surface);
+    if (faces.empty()) {
+      fatal_error("Surface {} has no faces, which is not supported", surface);
+    }
+
+    // get the type of the first face
+    SurfaceFaceType type = face_type(faces[0]);
+
+    // check that all other faces are the same type
+    for (const auto face : faces) {
+      const auto type_to_check = face_type(face);
+      if (type_to_check != type) {
+        fatal_error("Surface {} has mixed face types, which is not supported. Face ID {} has type {}, expected type {}.",
+                    surface, face, type_to_check, type);
+      }
+
     }
   }
 }

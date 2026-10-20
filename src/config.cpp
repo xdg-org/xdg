@@ -70,7 +70,7 @@ void XDGConfig::initialize() {
   std::atexit(cleanup_libmesh_at_exit);
 #endif
 
-initialized_ = true;
+  initialized_ = true;
 }
 
 void XDGConfig::set_n_threads(int n_threads) {
@@ -85,6 +85,10 @@ void XDGConfig::set_n_threads(int n_threads) {
   #endif
 
   n_threads_ = std::max(n_threads, 1);
+}
+
+void XDGConfig::set_fatal_error_handling(ErrorPolicy fatal_error_handling) {
+  fatal_error_handling_ = fatal_error_handling;
 }
 
 #ifdef XDG_ENABLE_LIBMESH

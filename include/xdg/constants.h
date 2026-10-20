@@ -29,6 +29,13 @@ constexpr double PLUCKER_ZERO_TOL {20 * std::numeric_limits<double>::epsilon()};
 
 constexpr double TINY_BIT {1e-10};
 
+// How fatal errors should be handled
+enum class ErrorPolicy {
+  EXIT  = 0,
+  THROW = 1,
+  NONE  = 2
+};
+
 // Whether information pertains to a surface or volume
 enum class GeometryType {
  SURFACE = 2,
