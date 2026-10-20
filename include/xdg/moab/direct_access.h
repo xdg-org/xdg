@@ -77,6 +77,7 @@ public:
       return to_mesh_ids(face_data.get_connectivity_indices<4>(face));
     }
     fatal_error(fmt::format("Unsupported face stride {0} for connectivity", face_data.element_stride));
+    return {};
   }
 
   //! \brief Get the coordinates of a face as XDG Vertices
@@ -106,6 +107,7 @@ public:
       return to_mesh_ids(element_data.get_connectivity_indices<8>(element));
     }
     fatal_error(fmt::format("Unsupported element stride {} for connectivity", element_data.element_stride));
+    return {};
   }
 
   template <size_t N>
@@ -132,6 +134,7 @@ public:
       return to_vertices(element_data.get_connectivity_indices<8>(element));
     }
     fatal_error(fmt::format("Unsupported element stride {} for coordinates", element_data.element_stride));
+    return {};
   }
 
   //! \brief Get the adjacent element
