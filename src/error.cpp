@@ -7,8 +7,6 @@
 
 #include "xdg/error.h"
 
-#include "xdg/error.h"
-
 void output(const std::string& message, std::ostream& out, int indent)
 {
   // Set line wrapping and indentation
