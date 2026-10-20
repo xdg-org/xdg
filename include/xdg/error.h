@@ -27,7 +27,7 @@ void warning(fmt::format_string<Args...> fstring, Args&&... args)
 }
 
 template<typename... Args>
-[[noreturn]] void fatal_error(fmt::format_string<Args...> fstring, Args&&... args)
+void fatal_error(fmt::format_string<Args...> fstring, Args&&... args)
 {
   fatal_error(fmt::format(fstring, std::forward<Args>(args)...));
 }
