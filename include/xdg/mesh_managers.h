@@ -6,3 +6,7 @@
 #ifdef XDG_ENABLE_LIBMESH
 #include "xdg/libmesh/mesh_manager.h"
 #endif
+
+#ifdef XDG_ENABLE_OMEGA_H
+#include "xdg/omega_h/mesh_manager.h"
+#endif
