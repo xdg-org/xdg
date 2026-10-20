@@ -16,6 +16,9 @@ public:
 
   MfemMeshManager() {};
 
+  //! Construct from an existing MFEM mesh, taking ownership of it
+  explicit MfemMeshManager(std::unique_ptr<mfem::Mesh> mesh) : mesh_(std::move(mesh)) {};
+
   ~MfemMeshManager() override = default;
 
   // Backend methods
@@ -65,7 +68,7 @@ public:
   }
 
   int num_surface_faces(MeshID surface) const override {
-    return sideset_to_element_map_.at(surface).size();
+    return surface_map_.at(surface).size();
   }
 
   // get all of the elements in this volume
@@ -90,13 +93,9 @@ public:
   // The table works wonders for this
   virtual MeshID adjacent_element(MeshID element, int face) const override;
 
-  virtual MeshID get_boundary_face_element(MeshID face) const override {
-    fatal_error("MfemMeshManager::get_boundary_face_element() not implemented yet");
-  }
+  virtual MeshID get_boundary_face_element(MeshID face) const override;
 
-  virtual Sense surface_sense(MeshID surface, MeshID volume) const override {
-    fatal_error("MfemMeshManager::surface_sense() not implemented yet");
-  }
+  virtual Sense surface_sense(MeshID surface, MeshID volume) const override;
 
   virtual int num_vertices() const override {
     return mesh_->GetNV();
@@ -114,7 +113,9 @@ public:
   }
 
   virtual std::vector<MeshID> element_connectivity(MeshID element) const override {
-    fatal_error("MfemMeshManager::element_connectivity() not implemented yet");
+    mfem::Array<int> index_array;
+    mesh_->GetElementVertices(element, index_array);
+    return std::vector<MeshID>(index_array.GetData(), index_array.GetData() + index_array.Size());
   }
 
   virtual std::vector<MeshID> face_connectivity(MeshID face) const override {
@@ -132,8 +133,24 @@ public:
 
   void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override;
 
-  // This will be largely a copy of the libmesh version
+  // Find every MFEM face that separates two different volumes (or a volume
+  // and the exterior of the mesh), grouped by the pair of volumes it separates
+  void discover_surface_elements();
+
+  // Sort the faces of each boundary attribute by the interface they lie on
+  void map_sidesets_to_discovered_interfaces();
+
+  // Create surfaces from the boundary attributes, then from any interface
+  // faces that no boundary attribute covers
+  void create_surfaces_from_sidesets_and_interfaces();
+
+  // Orient every surface face so its normal points out of the surface's
+  // forward volume
   void determine_surface_senses();
+
+  //! Volumes on either side of an MFEM face: {attr(Elem1), attr(Elem2)}, or
+  //! {attr(Elem1), ID_NONE} if the face is on the exterior of the mesh
+  std::pair<MeshID, MeshID> face_volumes(int face) const;
 
   // Metadata methods
   void parse_metadata() override;
@@ -150,13 +167,28 @@ private:
   // For each volume of the mesh, keep a set of the interior element IDs
   std::map<int, std::set<int>> volume_to_element_map_;
   
-  // For each sideset of the mesh, keep a set of the boundary element IDs
-  // This the libmesh equivalent of surface_map_
-  std::map<int, std::set<int>> sideset_to_element_map_;
+  using InterfacePair = std::pair<MeshID, MeshID>;
 
-  // map to keep track of each sideset held by a particular
-  // volume
-  std::map<int, std::set<int>> volumes_to_sidesets_;
+  //! MFEM faces separating each pair of volumes, keyed by {lower volume ID,
+  //! higher volume ID}, or {volume ID, ID_NONE} on the exterior of the mesh
+  std::map<InterfacePair, std::vector<int>> interface_faces_;
+
+  //! For each boundary attribute, its faces grouped by the interface they lie on.
+  //! Boundary elements internal to a single volume are not included
+  std::map<int, std::map<InterfacePair, std::vector<int>>> sideset_interface_faces_;
+
+  //! Surfaces created from each boundary attribute. A boundary attribute
+  //! spanning more than one interface is split into one surface per interface
+  std::map<int, std::vector<MeshID>> sideset_surface_map_;
+
+  //! MFEM face indices making up each surface. Face IDs handed out by this
+  //! class are MFEM face indices
+  std::map<MeshID, std::vector<MeshID>> surface_map_;
+
+  //! True for faces whose vertex order is reversed relative to MFEM's, so that
+  //! their normal points out of the forward volume of their surface rather
+  //! than out of Elem1
+  std::vector<bool> face_reversed_;
 
   // set to capture all of the valid volumes/attributes
   // It's a set (not vector) to prevent double counting
@@ -168,13 +200,9 @@ private:
   // implicit complement as well...
   std::set<int> attributes_;
 
-  // Offset added to boundary element indices to form face IDs: [0, offset) are MFEM faces,
-  // [offset, offset + NBE) are boundary elements
-  int bdr_face_id_offset_;
-
   //! Mapping of surfaces to the volumes on either side. Volumes are ordered
-  //! based on their sense with respect to the surface triangles. We reuse
-  //! whichever ordering mfem decides on when the mesh is constructed.
+  //! based on their sense with respect to the surface faces: face normals
+  //! point out of the first volume and into the second.
   std::unordered_map<MeshID, std::pair<MeshID, MeshID>> surface_senses_;
 };
 
@@ -258,8 +286,9 @@ struct MfemMeshElementFaceAccessor : public ElementFaceAccessor {
 
     if ( face_el_tx->Elem2No == element_ )
       // This element is NOT the one that the normal vector points out of.
-      // switch two of the vertices around to make sure the cross product is good.
-      std::swap( output[0], output[1] );
+      // Reverse the winding (keeping the first vertex) so the normal flips.
+      // Swapping two vertices would turn a quad into a bow-tie.
+      std::reverse( output.begin() + 1, output.end() );
 
     return output;
   }

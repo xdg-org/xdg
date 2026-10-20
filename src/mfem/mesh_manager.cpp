@@ -4,6 +4,18 @@
 #include "xdg/util/str_utils.h"
 
 namespace xdg {
+
+namespace {
+// Key for the interface between two volumes: {lower volume, higher volume}, so
+// a face is grouped the same way regardless of which of its elements MFEM
+// calls Elem1. Exterior faces are keyed by {volume, ID_NONE} so the real
+// volume is always the forward sense.
+std::pair<MeshID, MeshID> interface_pair(MeshID vol1, MeshID vol2) {
+  if (vol2 == ID_NONE) return {vol1, ID_NONE};
+  return {std::min(vol1, vol2), std::max(vol1, vol2)};
+}
+} // namespace
+
 void MfemMeshManager::load_file(const std::string &filepath) {
   mesh_ = std::make_unique<mfem::Mesh>(filepath.c_str(), 1, 1);
 }
@@ -41,45 +53,21 @@ void MfemMeshManager::init() {
   // Finish the BlockMapping for volume elements
   volume_element_id_map_ = IDBlockMapping<MeshID>(volume_element_ids);
 
-  // create a set for capturing all of the sideset IDs
-  // without repeats
-  std::set<int> sideset_ids;
-
-  // same for boundary attributes
-  for (int i=0; i<mesh_->GetNBE(); i++) {
-    int sideset = mesh_->GetBdrAttribute(i);
-
-    sideset_to_element_map_[sideset].insert(i);
-
-    // We also want to count the number of sidesets that each volume has.
-    // So, while we are looping over each boundary element, we look at
-    // which sideset it's a member of. We then look at
-    // its immediate neighbour on the interior of the mesh. We query
-    // this neighbour for which volume it's a member of, and register
-    // this sideset as a member of that volume.
-    int elem_no, info;
-    mesh_->GetBdrElementAdjacentElement(i, elem_no, info);
-
-    int volume = mesh_->GetAttribute(elem_no);
-    volumes_to_sidesets_[volume].insert(sideset);
-
-    // we want to populate the surfaces_ array from the base class
-    sideset_ids.insert(sideset);
-  }
-  
   // We've read in the mesh and counted all the attributes, i.e. a unique
   // list of all the attributes we've seen. Let's copy the contents of
   // attributes_ into volumes_, so the base class has access to the list
   // of volume IDs
   std::copy(attributes_.begin(), attributes_.end(), std::back_inserter(volumes_));
 
-  // ditto for surfaces
-  std::copy(sideset_ids.begin(), sideset_ids.end(), std::back_inserter(surfaces_));
+  // search for any implicit surfaces (faces that are the boundary between two
+  // attributes/volumes)
+  discover_surface_elements();
 
-  // This mesh manager class is designed so that [0, mesh_->GetNumFaces()) denotes
-  // internal element faces, and all indices beyond this range denote external
-  // element faces.
-  bdr_face_id_offset_ = mesh_->GetNumFaces();
+  // map boundary attributes to discovered interfaces
+  map_sidesets_to_discovered_interfaces();
+
+  // create surfaces from boundary attributes and interfaces
+  create_surfaces_from_sidesets_and_interfaces();
 
   determine_surface_senses();
 
@@ -132,49 +120,41 @@ std::vector<MeshID> MfemMeshManager::get_volume_surfaces(MeshID volume) const {
 }
 
 std::vector<MeshID> MfemMeshManager::get_surface_faces(MeshID surface) const {
-  // get the set associated with this surface
-  const std::set<int>& boundary_faces = sideset_to_element_map_.at(surface);
+  return surface_map_.at(surface);
+}
 
-  // copy it into a vector
-  std::vector<int> output(boundary_faces.begin(), boundary_faces.end());
+std::vector<MeshID> MfemMeshManager::face_vertices(MeshID face) const {
+  mfem::Array<int> index_array;
 
-  // We want [0->mesh_->GetNumFaces() ) to represent mesh faces.
-  // and we want [ mesh_->GetNumFaces(), mesh_->GetNumFaces() + mesh_->GetNBE() )
-  // to represent the boundary faces.
-  // When we query the face vertices later, we need to take this
-  // mapping into account. All we do here is increase the MeshIDs by
-  // bdr_face_id_offset_ to effect this mapping
-  std::transform( output.begin(), output.end(), output.begin(), [&](int in){ return in + bdr_face_id_offset_; } );
+  // index_array gets populated with the indices of the vertices itself
+  mesh_->GetFaceVertices(face, index_array);
+
+  // copy these indices into std::vector and return it
+  std::vector<MeshID> output( index_array.GetData(), index_array.GetData() + index_array.Size() );
+
+  // MFEM orders face vertices so that the normal points out of Elem1. Reverse
+  // the winding of faces whose forward volume is on the Elem2 side. Keeping
+  // the first vertex in place keeps quads valid (no bow-ties)
+  if (face_reversed_[face]) std::reverse(output.begin() + 1, output.end());
 
   return output;
 }
 
-std::vector<MeshID> MfemMeshManager::face_vertices(MeshID element) const {
-  mfem::Array<int> index_array;
-  
-  if (element >= bdr_face_id_offset_) {
-    // we are actually talking about a boundary element here. this is
-    // us taking the mapping into account. see comments at the end of
-    // get_surfaces_faces
-    MeshID bdr_element = element - bdr_face_id_offset_;
-    mesh_->GetBdrElementVertices(bdr_element, index_array);
-
-    // mfem::Element* bdr_el = mesh_->GetBdrElement(bdr_element);
-    // int* vertices = bdr_el->GetVertices();
-  }
-
-  else {
-    // index_array gets populated with the indices of the vertices itself
-    mesh_->GetFaceVertices(element, index_array);
-  }
-
-  // copy these indices into std::vector and return it
-  std::vector<MeshID> output( index_array.GetData(), index_array.GetData() + index_array.Size() );
-  return output;
+MeshID MfemMeshManager::get_boundary_face_element(MeshID face) const {
+  int e1, e2;
+  mesh_->GetFaceElements(face, &e1, &e2);
+  // the element the face normal points out of
+  MeshID element = face_reversed_[face] ? e2 : e1;
+  return element >= 0 ? element : ID_NONE;
 }
 
 std::pair<int, int> MfemMeshManager::surface_senses(MeshID surface) const {
   return surface_senses_.at(surface);
+}
+
+Sense MfemMeshManager::surface_sense(MeshID surface, MeshID volume) const {
+  auto senses = surface_senses(surface);
+  return volume == senses.first ? Sense::FORWARD : Sense::REVERSE;
 }
 
 std::vector<Vertex> MfemMeshManager::element_vertices(MeshID element) const {
@@ -240,33 +220,121 @@ MeshID MfemMeshManager::adjacent_element(MeshID element, int face) const {
   fatal_error("Shouldn't reach this far!");
 }
 
-void MfemMeshManager::determine_surface_senses() {
-  // volumes either side of a boundary element: {attr(Elem1), attr(Elem2)}, or
-  // {attr(Elem1), ID_NONE} if the face is on the true boundary of the mesh
-  auto bdr_element_volumes = [this](int bdr_element) -> std::pair<MeshID, MeshID> {
-    int e1, e2;
-    mesh_->GetFaceElements(mesh_->GetBdrElementFaceIndex(bdr_element), &e1, &e2);
-    return {mesh_->GetAttribute(e1), e2 >= 0 ? mesh_->GetAttribute(e2) : ID_NONE};
-  };
+std::pair<MeshID, MeshID> MfemMeshManager::face_volumes(int face) const {
+  // TODO: This won't work with ParMesh, where Elem2No < 0 can also mean the
+  // neighbour lives on another rank
+  int e1, e2;
+  mesh_->GetFaceElements(face, &e1, &e2);
+  return {mesh_->GetAttribute(e1), e2 >= 0 ? mesh_->GetAttribute(e2) : ID_NONE};
+}
 
-  for (auto &[surface_id, surface_faces] : sideset_to_element_map_) {
-    if (surface_faces.size() == 0) continue;
+void MfemMeshManager::discover_surface_elements() {
+  // MFEM numbers every face of the mesh, so we can walk them directly and keep
+  // any face whose elements belong to different volumes.
+  interface_faces_.clear();
+  for (int face = 0; face < mesh_->GetNumFaces(); face++) {
+    auto [vol1, vol2] = face_volumes(face);
+    if (vol1 == vol2) continue;
+    InterfacePair pair = interface_pair(vol1, vol2);
+    interface_faces_[pair].push_back(face);
+  }
+}
 
-    const auto senses = bdr_element_volumes(*surface_faces.begin());
+void MfemMeshManager::map_sidesets_to_discovered_interfaces() {
+  // Every boundary element is a face of the mesh, so it is always represented
+  // in the discovered interfaces unless it is internal to a single volume, in
+  // which case it doesn't separate anything and is ignored (as it is for
+  // libMesh).
+  sideset_interface_faces_.clear();
+  std::unordered_map<int, int> face_to_sideset;
+  for (int bdr_element = 0; bdr_element < mesh_->GetNBE(); bdr_element++) {
+    const int sideset = mesh_->GetBdrAttribute(bdr_element);
+    const int face = mesh_->GetBdrElementFaceIndex(bdr_element);
 
-    // a single sense pair can only describe the surface if every face in the
-    // boundary attribute separates the same two volumes (in either order)
-    const std::pair<MeshID, MeshID> flipped {senses.second, senses.first};
-    for (int bdr_element : surface_faces) {
-      const auto volumes = bdr_element_volumes(bdr_element);
-      if (volumes != senses && volumes != flipped) {
-        fatal_error("Boundary attribute {} separates more than one pair of volumes "
-                    "(({}, {}) and ({}, {})), which the MFEM mesh manager does not yet support",
-                    surface_id, senses.first, senses.second, volumes.first, volumes.second);
+    auto [vol1, vol2] = face_volumes(face);
+    if (vol1 == vol2) continue;
+
+    // a face can only belong to one surface
+    auto [it, inserted] = face_to_sideset.emplace(face, sideset);
+    if (!inserted) {
+      if (it->second != sideset) {
+        fatal_error("Face {} belongs to boundary attributes {} and {}, which the MFEM "
+                    "mesh manager does not support", face, it->second, sideset);
       }
+      continue; // duplicate boundary element on the same face
     }
 
-    surface_senses_[surface_id] = senses;
+    InterfacePair pair = interface_pair(vol1, vol2);
+    sideset_interface_faces_[sideset][pair].push_back(face);
+  }
+}
+
+void MfemMeshManager::create_surfaces_from_sidesets_and_interfaces() {
+  // Mirrors LibMeshManager::create_surfaces_from_sidesets_and_interfaces:
+  // 1. each boundary attribute becomes one surface per interface it lies on.
+  //    If it only lies on one interface the boundary attribute ID is reused as
+  //    the surface ID, otherwise new surface IDs are assigned.
+  // 2. faces of each interface that no boundary attribute covers become a new
+  //    surface with a new surface ID.
+  surfaces_.clear();
+  surface_map_.clear();
+  surface_senses_.clear();
+  sideset_surface_map_.clear();
+
+  // boundary attribute IDs are reserved so implicit surfaces never take them
+  std::set<MeshID> used_surface_ids;
+  for (int i = 0; i < mesh_->bdr_attributes.Size(); i++) {
+    used_surface_ids.insert(mesh_->bdr_attributes[i]);
+  }
+
+  MeshID next_surface_id = 1;
+  auto next_available_surface_id = [&]() {
+    while (used_surface_ids.count(next_surface_id) != 0) next_surface_id++;
+    used_surface_ids.insert(next_surface_id);
+    return next_surface_id++;
+  };
+
+  auto add_surface = [&](MeshID surface_id, const InterfacePair& pair, const std::vector<int>& faces) {
+    surfaces_.push_back(surface_id);
+    surface_senses_[surface_id] = pair;
+    surface_map_[surface_id] = std::vector<MeshID>(faces.begin(), faces.end());
+  };
+
+  std::vector<bool> covered_faces(mesh_->GetNumFaces(), false);
+
+  // std::map keeps boundary attributes and interfaces sorted, so surface IDs
+  // are assigned deterministically
+  for (const auto& [sideset_id, interface_groups] : sideset_interface_faces_) {
+    const bool reuse_sideset_id = interface_groups.size() == 1;
+    for (const auto& [pair, faces] : interface_groups) {
+      MeshID surface_id = reuse_sideset_id ? sideset_id : next_available_surface_id();
+      add_surface(surface_id, pair, faces);
+      for (int face : faces) covered_faces[face] = true;
+      sideset_surface_map_[sideset_id].push_back(surface_id);
+    }
+  }
+
+  for (const auto& [pair, faces] : interface_faces_) {
+    std::vector<int> remaining_faces;
+    std::copy_if(faces.begin(), faces.end(), std::back_inserter(remaining_faces),
+                 [&](int face) { return !covered_faces[face]; });
+    if (remaining_faces.empty()) continue;
+
+    add_surface(next_available_surface_id(), pair, remaining_faces);
+  }
+}
+
+void MfemMeshManager::determine_surface_senses() {
+  // MFEM orders the vertices of a face so that its normal points out of
+  // Elem1, but Elem1 may be on either side of a surface. Mark the faces whose
+  // Elem1 is not in the forward volume so face_vertices can flip them, giving
+  // every face of a surface a normal that points out of its forward volume.
+  face_reversed_.assign(mesh_->GetNumFaces(), false);
+  for (const auto& [surface_id, faces] : surface_map_) {
+    const MeshID forward_volume = surface_senses_.at(surface_id).first;
+    for (MeshID face : faces) {
+      face_reversed_[face] = face_volumes(face).first != forward_volume;
+    }
   }
 }
 
@@ -316,12 +384,21 @@ void MfemMeshManager::parse_metadata() {
     const mfem::Array<int> &attrs = bdr_attr_sets.GetAttributeSet(bdr_name);
     remove_substring(bdr_name, "boundary:");
 
-    // loop over every surface that is named the same thing
+    // loop over every boundary attribute that is named the same thing, and
+    // every surface created from it
     for (int i = 0; i < attrs.Size(); i++) {
-      const int bdr_id = attrs[i];
-      const auto key = std::make_pair(bdr_id, PropertyType::BOUNDARY_CONDITION);
+      auto it = sideset_surface_map_.find(attrs[i]);
+      if (it == sideset_surface_map_.end()) continue;
 
-      surface_metadata_[key] = {PropertyType::BOUNDARY_CONDITION, bdr_name};
+      for (auto surface : it->second) {
+        const auto key = std::make_pair(surface, PropertyType::BOUNDARY_CONDITION);
+        if (surface_metadata_.count(key) != 0 &&
+            surface_metadata_.at(key).value != bdr_name) {
+          fatal_error("Conflicting boundary metadata assigned to surface {}", surface);
+        }
+
+        surface_metadata_[key] = {PropertyType::BOUNDARY_CONDITION, bdr_name};
+      }
     }
   }
 }
@@ -335,10 +412,7 @@ SurfaceFaceType MfemMeshManager::get_surface_face_type(MeshID surface) const {
 }
 
 SurfaceFaceType MfemMeshManager::face_type(MeshID face) const {
-  // face IDs >= bdr_face_id_offset_ are boundary elements (see get_surface_faces)
-  mfem::Geometry::Type geom = face < bdr_face_id_offset_
-    ? mesh_->GetFaceGeometry(face)
-    : mesh_->GetBdrElementGeometry(face - bdr_face_id_offset_);
+  mfem::Geometry::Type geom = mesh_->GetFaceGeometry(face);
 
   switch (geom) {
     case mfem::Geometry::TRIANGLE: return SurfaceFaceType::TRI;
