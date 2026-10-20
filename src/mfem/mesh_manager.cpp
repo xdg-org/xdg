@@ -241,52 +241,32 @@ MeshID MfemMeshManager::adjacent_element(MeshID element, int face) const {
 }
 
 void MfemMeshManager::determine_surface_senses() {
+  // volumes either side of a boundary element: {attr(Elem1), attr(Elem2)}, or
+  // {attr(Elem1), ID_NONE} if the face is on the true boundary of the mesh
+  auto bdr_element_volumes = [this](int bdr_element) -> std::pair<MeshID, MeshID> {
+    int e1, e2;
+    mesh_->GetFaceElements(mesh_->GetBdrElementFaceIndex(bdr_element), &e1, &e2);
+    return {mesh_->GetAttribute(e1), e2 >= 0 ? mesh_->GetAttribute(e2) : ID_NONE};
+  };
+
   for (auto &[surface_id, surface_faces] : sideset_to_element_map_) {
     if (surface_faces.size() == 0) continue;
 
-    int face_index = *surface_faces.begin();
+    const auto senses = bdr_element_volumes(*surface_faces.begin());
 
-    // first, get the volume that this sideset is living on.
-    // we do it the dumb way
-    int elem_no, info;
-    mesh_->GetBdrElementAdjacentElement(face_index, elem_no, info);
-
-    // TODO: does this return the same number for every element on
-    // sideset 3?
-
-    int volume = mesh_->GetAttribute(elem_no);
-
-    int face_no = mesh_->GetBdrElementFaceIndex(face_index);
-    // check if the connectivity is still there
-    int e1, e2;
-    mesh_->GetFaceElements(face_no, &e1, &e2);
-
-    // if we have both elements nontrivial (i.e. != -1) then we ask the
-    // the mesh which is elem1 and which is elem2
-    // The normal vector is supposed to point from the reverse sense
-    // to the forward sense
-    if (e1 != -1 and e2 !=-1) {
-      auto face_el_tx = mesh_->GetFaceElementTransformations(face_no);
-
-      // check that face_el_tx has picked out the correct elements
-      assert( (face_el_tx->Elem1No == e1 or face_el_tx->Elem1No == e2)
-        and   (face_el_tx->Elem2No == e1 or face_el_tx->Elem2No == e2)
-      );
-
-      // Elem1 is the reverse sense and Elem2 is the forwards sense, since
-      // by construction, this is the way the normal vectors are pointing.
-      // We can't put the element IDs in to the array, so we have to ask
-      // the mesh for their attributes
-      surface_senses_[surface_id] = {
-        mesh_->GetAttribute(face_el_tx->Elem1No), mesh_->GetAttribute(face_el_tx->Elem2No)
-      };
+    // a single sense pair can only describe the surface if every face in the
+    // boundary attribute separates the same two volumes (in either order)
+    const std::pair<MeshID, MeshID> flipped {senses.second, senses.first};
+    for (int bdr_element : surface_faces) {
+      const auto volumes = bdr_element_volumes(bdr_element);
+      if (volumes != senses && volumes != flipped) {
+        fatal_error("Boundary attribute {} separates more than one pair of volumes "
+                    "(({}, {}) and ({}, {})), which the MFEM mesh manager does not yet support",
+                    surface_id, senses.first, senses.second, volumes.first, volumes.second);
+      }
     }
 
-    // We have a surface on a true boundary. The second element is simply
-    // the implcit complement
-    else {
-      surface_senses_[surface_id] = {volume, ID_NONE};
-    }
+    surface_senses_[surface_id] = senses;
   }
 }
 
