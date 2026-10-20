@@ -393,7 +393,7 @@ if (XDG_ENABLE_MOAB)
 endif()
 
 if (XDG_ENABLE_MFEM)
-  target_link_libraries(xdg PUBLIC mfem)
+  target_link_libraries(xdg PRIVATE mfem)
 endif()
 
 #=================================================================

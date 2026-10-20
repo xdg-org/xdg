@@ -76,9 +76,10 @@ void MfemMeshManager::init() {
   // ditto for surfaces
   std::copy(sideset_ids.begin(), sideset_ids.end(), std::back_inserter(surfaces_));
 
-  // set these two attributes related to interior/boundary faces
-  num_interior_faces_ = mesh_->GetNumFaces();
-  num_boundary_faces_ = mesh_->GetNBE();
+  // This mesh manager class is designed so that [0, mesh_->GetNumFaces()) denotes
+  // internal element faces, and all indices beyond this range denote external
+  // element faces.
+  bdr_face_id_offset_ = mesh_->GetNumFaces();
 
   determine_surface_senses();
 
@@ -137,13 +138,13 @@ std::vector<MeshID> MfemMeshManager::get_surface_faces(MeshID surface) const {
   // copy it into a vector
   std::vector<int> output(boundary_faces.begin(), boundary_faces.end());
 
-  // We want [0->mesh_->GetNumFaces() ) to represent interior faces.
+  // We want [0->mesh_->GetNumFaces() ) to represent mesh faces.
   // and we want [ mesh_->GetNumFaces(), mesh_->GetNumFaces() + mesh_->GetNBE() )
   // to represent the boundary faces.
   // When we query the face vertices later, we need to take this
   // mapping into account. All we do here is increase the MeshIDs by
-  // num_interior_faces_ to effect this mapping
-  std::transform( output.begin(), output.end(), output.begin(), [&](int in){ return in + num_interior_faces_; } );
+  // bdr_face_id_offset_ to effect this mapping
+  std::transform( output.begin(), output.end(), output.begin(), [&](int in){ return in + bdr_face_id_offset_; } );
 
   return output;
 }
@@ -151,11 +152,11 @@ std::vector<MeshID> MfemMeshManager::get_surface_faces(MeshID surface) const {
 std::vector<MeshID> MfemMeshManager::face_vertices(MeshID element) const {
   mfem::Array<int> index_array;
   
-  if (element >= num_interior_faces_) {
+  if (element >= bdr_face_id_offset_) {
     // we are actually talking about a boundary element here. this is
     // us taking the mapping into account. see comments at the end of
     // get_surfaces_faces
-    MeshID bdr_element = element - num_interior_faces_;
+    MeshID bdr_element = element - bdr_face_id_offset_;
     mesh_->GetBdrElementVertices(bdr_element, index_array);
 
     // mfem::Element* bdr_el = mesh_->GetBdrElement(bdr_element);
@@ -354,10 +355,10 @@ SurfaceFaceType MfemMeshManager::get_surface_face_type(MeshID surface) const {
 }
 
 SurfaceFaceType MfemMeshManager::face_type(MeshID face) const {
-  // face IDs >= num_interior_faces_ are boundary elements (see get_surface_faces)
-  mfem::Geometry::Type geom = face < num_interior_faces_
+  // face IDs >= bdr_face_id_offset_ are boundary elements (see get_surface_faces)
+  mfem::Geometry::Type geom = face < bdr_face_id_offset_
     ? mesh_->GetFaceGeometry(face)
-    : mesh_->GetBdrElementGeometry(face - num_interior_faces_);
+    : mesh_->GetBdrElementGeometry(face - bdr_face_id_offset_);
 
   switch (geom) {
     case mfem::Geometry::TRIANGLE: return SurfaceFaceType::TRI;

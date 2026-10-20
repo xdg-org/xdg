@@ -168,8 +168,9 @@ private:
   // implicit complement as well...
   std::set<int> attributes_;
 
-  int num_interior_faces_;
-  int num_boundary_faces_;
+  // Offset added to boundary element indices to form face IDs: [0, offset) are MFEM faces,
+  // [offset, offset + NBE) are boundary elements
+  int bdr_face_id_offset_;
 
   //! Mapping of surfaces to the volumes on either side. Volumes are ordered
   //! based on their sense with respect to the surface triangles. We reuse
