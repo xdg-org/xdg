@@ -49,7 +49,7 @@ void warning(const std::string& message)
   write_message("Warning: " + message);
 }
   
-void fatal_error(const std::string& message, int err)
+void fatal_error(const std::string& message)
 {
   switch (xdg::XDGConfig::config().fatal_error_handling()) {
     case xdg::ErrorPolicy::EXIT:
@@ -70,7 +70,7 @@ void fatal_error(const std::string& message, int err)
       }
 #endif
       // Abort the program
-      std::exit(err);
+      std::exit(-1);
       break;
     }
     case xdg::ErrorPolicy::THROW:
