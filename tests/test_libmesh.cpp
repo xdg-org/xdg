@@ -617,13 +617,17 @@ TEST_CASE("Multiblock sidesets")
   assert(tracks.size() > 0);
 }
 
-TEMPLATE_TEST_CASE("TEST libMesh Raytrace Quads", "[libMesh][faces][quads]",
-                   Embree_Raytracer)
+TEMPLATE_LIST_TEST_CASE("TEST libMesh Raytrace Quads", "[libMesh][faces][quads]",
+                        RayTracerBackends)
 {
   constexpr auto rt_backend = TestType::value;
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
+    if (rt_backend != RTLibrary::EMBREE) {
+      SKIP("Only Embree currently supports quads.");
+    }
+
     std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH, rt_backend);
     REQUIRE(xdg->ray_tracing_interface()->library() == rt_backend);
     REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);

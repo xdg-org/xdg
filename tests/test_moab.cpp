@@ -75,9 +75,7 @@ TEST_CASE("Test MOAB Initialization")
   }
 }
 
-TEMPLATE_TEST_CASE("Test BVH Build", "[moab][bvh]",
-                   Embree_Raytracer,
-                   GPRT_Raytracer)
+TEMPLATE_LIST_TEST_CASE("Test BVH Build", "[moab][bvh]", RayTracerBackends)
 {
   std::shared_ptr<MeshManager> mesh_manager = std::make_shared<MOABMeshManager>();
 
@@ -101,9 +99,7 @@ TEMPLATE_TEST_CASE("Test BVH Build", "[moab][bvh]",
 }
 
 
-TEMPLATE_TEST_CASE("Test Ray Fire MOAB (all built backends)", "[ray_tracer][moab]",
-                   Embree_Raytracer,
-                   GPRT_Raytracer)
+TEMPLATE_LIST_TEST_CASE("Test Ray Fire MOAB (all built backends)", "[ray_tracer][moab]", RayTracerBackends)
 {
   constexpr auto rt_backend = TestType::value;
 
@@ -152,13 +148,16 @@ TEST_CASE("MOAB Element Types")
   }
 }
 
-TEMPLATE_TEST_CASE("TEST MOAB Find Element Method", "[moab][elements]",
-                   Embree_Raytracer)
+TEMPLATE_LIST_TEST_CASE("TEST MOAB Find Element Method", "[moab][elements]", RayTracerBackends)
 {
   constexpr auto rt_backend = TestType::value;
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
+    if (rt_backend == RTLibrary::GPRT) {
+      SKIP("GPRT does not currently support the find_element method.");
+    }
+
     std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB, rt_backend);
     REQUIRE(xdg->ray_tracing_interface()->library() == rt_backend);
     REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
@@ -195,13 +194,16 @@ TEMPLATE_TEST_CASE("TEST MOAB Find Element Method", "[moab][elements]",
   }
 }
 
-TEMPLATE_TEST_CASE("TEST MOAB Raytrace Quads", "[moab][faces][quads]",
-                   Embree_Raytracer)
+TEMPLATE_LIST_TEST_CASE("TEST MOAB Raytrace Quads", "[moab][faces][quads]", RayTracerBackends)
 {
   constexpr auto rt_backend = TestType::value;
 
   DYNAMIC_SECTION(fmt::format("Backend = {}", rt_backend)) {
     check_ray_tracer_supported(rt_backend); // skip if backend not enabled at configuration time
+    if (rt_backend != RTLibrary::EMBREE) {
+      SKIP("Only Embree currently supports quads.");
+    }
+
     std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB, rt_backend);
     REQUIRE(xdg->ray_tracing_interface()->library() == rt_backend);
     REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::MOAB);
