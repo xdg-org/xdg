@@ -3,6 +3,7 @@
 
 // testing includes
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers.hpp>
 
 // xdg includes
 #include "xdg/config.h"
@@ -70,4 +71,28 @@ TEST_CASE("Config throw on fatal error")
   // Check to make sure we do nothing.
   xdg::XDGConfig::config().set_fatal_error_handling(xdg::ErrorPolicy::NONE);
   fatal_error("Error!");
+}
+
+TEST_CASE("Fatal error messages are formatted whatever their arguments")
+{
+  xdg::XDGConfig::config().set_fatal_error_handling(xdg::ErrorPolicy::THROW);
+
+  // a single integer is formatted into the message, not taken as an exit code
+  int surface = 7;
+  REQUIRE_THROWS_WITH(fatal_error("Surface {} has no faces", surface),
+                      "Surface 7 has no faces");
+  REQUIRE_THROWS_WITH(fatal_error("Surface {} has no faces", 7),
+                      "Surface 7 has no faces");
+
+  // other argument counts and types, which already worked
+  REQUIRE_THROWS_WITH(fatal_error("Surface {} borders volume {}", surface, 3),
+                      "Surface 7 borders volume 3");
+  REQUIRE_THROWS_WITH(fatal_error("Element {} not found", size_t {12}),
+                      "Element 12 not found");
+
+  // a message on its own is used as written, braces included
+  REQUIRE_THROWS_WITH(fatal_error(std::string("A literal {} stays")),
+                      "A literal {} stays");
+
+  xdg::XDGConfig::config().reset();
 }
