@@ -171,6 +171,11 @@ jobs:
         run: |
           ~/opt/bin/tools/find-volume
 
-      - name: Setup tmate session
+      - name: Setup upterm session
         if: ${{ failure() }}
-        uses: mxschmitt/action-tmate@v3
+        uses: owenthereal/action-upterm@v2
+        timeout-minutes: 360 # Shut down the server after 6 hours
+        with:
+          wait-timeout-minutes: 180 # Shut down the server if unconnected after 3 hours
+          limit-access-to-actor: true # Restrict access to the user who triggered the workflow
+          limit-access-to-users: Waqar-ukaea, pshriwise, nuclearkevin # Also always authorise this list of users
