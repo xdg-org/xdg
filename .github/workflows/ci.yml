@@ -31,8 +31,8 @@ jobs:
         shell: bash
         run: |
           sudo apt -y update
-          sudo apt install -y libgcc-9-dev \
-                              libstdc++-9-dev \
+          sudo apt install -y libgcc-13-dev \
+                              libstdc++-13-dev \
                               libembree-dev \
                               libnetcdf-dev \
                               libhdf5-dev \
@@ -43,6 +43,13 @@ jobs:
         with:
           version: 3.24.3
           cache: true
+
+      - name: Determine runner image
+        id: runner_image
+        shell: bash
+        run: |
+          source /etc/os-release
+          echo "RUNNER_DISTRO=${ID}-${VERSION_ID}" >> "$GITHUB_ENV"
 
       - name: GPRT Apt Dependencies
         shell: bash
@@ -105,7 +112,7 @@ jobs:
           cache-name: moab-cache
         with:
           path: ~/MOAB
-          key: moab-${{ runner.os }}-${{ env.cache-name }}-${{ env.MOAB_SHA }}
+          key: moab-${{ runner.os }}-${{ env.cache-name }}-${{ env.RUNNER_DISTRO }}-${{ env.MOAB_SHA }}
 
       - name: libMesh Cache
         if: ${{ matrix.libmesh }}
@@ -115,7 +122,8 @@ jobs:
           cache-name: libmesh-cache
         with:
           path: ~/LIBMESH
-          key: libmesh-${{ runner.os }}-${{ env.cache-name }}-${{ env.LIBMESH_SHA }}
+          key: libmesh-${{ runner.os }}-${{ env.cache-name }}-${{ env.RUNNER_DISTRO }}-${{ env.LIBMESH_SHA }}
+
 
       - if: ${{ matrix.moab && steps.moab-cache.outputs.cache-hit != 'true' }}
         name: Build MOAB
@@ -130,6 +138,9 @@ jobs:
       - if: ${{ matrix.libmesh && steps.libmesh-cache.outputs.cache-hit != 'true' }}
         name: Build libMesh
         shell: bash
+        env:
+          CC: gcc-13
+          CXX: g++-13
         run: |
           cd ~
           cd libmesh
@@ -137,7 +148,7 @@ jobs:
           git submodule update --init --recursive
           mkdir build
           cd build
-          ../configure --prefix=$HOME/LIBMESH --enable-exodus --disable-netcdf4 --disable-eigen --disable-lapack --disable-mpi --disable-metaphysicl
+          ../configure --prefix=$HOME/LIBMESH --enable-exodus --disable-netcdf-4 --disable-eigen --disable-lapack --disable-mpi --disable-metaphysicl
           make -j4
           sudo make install
 
