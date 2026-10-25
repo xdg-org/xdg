@@ -7,7 +7,7 @@ on:
 
 jobs:
   main:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -19,8 +19,8 @@ jobs:
         shell: bash
         run: |
           sudo apt -y update
-          sudo apt install -y libgcc-9-dev \
-                              libstdc++-9-dev \
+          sudo apt install -y libgcc-13-dev \
+                              libstdc++-13-dev \
                               libembree-dev \
                               libnetcdf-dev \
                               libhdf5-dev \
@@ -33,6 +33,12 @@ jobs:
           echo "OPENMC_ENDF_DATA=$HOME/endf-b-vii.1" >> $GITHUB_ENV
           echo "PATH=$HOME/opt/bin:$PATH" >> $GITHUB_ENV
 
+      - name: Determine runner image
+        id: runner_image
+        shell: bash
+        run: |
+          source /etc/os-release
+          echo "RUNNER_DISTRO=${ID}-${VERSION_ID}" >> "$GITHUB_ENV"
 
       - name: Clone MOAB
         shell: bash
@@ -62,7 +68,7 @@ jobs:
           cache-name: moab-cache
         with:
           path: ~/MOAB
-          key: moab-${{ runner.os }}-${{ env.cache-name }}-${{ env.MOAB_SHA }}
+          key: moab-${{ runner.os }}-${{ env.cache-name }}-${{ env.RUNNER_DISTRO }}-${{ env.MOAB_SHA }}
 
       - name: libMesh Cache
         id: libmesh-cache
@@ -71,7 +77,7 @@ jobs:
           cache-name: libmesh-cache
         with:
           path: ~/LIBMESH
-          key: libmesh-${{ runner.os }}-${{ env.cache-name }}-${{ env.LIBMESH_SHA }}
+          key: libmesh-${{ runner.os }}-${{ env.cache-name }}-${{ env.RUNNER_DISTRO }}-${{ env.LIBMESH_SHA }}
 
       - if: ${{ steps.moab-cache.outputs.cache-hit != 'true' }}
         name: Build MOAB
@@ -87,6 +93,9 @@ jobs:
       - if: ${{ steps.libmesh-cache.outputs.cache-hit != 'true' }}
         name: Build libMesh
         shell: bash
+        env:
+          CC: gcc-13
+          CXX: g++-13
         run: |
           cd ~/libmesh
           git submodule update --init --recursive
