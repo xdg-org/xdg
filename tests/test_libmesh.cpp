@@ -16,6 +16,8 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 // libMesh includes
+#include "libmesh/mesh_base.h"
+#include "libmesh/mesh_refinement.h"
 #include "libmesh/elem.h"
 #include "libmesh/mesh.h"
 #include "libmesh/node.h"
@@ -619,13 +621,37 @@ TEST_CASE("Multiblock sidesets")
 
 TEST_CASE("AMR mesh")
 {
-  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
-  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
-  const auto& mesh_manager = xdg->mesh_manager();
-  mesh_manager->load_file("amr_mesh.exo-s003");
+  const libMesh::Point bottom_left = {0.0, 0.0, 1.0};
+  const libMesh::Point top_right = {2.0, 1.0, 2.0};
+
+  auto mesh = std::make_unique<libMesh::Mesh>(*XDGConfig::config().libmesh_comm(), 3);
+  mesh->read("amr_mesh.exo");
+  libMesh::MeshRefinement mesh_refinement((*mesh.get()));
+
+  // Apply AMR to the mesh two times. There doesn't appear to be a way to store
+  // AMR connectivity in Exodus output, so we need to generate it outselves.
+  for (int i = 0; i < 2; ++i) {
+    for (libMesh::Elem * elem : mesh->active_element_ptr_range()) {
+      const auto & va = elem->vertex_average();
+      const bool in_x = va(0) >= bottom_left(0) && va(0) < top_right(0);
+      const bool in_y = va(1) >= bottom_left(1) && va(1) < top_right(1);
+      const bool in_z = va(2) >= bottom_left(2) && va(2) < top_right(2);
+      if (in_x && in_y && in_z) {
+        elem->set_refinement_flag(libMesh::Elem::RefinementState::REFINE);
+      }
+    }
+
+    mesh_refinement.refine_and_coarsen_elements();
+    mesh_refinement.clean_refinement_flags();
+  }
+  mesh->prepare_for_use();
+
+  auto mesh_manager = std::make_shared<xdg::LibMeshManager>(mesh.get());
   mesh_manager->init();
   mesh_manager->parse_metadata();
+  auto xdg = std::make_shared<xdg::XDG>(mesh_manager, xdg::RTLibrary::EMBREE);
 
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
   REQUIRE(mesh_manager->num_volumes() == 4);
 }
 
