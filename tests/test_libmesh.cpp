@@ -617,6 +617,18 @@ TEST_CASE("Multiblock sidesets")
   assert(tracks.size() > 0);
 }
 
+TEST_CASE("AMR mesh")
+{
+  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::LIBMESH);
+  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("amr_mesh.exo");
+  mesh_manager->init();
+  mesh_manager->parse_metadata();
+
+  REQUIRE(mesh_manager->num_volumes() == 4);
+}
+
 TEMPLATE_TEST_CASE("TEST libMesh Raytrace Quads", "[libMesh][faces][quads]",
                    Embree_Raytracer)
 {
