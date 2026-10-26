@@ -629,7 +629,7 @@ TEST_CASE("AMR mesh")
   libMesh::MeshRefinement mesh_refinement((*mesh.get()));
 
   // Apply AMR to the mesh two times. There doesn't appear to be a way to store
-  // AMR connectivity in Exodus output, so we need to generate it outselves.
+  // AMR connectivity in Exodus output, so we need to generate it here
   for (int i = 0; i < 2; ++i) {
     for (libMesh::Elem * elem : mesh->active_element_ptr_range()) {
       const auto & va = elem->vertex_average();

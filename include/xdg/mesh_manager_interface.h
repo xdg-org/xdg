@@ -151,8 +151,9 @@ public:
   //! \brief Get the adjacent element across a given face
   //! \param element The current element ID
   //! \param face The local face index
+  //! \param refined_idx The index of a more refined element across 'face'
   //! \return The ID of the adjacent element, or ID_NONE if the face is on a boundary
-  virtual MeshID adjacent_element(MeshID element, int face) const = 0;
+  virtual MeshID adjacent_element(MeshID element, int face, int refined_idx = -1) const = 0;
 
   //! \brief Get the volume of a given element
   //! \param element The element ID
