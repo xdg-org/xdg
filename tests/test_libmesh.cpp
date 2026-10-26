@@ -651,6 +651,13 @@ TEST_CASE("AMR mesh")
   mesh_manager->parse_metadata();
   auto xdg = std::make_shared<xdg::XDG>(mesh_manager, xdg::RTLibrary::EMBREE);
 
+  xdg->prepare_raytracer();
+
+  auto results = xdg->segments({0.25, 0.25, -1.0}, {0.25, 0.25, 3.0});
+  for (auto & [elem, dist] : results) {
+    std::cout << "Element: " << elem << ", distance: " << dist << std::endl;
+  }
+
   REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
   REQUIRE(mesh_manager->num_volumes() == 4);
 }
