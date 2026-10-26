@@ -518,7 +518,7 @@ MOABMeshManager::element_handle(MeshID element) const
 }
 
 MeshID
-MOABMeshManager::adjacent_element(MeshID element, int face, int /*refined_idx*/) const
+MOABMeshManager::adjacent_element(MeshID element, int face) const
 {
   moab::EntityHandle element_handle;
   auto rval = this->moab_interface()->handle_from_id(moab::MBTET, element, element_handle);
@@ -537,6 +537,13 @@ MOABMeshManager::adjacent_element(MeshID element, int face, int /*refined_idx*/)
 
   fatal_error("Unsupported MOAB element type for element {}", element);
   return ID_NONE;
+}
+
+std::pair<MeshID, int>
+MOABMeshManager::adjacent_subelement(MeshID element, int face, int subface_idx) const
+{
+  fatal_error("'adjacent_subelement' has not been implemented for the MOABMeshManager!");
+  return {ID_NONE, ID_NONE};
 }
 
 xdg::Vertex

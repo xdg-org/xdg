@@ -214,8 +214,12 @@ public:
     return VolumeElementType::TET; // hardcoded to Tet for this mock
   }
 
-  virtual MeshID adjacent_element(MeshID element, int face, int /*refined_idx*/) const override {
+  virtual MeshID adjacent_element(MeshID element, int face) const override {
     return element_adjacencies_.at(element)[face];
+  }
+
+  virtual std::pair<MeshID, int> adjacent_subelement(MeshID element, int face, int subface_idx) const override {
+    return {ID_NONE, ID_NONE};
   }
 
   virtual Vertex vertex_coordinates(MeshID vertex_id) const override {
@@ -336,7 +340,7 @@ struct MockElementFaceAccessor : public ElementFaceAccessor {
     return 4;
   }
 
-  bool refined_faces() const override { return false; }
+  bool has_sub_faces() const override { return false; }
 
   int num_sub_faces(int i) const override { return 1; }
 
@@ -444,8 +448,12 @@ public:
     return VolumeElementType::HEX;
   }
 
-  MeshID adjacent_element(MeshID element, int face, int /*refined_idx*/) const override {
+  MeshID adjacent_element(MeshID element, int face) const override {
     return element_adjacencies_.at(element).at(face);
+  }
+
+  virtual std::pair<MeshID, int> adjacent_subelement(MeshID element, int face, int subface_idx) const override {
+    return {ID_NONE, ID_NONE};
   }
 
   Vertex vertex_coordinates(MeshID vertex_id) const override {
@@ -586,7 +594,7 @@ struct MockHexElementFaceAccessor : public ElementFaceAccessor {
 
   int num_faces() const override { return 6; }
 
-  bool refined_faces() const override { return false; }
+  bool has_sub_faces() const override { return false; }
 
   int num_sub_faces(int i) const override { return 1; }
 
