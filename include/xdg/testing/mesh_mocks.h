@@ -214,7 +214,7 @@ public:
     return VolumeElementType::TET; // hardcoded to Tet for this mock
   }
 
-  virtual MeshID adjacent_element(MeshID element, int face) const override {
+  virtual MeshID adjacent_element(MeshID element, int face, int /*refined_idx*/) const override {
     return element_adjacencies_.at(element)[face];
   }
 
@@ -336,6 +336,10 @@ struct MockElementFaceAccessor : public ElementFaceAccessor {
     return 4;
   }
 
+  bool refined_faces() const override { return false; }
+
+  int num_sub_faces(int i) const override { return 1; }
+
   // data members
   const MockedTriTetMesh* mesh_manager_;
   std::array<std::array<int, 3>, 4> tet_connectivity_;
@@ -440,7 +444,7 @@ public:
     return VolumeElementType::HEX;
   }
 
-  MeshID adjacent_element(MeshID element, int face) const override {
+  MeshID adjacent_element(MeshID element, int face, int /*refined_idx*/) const override {
     return element_adjacencies_.at(element).at(face);
   }
 
@@ -581,6 +585,10 @@ struct MockHexElementFaceAccessor : public ElementFaceAccessor {
   }
 
   int num_faces() const override { return 6; }
+
+  bool refined_faces() const override { return false; }
+
+  int num_sub_faces(int i) const override { return 1; }
 
   const MockedQuadHexMesh* mesh_manager_;
   std::array<Vertex, 8> element_vertices_;

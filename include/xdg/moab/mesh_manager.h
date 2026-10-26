@@ -88,7 +88,7 @@ public:
 
   VolumeElementType element_type(MeshID element) const override;
 
-  MeshID adjacent_element(MeshID element, int face) const override;
+  MeshID adjacent_element(MeshID element, int face, int refined_idx = -1) const override;
 
   // Topology
   std::pair<MeshID, MeshID> surface_senses(MeshID surface) const override;
@@ -248,6 +248,8 @@ struct MOABElementFaceAccessor : public ElementFaceAccessor {
   int num_faces() const override {
     return static_cast<int>(element_ordering_->size());
   }
+
+  bool refined_faces() const override { return false; }
 
   // data members
   const MOABMeshManager* mesh_manager_;

@@ -3,6 +3,7 @@
 
 #include <map>
 #include <memory>
+#include <vector>
 
 #include "xdg/constants.h"
 #include "xdg/element_face_accessor.h"
@@ -20,6 +21,8 @@ namespace xdg {
 class LibMeshManager : public MeshManager {
 
   constexpr static int SIDE_NONE {-1};
+  // Valid neighbors can -1 for boundary faces, so we assign -2 to mean invalid neighbors.
+  constexpr static int INVALID_NEIGHBOR {-2};
 
 public:
   LibMeshManager(const libMesh::MeshBase* ptr);
@@ -27,30 +30,6 @@ public:
   LibMeshManager();
 
   ~LibMeshManager() override = default;
-
-  // Backend methods
-
-  //! \brief Map ID spaces into indices for ordered access by downstream applications
-  void map_id_spaces();
-
-  //! Discover element faces on subdomain interfaces.
-  void discover_surface_elements();
-
-  //! Validate that explicit sideset faces are represented by discovered
-  //! interface sets and record the corresponding interface associations.
-  void map_sidesets_to_discovered_interfaces();
-
-  //! Create surfaces for explicit sidesets, splitting them by discovered
-  //! interface set when needed, and then create any remaining implicit
-  //! interface surfaces that were not covered by sidesets.
-  void create_surfaces_from_sidesets_and_interfaces();
-
-  //! The "natural" orientation of triangle normals is dependent on the element
-  //! used to defined the SidePair objects we use for unique identification of faces.
-  //! This method ensures that the normals are consistent for each sideset and sets
-  //! the senses of the parent volumes (mesh blocks) for each surface, updating
-  //! curent SidePair objects to do so if necessary.
-  void determine_surface_senses();
 
   // Interface methods
   MeshLibrary mesh_library() const override { return MeshLibrary::LIBMESH; }
@@ -61,8 +40,6 @@ public:
 
   void parse_metadata() override;
 
-  void check_face_and_element_types() const;
-
   static VolumeElementType _elem_xdg_type(const libMesh::Elem *elem_ptr) {
     switch (elem_ptr->type()) {
     case libMesh::TET4:
@@ -72,6 +49,24 @@ public:
     default:
       return VolumeElementType::UNSUPPORTED;
     }
+  }
+
+  bool has_amr_conn() const { return amr_conn_map_.size() > 0; }
+
+  bool is_elem_adaptive(MeshID element) const {
+    return amr_conn_map_.count(element);
+  }
+
+  int get_num_subfaces(MeshID element, int face) const {
+    const auto & conn = amr_conn_map_.at(element);
+    const int start = conn.max_face_neighbors_ * face;
+    const int end = conn.max_face_neighbors_ * (face + 1);
+    for (int i = start; i < end; ++i) {
+      if (conn.neighboring_elems_[i].first == LibMeshManager::INVALID_NEIGHBOR) {
+        return i - start;
+      }
+    }
+    return end - start;
   }
 
   int num_volumes() const override { return volumes_.size(); }
@@ -132,7 +127,7 @@ public:
 
   VolumeElementType element_type(MeshID element) const override;
 
-  MeshID adjacent_element(MeshID element, int face) const override;
+  MeshID adjacent_element(MeshID element, int face, int refined_idx = -1) const override;
 
   MeshID create_volume() override;
 
@@ -145,7 +140,7 @@ public:
   // Accessors
   const libMesh::MeshBase* mesh() const { return mesh_; }
 
-  private:
+private:
   //! Helper struct for unique identification of an element face
   struct SidePair {
     SidePair() = default;
@@ -321,12 +316,61 @@ public:
     }
   };
 
+protected:
+  // Backend methods
+  //! \brief Map ID spaces into indices for ordered access by downstream applications
+  void map_id_spaces();
+
+  //! Discover element faces on subdomain interfaces.
+  void discover_surface_elements();
+
+  //! Validate that explicit sideset faces are represented by discovered
+  //! interface sets and record the corresponding interface associations.
+  void map_sidesets_to_discovered_interfaces();
+
+  //! Create surfaces for explicit sidesets, splitting them by discovered
+  //! interface set when needed, and then create any remaining implicit
+  //! interface surfaces that were not covered by sidesets.
+  void create_surfaces_from_sidesets_and_interfaces();
+
+  //! The "natural" orientation of triangle normals is dependent on the element
+  //! used to defined the SidePair objects we use for unique identification of faces.
+  //! This method ensures that the normals are consistent for each sideset and sets
+  //! the senses of the parent volumes (mesh blocks) for each surface, updating
+  //! curent SidePair objects to do so if necessary.
+  void determine_surface_senses();
+
+  void check_face_and_element_types() const;
+
+  //! Build the one-to-many connectivity maps for the case where less refined elements share
+  //! a face with several more refined elements.
+  void build_amr_connectivity_map();
+
+  //! Get the active, more refined, neighbors associated with a given side of an element.
+  void get_active_neighbors(MeshID current_elem_id, int side, std::vector<std::pair<MeshID, int>> & refined_neighbors);
+
   // Attributes
-  protected:
   // a mesh managed by this class (if loading from a file)
   std::unique_ptr<libMesh::Mesh> managed_mesh_ {nullptr};
   // a pointer to the mesh this class is using for data-structure queries (may be managed externally)
   const libMesh::MeshBase* mesh_ {nullptr};
+
+  struct CoarseToFineElemMap {
+    int num_faces_ {-1};
+    int max_face_neighbors_ {-1};
+    // Vector of neighboring elements with the side pointing to this element
+    std::vector<std::pair<MeshID, int>> neighboring_elems_;
+
+    CoarseToFineElemMap() = default;
+
+    std::pair<MeshID, int> refined_neighbor(int face, int neighbor_idx) const {
+      return neighboring_elems_[face * max_face_neighbors_ + neighbor_idx];
+    }
+  };
+
+  // mapping elements to their neighbors when a mesh is adaptive
+  // key is an element that was found to have AMR connectivity
+  std::unordered_map<MeshID, CoarseToFineElemMap> amr_conn_map_;
 
   // Ugh, double mapping
   std::unordered_map<MeshID, SidePair> mesh_id_to_sidepair_;
@@ -375,6 +419,8 @@ struct LibMeshElementFaceAccessor : public ElementFaceAccessor {
   ElementFaceAccessor(element), mesh_manager_(mesh_manager) {
     mesh_ = mesh_manager_->mesh();
     elem_ptr_ = mesh_->elem_ptr(element);
+    // Early out of the hash-map lookup if the mesh doesn't have AMR connectivity.
+    adaptive_ = mesh_manager_->has_amr_conn() ? mesh_manager_->is_elem_adaptive(element) : false;
   }
 
   std::vector<Vertex> face_vertices(int i) const override {
@@ -407,10 +453,17 @@ struct LibMeshElementFaceAccessor : public ElementFaceAccessor {
     return static_cast<int>(elem_ptr_->n_sides());
   }
 
+  bool refined_faces() const override { return adaptive_; }
+
+  int num_sub_faces(int i) const override {
+    return mesh_manager_->get_num_subfaces(element_, i);
+  }
+
   // data members
   const LibMeshManager* mesh_manager_;
   const libMesh::MeshBase* mesh_;
   const libMesh::Elem* elem_ptr_;
+  bool adaptive_;
 };
 
 
