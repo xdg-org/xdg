@@ -162,21 +162,23 @@ void LibMeshManager::check_face_and_element_types() const {
   }
 }
 
-MeshID LibMeshManager::adjacent_element(MeshID element, int face, int refined_idx) const {
+MeshID LibMeshManager::adjacent_element(MeshID element, int face) const {
   const auto elem_ptr = mesh()->elem_ptr(element);
   if (!elem_ptr) return ID_NONE;
-  if (refined_idx < 0) {
-    auto neighbor = elem_ptr->neighbor_ptr(face);
-    if (!neighbor) return ID_NONE;
-    return neighbor->id();
+  auto neighbor = elem_ptr->neighbor_ptr(face);
+  if (!neighbor) return ID_NONE;
+  return neighbor->id();
+}
+
+std::pair<MeshID, int>
+LibMeshManager::adjacent_subelement(MeshID element, int face, int subface_idx) const {
+  const auto elem_ptr = mesh()->elem_ptr(element);
+  if (!elem_ptr) return {ID_NONE, ID_NONE};
+
+  if (amr_conn_map_.count(element)) {
+    return amr_conn_map_.at(element).refined_neighbor(face, subface_idx);
   } else {
-    // If the refinement index has been provided, we query the one-to-many AMR mapping
-    // to find the more refined elements across the face.
-    if (amr_conn_map_.count(element)) {
-      return amr_conn_map_.at(element).refined_neighbor(face, refined_idx).first;
-    } else {
-      return ID_NONE;
-    }
+    return {ID_NONE, ID_NONE};
   }
 }
 
