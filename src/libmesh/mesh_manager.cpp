@@ -54,9 +54,15 @@ void LibMeshManager::init() {
   // invert the boundary info sideset map so that we can identify
   // the elements associated with each sideset
   for (auto entry : boundary_info.get_sideset_map()) {
-    const libMesh::Elem* other_elem = entry.first->neighbor_ptr(entry.second.first);
+    if (!entry.first->active()) {
+      continue;
+    }
+
     sideset_face_map_[entry.second.second].push_back(sidepair_id({entry.first, entry.second.first}));
   }
+
+  // build the amr connectivity map which is used to construct sidepairs
+  build_amr_connectivity_map();
 
   // search for any implicit sidesets (faces that are the boundary between two
   // subdomains/volumes)
@@ -156,12 +162,22 @@ void LibMeshManager::check_face_and_element_types() const {
   }
 }
 
-MeshID LibMeshManager::adjacent_element(MeshID element, int face) const {
+MeshID LibMeshManager::adjacent_element(MeshID element, int face, int refined_idx) const {
   const auto elem_ptr = mesh()->elem_ptr(element);
   if (!elem_ptr) return ID_NONE;
-  auto neighbor = elem_ptr->neighbor_ptr(face);
-  if (!neighbor) return ID_NONE;
-  return neighbor->id();
+  if (refined_idx < 0) {
+    auto neighbor = elem_ptr->neighbor_ptr(face);
+    if (!neighbor) return ID_NONE;
+    return neighbor->id();
+  } else {
+    // If the refinement index has been provided, we query the one-to-many AMR mapping
+    // to find the more refined elements across the face.
+    if (amr_conn_map_.count(element)) {
+      return amr_conn_map_.at(element).refined_neighbor(face, refined_idx).first;
+    } else {
+      return ID_NONE;
+    }
+  }
 }
 
 xdg::Vertex
@@ -711,6 +727,79 @@ LibMeshManager::surface_senses(MeshID surface) const {
 Sense LibMeshManager::surface_sense(MeshID surface, MeshID volume) const {
   auto senses = surface_senses(surface);
   return volume == senses.first ? Sense::FORWARD : Sense::REVERSE;
+}
+
+void
+LibMeshManager::build_amr_connectivity_map()
+{
+  amr_conn_map_.clear();
+  for (const auto *elem : mesh()->active_element_ptr_range()) {
+    // Temporary vector of vectors to store neighbors in each face.
+    std::vector<std::vector<std::pair<MeshID, int>>> refined_neighbor_ids;
+    int num_active_neighbors = 0;
+    // At present, 'max_num_neighbors_per_face' will always be 4 as libMesh only allows
+    // neighboring elements to vary by a single refinement level. However, this could
+    // change (hence the overengineering below).
+    int max_num_neighbors_per_face = 1;
+    for (int face = 0; face < elem->n_sides(); ++face) {
+      refined_neighbor_ids.push_back({});
+      this->get_active_neighbors(elem->id(), face, refined_neighbor_ids[face]);
+      num_active_neighbors += refined_neighbor_ids[face].size();
+      max_num_neighbors_per_face = std::max(max_num_neighbors_per_face, static_cast<int>(refined_neighbor_ids[face].size()));
+    }
+
+    // If there are more active neigbors than the element has faces, we've encountered a
+    // one-to-many AMR mapping that needs to be cached.
+    if (num_active_neighbors > elem->n_sides()) {
+      amr_conn_map_[elem->id()] = CoarseToFineElemMap();
+      auto& elem_data = amr_conn_map_.at(elem->id());
+
+      elem_data.num_faces_ = elem->n_sides();
+      elem_data.max_face_neighbors_ = max_num_neighbors_per_face;
+      elem_data.neighboring_elems_.resize(elem_data.max_face_neighbors_ * elem_data.num_faces_, {INVALID_NEIGHBOR, -1});
+
+      // Flattening the element face neighbor list to improve cache access.
+      for (int face = 0; face < elem_data.num_faces_; ++face) {
+        for (int active_neighbor = 0; active_neighbor < refined_neighbor_ids[face].size(); ++active_neighbor) {
+          auto idx = face * elem_data.max_face_neighbors_ + active_neighbor;
+          elem_data.neighboring_elems_[idx] = refined_neighbor_ids[face][active_neighbor];
+        }
+      }
+    }
+  }
+}
+
+void
+LibMeshManager::get_active_neighbors(MeshID current_elem_id, int side, std::vector<std::pair<MeshID, int>> & refined_neighbors)
+{
+  refined_neighbors.clear();
+  auto current_elem = mesh()->query_elem_ptr(current_elem_id);
+  if (!current_elem) {
+    return;
+  }
+
+  // No neighbors, this is a boundary element.
+  auto root_neighbor = current_elem->neighbor_ptr(side);
+  if (!root_neighbor) {
+    refined_neighbors.push_back({ID_NONE, ID_NONE});
+    return;
+  }
+
+  // Our job is done, the immediate neighbor for this side is active and so
+  // libMesh is storing the connectivity correctly.
+  if (root_neighbor->active()) {
+    refined_neighbors.push_back({root_neighbor->id(), root_neighbor->which_neighbor_am_i(current_elem)});
+    return;
+  }
+
+  // Need to walk the adaptivity tree of the neighbor to build the one->many face mapping.
+  std::vector<const libMesh::Elem*> family_tree;
+  root_neighbor->family_tree_by_neighbor(family_tree, current_elem, /*reset=*/true);
+  for (auto adaptive_neighbor : family_tree) {
+    if (adaptive_neighbor->active()) {
+      refined_neighbors.push_back({adaptive_neighbor->id(), adaptive_neighbor->which_neighbor_am_i(current_elem)});
+    }
+  }
 }
 
 } // namespace xdg

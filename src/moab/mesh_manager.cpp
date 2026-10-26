@@ -518,7 +518,7 @@ MOABMeshManager::element_handle(MeshID element) const
 }
 
 MeshID
-MOABMeshManager::adjacent_element(MeshID element, int face) const
+MOABMeshManager::adjacent_element(MeshID element, int face, int /*refined_idx*/) const
 {
   moab::EntityHandle element_handle;
   auto rval = this->moab_interface()->handle_from_id(moab::MBTET, element, element_handle);
