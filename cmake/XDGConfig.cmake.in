@@ -15,6 +15,12 @@ if(@XDG_ENABLE_MOAB@)
   endif()
 endif()
 
+if(@XDG_ENABLE_OMEGA_H@)
+  if(NOT TARGET Omega_h::omega_h)
+    find_dependency(Omega_h REQUIRED HINTS "@OMEGA_H_INSTALL_PATH@/lib/cmake/Omega_h")
+  endif()
+endif()
+
 if(@XDG_ENABLE_LIBMESH@)
   find_dependency(PkgConfig REQUIRED)
   list(APPEND CMAKE_PREFIX_PATH @LIBMESH_PREFIX@)
