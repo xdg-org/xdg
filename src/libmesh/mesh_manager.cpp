@@ -206,23 +206,7 @@ LibMeshManager::element_connectivity(MeshID element) const {
 
 std::vector<MeshID>
 LibMeshManager::face_connectivity(MeshID face) const {
-  const auto& sp = sidepair(face);
-  auto face_ptr = sp.face_ptr();
-  if (!face_ptr) {
-    fatal_error("Invalid face in face_connectivity");
-  }
-
-  std::vector<MeshID> conn;
-  conn.reserve(face_ptr->n_nodes());
-  for (unsigned int i = 0; i < face_ptr->n_nodes(); ++i) {
-    conn.push_back(face_ptr->node_id(i));
-  }
-
-  if (sp.reverse_winding()) {
-    std::reverse(conn.begin(), conn.end());
-  }
-
-  return std::move(conn);
+  return std::move(sidepair(face).face_connectivity());
 }
 
 MeshID
@@ -652,41 +636,7 @@ LibMeshManager::element_vertices(MeshID element) const {
 
 std::vector<MeshID>
 LibMeshManager::face_vertices(MeshID face) const {
-  const auto& side_pair = sidepair(face);
-  std::vector<MeshID> vertex_ids;
-  const auto* elem = side_pair.reverse_winding() ? side_pair.second() : side_pair.first();
-  if (!elem) {
-    fatal_error("Invalid face ID {} for LibMesh mesh", face);
-  }
-  const auto side_num = static_cast<unsigned int>(side_pair.side_num());
-
-  switch (elem->type()) {
-    case libMesh::TET4: {
-      vertex_ids.reserve(3);
-      for (unsigned int i = 0; i < 3; ++i) {
-        const auto node_ptr = elem->node_ptr(libMesh::Tet4::side_nodes_map[side_num][i]);
-        vertex_ids.push_back(node_ptr->id());
-      }
-      break;
-    }
-    case libMesh::HEX8: {
-      vertex_ids.reserve(4);
-      for (unsigned int i = 0; i < 4; ++i) {
-        const auto node_ptr = elem->node_ptr(libMesh::Hex8::side_nodes_map[side_num][i]);
-        vertex_ids.push_back(node_ptr->id());
-      }
-      break;
-    }
-    default:
-      fatal_error("Unsupported element type {} for face {}", static_cast<int>(elem->type()), face);
-  }
-
-  // Need to reverse the winding order since pair.second() was used to fetch vertices.
-  if (side_pair.reverse_winding()) {
-    std::reverse(vertex_ids.begin(), vertex_ids.end());
-  }
-
-  return std::move(vertex_ids);
+  return std::move(sidepair(face).face_vertices());
 }
 
 SurfaceFaceType
