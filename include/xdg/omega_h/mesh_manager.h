@@ -87,8 +87,16 @@ public:
     return SurfaceFaceType::TRI;
   }
 
+  SurfaceFaceType face_type(MeshID face) const override {
+    return SurfaceFaceType::TRI;
+  }
+
   VolumeElementType get_volume_element_type(MeshID volume) const override {
     // Omega_h simplex meshes always use tetrahedral volume elements
+    return VolumeElementType::TET;
+  }
+
+  VolumeElementType element_type(MeshID element) const override {
     return VolumeElementType::TET;
   }
 

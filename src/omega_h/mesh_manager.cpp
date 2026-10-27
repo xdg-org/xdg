@@ -52,6 +52,11 @@ void OmegaHMeshManager::load_file(const std::string &file_path) {
   const int exodus_file = Omega_h::exodus::open(file_path);
   Omega_h::exodus::read_mesh(exodus_file, mesh_.get());
   Omega_h::exodus::close(exodus_file);
+
+  // Omega_h only supports simplex (tet) meshes
+  if (mesh_->family() != OMEGA_H_SIMPLEX) {
+    fatal_error("Hex meshes not supported with Omega_h backend");
+  }
 }
 
 void OmegaHMeshManager::init() {
