@@ -224,7 +224,7 @@ private:
       }
       // If we've gotten here, we could be dealing with an AMR mesh. An element in first()
       // may be less refined then the element in second(), so we need to ensure faces are
-      // quieried with second() and the face adjusted accordingly. However, we need to
+      // quieried with second() and the face is adjusted accordingly. However, we need to
       // signal that the winding order be reversed to ensure the normals are consistent.
       auto unrefined_neighbor = side_.first->which_neighbor_am_i(side_.second);
       if (unrefined_neighbor != libMesh::invalid_uint) {
@@ -246,7 +246,7 @@ private:
 
     bool operator==(const SidePair& other) const
     {
-      return first() == other.first() && side_num() == other.side_num();
+      return first() == other.first() && side_num() == other.side_num() && second() == other.second();
     }
 
     bool operator<(const SidePair& other) const
@@ -268,8 +268,66 @@ private:
       }
     }
 
+    std::vector<MeshID> face_connectivity() const {
+      auto fp = this->face_ptr();
+      if (!fp) {
+        fatal_error("Invalid face in SidePair");
+      }
+
+      std::vector<MeshID> conn;
+      conn.reserve(fp->n_nodes());
+      for (unsigned int i = 0; i < fp->n_nodes(); ++i) {
+        conn.push_back(fp->node_id(i));
+      }
+
+      if (this->reverse_winding()) {
+        std::reverse(conn.begin(), conn.end());
+      }
+
+      return std::move(conn);
+    }
+
+    std::vector<MeshID> face_vertices() const {
+      std::vector<MeshID> vertex_ids;
+      const auto* elem = this->reverse_winding() ? this->second() : this->first();
+      if (!elem) {
+        fatal_error("Invalid face ID for LibMesh mesh");
+      }
+      const auto side_num = static_cast<unsigned int>(this->side_num());
+
+      switch (elem->type()) {
+        case libMesh::TET4: {
+          vertex_ids.reserve(3);
+          for (unsigned int i = 0; i < 3; ++i) {
+            const auto node_ptr = elem->node_ptr(libMesh::Tet4::side_nodes_map[side_num][i]);
+            vertex_ids.push_back(node_ptr->id());
+          }
+          break;
+        }
+        case libMesh::HEX8: {
+          vertex_ids.reserve(4);
+          for (unsigned int i = 0; i < 4; ++i) {
+            const auto node_ptr = elem->node_ptr(libMesh::Hex8::side_nodes_map[side_num][i]);
+            vertex_ids.push_back(node_ptr->id());
+          }
+          break;
+        }
+        default:
+          fatal_error("Unsupported face element type {}", static_cast<int>(elem->type()));
+      }
+
+      // Need to reverse the winding order since pair.second() was used to fetch vertices.
+      if (this->reverse_winding()) {
+        std::reverse(vertex_ids.begin(), vertex_ids.end());
+      }
+
+      return std::move(vertex_ids);
+    }
+
     std::pair<const libMesh::Elem*, const libMesh::Elem*> side_ {nullptr, nullptr};
     int32_t side_num_ {SIDE_NONE};
+    //! Whether second() should be used for fetching face vertices or not. If so, the
+    //! winding order needs to be reversed to preserve the triangle normal.
     bool reverse_winding_ {false};
   }; // SidePair
 
