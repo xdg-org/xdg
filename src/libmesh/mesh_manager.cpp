@@ -919,7 +919,7 @@ LibMeshManager::build_amr_connectivity_map()
 
       elem_data.num_faces_ = elem->n_sides();
       elem_data.max_face_neighbors_ = max_num_neighbors_per_face;
-      elem_data.neighboring_elems_.resize(elem_data.max_face_neighbors_ * elem_data.num_faces_, {INVALID_NEIGHBOR, -1});
+      elem_data.neighboring_elems_.resize(elem_data.max_face_neighbors_ * elem_data.num_faces_, {INVALID_NEIGHBOR, SidePair::SIDE_NONE});
 
       // Flattening the element face neighbor list to improve cache access.
       for (int face = 0; face < elem_data.num_faces_; ++face) {
@@ -944,7 +944,7 @@ LibMeshManager::get_active_neighbors(MeshID current_elem_id, int side, std::vect
   // No neighbors, this is a boundary element.
   auto root_neighbor = current_elem->neighbor_ptr(side);
   if (!root_neighbor) {
-    refined_neighbors.push_back({ID_NONE, ID_NONE});
+    refined_neighbors.push_back({ID_NONE, SidePair::SIDE_NONE});
     return;
   }
 
