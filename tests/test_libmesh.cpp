@@ -647,18 +647,30 @@ TEST_CASE("AMR mesh")
   mesh->prepare_for_use();
 
   auto mesh_manager = std::make_shared<xdg::LibMeshManager>(mesh.get());
+  REQUIRE(mesh_manager->mesh_library() == MeshLibrary::LIBMESH);
   mesh_manager->init();
   mesh_manager->parse_metadata();
-  auto xdg = std::make_shared<xdg::XDG>(mesh_manager, xdg::RTLibrary::EMBREE);
+  auto xdg = std::make_shared<xdg::XDG>(mesh_manager);
 
   xdg->prepare_raytracer();
+  REQUIRE(mesh_manager->num_volumes() == 3);
+  REQUIRE(mesh_manager->num_volume_elements() == 1096);
 
-  auto results = xdg->segments({0.25, 0.25, -1.0}, {0.25, 0.25, 3.0});
-  for (auto & [elem, dist] : results) {
-    std::cout << "Element: " << elem << ", distance: " << dist << std::endl;
+  auto enter_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, -1.0}, {0.0, 0.0, 1.0}, xdg::INFTY, xdg::HitOrientation::ENTERING);
+  REQUIRE_THAT(enter_vol1.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
+  auto exit_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, -1.0}, {0.0, 0.0, 1.0}, xdg::INFTY, xdg::HitOrientation::EXITING);
+  REQUIRE_THAT(exit_vol1.first, Catch::Matchers::WithinAbs(3.0, 1e-6));
+
+  const std::array<double, 11> valid_segments {0.5, 0.25, 0.25, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125};
+  auto results_fw = xdg->segments({0.0625, 0.0625, -1.0}, {0.0625, 0.0625, 3.0});
+  for (std::size_t i = 0; i < valid_segments.size(); ++i) {
+    REQUIRE_THAT(results_fw[i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
+  }
+  auto results_bw = xdg->segments({0.0625, 0.0625, 3.0}, {0.0625, 0.0625, -1.0});
+  for (std::size_t i = 0; i < valid_segments.size(); ++i) {
+    REQUIRE_THAT(results_bw[10 - i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
   }
 
-  REQUIRE(xdg->mesh_manager()->mesh_library() == MeshLibrary::LIBMESH);
   REQUIRE(mesh_manager->num_volumes() == 4);
 }
 

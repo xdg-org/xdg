@@ -62,6 +62,7 @@ void LibMeshManager::init() {
   }
 
   // build the amr connectivity map which is used to construct sidepairs
+  // and walk elements correctly
   build_amr_connectivity_map();
 
   // search for any implicit sidesets (faces that are the boundary between two
@@ -157,7 +158,6 @@ void LibMeshManager::check_face_and_element_types() const {
         fatal_error("Surface {} has mixed face types, which is not supported. Face ID {} has type {}, expected type {}.",
                     surface, face, type_to_check, type);
       }
-
     }
   }
 }
@@ -217,7 +217,12 @@ LibMeshManager::face_connectivity(MeshID face) const {
   for (unsigned int i = 0; i < face_ptr->n_nodes(); ++i) {
     conn.push_back(face_ptr->node_id(i));
   }
-  return conn;
+
+  if (sp.reverse_winding()) {
+    std::reverse(conn.begin(), conn.end());
+  }
+
+  return std::move(conn);
 }
 
 MeshID
@@ -321,11 +326,32 @@ void LibMeshManager::discover_surface_elements() {
       MeshID neighbor_id = neighbor ? neighbor->subdomain_id() : ID_NONE;
       // if these IDs are different, then this is an interface element
       if (neighbor_id == subdomain_id) continue;
-      // ensure that there is only one interface between each block pair
-      if (subdomain_interface_map_.count({neighbor_id, subdomain_id}) != 0) {
-        subdomain_interface_map_[{neighbor_id, subdomain_id}].insert(sidepair_id({elem, i}));
+
+      // In the case the mesh is adaptive, a one-to-many mapping can exist between
+      // less refined and more refined faces. We add a side pair for every mapping of
+      // more refined to less refined faces.
+      std::vector<MeshID> new_pairs;
+      if (amr_conn_map_.count(elem->id())) {
+        const auto & conn = amr_conn_map_.at(elem->id());
+        for (int sf = 0; sf < conn.get_num_subfaces(i); ++sf) {
+          auto active_subneighbor = mesh()->query_elem_ptr(conn.refined_neighbor(i, sf).first);
+          if (!active_subneighbor) {
+            new_pairs.push_back(sidepair_id({elem, i}));
+          } else {
+            new_pairs.push_back(sidepair_id({elem, active_subneighbor}));
+          }
+        }
       } else {
-        subdomain_interface_map_[{subdomain_id, neighbor_id}].insert(sidepair_id({elem, i}));
+        new_pairs.push_back(sidepair_id({elem, i}));
+      }
+
+      // ensure that there is only one interface between each block pair
+      for (auto new_side_pair : new_pairs) {
+        if (subdomain_interface_map_.count({neighbor_id, subdomain_id}) != 0) {
+          subdomain_interface_map_[{neighbor_id, subdomain_id}].insert(new_side_pair);
+        } else {
+          subdomain_interface_map_[{subdomain_id, neighbor_id}].insert(new_side_pair);
+        }
       }
     }
   }
@@ -628,7 +654,7 @@ std::vector<MeshID>
 LibMeshManager::face_vertices(MeshID face) const {
   const auto& side_pair = sidepair(face);
   std::vector<MeshID> vertex_ids;
-  const auto* elem = side_pair.first();
+  const auto* elem = side_pair.reverse_winding() ? side_pair.second() : side_pair.first();
   if (!elem) {
     fatal_error("Invalid face ID {} for LibMesh mesh", face);
   }
@@ -654,6 +680,12 @@ LibMeshManager::face_vertices(MeshID face) const {
     default:
       fatal_error("Unsupported element type {} for face {}", static_cast<int>(elem->type()), face);
   }
+
+  // Need to reverse the winding order since pair.second() was used to fetch vertices.
+  if (side_pair.reverse_winding()) {
+    std::reverse(vertex_ids.begin(), vertex_ids.end());
+  }
+
   return std::move(vertex_ids);
 }
 
