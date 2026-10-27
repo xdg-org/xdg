@@ -56,6 +56,7 @@ EmbreeRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_ma
   SurfaceTreeID tree = next_surface_tree_id();
   surface_trees_.push_back(tree);
   auto volume_scene = this->create_embree_scene();
+
   auto volume_surfaces = mesh_manager->get_volume_surfaces(volume_id);
 
   // allocate total storage for all the primtives in a volume
