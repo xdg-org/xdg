@@ -58,15 +58,7 @@ public:
   }
 
   int get_num_subfaces(MeshID element, int face) const {
-    const auto & conn = amr_conn_map_.at(element);
-    const int start = conn.max_face_neighbors_ * face;
-    const int end = conn.max_face_neighbors_ * (face + 1);
-    for (int i = start; i < end; ++i) {
-      if (conn.neighboring_elems_[i].first == LibMeshManager::INVALID_NEIGHBOR) {
-        return i - start;
-      }
-    }
-    return end - start;
+    return amr_conn_map_.at(element).get_num_subfaces(face);
   }
 
   int num_volumes() const override { return volumes_.size(); }
@@ -148,28 +140,28 @@ private:
     SidePair() = default;
 
     SidePair(std::pair<const libMesh::Elem*, int> old_side) {
-      side.first = old_side.first;
+      side_.first = old_side.first;
       side_num_ = old_side.second;
-      side.second = old_side.first->neighbor_ptr(side_num_);
-      if (side.second != nullptr) {
+      side_.second = old_side.first->neighbor_ptr(side_num_);
+      if (side_.second != nullptr) {
         set_order();
         set_side_num();
       }
     }
 
     SidePair(const libMesh::Elem* elem, int side_num) {
-      side.first = elem;
+      side_.first = elem;
       side_num_ = side_num;
-      side.second = elem->neighbor_ptr(side_num);
-      if (side.second != nullptr) {
+      side_.second = elem->neighbor_ptr(side_num);
+      if (side_.second != nullptr) {
         set_order();
         set_side_num();
       }
     }
 
     SidePair(const libMesh::Elem* elem1, const libMesh::Elem* elem2) {
-      side.first = elem1;
-      side.second = elem2;
+      side_.first = elem1;
+      side_.second = elem2;
       if (elem1 == nullptr || elem2 == nullptr) {
         fatal_error("SidePair pointer constructor must be used with non-null pointers");
       }
@@ -177,8 +169,8 @@ private:
       set_side_num();
     }
 
-    SidePair(std::pair<const libMesh::Elem*, const libMesh::Elem*> side_pair) : side(side_pair) {
-      if (side.first == nullptr || side.second == nullptr) {
+    SidePair(std::pair<const libMesh::Elem*, const libMesh::Elem*> side_pair) : side_(side_pair) {
+      if (side_.first == nullptr || side_.second == nullptr) {
         fatal_error("SidePair pair constructor must be used with non-null pointers");
       }
       set_order();
@@ -186,32 +178,32 @@ private:
     }
 
     void set_order() {
-      if (side.first == nullptr && side.second == nullptr) {
+      if (side_.first == nullptr && side_.second == nullptr) {
         fatal_error("SidePair created with null elements");
       }
 
       // re-order so that null pointers come second if present
-      if (side.first == nullptr) {
-        std::swap(side.first, side.second);
+      if (side_.first == nullptr) {
+        std::swap(side_.first, side_.second);
         return;
       }
 
       // if a null pointer is present, the remaining checks aren't necessary
-      if (side.second == nullptr) {
+      if (side_.second == nullptr) {
         return;
       }
 
-      if (side.first->id() == side.second->id()) {
-        fatal_error("SidePair created with the same element on both sides. Element ID: {}", side.first->id());
+      if (side_.first->id() == side_.second->id()) {
+        fatal_error("SidePair created with the same element on both sides. Element ID: {}", side_.first->id());
       }
 
-      if (side.first->id() > side.second->id()) {
-        std::swap(side.first, side.second);
+      if (side_.first->id() > side_.second->id()) {
+        std::swap(side_.first, side_.second);
       }
     }
 
     SurfaceFaceType face_type() const {
-      switch (side.first->type()) {
+      switch (side_.first->type()) {
         case libMesh::TET4:
           return SurfaceFaceType::TRI;
         case libMesh::HEX8:
@@ -221,30 +213,34 @@ private:
       }
     }
 
-    //! Retrieve a vertex of the side pair face, using the type
-    //! to access the node reference though an internal, non-blocking
-    //! data structure
-    template<typename T>
-    Vertex vertex(int i) const {
-      const auto e_type = static_cast<const T*>(first());
-      const auto& node_ref = first()->node_ref(e_type->side_nodes_map[side_num()][i]);
-      return {node_ref(0), node_ref(1), node_ref(2)};
-    }
-
     void set_side_num() {
-      for (int i = 0; i < side.first->n_sides(); i++) {
-        if (side.first->neighbor_ptr(i) == side.second) {
+      reverse_winding_ = false;
+
+      for (int i = 0; i < side_.first->n_sides(); i++) {
+        if (side_.first->neighbor_ptr(i) == side_.second) {
           side_num_ = i;
-          break;
+          return;
         }
       }
+      // If we've gotten here, we could be dealing with an AMR mesh. An element in first()
+      // may be less refined then the element in second(), so we need to ensure faces are
+      // quieried with second() and the face adjusted accordingly. However, we need to
+      // signal that the winding order be reversed to ensure the normals are consistent.
+      auto unrefined_neighbor = side_.first->which_neighbor_am_i(side_.second);
+      if (unrefined_neighbor != libMesh::invalid_uint) {
+        // second() is a neighbor of first()
+        reverse_winding_ = true;
+        side_num_ = side_.second->which_neighbor_am_i(side_.first);
+        return;
+      }
+
       if (side_num_ == SIDE_NONE) {
         fatal_error("SidePair created with elements that are not neighbors");
       }
     }
 
     void swap() {
-      std::swap(side.first, side.second);
+      std::swap(side_.first, side_.second);
       set_side_num();
     }
 
@@ -255,21 +251,26 @@ private:
 
     bool operator<(const SidePair& other) const
     {
-      return side < other.side;
+      return side_ < other.side_;
     }
 
-    const libMesh::Elem* first() const { return side.first; }
-    const libMesh::Elem* second() const { return side.second; }
+    const libMesh::Elem* first() const { return side_.first; }
+    const libMesh::Elem* second() const { return side_.second; }
 
-    const int32_t side_num() const { return side_num_; }
+    int32_t side_num() const { return side_num_; }
+    bool reverse_winding() const { return reverse_winding_; }
 
     const std::unique_ptr<const libMesh::Elem> face_ptr() const {
-
-      return first()->side_ptr(side_num());
+      if (reverse_winding()) {
+        return second()->side_ptr(side_num());
+      } else {
+        return first()->side_ptr(side_num());
+      }
     }
 
-    std::pair<const libMesh::Elem*, const libMesh::Elem*> side {nullptr, nullptr};
+    std::pair<const libMesh::Elem*, const libMesh::Elem*> side_ {nullptr, nullptr};
     int32_t side_num_ {SIDE_NONE};
+    bool reverse_winding_ {false};
   }; // SidePair
 
   struct SidePairHash {
@@ -367,6 +368,17 @@ protected:
 
     std::pair<MeshID, int> refined_neighbor(int face, int neighbor_idx) const {
       return neighboring_elems_[face * max_face_neighbors_ + neighbor_idx];
+    }
+
+    int get_num_subfaces(int face) const {
+      const int start = max_face_neighbors_ * face;
+      const int end = max_face_neighbors_ * (face + 1);
+      for (int i = start; i < end; ++i) {
+        if (neighboring_elems_[i].first == LibMeshManager::INVALID_NEIGHBOR) {
+          return i - start;
+        }
+      }
+      return end - start;
     }
   };
 
