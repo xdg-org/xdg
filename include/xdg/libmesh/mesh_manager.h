@@ -260,6 +260,7 @@ protected:
   // a pointer to the mesh this class is using for data-structure queries (may be managed externally)
   const libMesh::MeshBase* mesh_ {nullptr};
 
+  // A helper struct to store AMR connectivity.
   struct CoarseToFineElemMap {
     int num_faces_ {-1};
     int max_face_neighbors_ {-1};

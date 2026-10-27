@@ -380,7 +380,7 @@ LibMeshManager::element_connectivity(MeshID element) const {
   for (unsigned int i = 0; i < elem_ptr->n_nodes(); i++) {
     conn.push_back(elem_ptr->node_ptr(i)->id());
   }
-  return conn;
+  return std::move(conn);
 }
 
 std::vector<MeshID>
@@ -518,9 +518,6 @@ void LibMeshManager::discover_surface_elements() {
       }
     }
   }
-
-  // build the BlockMapping for volume elements
-  volume_element_id_map_ = IDBlockMapping<MeshID>(volume_element_ids);
 }
 
 void LibMeshManager::map_sidesets_to_discovered_interfaces() {
@@ -784,7 +781,7 @@ LibMeshManager::get_volume_elements(MeshID volume) const {
   for (; it != it_end; ++it) {
     elements.push_back((*it)->id());
   }
-  return elements;
+  return std::move(elements);
 }
 
 int
@@ -810,7 +807,7 @@ LibMeshManager::element_vertices(MeshID element) const {
     const auto& node = elem.node_ref(i);
     vertices[i] = {node(0), node(1), node(2)};
   }
-  return vertices;
+  return std::move(vertices);
 }
 
 std::vector<MeshID>
@@ -879,7 +876,7 @@ LibMeshManager::get_volume_surfaces(MeshID volume) const {
       surfaces.push_back(surface);
     }
   }
-  return surfaces;
+  return std::move(surfaces);
 }
 
 std::pair<MeshID, MeshID>
