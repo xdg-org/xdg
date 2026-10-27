@@ -9,54 +9,15 @@
 #include "xdg/element_face_accessor.h"
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/error.h"
+#include "xdg/libmesh/side_pair.h"
 
 #include "libmesh/libmesh.h"
 #include "libmesh/elem.h"
 #include "libmesh/cell_tet4.h"
 #include "libmesh/cell_hex8.h"
 #include "libmesh/mesh.h"
+
 namespace xdg {
-
-//! Helper class for unique identification of an element face
-class SidePair {
-public:
-  constexpr static int SIDE_NONE {-1};
-
-  //! Constructors
-  SidePair() = default;
-  SidePair(std::pair<const libMesh::Elem*, int> old_side);
-  SidePair(const libMesh::Elem* elem, int side_num);
-  SidePair(const libMesh::Elem* elem1, const libMesh::Elem* elem2);
-  SidePair(std::pair<const libMesh::Elem*, const libMesh::Elem*> side_pair);
-
-  //! Mutators
-  void set_order();
-  void set_side_num();
-  void swap();
-
-  //! Operator overloads
-  bool operator==(const SidePair& other) const;
-  bool operator<(const SidePair& other) const;
-
-  //! Accessors
-  SurfaceFaceType face_type() const;
-  const libMesh::Elem* first() const { return side_.first; }
-  const libMesh::Elem* second() const { return side_.second; }
-  int32_t side_num() const { return side_num_; }
-  bool reverse_winding() const { return reverse_winding_; }
-
-  //! Connectivity
-  const std::unique_ptr<const libMesh::Elem> face_ptr() const;
-  std::vector<MeshID> face_connectivity() const;
-  std::vector<MeshID> face_vertices() const;
-
-private:
-  std::pair<const libMesh::Elem*, const libMesh::Elem*> side_ {nullptr, nullptr};
-  int32_t side_num_ {SIDE_NONE};
-  //! Whether second() should be used for fetching face vertices or not. If so, the
-  //! winding order needs to be reversed to preserve the direction of the face normal.
-  bool reverse_winding_ {false};
-}; // class SidePair
 
 class LibMeshManager : public MeshManager {
 
@@ -174,16 +135,40 @@ public:
   const libMesh::MeshBase* mesh() const { return mesh_; }
 
 private:
-
-  struct SidePairHash {
-
-    std::size_t operator()(const SidePair& p) const
+  // Utility objects.
+  // A struct to define a hash for two MeshIDs.
+  struct MeshIDPairHash {
+    std::size_t operator()(const std::pair<MeshID, MeshID>& p) const
     {
-      auto hash1 = std::hash<const libMesh::Elem*>{}(p.first());
-      auto hash2 = std::hash<int32_t>{}(p.side_num());
-      // Combine the two hashes into a single hash value
-      // This can be done using a common technique that combines them with XOR and bit shifting
-      return hash1 ^ (hash2 + 0x9e3779b9 + (hash1 << 6) + (hash1 >> 2));
+      // Combine the hashes of the two integers
+      std::size_t h1 = std::hash<int32_t>{}(p.first);
+      std::size_t h2 = std::hash<int32_t>{}(p.second);
+      // Use a bitwise combination for mixing
+      return h1 ^ (h2 << 1); // XOR and shift for a simple combination
+    }
+  };
+  // A helper struct to store AMR connectivity.
+  struct CoarseToFineElemMap {
+    int num_faces_ {-1};
+    int max_face_neighbors_ {-1};
+    // Vector of neighboring elements with the side pointing to this element
+    std::vector<std::pair<MeshID, int>> neighboring_elems_;
+
+    CoarseToFineElemMap() = default;
+
+    std::pair<MeshID, int> refined_neighbor(int face, int neighbor_idx) const {
+      return neighboring_elems_[face * max_face_neighbors_ + neighbor_idx];
+    }
+
+    int get_num_subfaces(int face) const {
+      const int start = max_face_neighbors_ * face;
+      const int end = max_face_neighbors_ * (face + 1);
+      for (int i = start; i < end; ++i) {
+        if (neighboring_elems_[i].first == LibMeshManager::INVALID_NEIGHBOR) {
+          return i - start;
+        }
+      }
+      return end - start;
     }
   };
 
@@ -210,18 +195,6 @@ private:
     return next_sidepair_id_++;
   }
 
-  struct MeshIDPairHash {
-    std::size_t operator()(const std::pair<MeshID, MeshID>& p) const
-    {
-      // Combine the hashes of the two integers
-      std::size_t h1 = std::hash<int32_t>{}(p.first);
-      std::size_t h2 = std::hash<int32_t>{}(p.second);
-      // Use a bitwise combination for mixing
-      return h1 ^ (h2 << 1); // XOR and shift for a simple combination
-    }
-  };
-
-protected:
   // Backend methods
   //! \brief Map ID spaces into indices for ordered access by downstream applications
   void map_id_spaces();
@@ -260,38 +233,13 @@ protected:
   // a pointer to the mesh this class is using for data-structure queries (may be managed externally)
   const libMesh::MeshBase* mesh_ {nullptr};
 
-  // A helper struct to store AMR connectivity.
-  struct CoarseToFineElemMap {
-    int num_faces_ {-1};
-    int max_face_neighbors_ {-1};
-    // Vector of neighboring elements with the side pointing to this element
-    std::vector<std::pair<MeshID, int>> neighboring_elems_;
-
-    CoarseToFineElemMap() = default;
-
-    std::pair<MeshID, int> refined_neighbor(int face, int neighbor_idx) const {
-      return neighboring_elems_[face * max_face_neighbors_ + neighbor_idx];
-    }
-
-    int get_num_subfaces(int face) const {
-      const int start = max_face_neighbors_ * face;
-      const int end = max_face_neighbors_ * (face + 1);
-      for (int i = start; i < end; ++i) {
-        if (neighboring_elems_[i].first == LibMeshManager::INVALID_NEIGHBOR) {
-          return i - start;
-        }
-      }
-      return end - start;
-    }
-  };
-
   // mapping elements to their neighbors when a mesh is adaptive
   // key is an element that was found to have AMR connectivity
   std::unordered_map<MeshID, CoarseToFineElemMap> amr_conn_map_;
 
   // Ugh, double mapping
   std::unordered_map<MeshID, SidePair> mesh_id_to_sidepair_;
-  std::unordered_map<SidePair, MeshID, SidePairHash> sidepair_to_mesh_id_;
+  std::unordered_map<SidePair, MeshID, SidePair::Hash> sidepair_to_mesh_id_;
 
   // sideset face mapping, stores the element and the side number
   // for each face in the mesh that lies on a boundary
