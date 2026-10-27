@@ -253,6 +253,8 @@ struct MOABElementFaceAccessor : public ElementFaceAccessor {
 
   bool has_sub_faces() const override { return false; }
 
+  int num_sub_faces(int i) const override { return 1; }
+
   // data members
   const MOABMeshManager* mesh_manager_;
   std::vector<Vertex> element_coordinates_;
