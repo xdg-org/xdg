@@ -633,10 +633,11 @@ TEST_CASE("AMR mesh")
   for (int i = 0; i < 2; ++i) {
     for (libMesh::Elem * elem : mesh->active_element_ptr_range()) {
       const auto & va = elem->vertex_average();
-      const bool in_x = va(0) >= bottom_left(0) && va(0) < top_right(0);
-      const bool in_y = va(1) >= bottom_left(1) && va(1) < top_right(1);
-      const bool in_z = va(2) >= bottom_left(2) && va(2) < top_right(2);
-      if (in_x && in_y && in_z) {
+      bool refine = true;
+      for (int coord = 0; coord < 3; ++coord) {
+        refine &= va(coord) >= bottom_left(coord) && va(coord) < top_right(coord);
+      }
+      if (refine) {
         elem->set_refinement_flag(libMesh::Elem::RefinementState::REFINE);
       }
     }
@@ -655,23 +656,48 @@ TEST_CASE("AMR mesh")
   xdg->prepare_raytracer();
   REQUIRE(mesh_manager->num_volumes() == 3);
   REQUIRE(mesh_manager->num_volume_elements() == 1096);
+  // This will fail if the one-to-many mapping for interface faces is wrong.
+  REQUIRE(mesh_manager->num_volume_faces(1) == 384);
+  // This will fail if the boundary surfaces contain lower refinement state elements.
+  REQUIRE(mesh_manager->num_volume_faces(mesh_manager->implicit_complement()) == 580);
 
+  // Test ray fire on an interface with AMR connectivity.
   auto enter_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, -1.0}, {0.0, 0.0, 1.0}, xdg::INFTY, xdg::HitOrientation::ENTERING);
   REQUIRE_THAT(enter_vol1.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
   auto exit_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, -1.0}, {0.0, 0.0, 1.0}, xdg::INFTY, xdg::HitOrientation::EXITING);
   REQUIRE_THAT(exit_vol1.first, Catch::Matchers::WithinAbs(3.0, 1e-6));
 
   const std::array<double, 11> valid_segments {0.5, 0.25, 0.25, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125};
-  auto results_fw = xdg->segments({0.0625, 0.0625, -1.0}, {0.0625, 0.0625, 3.0});
+
+  // Test crossing a contiguous AMR volume with segments.
+  auto results_fw_1 = xdg->segments({1.9375, 0.0625, -1.0}, {1.9375, 0.0625, 3.0});
   for (std::size_t i = 0; i < valid_segments.size(); ++i) {
-    REQUIRE_THAT(results_fw[i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
+    REQUIRE_THAT(results_fw_1[i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
   }
-  auto results_bw = xdg->segments({0.0625, 0.0625, 3.0}, {0.0625, 0.0625, -1.0});
+  auto results_bw_1 = xdg->segments({1.9375, 0.0625, 3.0}, {1.9375, 0.0625, -1.0});
   for (std::size_t i = 0; i < valid_segments.size(); ++i) {
-    REQUIRE_THAT(results_bw[10 - i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
+    REQUIRE_THAT(results_bw_1[10 - i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
   }
 
-  REQUIRE(mesh_manager->num_volumes() == 4);
+  // Test crossing an AMR interface boundary with segments.
+  auto results_fw_2 = xdg->segments({0.0625, 0.0625, -1.0}, {0.0625, 0.0625, 3.0});
+  for (std::size_t i = 0; i < valid_segments.size(); ++i) {
+    REQUIRE_THAT(results_fw_2[i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
+  }
+  auto results_bw_2 = xdg->segments({0.0625, 0.0625, 3.0}, {0.0625, 0.0625, -1.0});
+  for (std::size_t i = 0; i < valid_segments.size(); ++i) {
+    REQUIRE_THAT(results_bw_2[10 - i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
+  }
+
+  // Test crossing an interface boundary where elements are all at the same refinement state.
+  auto results_fw_3 = xdg->segments({-1.0, 0.0625, 1.0625}, {3.0, 0.0625, 1.0625});
+  for (const auto & [elem, dist] : results_fw_3) {
+    REQUIRE_THAT(dist, Catch::Matchers::WithinAbs(0.125, 1e-6));
+  }
+  auto results_bw_3 = xdg->segments({3.0, 0.0625, 1.0625}, {-1.0, 0.0625, 1.0625});
+  for (const auto & [elem, dist] : results_bw_3) {
+    REQUIRE_THAT(dist, Catch::Matchers::WithinAbs(0.125, 1e-6));
+  }
 }
 
 TEMPLATE_TEST_CASE("TEST libMesh Raytrace Quads", "[libMesh][faces][quads]",
