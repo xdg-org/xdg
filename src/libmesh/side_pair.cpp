@@ -6,7 +6,7 @@
 #include "libmesh/cell_hex8.h"
 
 namespace xdg {
-  SidePair::SidePair(std::pair<const libMesh::Elem*, int> old_side) {
+SidePair::SidePair(std::pair<const libMesh::Elem*, int> old_side) {
   side_.first = old_side.first;
   side_num_ = old_side.second;
   side_.second = old_side.first->neighbor_ptr(side_num_);
@@ -91,8 +91,9 @@ void SidePair::set_side_num() {
   }
   // If we've gotten here, we could be dealing with an AMR mesh. An element in first()
   // may be less refined then the element in second(), so we need to ensure faces are
-  // quieried with second() and the face is adjusted accordingly. However, we need to
-  // signal that the winding order be reversed to ensure the normals are consistent.
+  // quieried with second() and side_num_ is adjusted accordingly to point from second()
+  // to first(). However, we need to signal that the winding order be reversed to ensure
+  // the normals are consistent.
   auto unrefined_neighbor = side_.first->which_neighbor_am_i(side_.second);
   if (unrefined_neighbor != libMesh::invalid_uint) {
     // second() is a neighbor of first()

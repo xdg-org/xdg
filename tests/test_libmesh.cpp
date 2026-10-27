@@ -566,7 +566,7 @@ TEST_CASE("LibMesh Element ID and Index Mapping")
     mesh_manager->init();
     REQUIRE(mesh_manager->num_volume_elements() == 10333);
 
-      // check element ID to index mapping
+    // check element ID to index mapping
     int expected_index = 0;
     for (const auto* elem : mesh_manager->mesh()->active_element_ptr_range()) {
       MeshID element_id = elem->id();
@@ -626,6 +626,8 @@ TEST_CASE("AMR mesh")
 
   auto mesh = std::make_unique<libMesh::Mesh>(*XDGConfig::config().libmesh_comm(), 3);
   mesh->read("amr_mesh.exo");
+  // set allow renumbering to false generates a discontiguous element space
+  mesh->allow_renumbering(false);
   libMesh::MeshRefinement mesh_refinement((*mesh.get()));
 
   // Apply AMR to the mesh two times. There doesn't appear to be a way to store
@@ -661,59 +663,89 @@ TEST_CASE("AMR mesh")
   // This will fail if the boundary surfaces contain lower refinement state elements.
   REQUIRE(mesh_manager->num_volume_faces(mesh_manager->implicit_complement()) == 580);
 
+  // Test element ID to index mapping.
+  {
+    int expected_index = 0;
+    for (const auto* elem : mesh->active_element_ptr_range()) {
+      REQUIRE(mesh_manager->element_index(elem->id()) == expected_index);
+      expected_index++;
+    }
+  }
+
+  // Test element index to ID mappings.
+  {
+    std::vector<MeshID> elem_ids;
+    for (const auto* elem : mesh->active_element_ptr_range()) {
+      elem_ids.push_back(elem->id());
+    }
+    for (int elem_idx = 0; elem_idx < mesh_manager->num_volume_elements(); ++elem_idx) {
+      REQUIRE(mesh_manager->element_id(elem_idx) == elem_ids[elem_idx]);
+    }
+  }
+
   // Testing find element calls for different refinement levels.
-  auto elem1 = xdg->find_element({0.0625, 0.0625, 1.0625});
-  REQUIRE(elem1 != xdg::ID_NONE);
-  REQUIRE_THAT(mesh_manager->element_volume(elem1), Catch::Matchers::WithinAbs(0.001953125, 1e-6));
-  auto elem2 = xdg->find_element({0.125, 0.125, 0.875});
-  REQUIRE(elem2 != xdg::ID_NONE);
-  REQUIRE_THAT(mesh_manager->element_volume(elem2), Catch::Matchers::WithinAbs(0.015625, 1e-6));
-  auto elem3 = xdg->find_element({0.25, 0.25, 0.25});
-  REQUIRE(elem3 != xdg::ID_NONE);
-  REQUIRE_THAT(mesh_manager->element_volume(elem3), Catch::Matchers::WithinAbs(0.125, 1e-6));
+  {
+    auto elem1 = xdg->find_element({0.0625, 0.0625, 1.0625});
+    REQUIRE(elem1 != xdg::ID_NONE);
+    REQUIRE_THAT(mesh_manager->element_volume(elem1), Catch::Matchers::WithinAbs(0.001953125, 1e-6));
+    auto elem2 = xdg->find_element({0.125, 0.125, 0.875});
+    REQUIRE(elem2 != xdg::ID_NONE);
+    REQUIRE_THAT(mesh_manager->element_volume(elem2), Catch::Matchers::WithinAbs(0.015625, 1e-6));
+    auto elem3 = xdg->find_element({0.25, 0.25, 0.25});
+    REQUIRE(elem3 != xdg::ID_NONE);
+    REQUIRE_THAT(mesh_manager->element_volume(elem3), Catch::Matchers::WithinAbs(0.125, 1e-6));
+  }
 
   // Test ray fire on an interface with AMR connectivity.
-  auto enter_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, -1.0}, {0.0, 0.0, 1.0}, xdg::INFTY, xdg::HitOrientation::ENTERING);
-  REQUIRE_THAT(enter_vol1.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
-  auto exit_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, -1.0}, {0.0, 0.0, 1.0}, xdg::INFTY, xdg::HitOrientation::EXITING);
-  REQUIRE_THAT(exit_vol1.first, Catch::Matchers::WithinAbs(3.0, 1e-6));
+  {
+    auto enter_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, -1.0}, {0.0, 0.0, 1.0}, xdg::INFTY, xdg::HitOrientation::ENTERING);
+    REQUIRE_THAT(enter_vol1.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
+    auto exit_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, -1.0}, {0.0, 0.0, 1.0}, xdg::INFTY, xdg::HitOrientation::EXITING);
+    REQUIRE_THAT(exit_vol1.first, Catch::Matchers::WithinAbs(3.0, 1e-6));
+  }
 
   const std::array<double, 11> valid_segments {0.5, 0.25, 0.25, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125};
 
   // Test crossing a contiguous AMR volume with segments.
-  auto results_fw_1 = xdg->segments({1.9375, 0.0625, -1.0}, {1.9375, 0.0625, 3.0});
-  REQUIRE(results_fw_1.size() == 11);
-  for (std::size_t i = 0; i < valid_segments.size(); ++i) {
-    REQUIRE_THAT(results_fw_1[i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
-  }
-  auto results_bw_1 = xdg->segments({1.9375, 0.0625, 3.0}, {1.9375, 0.0625, -1.0});
-  REQUIRE(results_bw_1.size() == 11);
-  for (std::size_t i = 0; i < valid_segments.size(); ++i) {
-    REQUIRE_THAT(results_bw_1[10 - i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
+  {
+    auto results_fw_1 = xdg->segments({1.9375, 0.0625, -1.0}, {1.9375, 0.0625, 3.0});
+    REQUIRE(results_fw_1.size() == 11);
+    for (std::size_t i = 0; i < valid_segments.size(); ++i) {
+      REQUIRE_THAT(results_fw_1[i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
+    }
+    auto results_bw_1 = xdg->segments({1.9375, 0.0625, 3.0}, {1.9375, 0.0625, -1.0});
+    REQUIRE(results_bw_1.size() == 11);
+    for (std::size_t i = 0; i < valid_segments.size(); ++i) {
+      REQUIRE_THAT(results_bw_1[10 - i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
+    }
   }
 
   // Test crossing an AMR interface boundary with segments.
-  auto results_fw_2 = xdg->segments({0.0625, 0.0625, -1.0}, {0.0625, 0.0625, 3.0});
-  REQUIRE(results_fw_2.size() == 11);
-  for (std::size_t i = 0; i < valid_segments.size(); ++i) {
-    REQUIRE_THAT(results_fw_2[i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
-  }
-  auto results_bw_2 = xdg->segments({0.0625, 0.0625, 3.0}, {0.0625, 0.0625, -1.0});
-  REQUIRE(results_bw_2.size() == 11);
-  for (std::size_t i = 0; i < valid_segments.size(); ++i) {
-    REQUIRE_THAT(results_bw_2[10 - i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
+  {
+    auto results_fw_2 = xdg->segments({0.0625, 0.0625, -1.0}, {0.0625, 0.0625, 3.0});
+    REQUIRE(results_fw_2.size() == 11);
+    for (std::size_t i = 0; i < valid_segments.size(); ++i) {
+      REQUIRE_THAT(results_fw_2[i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
+    }
+    auto results_bw_2 = xdg->segments({0.0625, 0.0625, 3.0}, {0.0625, 0.0625, -1.0});
+    REQUIRE(results_bw_2.size() == 11);
+    for (std::size_t i = 0; i < valid_segments.size(); ++i) {
+      REQUIRE_THAT(results_bw_2[10 - i].second, Catch::Matchers::WithinAbs(valid_segments[i], 1e-6));
+    }
   }
 
   // Test crossing an interface boundary where elements are all at the same refinement state.
-  auto results_fw_3 = xdg->segments({-1.0, 0.0625, 1.0625}, {3.0, 0.0625, 1.0625});
-  REQUIRE(results_fw_3.size() == 16);
-  for (const auto & [elem, dist] : results_fw_3) {
-    REQUIRE_THAT(dist, Catch::Matchers::WithinAbs(0.125, 1e-6));
-  }
-  auto results_bw_3 = xdg->segments({3.0, 0.0625, 1.0625}, {-1.0, 0.0625, 1.0625});
-  REQUIRE(results_bw_3.size() == 16);
-  for (const auto & [elem, dist] : results_bw_3) {
-    REQUIRE_THAT(dist, Catch::Matchers::WithinAbs(0.125, 1e-6));
+  {
+    auto results_fw_3 = xdg->segments({-1.0, 0.0625, 1.0625}, {3.0, 0.0625, 1.0625});
+    REQUIRE(results_fw_3.size() == 16);
+    for (const auto & [elem, dist] : results_fw_3) {
+      REQUIRE_THAT(dist, Catch::Matchers::WithinAbs(0.125, 1e-6));
+    }
+    auto results_bw_3 = xdg->segments({3.0, 0.0625, 1.0625}, {-1.0, 0.0625, 1.0625});
+    REQUIRE(results_bw_3.size() == 16);
+    for (const auto & [elem, dist] : results_bw_3) {
+      REQUIRE_THAT(dist, Catch::Matchers::WithinAbs(0.125, 1e-6));
+    }
   }
 }
 
