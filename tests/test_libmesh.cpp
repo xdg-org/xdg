@@ -626,13 +626,21 @@ TEST_CASE("AMR mesh")
 
   auto mesh = std::make_unique<libMesh::Mesh>(*XDGConfig::config().libmesh_comm(), 3);
   mesh->read("amr_mesh.exo");
-  // set allow renumbering to false generates a discontiguous element space
   mesh->allow_renumbering(false);
   libMesh::MeshRefinement mesh_refinement((*mesh.get()));
 
   // Apply AMR to the mesh two times. There doesn't appear to be a way to store
   // AMR connectivity in Exodus output, so we need to generate it here
-  for (int i = 0; i < 2; ++i) {
+  // A single round of refinement followed by coarsening (when the mesh isn't renumbering)
+  // creates holes in the libMesh element array (and therefore the id space). This allows us
+  // to test the index->element (and dual) mapping under AMR.
+  const std::array<libMesh::Elem::RefinementState, 4> amr_state {
+    libMesh::Elem::RefinementState::REFINE,
+    libMesh::Elem::RefinementState::COARSEN,
+    libMesh::Elem::RefinementState::REFINE,
+    libMesh::Elem::RefinementState::REFINE
+  };
+  for (int i = 0; i < 4; ++i) {
     for (libMesh::Elem * elem : mesh->active_element_ptr_range()) {
       const auto & va = elem->vertex_average();
       bool refine = true;
@@ -640,12 +648,14 @@ TEST_CASE("AMR mesh")
         refine &= va(coord) >= bottom_left(coord) && va(coord) < top_right(coord);
       }
       if (refine) {
-        elem->set_refinement_flag(libMesh::Elem::RefinementState::REFINE);
+        elem->set_refinement_flag(amr_state[i]);
       }
     }
 
     mesh_refinement.refine_and_coarsen_elements();
     mesh_refinement.clean_refinement_flags();
+    // Contract deletes more refined child elements.
+    mesh->contract();
   }
   mesh->prepare_for_use();
 
