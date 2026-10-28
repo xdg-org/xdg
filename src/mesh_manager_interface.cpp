@@ -240,7 +240,7 @@ MeshManager::next_element(MeshID current_element,
     if (entering_dot < 0.0) return;
 
     // If we've gotten this far, we have a candidate.
-    ret_val.push_back({subelement, result.t, entering_dot});
+    ret_val.push_back({subelement, std::max(0.0, result.t), entering_dot});
   };
 
   auto element_face_accessor = ElementFaceAccessor::create(this, current_element);
