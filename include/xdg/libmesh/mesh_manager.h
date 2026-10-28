@@ -3,23 +3,26 @@
 
 #include <map>
 #include <memory>
+#include <vector>
 
 #include "xdg/constants.h"
 #include "xdg/element_face_accessor.h"
 #include "xdg/mesh_manager_interface.h"
 #include "xdg/error.h"
+#include "xdg/libmesh/side_pair.h"
 
 #include "libmesh/libmesh.h"
 #include "libmesh/elem.h"
 #include "libmesh/cell_tet4.h"
 #include "libmesh/cell_hex8.h"
 #include "libmesh/mesh.h"
-namespace xdg {
 
+namespace xdg {
 
 class LibMeshManager : public MeshManager {
 
-  constexpr static int SIDE_NONE {-1};
+  // Valid neighbors can -1 for boundary faces, so we assign -2 to mean invalid neighbors.
+  constexpr static int INVALID_NEIGHBOR {-2};
 
 public:
   LibMeshManager(const libMesh::MeshBase* ptr);
@@ -27,30 +30,6 @@ public:
   LibMeshManager();
 
   ~LibMeshManager() override = default;
-
-  // Backend methods
-
-  //! \brief Map ID spaces into indices for ordered access by downstream applications
-  void map_id_spaces();
-
-  //! Discover element faces on subdomain interfaces.
-  void discover_surface_elements();
-
-  //! Validate that explicit sideset faces are represented by discovered
-  //! interface sets and record the corresponding interface associations.
-  void map_sidesets_to_discovered_interfaces();
-
-  //! Create surfaces for explicit sidesets, splitting them by discovered
-  //! interface set when needed, and then create any remaining implicit
-  //! interface surfaces that were not covered by sidesets.
-  void create_surfaces_from_sidesets_and_interfaces();
-
-  //! The "natural" orientation of triangle normals is dependent on the element
-  //! used to defined the SidePair objects we use for unique identification of faces.
-  //! This method ensures that the normals are consistent for each sideset and sets
-  //! the senses of the parent volumes (mesh blocks) for each surface, updating
-  //! curent SidePair objects to do so if necessary.
-  void determine_surface_senses();
 
   // Interface methods
   MeshLibrary mesh_library() const override { return MeshLibrary::LIBMESH; }
@@ -61,8 +40,6 @@ public:
 
   void parse_metadata() override;
 
-  void check_face_and_element_types() const;
-
   static VolumeElementType _elem_xdg_type(const libMesh::Elem *elem_ptr) {
     switch (elem_ptr->type()) {
     case libMesh::TET4:
@@ -72,6 +49,16 @@ public:
     default:
       return VolumeElementType::UNSUPPORTED;
     }
+  }
+
+  bool has_amr_conn() const { return amr_conn_map_.size() > 0; }
+
+  bool is_elem_adaptive(MeshID element) const {
+    return amr_conn_map_.count(element);
+  }
+
+  int get_num_subfaces(MeshID element, int face) const {
+    return amr_conn_map_.at(element).get_num_subfaces(face);
   }
 
   int num_volumes() const override { return volumes_.size(); }
@@ -134,6 +121,8 @@ public:
 
   MeshID adjacent_element(MeshID element, int face) const override;
 
+  std::pair<MeshID, int> adjacent_subelement(MeshID element, int face, int subface_idx) const override;
+
   MeshID create_volume() override;
 
   void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override;
@@ -145,145 +134,41 @@ public:
   // Accessors
   const libMesh::MeshBase* mesh() const { return mesh_; }
 
-  private:
-  //! Helper struct for unique identification of an element face
-  struct SidePair {
-    SidePair() = default;
+private:
+  // Utility objects.
+  // A struct to define a hash for two MeshIDs.
+  struct MeshIDPairHash {
+    std::size_t operator()(const std::pair<MeshID, MeshID>& p) const
+    {
+      // Combine the hashes of the two integers
+      std::size_t h1 = std::hash<int32_t>{}(p.first);
+      std::size_t h2 = std::hash<int32_t>{}(p.second);
+      // Use a bitwise combination for mixing
+      return h1 ^ (h2 << 1); // XOR and shift for a simple combination
+    }
+  };
+  // A helper struct to store AMR connectivity.
+  struct CoarseToFineElemMap {
+    int num_faces_ {-1};
+    int max_face_neighbors_ {-1};
+    // Vector of neighboring elements with the side pointing to this element
+    std::vector<std::pair<MeshID, int>> neighboring_elems_;
 
-    SidePair(std::pair<const libMesh::Elem*, int> old_side) {
-      side.first = old_side.first;
-      side_num_ = old_side.second;
-      side.second = old_side.first->neighbor_ptr(side_num_);
-      if (side.second != nullptr) {
-        set_order();
-        set_side_num();
-      }
+    CoarseToFineElemMap() = default;
+
+    std::pair<MeshID, int> refined_neighbor(int face, int neighbor_idx) const {
+      return neighboring_elems_[face * max_face_neighbors_ + neighbor_idx];
     }
 
-    SidePair(const libMesh::Elem* elem, int side_num) {
-      side.first = elem;
-      side_num_ = side_num;
-      side.second = elem->neighbor_ptr(side_num);
-      if (side.second != nullptr) {
-        set_order();
-        set_side_num();
-      }
-    }
-
-    SidePair(const libMesh::Elem* elem1, const libMesh::Elem* elem2) {
-      side.first = elem1;
-      side.second = elem2;
-      if (elem1 == nullptr || elem2 == nullptr) {
-        fatal_error("SidePair pointer constructor must be used with non-null pointers");
-      }
-      set_order();
-      set_side_num();
-    }
-
-    SidePair(std::pair<const libMesh::Elem*, const libMesh::Elem*> side_pair) : side(side_pair) {
-      if (side.first == nullptr || side.second == nullptr) {
-        fatal_error("SidePair pair constructor must be used with non-null pointers");
-      }
-      set_order();
-      set_side_num();
-    }
-
-    void set_order() {
-      if (side.first == nullptr && side.second == nullptr) {
-        fatal_error("SidePair created with null elements");
-      }
-
-      // re-order so that null pointers come second if present
-      if (side.first == nullptr) {
-        std::swap(side.first, side.second);
-        return;
-      }
-
-      // if a null pointer is present, the remaining checks aren't necessary
-      if (side.second == nullptr) {
-        return;
-      }
-
-      if (side.first->id() == side.second->id()) {
-        fatal_error("SidePair created with the same element on both sides. Element ID: {}", side.first->id());
-      }
-
-      if (side.first->id() > side.second->id()) {
-        std::swap(side.first, side.second);
-      }
-    }
-
-    SurfaceFaceType face_type() const {
-      switch (side.first->type()) {
-        case libMesh::TET4:
-          return SurfaceFaceType::TRI;
-        case libMesh::HEX8:
-          return SurfaceFaceType::QUAD;
-        default:
-          return SurfaceFaceType::UNSUPPORTED;
-      }
-    }
-
-    //! Retrieve a vertex of the side pair face, using the type
-    //! to access the node reference though an internal, non-blocking
-    //! data structure
-    template<typename T>
-    Vertex vertex(int i) const {
-      const auto e_type = static_cast<const T*>(first());
-      const auto& node_ref = first()->node_ref(e_type->side_nodes_map[side_num()][i]);
-      return {node_ref(0), node_ref(1), node_ref(2)};
-    }
-
-    void set_side_num() {
-      for (int i = 0; i < side.first->n_sides(); i++) {
-        if (side.first->neighbor_ptr(i) == side.second) {
-          side_num_ = i;
-          break;
+    int get_num_subfaces(int face) const {
+      const int start = max_face_neighbors_ * face;
+      const int end = max_face_neighbors_ * (face + 1);
+      for (int i = start; i < end; ++i) {
+        if (neighboring_elems_[i].first == LibMeshManager::INVALID_NEIGHBOR) {
+          return i - start;
         }
       }
-      if (side_num_ == SIDE_NONE) {
-        fatal_error("SidePair created with elements that are not neighbors");
-      }
-    }
-
-    void swap() {
-      std::swap(side.first, side.second);
-      set_side_num();
-    }
-
-    bool operator==(const SidePair& other) const
-    {
-      return first() == other.first() && side_num() == other.side_num();
-    }
-
-    bool operator<(const SidePair& other) const
-    {
-      return side < other.side;
-    }
-
-    const libMesh::Elem* first() const { return side.first; }
-    const libMesh::Elem* second() const { return side.second; }
-
-    const int32_t side_num() const { return side_num_; }
-
-    const std::unique_ptr<const libMesh::Elem> face_ptr() const {
-
-      return first()->side_ptr(side_num());
-    }
-
-    std::pair<const libMesh::Elem*, const libMesh::Elem*> side {nullptr, nullptr};
-    int32_t side_num_ {SIDE_NONE};
-  }; // SidePair
-
-  struct SidePairHash {
-
-    std::size_t operator()(const SidePair& p) const
-    {
-      auto hash1 = std::hash<const libMesh::Elem*>{}(p.first());
-      auto hash2 = std::hash<int32_t>{}(p.side_num());
-      // Combine the two hashes into a single hash value
-      // This can be done using a common technique that combines them with XOR and bit shifting
-      return hash1 ^ (hash2 + 0x9e3779b9 + (hash1 << 6) + (hash1 >> 2));
+      return end - start;
     }
   };
 
@@ -310,27 +195,51 @@ public:
     return next_sidepair_id_++;
   }
 
-  struct MeshIDPairHash {
-    std::size_t operator()(const std::pair<MeshID, MeshID>& p) const
-    {
-      // Combine the hashes of the two integers
-      std::size_t h1 = std::hash<int32_t>{}(p.first);
-      std::size_t h2 = std::hash<int32_t>{}(p.second);
-      // Use a bitwise combination for mixing
-      return h1 ^ (h2 << 1); // XOR and shift for a simple combination
-    }
-  };
+  // Backend methods
+  //! \brief Map ID spaces into indices for ordered access by downstream applications
+  void map_id_spaces();
+
+  //! Discover element faces on subdomain interfaces.
+  void discover_surface_elements();
+
+  //! Validate that explicit sideset faces are represented by discovered
+  //! interface sets and record the corresponding interface associations.
+  void map_sidesets_to_discovered_interfaces();
+
+  //! Create surfaces for explicit sidesets, splitting them by discovered
+  //! interface set when needed, and then create any remaining implicit
+  //! interface surfaces that were not covered by sidesets.
+  void create_surfaces_from_sidesets_and_interfaces();
+
+  //! The "natural" orientation of triangle normals is dependent on the element
+  //! used to defined the SidePair objects we use for unique identification of faces.
+  //! This method ensures that the normals are consistent for each sideset and sets
+  //! the senses of the parent volumes (mesh blocks) for each surface, updating
+  //! curent SidePair objects to do so if necessary.
+  void determine_surface_senses();
+
+  void check_face_and_element_types() const;
+
+  //! Build the one-to-many connectivity maps for the case where less refined elements share
+  //! a face with several more refined elements.
+  void build_amr_connectivity_map();
+
+  //! Get the active, more refined, neighbors associated with a given side of an element.
+  void get_active_neighbors(MeshID current_elem_id, int side, std::vector<std::pair<MeshID, int>> & refined_neighbors);
 
   // Attributes
-  protected:
   // a mesh managed by this class (if loading from a file)
   std::unique_ptr<libMesh::Mesh> managed_mesh_ {nullptr};
   // a pointer to the mesh this class is using for data-structure queries (may be managed externally)
   const libMesh::MeshBase* mesh_ {nullptr};
 
+  // mapping elements to their neighbors when a mesh is adaptive
+  // key is an element that was found to have AMR connectivity
+  std::unordered_map<MeshID, CoarseToFineElemMap> amr_conn_map_;
+
   // Ugh, double mapping
   std::unordered_map<MeshID, SidePair> mesh_id_to_sidepair_;
-  std::unordered_map<SidePair, MeshID, SidePairHash> sidepair_to_mesh_id_;
+  std::unordered_map<SidePair, MeshID, SidePair::Hash> sidepair_to_mesh_id_;
 
   // sideset face mapping, stores the element and the side number
   // for each face in the mesh that lies on a boundary
@@ -375,6 +284,8 @@ struct LibMeshElementFaceAccessor : public ElementFaceAccessor {
   ElementFaceAccessor(element), mesh_manager_(mesh_manager) {
     mesh_ = mesh_manager_->mesh();
     elem_ptr_ = mesh_->elem_ptr(element);
+    // Early out of the hash-map lookup if the mesh doesn't have AMR connectivity.
+    adaptive_ = mesh_manager_->has_amr_conn() ? mesh_manager_->is_elem_adaptive(element) : false;
   }
 
   std::vector<Vertex> face_vertices(int i) const override {
@@ -407,10 +318,17 @@ struct LibMeshElementFaceAccessor : public ElementFaceAccessor {
     return static_cast<int>(elem_ptr_->n_sides());
   }
 
+  bool has_sub_faces() const override { return adaptive_; }
+
+  int num_sub_faces(int i) const override {
+    return mesh_manager_->get_num_subfaces(element_, i);
+  }
+
   // data members
   const LibMeshManager* mesh_manager_;
   const libMesh::MeshBase* mesh_;
   const libMesh::Elem* elem_ptr_;
+  bool adaptive_;
 };
 
 

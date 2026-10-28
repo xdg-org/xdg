@@ -218,6 +218,10 @@ public:
     return element_adjacencies_.at(element)[face];
   }
 
+  virtual std::pair<MeshID, int> adjacent_subelement(MeshID element, int face, int subface_idx) const override {
+    return {ID_NONE, ID_NONE};
+  }
+
   virtual Vertex vertex_coordinates(MeshID vertex_id) const override {
     return vertices().at(vertex_id);
   }
@@ -336,6 +340,10 @@ struct MockElementFaceAccessor : public ElementFaceAccessor {
     return 4;
   }
 
+  bool has_sub_faces() const override { return false; }
+
+  int num_sub_faces(int i) const override { return 1; }
+
   // data members
   const MockedTriTetMesh* mesh_manager_;
   std::array<std::array<int, 3>, 4> tet_connectivity_;
@@ -442,6 +450,10 @@ public:
 
   MeshID adjacent_element(MeshID element, int face) const override {
     return element_adjacencies_.at(element).at(face);
+  }
+
+  virtual std::pair<MeshID, int> adjacent_subelement(MeshID element, int face, int subface_idx) const override {
+    return {ID_NONE, ID_NONE};
   }
 
   Vertex vertex_coordinates(MeshID vertex_id) const override {
@@ -581,6 +593,10 @@ struct MockHexElementFaceAccessor : public ElementFaceAccessor {
   }
 
   int num_faces() const override { return 6; }
+
+  bool has_sub_faces() const override { return false; }
+
+  int num_sub_faces(int i) const override { return 1; }
 
   const MockedQuadHexMesh* mesh_manager_;
   std::array<Vertex, 8> element_vertices_;

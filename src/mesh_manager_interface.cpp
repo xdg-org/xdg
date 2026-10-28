@@ -173,6 +173,76 @@ MeshManager::next_element(MeshID current_element,
     double exiting_dot;
   };
 
+  // A helper functor to resolve subfaces. 'subelement' is an element adjacent to 'current_element'.
+  // 'adjacent_face' is a face in 'subelement' that boarders 'current_element'. 'ret_val' is a list
+  // of candidate elements to advance into.
+  auto resolve_subface = [&](MeshID subelement, int adjacent_face, std::vector<FaceCandidate> & ret_val) {
+    auto subelement_face_accessor = ElementFaceAccessor::create(this, subelement);
+
+    // Get the face directly adjacent to 'current_element'
+    auto coords = subelement_face_accessor->face_vertices(adjacent_face);
+    double entering_dot;
+    PluckerIntersectionResult result {false, INFTY};
+    if (coords.size() == 3) {
+      entering_dot = -1.0 * u.dot(triangle_normal(coords));
+      if (entering_dot < 0) return;
+      result = plucker_ray_tri_intersect(
+          coords.data(), r, u, INFTY, -1e-10, false, 0);
+    } else if (coords.size() == 4) {
+      std::array<Vertex, 3> tri0;
+      std::array<Vertex, 3> tri1;
+      if (canonical_diagonal(coords)) {
+        tri0 = {coords[0], coords[1], coords[2]};
+        tri1 = {coords[0], coords[2], coords[3]};
+      } else {
+        tri0 = {coords[1], coords[2], coords[3]};
+        tri1 = {coords[1], coords[3], coords[0]};
+      }
+      PluckerIntersectionResult result0, result1;
+      double entering_dot0 = -1.0 * u.dot(triangle_normal(tri0));
+      if (entering_dot0 >= 0.0) {
+        result0 = plucker_ray_tri_intersect(tri0.data(),
+                                            r,
+                                            u,
+                                            INFTY,
+                                            -1e-10,
+                                            false,
+                                            0);
+      }
+
+      double entering_dot1 = -1.0 * u.dot(triangle_normal(tri1));
+      if (entering_dot1 >= 0.0) {
+        result1 = plucker_ray_tri_intersect(tri1.data(),
+                                            r,
+                                            u,
+                                            INFTY,
+                                            -1e-10,
+                                            false,
+                                            0);
+      }
+      if (!result0.hit && !result1.hit) return;
+      // we hit one or both triangles, so we will return a hit
+      result.hit = true;
+      // if we hit both triangles, use the closer triangle distance
+      if (result0.hit) {
+        result.t = result0.t;
+        entering_dot = entering_dot0;
+      }
+      if (result1.hit && result1.t < result.t) {
+        result.t = result1.t;
+        entering_dot = entering_dot1;
+      }
+    } else {
+      fatal_error("Unsupported face vertex count {} in next_element", coords.size());
+    }
+
+    if (!result.hit) return;
+    if (entering_dot < 0.0) return;
+
+    // If we've gotten this far, we have a candidate.
+    ret_val.push_back({subelement, std::max(0.0, result.t), entering_dot});
+  };
+
   auto element_face_accessor = ElementFaceAccessor::create(this, current_element);
   std::vector<FaceCandidate> candidates;
   const auto element_vertices = this->element_vertices(current_element);
@@ -239,11 +309,27 @@ MeshManager::next_element(MeshID current_element,
     if (!result.hit) continue;
     if (exiting_dot < 0.0) continue;
 
-    MeshID next_element = this->adjacent_element(current_element, i);
-
-    candidates.push_back({next_element,
-                          std::max(0.0, result.t),
-                          exiting_dot});
+    // If the element has subfaces we need to figure out which face is composed of
+    // multiple subfaces. Then, we resolve which subface we're entering into.
+    if (element_face_accessor->has_sub_faces()) {
+      const int num_subfaces = element_face_accessor->num_sub_faces(i);
+      // This face isn't split, so we can just push back into the candidates vector.
+      if (num_subfaces == 1) {
+        candidates.push_back({this->adjacent_element(current_element, i),
+                              std::max(0.0, result.t),
+                              exiting_dot});
+      } else {
+        // This face has subfaces.
+        for (int sf = 0; sf < num_subfaces; ++sf) {
+          auto [subelement, adjacent_face] = this->adjacent_subelement(current_element, i, sf);
+          resolve_subface(subelement, adjacent_face, candidates);
+        }
+      }
+    } else {
+      candidates.push_back({this->adjacent_element(current_element, i),
+                            std::max(0.0, result.t),
+                            exiting_dot});
+    }
   }
 
   if (candidates.empty()) return {ID_NONE, INFTY};

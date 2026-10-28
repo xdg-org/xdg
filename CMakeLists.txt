@@ -237,6 +237,7 @@ endif()
 if (XDG_ENABLE_LIBMESH)
 list(APPEND xdg_sources
 src/libmesh/mesh_manager.cpp
+src/libmesh/side_pair.cpp
 )
 endif()
 

@@ -90,6 +90,8 @@ public:
 
   MeshID adjacent_element(MeshID element, int face) const override;
 
+  std::pair<MeshID, int> adjacent_subelement(MeshID element, int face, int subface_idx) const override;
+
   // Topology
   std::pair<MeshID, MeshID> surface_senses(MeshID surface) const override;
 
@@ -248,6 +250,10 @@ struct MOABElementFaceAccessor : public ElementFaceAccessor {
   int num_faces() const override {
     return static_cast<int>(element_ordering_->size());
   }
+
+  bool has_sub_faces() const override { return false; }
+
+  int num_sub_faces(int i) const override { return 1; }
 
   // data members
   const MOABMeshManager* mesh_manager_;
