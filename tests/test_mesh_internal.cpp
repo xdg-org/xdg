@@ -22,6 +22,8 @@ TEST_CASE("Test Mesh Mock")
 
   REQUIRE(mm->num_volume_elements() == 12);
   REQUIRE(mm->num_volume_elements(1) == 12);
+  REQUIRE(mm->num_volume_element_faces() == 48);
+  REQUIRE(mm->num_volume_element_faces(1) == 48);
 }
 
 TEST_CASE("MockedQuadHexMesh Face Representation")
@@ -32,6 +34,8 @@ TEST_CASE("MockedQuadHexMesh Face Representation")
   REQUIRE(mm->num_surfaces() == 6);
   REQUIRE(mm->num_volume_faces(0) == 10);
   REQUIRE(mm->num_volume_elements(0) == 2);
+  REQUIRE(mm->num_volume_element_faces() == 12);
+  REQUIRE(mm->num_volume_element_faces(0) == 12);
   REQUIRE(mm->get_volume_elements(0) == std::vector<MeshID> {0, 1});
   REQUIRE(mm->element_connectivity(0) == std::vector<MeshID> {0, 1, 2, 3, 4, 5, 6, 7});
   REQUIRE(mm->element_connectivity(1) == std::vector<MeshID> {1, 8, 9, 2, 5, 10, 11, 6});
