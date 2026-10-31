@@ -16,7 +16,7 @@ public:
     std::size_t operator()(const SidePair& p) const
     {
       auto hash1 = std::hash<const libMesh::Elem*>{}(p.first());
-      auto hash2 = std::hash<int32_t>{}(p.side_num());
+      auto hash2 = std::hash<const libMesh::Elem*>{}(p.second());
       // Combine the two hashes into a single hash value
       // This can be done using a common technique that combines them with XOR and bit shifting
       return hash1 ^ (hash2 + 0x9e3779b9 + (hash1 << 6) + (hash1 >> 2));
