@@ -42,10 +42,9 @@ significant_segments(const std::vector<std::pair<MeshID, double>> &segments) {
   return result;
 }
 
-TEMPLATE_TEST_CASE("Test Regularized Tet Mesh Shared-Edge Tracks",
-                   "[tracks][regression]",
-                   MOAB_Interface,
-                   LibMesh_Interface)
+TEMPLATE_LIST_TEST_CASE("Test Regularized Tet Mesh Shared-Edge Tracks",
+                        "[tracks][regression]",
+                        MeshManagerBackends)
 {
   constexpr auto mesh_backend = TestType::value;
 
@@ -235,10 +234,9 @@ double segment_sum(const std::vector<std::pair<MeshID, double>>& segments)
 }
 
 
-TEMPLATE_TEST_CASE("Segments account for simulated hex tracks starting on faces",
-                   "[tracks][hex][regression]",
-                   MOAB_Interface,
-                   LibMesh_Interface)
+TEMPLATE_LIST_TEST_CASE("Segments account for simulated hex tracks starting on faces",
+                        "[tracks][hex][regression]",
+                        MeshManagerBackends)
 {
   constexpr auto mesh_backend = TestType::value;
 
@@ -297,10 +295,9 @@ TEMPLATE_TEST_CASE("Segments account for simulated hex tracks starting on faces"
 // into two subtriangles. This ray intersects the outward-facing subtriangle;
 // `next_element` used to miss that exit and return ID_NONE/INFTY when it chose
 // the other subtriangle's orientation.
-TEMPLATE_TEST_CASE("Next_element chooses exiting quad subtriangle",
-                   "[walk_elements][hex][quads]",
-                   MOAB_Interface,
-                   LibMesh_Interface)
+TEMPLATE_LIST_TEST_CASE("Next_element chooses exiting quad subtriangle",
+                        "[walk_elements][hex][quads]",
+                        MeshManagerBackends)
 {
   constexpr auto mesh_backend = TestType::value;
 

@@ -58,9 +58,7 @@ const std::array<ExpectedVertexCoordinate, 21> SAMPLE_COORDINATES = {{
   {1080, {6.276147641, 6.66300095, 4.509159822}}
 }};
 
-TEMPLATE_TEST_CASE("Test Mesh Without Geometry", "[mesh]",
-                   MOAB_Interface,
-                   LibMesh_Interface)
+TEMPLATE_LIST_TEST_CASE("Test Mesh Without Geometry", "[mesh]", MeshManagerBackends)
 {
   constexpr auto mesh_backend = TestType::value;
 
