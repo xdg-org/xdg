@@ -82,9 +82,11 @@ MeshManager::num_volume_elements() const
 int
 MeshManager::num_volume_element_faces(MeshID volume) const
 {
-  auto elem_type = get_volume_element_type(volume);
   auto num_elem = num_volume_elements(volume);
-  switch (get_volume_element_type(volume)) {
+  if (num_elem == 0) return 0;
+
+  auto elem_type = get_volume_element_type(volume);
+  switch (elem_type) {
     case VolumeElementType::TET: return 4 * num_elem;
     case VolumeElementType::HEX: return 6 * num_elem;
     default: {
@@ -99,6 +101,7 @@ MeshManager::num_volume_element_faces() const
 {
   int n_element_faces = 0;
   for (auto volume : volumes()) {
+    if (implicit_complement() == volume) continue;
     n_element_faces += num_volume_element_faces(volume);
   }
   return n_element_faces;
