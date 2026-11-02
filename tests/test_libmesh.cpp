@@ -394,10 +394,15 @@ TEST_CASE("Test Volume Element Count Cylinder-Brick")
   MeshID volume = 1;
   auto elements = mesh_manager->get_volume_elements(volume);
   REQUIRE(elements.size() == 7587);
+  REQUIRE(mesh_manager->num_volume_element_faces(volume) == 30348);
 
   volume = 2;
   elements = mesh_manager->get_volume_elements(volume);
   REQUIRE(elements.size() == 9037);
+  REQUIRE(mesh_manager->num_volume_element_faces(volume) == 36148);
+
+  // Make sure we skip the IPC
+  REQUIRE(mesh_manager->num_volume_element_faces() == 66496);
 }
 
 TEST_CASE("Test Find Element Brick")

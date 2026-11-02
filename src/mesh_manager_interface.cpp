@@ -79,6 +79,34 @@ MeshManager::num_volume_elements() const
   return n_elements;
 }
 
+int
+MeshManager::num_volume_element_faces(MeshID volume) const
+{
+  auto num_elem = num_volume_elements(volume);
+  if (num_elem == 0) return 0;
+
+  auto elem_type = get_volume_element_type(volume);
+  switch (elem_type) {
+    case VolumeElementType::TET: return 4 * num_elem;
+    case VolumeElementType::HEX: return 6 * num_elem;
+    default: {
+      fatal_error("Unsupported element type in 'num_volume_element_faces' {}", elem_type);
+      return 0;
+    }
+  }
+}
+
+int
+MeshManager::num_volume_element_faces() const
+{
+  int n_element_faces = 0;
+  for (auto volume : volumes()) {
+    if (implicit_complement() == volume) continue;
+    n_element_faces += num_volume_element_faces(volume);
+  }
+  return n_element_faces;
+}
+
 std::vector<MeshID>
 MeshManager::get_volume_faces(MeshID volume) const
 {

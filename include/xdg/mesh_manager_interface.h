@@ -78,6 +78,10 @@ public:
 
   virtual int num_volume_elements() const;
 
+  virtual int num_volume_element_faces(MeshID volume) const;
+
+  virtual int num_volume_element_faces() const;
+
   virtual int num_volume_faces(MeshID volume) const = 0;
 
   virtual int num_surface_faces(MeshID surface) const = 0;
