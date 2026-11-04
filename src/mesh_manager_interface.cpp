@@ -90,7 +90,8 @@ MeshManager::num_volume_element_faces(MeshID volume) const
     case VolumeElementType::TET: return 4 * num_elem;
     case VolumeElementType::HEX: return 6 * num_elem;
     default: {
-      fatal_error("Unsupported element type in 'num_volume_element_faces' {}", elem_type);
+      fatal_error("Unsupported element type in 'num_volume_element_faces' {}",
+                  VOLUME_ELEMENT_TYPE_TO_STR.at(elem_type));
       return 0;
     }
   }
