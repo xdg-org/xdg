@@ -26,9 +26,6 @@ void MfemMeshManager::init() {
     fatal_error("Mesh must be 3-dimensional");
   }
 
-  // this is done in the mesh reader
-  // mesh_->FinalizeTopology();
-  
   // set the volumes/attributes...
   // This set should have one entry per volume/attribute type
   for (int i=0; i<mesh_->attributes.Size(); i++) {
@@ -240,6 +237,21 @@ void MfemMeshManager::discover_surface_elements() {
   }
 }
 
+// Here we sort each sideset's faces by which two volumes they sit between. A
+// sideset may lie on several different pairs of volumes, so it isn't enough to
+// look at one of its faces to determine the surface here.
+//
+// We loop over the boundary elements because they are the only place sideset
+// labels are stored. Every face in a sideset has a boundary element, even if
+// it is buried within the mesh. If the file has no boundary elements at all,
+// MFEM generates them on the exterior, so those faces are handled here too.
+//
+// Faces with the same volume on both sides don't separate anything, so they
+// are skipped. A face in two different sidesets is a fatal error.
+//
+// Effect: sideset_interface_faces_ holds, for each sideset ID, a std::map from
+// each interface that sideset lies on to a vector of the face IDs on it. An
+// interface is a pair of volume IDs, or {volume ID, ID_NONE} on the exterior.
 void MfemMeshManager::map_sidesets_to_discovered_interfaces() {
   // Every boundary element is a face of the mesh, so it is always represented
   // in the discovered interfaces unless it is internal to a single volume, in
@@ -247,10 +259,15 @@ void MfemMeshManager::map_sidesets_to_discovered_interfaces() {
   // libMesh).
   sideset_interface_faces_.clear();
   std::unordered_map<int, int> face_to_sideset;
+
+  // Loop over all the indices of every face in a sideset
   for (int bdr_element = 0; bdr_element < mesh_->GetNBE(); bdr_element++) {
+    // look up which sideset this face belongs to
     const int sideset = mesh_->GetBdrAttribute(bdr_element);
+    // look up this face's index in the global face array
     const int face = mesh_->GetBdrElementFaceIndex(bdr_element);
 
+    // gather the two volumes on either side of this face
     auto [vol1, vol2] = face_volumes(face);
     if (vol1 == vol2) continue;
 
@@ -269,58 +286,86 @@ void MfemMeshManager::map_sidesets_to_discovered_interfaces() {
   }
 }
 
+// In this function we aim to handle the redundancy in interface_faces_ and
+// sideset_interface_faces_.
+// interface_faces_ holds each unique pair of volumes that are touching each
+// other, alongside a list of all the face IDs for each one.
+// sideset_interface_faces_ has something similar, but holds a different
+// object for each explicitly labelled sideset.
+//
+// The first half of this function makes a surface from each entry in
+// sideset_interface_faces_ (i.e.) from the explicitly labelled sidesets
+// and records the faces it used.
+//
+// The second half is to go through interface_faces_, skip the faces
+// that have already been used, and make a new surface for each interface from
+// the faces that haven't been consumed yet. These are the implicit boundaries.
 void MfemMeshManager::create_surfaces_from_sidesets_and_interfaces() {
-  // Mirrors LibMeshManager::create_surfaces_from_sidesets_and_interfaces:
-  // 1. each boundary attribute becomes one surface per interface it lies on.
-  //    If it only lies on one interface the boundary attribute ID is reused as
-  //    the surface ID, otherwise new surface IDs are assigned.
-  // 2. faces of each interface that no boundary attribute covers become a new
-  //    surface with a new surface ID.
   surfaces_.clear();
   surface_map_.clear();
   surface_senses_.clear();
   sideset_surface_map_.clear();
 
-  // boundary attribute IDs are reserved so implicit surfaces never take them
-  std::set<MeshID> used_surface_ids;
+  // Any surface that can't reuse a sideset ID gets a new ID. Start above the
+  // highest sideset ID, so a new ID can never clash with a sideset's.
+  MeshID next_surface_id = 1;
   for (int i = 0; i < mesh_->bdr_attributes.Size(); i++) {
-    used_surface_ids.insert(mesh_->bdr_attributes[i]);
+    next_surface_id = std::max(next_surface_id, mesh_->bdr_attributes[i] + 1);
   }
 
-  MeshID next_surface_id = 1;
-  auto next_available_surface_id = [&]() {
-    while (used_surface_ids.count(next_surface_id) != 0) next_surface_id++;
-    used_surface_ids.insert(next_surface_id);
-    return next_surface_id++;
-  };
+  // Remember which faces end up in a surface made from a sideset
+  std::vector<bool> face_is_in_sideset(mesh_->GetNumFaces(), false);
 
-  auto add_surface = [&](MeshID surface_id, const InterfacePair& pair, const std::vector<int>& faces) {
-    surfaces_.push_back(surface_id);
-    surface_senses_[surface_id] = pair;
-    surface_map_[surface_id] = std::vector<MeshID>(faces.begin(), faces.end());
-  };
-
-  std::vector<bool> covered_faces(mesh_->GetNumFaces(), false);
-
-  // std::map keeps boundary attributes and interfaces sorted, so surface IDs
-  // are assigned deterministically
+  // First, make surfaces from the sidesets. std::map keeps sidesets and
+  // interfaces sorted, so surface IDs are assigned deterministically.
   for (const auto& [sideset_id, interface_groups] : sideset_interface_faces_) {
-    const bool reuse_sideset_id = interface_groups.size() == 1;
     for (const auto& [pair, faces] : interface_groups) {
-      MeshID surface_id = reuse_sideset_id ? sideset_id : next_available_surface_id();
-      add_surface(surface_id, pair, faces);
-      for (int face : faces) covered_faces[face] = true;
+      // A sideset on one interface keeps its ID. A sideset on several
+      // interfaces is split into one surface per interface, each with a new ID.
+      MeshID surface_id;
+      if (interface_groups.size() == 1) {
+        surface_id = sideset_id;
+      } else {
+        surface_id = next_surface_id;
+        next_surface_id++;
+      }
+
+      // create a new surface
+      surfaces_.push_back(surface_id);
+      // add this pair of volumes to the surface senses
+      surface_senses_[surface_id] = pair;
+      // add the faces on this surface to the surface map
+      surface_map_[surface_id] = faces;
+      // record that this surface was extracted from the current
+      // sideset, so that parse_metadata can use the correct name
+      // for this surface (i.e. use the same name as the sideset)
       sideset_surface_map_[sideset_id].push_back(surface_id);
+
+      for (int face : faces) {
+        face_is_in_sideset[face] = true;
+      }
     }
   }
 
+  // Then, make one surface per interface from the faces no sideset covers.
+  // These are the implicit boundaries.
   for (const auto& [pair, faces] : interface_faces_) {
-    std::vector<int> remaining_faces;
-    std::copy_if(faces.begin(), faces.end(), std::back_inserter(remaining_faces),
-                 [&](int face) { return !covered_faces[face]; });
-    if (remaining_faces.empty()) continue;
+    std::vector<int> implicit_faces;
+    for (int face : faces) {
+      if (!face_is_in_sideset[face]) {
+        implicit_faces.push_back(face);
+      }
+    }
 
-    add_surface(next_available_surface_id(), pair, remaining_faces);
+    // every face on this interface was in a sideset
+    if (implicit_faces.empty()) continue;
+
+    MeshID surface_id = next_surface_id;
+    next_surface_id++;
+
+    surfaces_.push_back(surface_id);
+    surface_senses_[surface_id] = pair;
+    surface_map_[surface_id] = implicit_faces;
   }
 }
 
