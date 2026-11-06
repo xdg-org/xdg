@@ -147,7 +147,7 @@ __forceinline double dot( const Vec3da& a, const Vec3da& b ) { return a.dot(b); 
 __forceinline Vec3da cross( const Vec3da& a, const Vec3da& b ) { return a.cross(b); }
 
 __forceinline std::ostream& operator <<(std::ostream &os, Vec3da  const& v) {
-  return os << '[' << v[0] << ' ' << v[1] << ' ' << v[2] << ' ' << v.a << ']';
+  return os << '[' << v[0] << ' ' << v[1] << ' ' << v[2] << ']';
 }
 
 //! Determine if a position is lexicographically higher or lower than another
