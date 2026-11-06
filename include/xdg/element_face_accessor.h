@@ -32,6 +32,14 @@ namespace xdg {
     //! \brief Get the number of faces for this element
     virtual int num_faces() const = 0;
 
+    //! \brief Whether or not some of the element's neighbors have refined faces.
+    virtual bool has_sub_faces() const = 0;
+
+    //! \brief Get the number of subfaces (more refined faces in a neighboring element)
+    //! \param i The face index
+    //! \return the number of neighboring refined subfaces associated with element face i
+    virtual int num_sub_faces(int i) const = 0;
+
     //! \brief Get the element ID
     //! \return The element ID
     MeshID element() const { return element_; }

@@ -54,9 +54,16 @@ void LibMeshManager::init() {
   // invert the boundary info sideset map so that we can identify
   // the elements associated with each sideset
   for (auto entry : boundary_info.get_sideset_map()) {
-    const libMesh::Elem* other_elem = entry.first->neighbor_ptr(entry.second.first);
+    if (!entry.first->active()) {
+      continue;
+    }
+
     sideset_face_map_[entry.second.second].push_back(sidepair_id({entry.first, entry.second.first}));
   }
+
+  // build the amr connectivity map which is used to construct sidepairs
+  // and walk elements correctly
+  build_amr_connectivity_map();
 
   // search for any implicit sidesets (faces that are the boundary between two
   // subdomains/volumes)
@@ -151,7 +158,6 @@ void LibMeshManager::check_face_and_element_types() const {
         fatal_error("Surface {} has mixed face types, which is not supported. Face ID {} has type {}, expected type {}.",
                     surface, face, type_to_check, type);
       }
-
     }
   }
 }
@@ -162,6 +168,18 @@ MeshID LibMeshManager::adjacent_element(MeshID element, int face) const {
   auto neighbor = elem_ptr->neighbor_ptr(face);
   if (!neighbor) return ID_NONE;
   return neighbor->id();
+}
+
+std::pair<MeshID, int>
+LibMeshManager::adjacent_subelement(MeshID element, int face, int subface_idx) const {
+  const auto elem_ptr = mesh()->elem_ptr(element);
+  if (!elem_ptr) return {ID_NONE, ID_NONE};
+
+  if (amr_conn_map_.count(element)) {
+    return amr_conn_map_.at(element).refined_neighbor(face, subface_idx);
+  } else {
+    return {ID_NONE, ID_NONE};
+  }
 }
 
 xdg::Vertex
@@ -183,23 +201,12 @@ LibMeshManager::element_connectivity(MeshID element) const {
   for (unsigned int i = 0; i < elem_ptr->n_nodes(); i++) {
     conn.push_back(elem_ptr->node_ptr(i)->id());
   }
-  return conn;
+  return std::move(conn);
 }
 
 std::vector<MeshID>
 LibMeshManager::face_connectivity(MeshID face) const {
-  const auto& sp = sidepair(face);
-  auto face_ptr = sp.face_ptr();
-  if (!face_ptr) {
-    fatal_error("Invalid face in face_connectivity");
-  }
-
-  std::vector<MeshID> conn;
-  conn.reserve(face_ptr->n_nodes());
-  for (unsigned int i = 0; i < face_ptr->n_nodes(); ++i) {
-    conn.push_back(face_ptr->node_id(i));
-  }
-  return conn;
+  return std::move(sidepair(face).face_connectivity());
 }
 
 MeshID
@@ -303,17 +310,35 @@ void LibMeshManager::discover_surface_elements() {
       MeshID neighbor_id = neighbor ? neighbor->subdomain_id() : ID_NONE;
       // if these IDs are different, then this is an interface element
       if (neighbor_id == subdomain_id) continue;
-      // ensure that there is only one interface between each block pair
-      if (subdomain_interface_map_.count({neighbor_id, subdomain_id}) != 0) {
-        subdomain_interface_map_[{neighbor_id, subdomain_id}].insert(sidepair_id({elem, i}));
+
+      // In the case the mesh is adaptive, a one-to-many mapping can exist between
+      // less refined and more refined faces. We add a side pair for every mapping of
+      // more refined to less refined faces.
+      std::vector<MeshID> new_pairs;
+      if (amr_conn_map_.count(elem->id())) {
+        const auto & conn = amr_conn_map_.at(elem->id());
+        for (int sf = 0; sf < conn.get_num_subfaces(i); ++sf) {
+          auto active_subneighbor = mesh()->query_elem_ptr(conn.refined_neighbor(i, sf).first);
+          if (!active_subneighbor) {
+            new_pairs.push_back(sidepair_id({elem, i}));
+          } else {
+            new_pairs.push_back(sidepair_id({elem, active_subneighbor}));
+          }
+        }
       } else {
-        subdomain_interface_map_[{subdomain_id, neighbor_id}].insert(sidepair_id({elem, i}));
+        new_pairs.push_back(sidepair_id({elem, i}));
+      }
+
+      // ensure that there is only one interface between each block pair
+      for (auto new_side_pair : new_pairs) {
+        if (subdomain_interface_map_.count({neighbor_id, subdomain_id}) != 0) {
+          subdomain_interface_map_[{neighbor_id, subdomain_id}].insert(new_side_pair);
+        } else {
+          subdomain_interface_map_[{subdomain_id, neighbor_id}].insert(new_side_pair);
+        }
       }
     }
   }
-
-  // build the BlockMapping for volume elements
-  volume_element_id_map_ = IDBlockMapping<MeshID>(volume_element_ids);
 }
 
 void LibMeshManager::map_sidesets_to_discovered_interfaces() {
@@ -577,7 +602,7 @@ LibMeshManager::get_volume_elements(MeshID volume) const {
   for (; it != it_end; ++it) {
     elements.push_back((*it)->id());
   }
-  return elements;
+  return std::move(elements);
 }
 
 int
@@ -603,40 +628,12 @@ LibMeshManager::element_vertices(MeshID element) const {
     const auto& node = elem.node_ref(i);
     vertices[i] = {node(0), node(1), node(2)};
   }
-  return vertices;
+  return std::move(vertices);
 }
 
 std::vector<MeshID>
 LibMeshManager::face_vertices(MeshID face) const {
-  const auto& side_pair = sidepair(face);
-  std::vector<MeshID> vertex_ids;
-  const auto* elem = side_pair.first();
-  if (!elem) {
-    fatal_error("Invalid face ID {} for LibMesh mesh", face);
-  }
-  const auto side_num = static_cast<unsigned int>(side_pair.side_num());
-
-  switch (elem->type()) {
-    case libMesh::TET4: {
-      vertex_ids.reserve(3);
-      for (unsigned int i = 0; i < 3; ++i) {
-        const auto node_ptr = elem->node_ptr(libMesh::Tet4::side_nodes_map[side_num][i]);
-        vertex_ids.push_back(node_ptr->id());
-      }
-      break;
-    }
-    case libMesh::HEX8: {
-      vertex_ids.reserve(4);
-      for (unsigned int i = 0; i < 4; ++i) {
-        const auto node_ptr = elem->node_ptr(libMesh::Hex8::side_nodes_map[side_num][i]);
-        vertex_ids.push_back(node_ptr->id());
-      }
-      break;
-    }
-    default:
-      fatal_error("Unsupported element type {} for face {}", static_cast<int>(elem->type()), face);
-  }
-  return std::move(vertex_ids);
+  return std::move(sidepair(face).face_vertices());
 }
 
 SurfaceFaceType
@@ -700,7 +697,7 @@ LibMeshManager::get_volume_surfaces(MeshID volume) const {
       surfaces.push_back(surface);
     }
   }
-  return surfaces;
+  return std::move(surfaces);
 }
 
 std::pair<MeshID, MeshID>
@@ -711,6 +708,79 @@ LibMeshManager::surface_senses(MeshID surface) const {
 Sense LibMeshManager::surface_sense(MeshID surface, MeshID volume) const {
   auto senses = surface_senses(surface);
   return volume == senses.first ? Sense::FORWARD : Sense::REVERSE;
+}
+
+void
+LibMeshManager::build_amr_connectivity_map()
+{
+  amr_conn_map_.clear();
+  for (const auto *elem : mesh()->active_element_ptr_range()) {
+    // Temporary vector of vectors to store neighbors in each face.
+    std::vector<std::vector<std::pair<MeshID, int>>> refined_neighbor_ids;
+    int num_active_neighbors = 0;
+    // At present, 'max_num_neighbors_per_face' will always be 4 as libMesh only allows
+    // neighboring elements to vary by a single refinement level. However, this could
+    // change (hence the overengineering below).
+    int max_num_neighbors_per_face = 1;
+    for (int face = 0; face < elem->n_sides(); ++face) {
+      refined_neighbor_ids.push_back({});
+      this->get_active_neighbors(elem->id(), face, refined_neighbor_ids[face]);
+      num_active_neighbors += refined_neighbor_ids[face].size();
+      max_num_neighbors_per_face = std::max(max_num_neighbors_per_face, static_cast<int>(refined_neighbor_ids[face].size()));
+    }
+
+    // If there are more active neigbors than the element has faces, we've encountered a
+    // one-to-many AMR mapping that needs to be cached.
+    if (num_active_neighbors > elem->n_sides()) {
+      amr_conn_map_[elem->id()] = CoarseToFineElemMap();
+      auto& elem_data = amr_conn_map_.at(elem->id());
+
+      elem_data.num_faces_ = elem->n_sides();
+      elem_data.max_face_neighbors_ = max_num_neighbors_per_face;
+      elem_data.neighboring_elems_.resize(elem_data.max_face_neighbors_ * elem_data.num_faces_, {INVALID_NEIGHBOR, SidePair::SIDE_NONE});
+
+      // Flattening the element face neighbor list to improve cache access.
+      for (int face = 0; face < elem_data.num_faces_; ++face) {
+        for (int active_neighbor = 0; active_neighbor < refined_neighbor_ids[face].size(); ++active_neighbor) {
+          auto idx = face * elem_data.max_face_neighbors_ + active_neighbor;
+          elem_data.neighboring_elems_[idx] = refined_neighbor_ids[face][active_neighbor];
+        }
+      }
+    }
+  }
+}
+
+void
+LibMeshManager::get_active_neighbors(MeshID current_elem_id, int side, std::vector<std::pair<MeshID, int>> & refined_neighbors)
+{
+  refined_neighbors.clear();
+  auto current_elem = mesh()->query_elem_ptr(current_elem_id);
+  if (!current_elem) {
+    return;
+  }
+
+  // No neighbors, this is a boundary element.
+  auto root_neighbor = current_elem->neighbor_ptr(side);
+  if (!root_neighbor) {
+    refined_neighbors.push_back({ID_NONE, SidePair::SIDE_NONE});
+    return;
+  }
+
+  // Our job is done, the immediate neighbor for this side is active and so
+  // libMesh is storing the connectivity correctly.
+  if (root_neighbor->active()) {
+    refined_neighbors.push_back({root_neighbor->id(), root_neighbor->which_neighbor_am_i(current_elem)});
+    return;
+  }
+
+  // Need to walk the adaptivity tree of the neighbor to build the one->many face mapping.
+  std::vector<const libMesh::Elem*> family_tree;
+  root_neighbor->family_tree_by_neighbor(family_tree, current_elem, /*reset=*/true);
+  for (auto adaptive_neighbor : family_tree) {
+    if (adaptive_neighbor->active()) {
+      refined_neighbors.push_back({adaptive_neighbor->id(), adaptive_neighbor->which_neighbor_am_i(current_elem)});
+    }
+  }
 }
 
 } // namespace xdg
