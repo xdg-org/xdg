@@ -88,8 +88,7 @@ set(VENDOR_PATHS
 )
 
 # attempt to find external fmt
-set(XDG_MINIMUM_FMT_VERSION 9.0.0)
-find_package(fmt ${XDG_MINIMUM_FMT_VERSION} QUIET NO_SYSTEM_ENVIRONMENT_PATH)
+find_package(fmt QUIET NO_SYSTEM_ENVIRONMENT_PATH)
 if(NOT fmt_FOUND)
   list(APPEND VENDOR_PATHS vendor/fmt)
 endif()
@@ -163,13 +162,6 @@ endif()
 if (NOT fmt_FOUND)
   set(FMT_INSTALL OFF CACHE BOOL "Generate the fmt install target")
   add_subdirectory(vendor/fmt)
-  get_target_property(fmt_VERSION fmt VERSION)
-  set(fmt_DIR "${CMAKE_CURRENT_SOURCE_DIR}/vendor/fmt")
-endif()
-
-if (fmt_VERSION VERSION_LESS XDG_MINIMUM_FMT_VERSION)
-  message(FATAL_ERROR
-    "XDG requires fmt ${XDG_MINIMUM_FMT_VERSION} or newer; found ${fmt_VERSION} at ${fmt_DIR}.")
 endif()
 message(STATUS "Using fmt ${fmt_VERSION} at ${fmt_DIR}")
 
