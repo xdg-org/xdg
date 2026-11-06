@@ -6,6 +6,7 @@
 
 #include "xdg/config.h"
 #include "xdg/error.h"
+#include "xdg/fmt_formatters.h"
 #include "xdg/geometry/plucker.h"
 #include "xdg/geometry/measure.h"
 #include "xdg/geometry/face_common.h"

@@ -12,7 +12,7 @@
 #include "xdg/gprt/vulkan_probe.h"
 #include "xdg/xdg.h"
 
-#include "../tools/fmt_formatters.h"
+#include "xdg/fmt_formatters.h"
 
 #include <fmt/format.h>
 
