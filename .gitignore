@@ -4,3 +4,5 @@ build
 docs/_build
 docs/Doxyfile
 .vscode
+
+.idea/*
