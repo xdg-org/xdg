@@ -340,10 +340,6 @@ struct MockElementFaceAccessor : public ElementFaceAccessor {
     return 4;
   }
 
-  bool has_sub_faces() const override { return false; }
-
-  int num_sub_faces(int i) const override { return 1; }
-
   // data members
   const MockedTriTetMesh* mesh_manager_;
   std::array<std::array<int, 3>, 4> tet_connectivity_;
@@ -593,10 +589,6 @@ struct MockHexElementFaceAccessor : public ElementFaceAccessor {
   }
 
   int num_faces() const override { return 6; }
-
-  bool has_sub_faces() const override { return false; }
-
-  int num_sub_faces(int i) const override { return 1; }
 
   const MockedQuadHexMesh* mesh_manager_;
   std::array<Vertex, 8> element_vertices_;
