@@ -31,6 +31,10 @@ int main(int argc, char** argv) {
     .default_value(std::vector<double>{0.0, 0.0, 1.0})
     .help("Ray direction").scan<'g', double>().nargs(3);
 
+  args.add_argument("-m", "--mesh-library")
+    .help("Mesh library to use. One of (MOAB, LIBMESH, OPENFOAM)")
+    .default_value(std::string("MOAB"));
+
   try {
     args.parse_args(argc, argv);
   }
@@ -41,7 +45,17 @@ int main(int argc, char** argv) {
   }
 
   // create a mesh manager
-  std::shared_ptr<XDG> xdg = XDG::create(MeshLibrary::MOAB);
+  const std::string mesh_str = args.get<std::string>("--mesh-library");
+  MeshLibrary mesh_lib;
+  if (mesh_str == "MOAB")
+    mesh_lib = MeshLibrary::MOAB;
+  else if (mesh_str == "LIBMESH")
+    mesh_lib = MeshLibrary::LIBMESH;
+  else if (mesh_str == "OPENFOAM")
+    mesh_lib = MeshLibrary::OPENFOAM;
+  else
+    fatal_error("Invalid mesh library '{}' specified", mesh_str);
+  std::shared_ptr<XDG> xdg = XDG::create(mesh_lib);
   const auto& mm = xdg->mesh_manager();
   mm->load_file(args.get<std::string>("filename"));
   mm->init();

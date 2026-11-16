@@ -35,7 +35,12 @@ if (XDG_ENABLE_LIBMESH)
 endif()
 
 if (XDG_ENABLE_OPENFOAM)
-    list(APPEND TEST_NAMES test_openfoam_reader test_openfoam_topology)
+    list(APPEND TEST_NAMES test_openfoam_reader test_openfoam_topology test_openfoam
+                           test_openfoam_errors)
+endif()
+
+if (XDG_ENABLE_MOAB AND XDG_ENABLE_OPENFOAM)
+    list(APPEND TEST_NAMES test_openfoam_cross_check)
 endif()
 
 if (XDG_ENABLE_MOAB)
@@ -113,6 +118,11 @@ regularized_tet_mesh.exo
 regularized_tet_mesh.h5m
 regularized_hex_mesh.exo
 regularized_hex_mesh.h5m
+polymesh-regularized-hex
+polymesh-regularized-tet
+polymesh-cube-multiblock
+polymesh-jezebel
+polymesh-jezebel-quads
 )
 
 foreach(file ${TEST_FILES})

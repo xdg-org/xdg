@@ -45,7 +45,8 @@ significant_segments(const std::vector<std::pair<MeshID, double>> &segments) {
 TEMPLATE_TEST_CASE("Test Regularized Tet Mesh Shared-Edge Tracks",
                    "[tracks][regression]",
                    MOAB_Interface,
-                   LibMesh_Interface)
+                   LibMesh_Interface,
+                   OpenFOAM_Interface)
 {
   constexpr auto mesh_backend = TestType::value;
 
@@ -193,6 +194,8 @@ TEMPLATE_TEST_CASE("Test Regularized Tet Mesh Shared-Edge Tracks",
       filename += ".h5m";
     } else if (mesh_backend == MeshLibrary::LIBMESH) {
       filename += ".exo";
+    } else if (mesh_backend == MeshLibrary::OPENFOAM) {
+      filename = openfoam_fixture("polymesh-regularized-tet");
     } else {
       throw std::runtime_error(fmt::format(
           "Unsupported mesh library {} for regression test", mesh_backend));
@@ -238,7 +241,8 @@ double segment_sum(const std::vector<std::pair<MeshID, double>>& segments)
 TEMPLATE_TEST_CASE("Segments account for simulated hex tracks starting on faces",
                    "[tracks][hex][regression]",
                    MOAB_Interface,
-                   LibMesh_Interface)
+                   LibMesh_Interface,
+                   OpenFOAM_Interface)
 {
   constexpr auto mesh_backend = TestType::value;
 
@@ -251,6 +255,8 @@ TEMPLATE_TEST_CASE("Segments account for simulated hex tracks starting on faces"
       filename += ".h5m";
     } else if (mesh_backend == MeshLibrary::LIBMESH) {
       filename += ".exo";
+    } else if (mesh_backend == MeshLibrary::OPENFOAM) {
+      filename = openfoam_fixture("polymesh-regularized-hex");
     } else {
       throw std::runtime_error(fmt::format(
           "Unsupported mesh library {} for regression test", mesh_backend));
@@ -300,7 +306,8 @@ TEMPLATE_TEST_CASE("Segments account for simulated hex tracks starting on faces"
 TEMPLATE_TEST_CASE("Next_element chooses exiting quad subtriangle",
                    "[walk_elements][hex][quads]",
                    MOAB_Interface,
-                   LibMesh_Interface)
+                   LibMesh_Interface,
+                   OpenFOAM_Interface)
 {
   constexpr auto mesh_backend = TestType::value;
 
@@ -313,6 +320,8 @@ TEMPLATE_TEST_CASE("Next_element chooses exiting quad subtriangle",
       filename += ".h5m";
     } else if (mesh_backend == MeshLibrary::LIBMESH) {
       filename += ".exo";
+    } else if (mesh_backend == MeshLibrary::OPENFOAM) {
+      filename = openfoam_fixture("polymesh-jezebel-quads");
     } else {
       throw std::runtime_error(fmt::format(
           "Unsupported mesh library {} for regression test", mesh_backend));

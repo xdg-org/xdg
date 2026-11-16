@@ -137,14 +137,17 @@ TEMPLATE_TEST_CASE("Test Area and Volume Cube Mesh", "[measure][cube]",
 
 TEMPLATE_TEST_CASE("Test Area and Volume Spherical Mesh", "[measure][sphere]",
                    MOAB_Interface,
-                   LibMesh_Interface) {
+                   LibMesh_Interface,
+                   OpenFOAM_Interface) {
   constexpr auto mesh_library = TestType::value;
-  const std::string file = mesh_library == MeshLibrary::MOAB ? "jezebel.h5m"
-                                                            : "jezebel.exo";
+  const std::string file = mesh_library == MeshLibrary::MOAB       ? "jezebel.h5m"
+                           : mesh_library == MeshLibrary::OPENFOAM ? "polymesh-jezebel"
+                                                                   : "jezebel.exo";
 
   DYNAMIC_SECTION(fmt::format("Backend = {}, File = {}", mesh_library, file)) {
     // skip if backend not enabled at configuration time
     check_mesh_library_supported(mesh_library);
+    if (mesh_library == MeshLibrary::OPENFOAM) openfoam_fixture(file);
     std::shared_ptr<XDG> xdg = XDG::create(mesh_library);
     REQUIRE(xdg->mesh_manager()->mesh_library() == mesh_library);
     const auto& mesh_manager = xdg->mesh_manager();
@@ -187,17 +190,20 @@ TEMPLATE_TEST_CASE("Test Area and Volume Spherical Mesh", "[measure][sphere]",
   }
 }
 
-TEMPLATE_TEST_CASE("TEST Quad Measurements", "[model_properties][quads]", MOAB_Interface, LibMesh_Interface)
+TEMPLATE_TEST_CASE("TEST Quad Measurements", "[model_properties][quads]", MOAB_Interface, LibMesh_Interface,
+                   OpenFOAM_Interface)
 {
   constexpr auto mesh_backend = TestType::value;
 
   constexpr auto mesh_library = TestType::value;
-  const std::string file = mesh_library == MeshLibrary::MOAB ? "jezebel-quads.h5m"
-                                                            : "jezebel-quads.exo";
+  const std::string file = mesh_library == MeshLibrary::MOAB       ? "jezebel-quads.h5m"
+                           : mesh_library == MeshLibrary::OPENFOAM ? "polymesh-jezebel-quads"
+                                                                   : "jezebel-quads.exo";
 
 
   DYNAMIC_SECTION(fmt::format("Backend = {}, File = {}", mesh_backend, file)) {
     check_mesh_library_supported(mesh_backend); // skip if backend not enabled at configuration time
+    if (mesh_backend == MeshLibrary::OPENFOAM) openfoam_fixture(file);
     std::shared_ptr<XDG> xdg = XDG::create(mesh_backend);
     REQUIRE(xdg->mesh_manager()->mesh_library() == mesh_backend);
     const auto& mesh_manager = xdg->mesh_manager();

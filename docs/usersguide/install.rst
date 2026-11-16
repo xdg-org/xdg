@@ -12,11 +12,16 @@ The XDG library requires the following software to be installed on the system:
     - `C++ compiler <https://gcc.gnu.org/>`_
 
 The current method for XDG installation is to use the CMake build system. For a successful build,
-at least one of the following mesh libraries must be installed on the system
+at least one mesh backend must be enabled. The following backends require their mesh library to
+be installed on the system:
 
     - `libMesh <http://libmesh.github.io/>`_
     - `MOAB <https://sigma.mcs.anl.gov/moab-library/>`_
     - `MFEM <https://mfem.org/>`_
+
+The backend for OpenFOAM® meshes reads ``polyMesh`` directories itself and needs nothing installed. It is
+enabled by default (``XDG_ENABLE_OPENFOAM``), so it alone is enough for a successful build; see
+:ref:`openfoam_format`.
 
 
 The location(s) of the library installation(s) should be appended to the

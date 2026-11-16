@@ -179,11 +179,12 @@ endif()
 
 
 # Ensure at least one mesh backend is enabled
-if (NOT XDG_ENABLE_MOAB AND NOT XDG_ENABLE_LIBMESH)
+if (NOT XDG_ENABLE_MOAB AND NOT XDG_ENABLE_LIBMESH AND NOT XDG_ENABLE_OPENFOAM)
   message(FATAL_ERROR
     "No mesh backend enabled. Enable at least one of:\n"
     "  -DXDG_ENABLE_MOAB=ON\n"
-    "  -DXDG_ENABLE_LIBMESH=ON")
+    "  -DXDG_ENABLE_LIBMESH=ON\n"
+    "  -DXDG_ENABLE_OPENFOAM=ON")
 endif()
 
 # Ensure at least one ray tracing backend is enabled
@@ -258,6 +259,8 @@ src/openfoam/foam_token_stream.cpp
 src/openfoam/foam_file.cpp
 src/openfoam/poly_mesh.cpp
 src/openfoam/poly_mesh_topology.cpp
+src/openfoam/cell_shape.cpp
+src/openfoam/mesh_manager.cpp
 )
 endif()
 
@@ -333,6 +336,10 @@ endif()
 
 if (XDG_ENABLE_LIBMESH)
   target_compile_definitions(xdg PUBLIC XDG_ENABLE_LIBMESH)
+endif()
+
+if (XDG_ENABLE_OPENFOAM)
+  target_compile_definitions(xdg PUBLIC XDG_ENABLE_OPENFOAM)
 endif()
 
 if (XDG_ENABLE_EMBREE)

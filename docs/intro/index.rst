@@ -22,4 +22,7 @@ libraries include:
     - `MOAB <https://sigma.mcs.anl.gov/moab-library/>`_
     - `MFEM <https://mfem.org/>`_
 
+XDG also reads the ``polyMesh`` format of OpenFOAM® directly, without linking OpenFOAM,
+so meshes from CFD simulations can be used as they are.
+
 XDG is not a meshing library and as such does not provide any meshing capabilities.

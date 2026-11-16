@@ -10,16 +10,22 @@ on:
 jobs:
   main:
     name: |
-      libMesh=${{ matrix.libmesh }};MOAB=${{ matrix.moab }}
+      libMesh=${{ matrix.libmesh }};MOAB=${{ matrix.moab }};OpenFOAM=${{ matrix.openfoam }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         libmesh: [true, false]
         moab: [true, false]
-        exclude:
-          - moab: false
-            libmesh: false
+        # The OpenFOAM backend links no mesh library, so the combination that
+        # used to be impossible -- no external mesh library at all -- is now
+        # valid, and is the one that proves the backend stands on its own.
+        openfoam: [true]
+        include:
+          # one configuration with OpenFOAM off, to keep its guards honest
+          - libmesh: false
+            moab: true
+            openfoam: false
 
     steps:
       - name: Checkout
@@ -168,7 +174,7 @@ jobs:
             fi
             CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}$HOME/MOAB"
           fi
-          cmake .. -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" -DCMAKE_INSTALL_PREFIX=$HOME/opt -DXDG_ENABLE_MOAB=${{ matrix.moab && 'ON' || 'OFF' }} -DXDG_ENABLE_LIBMESH=${{ matrix.libmesh && 'ON' || 'OFF' }}
+          cmake .. -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" -DCMAKE_INSTALL_PREFIX=$HOME/opt -DXDG_ENABLE_MOAB=${{ matrix.moab && 'ON' || 'OFF' }} -DXDG_ENABLE_LIBMESH=${{ matrix.libmesh && 'ON' || 'OFF' }} -DXDG_ENABLE_OPENFOAM=${{ matrix.openfoam && 'ON' || 'OFF' }}
           make -j4 install
 
       - name: Test

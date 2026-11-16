@@ -25,7 +25,9 @@ TEMPLATE_PRODUCT_TEST_CASE("XDG Factory Creation", "[xdg][factory]",
                            ((MOAB_Interface, Embree_Raytracer),
                             (MOAB_Interface, GPRT_Raytracer),
                             (LibMesh_Interface, Embree_Raytracer),
-                            (LibMesh_Interface, GPRT_Raytracer))) {
+                            (LibMesh_Interface, GPRT_Raytracer),
+                            (OpenFOAM_Interface, Embree_Raytracer),
+                            (OpenFOAM_Interface, GPRT_Raytracer))) {
   using MeshTag = typename TestType::first_type;
   using RayTag = typename TestType::second_type;
   constexpr auto mesh_backend = MeshTag::value;
@@ -69,6 +71,12 @@ TEMPLATE_PRODUCT_TEST_CASE("XDG Factory Creation", "[xdg][factory]",
         REQUIRE(std::dynamic_pointer_cast<LibMeshManager>(xdg->mesh_manager()) != nullptr);
         break;
       #endif
+
+      #ifdef XDG_ENABLE_OPENFOAM
+      case MeshLibrary::OPENFOAM:
+        REQUIRE(std::dynamic_pointer_cast<OpenFOAMMeshManager>(xdg->mesh_manager()) != nullptr);
+        break;
+      #endif
     }
   }
 }
@@ -78,7 +86,9 @@ TEMPLATE_PRODUCT_TEST_CASE("XDG Constructor", "[xdg][constructor]",
                            ((MOAB_Interface, Embree_Raytracer),
                             (MOAB_Interface, GPRT_Raytracer),
                             (LibMesh_Interface, Embree_Raytracer),
-                            (LibMesh_Interface, GPRT_Raytracer))) {
+                            (LibMesh_Interface, GPRT_Raytracer),
+                            (OpenFOAM_Interface, Embree_Raytracer),
+                            (OpenFOAM_Interface, GPRT_Raytracer))) {
   using MeshTag = typename TestType::first_type;
   using RayTag = typename TestType::second_type;
   constexpr auto mesh_backend = MeshTag::value;
@@ -117,6 +127,12 @@ TEMPLATE_PRODUCT_TEST_CASE("XDG Constructor", "[xdg][constructor]",
       #ifdef XDG_ENABLE_LIBMESH
       case MeshLibrary::LIBMESH:
         REQUIRE(std::dynamic_pointer_cast<LibMeshManager>(xdg->mesh_manager()) != nullptr);
+        break;
+      #endif
+
+      #ifdef XDG_ENABLE_OPENFOAM
+      case MeshLibrary::OPENFOAM:
+        REQUIRE(std::dynamic_pointer_cast<OpenFOAMMeshManager>(xdg->mesh_manager()) != nullptr);
         break;
       #endif
     }
