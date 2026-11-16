@@ -14,6 +14,7 @@
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 // xdg includes
+#include "xdg/config.h"
 #include "xdg/constants.h"
 #include "xdg/openfoam/cell_shape.h"
 #include "xdg/openfoam/mesh_manager.h"
@@ -38,9 +39,17 @@ std::shared_ptr<OpenFOAMMeshManager> load(const TempMesh& fixture)
 }
 
 //! Capture what XDG writes to standard output, such as its notes, while in scope
+//!
+//! XDG's one-time setup runs first: with libMesh enabled it creates a
+//! LibMeshInit, whose std::ios::sync_with_stdio(false) gives std::cout a new
+//! buffer and would silently undo a redirection made before it.
 class CaptureStdout {
 public:
-  CaptureStdout() : previous_(std::cout.rdbuf(captured_.rdbuf())) {}
+  CaptureStdout()
+  {
+    if (!XDGConfig::config().initialized()) XDGConfig::config().initialize();
+    previous_ = std::cout.rdbuf(captured_.rdbuf());
+  }
 
   ~CaptureStdout() { std::cout.rdbuf(previous_); }
 
