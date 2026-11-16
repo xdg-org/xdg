@@ -35,7 +35,7 @@ if (XDG_ENABLE_LIBMESH)
 endif()
 
 if (XDG_ENABLE_OPENFOAM)
-    list(APPEND TEST_NAMES test_openfoam_reader)
+    list(APPEND TEST_NAMES test_openfoam_reader test_openfoam_topology)
 endif()
 
 if (XDG_ENABLE_MOAB)

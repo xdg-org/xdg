@@ -257,6 +257,7 @@ list(APPEND xdg_sources
 src/openfoam/foam_token_stream.cpp
 src/openfoam/foam_file.cpp
 src/openfoam/poly_mesh.cpp
+src/openfoam/poly_mesh_topology.cpp
 )
 endif()
 
