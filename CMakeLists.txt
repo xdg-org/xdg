@@ -4,6 +4,9 @@ project(xdg C CXX)
 option(XDG_ENABLE_MOAB    "Enable support for the MOAB mesh library"          ON)
 option(XDG_ENABLE_MFEM    "Enable support for the MFEM mesh library"         OFF)
 option(XDG_ENABLE_LIBMESH "Enable support for the libMesh mesh library"      OFF)
+# Unlike the other mesh backends this one reads the file format directly and
+# links nothing, so it can default ON without any risk to a configure step.
+option(XDG_ENABLE_OPENFOAM "Enable support for OpenFOAM polyMesh files"      ON)
 option(XDG_LINK_MPI       "Link with MPI (for dependency compatibility)"     OFF)
 option(XDG_ENABLE_EMBREE  "Enable support for the Embree ray tracing library" ON)
 option(XDG_ENABLE_GPRT    "Enable support for the GPRT ray tracing library"  OFF)
@@ -246,6 +249,14 @@ list(APPEND xdg_sources
 src/moab/mesh_manager.cpp
 src/moab/direct_access.cpp
 src/moab/metadata.cpp
+)
+endif()
+
+if (XDG_ENABLE_OPENFOAM)
+list(APPEND xdg_sources
+src/openfoam/foam_token_stream.cpp
+src/openfoam/foam_file.cpp
+src/openfoam/poly_mesh.cpp
 )
 endif()
 

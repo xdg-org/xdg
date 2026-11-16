@@ -34,6 +34,10 @@ if (XDG_ENABLE_LIBMESH)
     list(APPEND TEST_NAMES test_libmesh)
 endif()
 
+if (XDG_ENABLE_OPENFOAM)
+    list(APPEND TEST_NAMES test_openfoam_reader)
+endif()
+
 if (XDG_ENABLE_MOAB)
     list(APPEND TEST_NAMES test_ray_tracer_cross_check)
 endif()
