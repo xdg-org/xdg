@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
       .help("Path to the input file");
 
   args.add_argument("-l", "--library")
-      .help("Mesh library to use. One of (MOAB, LIBMESH)")
+      .help("Mesh library to use. One of (MOAB, LIBMESH, OPENFOAM)")
       .default_value("MOAB");
 
   args.add_argument("-n", "--num-tracks")
@@ -68,6 +68,8 @@ int main(int argc, char** argv) {
     xdg = XDG::create(MeshLibrary::MOAB);
   else if (args.get<std::string>("--library") == "LIBMESH")
     xdg = XDG::create(MeshLibrary::LIBMESH);
+  else if (args.get<std::string>("--library") == "OPENFOAM")
+    xdg = XDG::create(MeshLibrary::OPENFOAM);
   else
     fatal_error("Invalid mesh library {} specified", args.get<std::string>("--library"));
 

@@ -9,6 +9,10 @@
 #include "xdg/libmesh/mesh_manager.h"
 #endif
 
+#ifdef XDG_ENABLE_OPENFOAM
+#include "xdg/openfoam/mesh_manager.h"
+#endif
+
 #include "xdg/testing/mesh_mocks.h"
 
 namespace xdg {
@@ -24,6 +28,12 @@ std::shared_ptr<ElementFaceAccessor> ElementFaceAccessor::create(const MeshManag
   if (mesh_manager->mesh_library() == MeshLibrary::LIBMESH) {
     const LibMeshManager* libmesh_mesh_manager = dynamic_cast<const LibMeshManager*>(mesh_manager);
     return std::make_shared<LibMeshElementFaceAccessor>(libmesh_mesh_manager, element);
+  }
+  #endif
+  #ifdef XDG_ENABLE_OPENFOAM
+  if (mesh_manager->mesh_library() == MeshLibrary::OPENFOAM) {
+    const OpenFOAMMeshManager* openfoam_mesh_manager = dynamic_cast<const OpenFOAMMeshManager*>(mesh_manager);
+    return std::make_shared<OpenFOAMElementFaceAccessor>(openfoam_mesh_manager, element);
   }
   #endif
   // for testing

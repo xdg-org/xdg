@@ -61,6 +61,9 @@ std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib
     #ifdef XDG_ENABLE_MOAB
     if (mesh_lib == MeshLibrary::MOAB) return std::make_shared<MOABMeshManager>();
     #endif
+    #ifdef XDG_ENABLE_OPENFOAM
+    if (mesh_lib == MeshLibrary::OPENFOAM) return std::make_shared<OpenFOAMMeshManager>();
+    #endif
     #ifdef XDG_ENABLE_LIBMESH
     if (mesh_lib == MeshLibrary::LIBMESH) return std::make_shared<LibMeshManager>();
     #endif
@@ -69,6 +72,9 @@ std::shared_ptr<XDG> XDG::create(MeshLibrary mesh_lib, RTLibrary ray_tracing_lib
     std::string msg = fmt::format("Invalid mesh library '{}'. Supported:", MESH_LIB_TO_STR.at(mesh_lib));
     #ifdef XDG_ENABLE_MOAB
     msg += " MOAB";
+    #endif
+    #ifdef XDG_ENABLE_OPENFOAM
+    msg += " OPENFOAM";
     #endif
     #ifdef XDG_ENABLE_LIBMESH
     msg += " LIBMESH";
