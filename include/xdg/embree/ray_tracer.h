@@ -65,7 +65,6 @@ public:
 
   // Embree members
   RTCDevice device_;
-  std::vector<RTCGeometry> geometries_; //<! All geometries created by this ray tracer
 
   // Mesh-to-Scene maps
   std::map<MeshID, RTCGeometry> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
