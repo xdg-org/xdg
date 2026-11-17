@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <map>
 #include <numeric>
 #include <random>
 #include <string>
@@ -21,6 +22,45 @@
 
 using namespace xdg;
 using namespace xdg::test;
+
+
+TEST_CASE("Volume segments stay within the requested volume")
+{
+  check_mesh_library_supported(MeshLibrary::MOAB);
+  check_ray_tracer_supported(RTLibrary::EMBREE);
+
+  auto xdg = XDG::create(MeshLibrary::MOAB, RTLibrary::EMBREE);
+  const auto& mesh_manager = xdg->mesh_manager();
+  mesh_manager->load_file("cube-w-multiblock-sideset.h5m");
+  mesh_manager->init();
+  mesh_manager->parse_metadata();
+  xdg->prepare_raytracer();
+
+  std::map<MeshID, MeshID> element_volumes;
+  for (const auto candidate_volume : mesh_manager->volumes()) {
+    for (const auto element : mesh_manager->get_volume_elements(candidate_volume)) {
+      element_volumes[element] = candidate_volume;
+    }
+  }
+
+  const Position start {-10.0, 0.0, 0.0};
+  const Position end {10.0, 0.0, 0.0};
+
+  const std::vector<std::pair<MeshID, double>> expected_segments {
+    {1, 2.0},
+    {2, 8.0}
+  };
+
+  for (const auto& [volume, expected_length] : expected_segments) {
+    const auto segments = xdg->segments(volume, start, end);
+    double total_length = 0.0;
+    for (const auto& [element, length] : segments) {
+      REQUIRE(element_volumes.at(element) == volume);
+      total_length += length;
+    }
+    REQUIRE_THAT(total_length, Catch::Matchers::WithinAbs(expected_length, 1e-10));
+  }
+}
 
 
 TEST_CASE("Test Internal Tracks")
