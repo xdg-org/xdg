@@ -23,7 +23,32 @@ EmbreeRayTracer::EmbreeRayTracer()
 
 EmbreeRayTracer::~EmbreeRayTracer()
 {
-  rtcReleaseDevice(device_);
+
+  for (auto& surf_geom : surface_user_data_map_) {
+    rtcReleaseGeometry(surf_geom.first);
+  }
+
+  for (auto& elem_geom : volume_user_data_map_) {
+    rtcReleaseGeometry(elem_geom.first);
+  }
+
+  for (auto& surf_scene : surface_volume_tree_to_scene_map_) {
+    rtcReleaseScene(surf_scene.second);
+  }
+  // this scene is part of the map above
+  global_surface_scene_ = nullptr;
+
+  for (auto& elem_scene : element_volume_tree_to_scene_map_) {
+    rtcReleaseScene(elem_scene.second);
+  }
+  // this scene is part of the map above
+  global_element_scene_ = nullptr;
+
+  if (device_) {
+    rtcReleaseDevice(device_);
+    device_ = nullptr;
+  }
+
 }
 
 void EmbreeRayTracer::init()
