@@ -1,5 +1,5 @@
-#ifndef _XDG_TOOLS_FMT_FORMATTERS_H
-#define _XDG_TOOLS_FMT_FORMATTERS_H
+#ifndef XDG_FMT_FORMATTERS_H
+#define XDG_FMT_FORMATTERS_H
 
 #include <string>
 
@@ -73,4 +73,4 @@ struct formatter<xdg::VolumeElementType> : formatter<std::string> {
 
 } // namespace fmt
 
-#endif // _XDG_TOOLS_FMT_FORMATTERS_H
+#endif // XDG_FMT_FORMATTERS_H

@@ -12,7 +12,7 @@
 
 #include "xdg/xdg.h"
 
-#include "fmt_formatters.h"
+#include "xdg/fmt_formatters.h"
 
 using namespace xdg;
 
