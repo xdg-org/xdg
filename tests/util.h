@@ -45,6 +45,7 @@ inline XDGBackendFixture make_xdg_backend_fixture(
 
 using MOAB_Interface = std::integral_constant<MeshLibrary, MeshLibrary::MOAB>;
 using LibMesh_Interface = std::integral_constant<MeshLibrary, MeshLibrary::LIBMESH>;
+using MFEM_Interface = std::integral_constant<MeshLibrary, MeshLibrary::MFEM>;
 
 using Embree_Raytracer = std::integral_constant<RTLibrary, RTLibrary::EMBREE>;
 using GPRT_Raytracer = std::integral_constant<RTLibrary, RTLibrary::GPRT>;
@@ -103,6 +104,13 @@ inline bool mesh_library_available(xdg::MeshLibrary mesh) {
     #else
       return false;
     #endif
+
+    case xdg::MeshLibrary::MFEM:
+    #ifdef XDG_ENABLE_MFEM
+      return true;
+    #else
+      return false;
+    #endif
   }
 
   return false;
@@ -134,6 +142,10 @@ create_mesh_manager(xdg::MeshLibrary mesh) {
     return std::make_unique<xdg::LibMeshManager>();
   #endif
 
+  #ifdef XDG_ENABLE_MFEM
+  if (mesh == xdg::MeshLibrary::MFEM)
+    return std::make_unique<xdg::MfemMeshManager>();
+  #endif
   return nullptr;
 }
 

@@ -1,0 +1,330 @@
+#ifndef _XDG_MFEM_MESH_MANAGER
+#define _XDG_MFEM_MESH_MANAGER
+
+#include <memory>
+
+#include "xdg/constants.h"
+#include "xdg/element_face_accessor.h"
+#include "xdg/mesh_manager_interface.h"
+#include "xdg/error.h"
+
+#include "mfem/mfem.hpp"
+
+namespace xdg {
+class MfemMeshManager : public MeshManager {
+public:
+
+  MfemMeshManager() {};
+
+  //! Construct from an existing MFEM mesh, taking ownership of it
+  explicit MfemMeshManager(std::unique_ptr<mfem::Mesh> mesh) : mesh_(std::move(mesh)) {};
+
+  ~MfemMeshManager() override = default;
+
+  // Backend methods
+
+  void load_file(const std::string &filepath) override;
+
+  void init() override;
+
+  // Accessors
+  const mfem::Mesh* mesh() const { return mesh_.get(); }
+  mfem::Mesh* mesh() { return mesh_.get(); }
+
+  // Interface methods
+  MeshLibrary mesh_library() const override { return MeshLibrary::MFEM; }
+
+  int num_volumes() const override {
+    return volumes_.size();
+  }
+
+  int num_surfaces() const override {
+    return surfaces_.size();
+  }
+
+  int num_ents_of_dimension(int dim) const override {
+    switch (dim) {
+      case 3: return num_volumes();
+      case 2: return num_surfaces();
+      default: return 0;
+    }
+  }
+
+  int num_volume_elements(MeshID volume) const override {
+    return volume_to_element_map_.at(volume).size();
+  }
+
+  int num_volume_elements() const override {
+    return mesh_->GetNE();
+  }
+
+  int num_boundary_elements() const {
+    return mesh_->GetNBE();
+  }
+
+  // count the number of faces with the attribute "volume"
+  int num_volume_faces(MeshID volume) const override {
+    int count = 0;
+    for (auto surface : get_volume_surfaces(volume)) {
+      count += num_surface_faces(surface);
+    }
+    return count;
+  }
+
+  int num_surface_faces(MeshID surface) const override {
+    return surface_map_.at(surface).size();
+  }
+
+  // get all of the elements in this volume
+  virtual std::vector<MeshID> get_volume_elements(MeshID volume) const override;
+
+  virtual std::vector<MeshID> get_surface_faces(MeshID surface) const override;
+
+  virtual std::vector<Vertex> element_vertices(MeshID element) const override;
+
+  std::vector<Vertex> bdr_element_vertices(MeshID element) const;
+
+  virtual std::vector<MeshID> face_vertices(MeshID element) const override;
+
+  SurfaceFaceType get_surface_face_type(MeshID surface) const override;
+
+  SurfaceFaceType face_type(MeshID face) const override;
+
+  VolumeElementType get_volume_element_type(MeshID volume) const override;
+
+  VolumeElementType element_type(MeshID element) const override;
+
+  // The table works wonders for this
+  virtual MeshID adjacent_element(MeshID element, int face) const override;
+
+  virtual MeshID get_boundary_face_element(MeshID face) const override;
+
+  virtual Sense surface_sense(MeshID surface, MeshID volume) const override;
+
+  virtual int num_vertices() const override {
+    return mesh_->GetNV();
+  }
+
+  virtual double element_volume(MeshID element) const override {
+    return mesh_->GetElementVolume(element);
+  }
+
+  virtual Vertex vertex_coordinates(MeshID vertex_id) const override {
+    Vertex output;
+    const mfem::real_t* vertices = mesh_->GetVertex(vertex_id);
+    for (int i=0; i<mesh_->Dimension(); i++) output[i] = vertices[i];
+    return output;
+  }
+
+  virtual std::vector<MeshID> element_connectivity(MeshID element) const override {
+    mfem::Array<int> index_array;
+    mesh_->GetElementVertices(element, index_array);
+    return std::vector<MeshID>(index_array.GetData(), index_array.GetData() + index_array.Size());
+  }
+
+  virtual std::vector<MeshID> face_connectivity(MeshID face) const override {
+    return face_vertices(face);
+  }
+
+  // Topology
+
+  std::vector<MeshID> get_volume_surfaces(MeshID volume) const override;
+
+  std::pair<MeshID, MeshID> surface_senses(MeshID surface) const override;
+
+  // Seems like it's only used to create the implicit complement
+  MeshID create_volume() override;
+
+  void add_surface_to_volume(MeshID volume, MeshID surface, Sense sense, bool overwrite=false) override;
+
+  // Find every MFEM face that separates two different volumes (or a volume
+  // and the exterior of the mesh), grouped by the pair of volumes it separates
+  void discover_surface_elements();
+
+  // Sort the faces of each boundary attribute by the interface they lie on
+  void map_sidesets_to_discovered_interfaces();
+
+  // Create surfaces from the boundary attributes, then from any interface
+  // faces that no boundary attribute covers
+  void create_surfaces_from_sidesets_and_interfaces();
+
+  // Orient every surface face so its normal points out of the surface's
+  // forward volume
+  void determine_surface_senses();
+
+  //! Volumes on either side of an MFEM face: {attr(Elem1), attr(Elem2)}, or
+  //! {attr(Elem1), ID_NONE} if the face is on the exterior of the mesh
+  std::pair<MeshID, MeshID> face_volumes(int face) const;
+
+  // Metadata methods
+  void parse_metadata() override;
+
+  // Accessors
+  const std::unique_ptr<mfem::Mesh>& mfem_mesh() const {
+    return mesh_;
+  }
+
+  // Data members
+private:
+  std::unique_ptr<mfem::Mesh> mesh_ {nullptr};
+
+  // For each volume of the mesh, keep a set of the interior element IDs
+  std::map<int, std::set<int>> volume_to_element_map_;
+  
+  using InterfacePair = std::pair<MeshID, MeshID>;
+
+  //! MFEM faces separating each pair of volumes, keyed by {lower volume ID,
+  //! higher volume ID}, or {volume ID, ID_NONE} on the exterior of the mesh
+  std::map<InterfacePair, std::vector<int>> interface_faces_;
+
+  //! For each boundary attribute, its faces grouped by the interface they lie on.
+  //! Boundary elements internal to a single volume are not included
+  std::map<int, std::map<InterfacePair, std::vector<int>>> sideset_interface_faces_;
+
+  //! Surfaces created from each boundary attribute. A boundary attribute
+  //! spanning more than one interface is split into one surface per interface
+  std::map<int, std::vector<MeshID>> sideset_surface_map_;
+
+  //! MFEM face indices making up each surface. Face IDs handed out by this
+  //! class are MFEM face indices
+  std::map<MeshID, std::vector<MeshID>> surface_map_;
+
+  //! True for faces whose vertex order is reversed relative to MFEM's, so that
+  //! their normal points out of the forward volume of their surface rather
+  //! than out of Elem1
+  std::vector<bool> face_reversed_;
+
+  // set to capture all of the valid volumes/attributes
+  // It's a set (not vector) to prevent double counting
+  // Note that this is somewhat redundant, since the base
+  // class has the volumes_ vector, which we copy the
+  // contents of this into. We keep BOTH, with attributes_
+  // meant to resemble the TRUE volumes that the mfem mesh
+  // recogonises. volumes_ will be amended to include the
+  // implicit complement as well...
+  std::set<int> attributes_;
+
+  //! Mapping of surfaces to the volumes on either side. Volumes are ordered
+  //! based on their sense with respect to the surface faces: face normals
+  //! point out of the first volume and into the second.
+  std::unordered_map<MeshID, std::pair<MeshID, MeshID>> surface_senses_;
+};
+
+struct MfemMeshElementFaceAccessor : public ElementFaceAccessor {
+  MfemMeshElementFaceAccessor(const MfemMeshManager* mesh_manager, MeshID element) :
+  ElementFaceAccessor(element), mesh_manager_(mesh_manager), element_(element) {
+
+    // for each face, fetch the vertices of the face
+    auto& mesh = mesh_manager_->mfem_mesh();
+
+    // TODO: circumvent this method; fetch the table directly
+    mfem::Array<int> ori; // don't care abour ori
+    mesh->GetElementFaces(element_, faces_, ori);
+
+    // before, face_vertices_ was a stack array with compile-time
+    // size of 4*3=12 elements (i.e. 4 faces, each with 3 vertices
+    // since they are triangles). Now we need to support 6 faces
+    // with 4 vertices each.
+    //
+    // First, reserve enough space for that
+    int faces_per_el = num_faces();
+    // we also need the number of vertices per face,
+    // for which we can query the mesh. All of this
+    // stuff gets repeated below, but that's ok.
+    int face_no = faces_[0];
+    auto face_obj = mesh->GetFace(face_no);
+    // populate vertex_indices_ array
+    face_obj->GetVertices(vertex_indices_);
+    // finally, take the size of this array; store it in the
+    // member variable
+    vertices_per_face_ = vertex_indices_.Size();
+
+    // reserve space in face_vertices_ vector
+    face_vertices_.resize( faces_per_el * vertices_per_face_ );
+
+    for (int f=0; f<faces_per_el; f++) {
+      int face_no = faces_[f];
+
+      // pointer to the element object that defines this face
+      auto face_obj = mesh->GetFace(face_no);
+      face_obj->GetVertices(vertex_indices_);
+
+      for (int v=0; v<vertices_per_face_; v++) {
+        // face_vertices_ was previously declared with face_vertices_[4][3] and accessed
+        // with face_vertices[f][v].a
+        // Now we need to manually index
+        face_vertices_[f*vertices_per_face_ + v].a = 0.0;
+        const double* vertices = mesh->GetVertex( vertex_indices_[v] );
+        for (int d=0; d<mesh->SpaceDimension(); d++)
+          face_vertices_[f*vertices_per_face_ + v][d] = vertices[d];
+      }
+    }
+  }
+
+  // TODO: Is this correct? We're getting interior vertices here
+  //
+  // Clarification: we are concerned with the face here. The moab
+  // stores the vertices of the element, and picks the correct three
+  // that correspond to this face. Why not just get the face from
+  // the mesh itself? It exposes the vertices
+  std::vector<Vertex> face_vertices(int i) const override {
+    std::vector<Vertex> output;
+
+    // we have already gathered the vertices for this face.
+    // copy them into the output array
+    auto begin = face_vertices_.begin() + i * vertices_per_face_;
+    auto end = begin + vertices_per_face_;
+    std::copy(begin, end, std::back_inserter(output));
+
+    // we need mesh_->GetFaceElementTransformations
+    auto& mesh = mesh_manager_->mfem_mesh();
+
+    // we get the face element trafo for the face we are
+    // currently talking about
+    int face_no     = faces_[i];
+    auto face_el_tx = mesh->GetFaceElementTransformations(face_no);
+
+    // The mfem docu implies that FaceElementTransformations::Elem1No
+    // is the one that the normal vector is supposed to point out of.
+    // We use this info to switch some stuff around
+
+    if ( face_el_tx->Elem2No == element_ )
+      // This element is NOT the one that the normal vector points out of.
+      // Reverse the winding (keeping the first vertex) so the normal flips.
+      // Swapping two vertices would turn a quad into a bow-tie.
+      std::reverse( output.begin() + 1, output.end() );
+
+    return output;
+  }
+
+  int num_faces() const override {
+    // first, look up the geom type
+    auto geom = mesh_manager_->element_type(element_);
+
+    switch (geom) {
+      case VolumeElementType::TET: return 4;
+      case VolumeElementType::HEX: return 6;
+      default: fatal_error("Element type not supported!");
+    }
+  }
+
+  // data members
+  const MfemMeshManager* mesh_manager_;
+
+  // flattened as total_faces * vertices_per_face_ entries
+  std::vector<Vertex> face_vertices_;
+  int vertices_per_face_ = 0;
+  // indices for each of the faces on this element
+  mfem::Array<int> faces_;
+  mfem::Array<int> vertex_indices_;
+
+  MeshID element_;
+};
+
+// helper functions to convert mfem's element types to xdg
+VolumeElementType GetVolumeElementTypeFromMfem( mfem::Element::Type t );
+// SurfaceElementType GetSurfaceElementTypeFromMfem( mfem::Element::Type t );
+
+} // namespace xdg
+
+#endif // include guard

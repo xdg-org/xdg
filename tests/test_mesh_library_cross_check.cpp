@@ -2,10 +2,12 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <vector>
 
 // testing includes
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/generators/catch_generators.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
 // xdg includes
@@ -86,6 +88,7 @@ TEST_CASE("Test Cross Check Transport across mesh Backends Jezebel")
   const auto test_fixtures = make_mesh_lib_cases({
     {MeshLibrary::MOAB, "jezebel.h5m"}, // MOAB passed first so it becomes the reference case
     {MeshLibrary::LIBMESH, "jezebel.exo"},
+    {MeshLibrary::MFEM, "jezebel.exo"},
   });
   if (test_fixtures.size() < 2) {
     SKIP("Fewer than two mesh backends are available; skipping cross-check.");
@@ -102,6 +105,7 @@ TEST_CASE("Test Cross Check Transport across mesh Backends cyl-brick")
   const auto test_fixtures = make_mesh_lib_cases({
     {MeshLibrary::MOAB, "cyl-brick.h5m"}, // MOAB passed first so it becomes the reference case
     {MeshLibrary::LIBMESH, "cyl-brick.exo"},
+    {MeshLibrary::MFEM, "cyl-brick.exo"},
   });
   if (test_fixtures.size() < 2) {
     SKIP("Fewer than two mesh backends are available; skipping cross-check.");
@@ -112,12 +116,13 @@ TEST_CASE("Test Cross Check Transport across mesh Backends cyl-brick")
   harness.check();
 }
 
-TEST_CASE("Test Cross Check Transport across Backends Pincell -- Implicit libMesh Boundaries")
+TEST_CASE("Test Cross Check Transport across Backends Pincell -- Implicit libMesh/MFEM Boundaries")
 {
   // Attempt to build all supported test fixtures, but skip the test if fewer than two are available
   const auto test_fixtures = make_mesh_lib_cases({
     {MeshLibrary::MOAB, "pincell.h5m"}, // MOAB passed first so it becomes the reference case
-    {MeshLibrary::LIBMESH, "pincell-implicit.exo"}
+    {MeshLibrary::LIBMESH, "pincell-implicit.exo"},
+    {MeshLibrary::MFEM, "pincell-implicit.exo"}
   });
   if (test_fixtures.size() < 2) {
     SKIP("Fewer than two mesh backends are available; skipping cross-check.");
@@ -128,6 +133,52 @@ TEST_CASE("Test Cross Check Transport across Backends Pincell -- Implicit libMes
   harness.check();
 }
 
+
+TEST_CASE("Test Cross Check Implicit Boundary Discovery -- libMesh and MFEM")
+{
+  if (!mesh_library_available(MeshLibrary::LIBMESH) || !mesh_library_available(MeshLibrary::MFEM)) {
+    SKIP("libMesh and MFEM are both required; skipping cross-check.");
+  }
+
+  // both models have block interfaces with no sideset on them, and
+  // cube-w-multiblock-sideset.exo also has a sideset spanning two blocks
+  auto filename = GENERATE(as<std::string>{}, "pincell-implicit.exo", "cube-w-multiblock-sideset.exo");
+
+  DYNAMIC_SECTION("Model: " << filename) {
+    // Surface IDs and sense order may legitimately differ between backends,
+    // so summarise each surface by the (unordered) volumes it separates, its
+    // face count and its area
+    using SurfaceSummary = std::tuple<MeshID, MeshID, int, double>;
+    auto summarise = [&](MeshLibrary mesh_library) {
+      auto fixture = make_xdg_backend_fixture(mesh_library, RTLibrary::EMBREE, filename);
+      const auto& mesh_manager = fixture.xdg->mesh_manager();
+      std::vector<SurfaceSummary> summary;
+      for (auto surface : mesh_manager->surfaces()) {
+        auto [forward, reverse] = mesh_manager->surface_senses(surface);
+        summary.emplace_back(std::min(forward, reverse), std::max(forward, reverse),
+                             mesh_manager->num_surface_faces(surface),
+                             fixture.xdg->measure_surface_area(surface));
+      }
+      std::sort(summary.begin(), summary.end());
+      return std::make_pair(mesh_manager->num_volumes(), summary);
+    };
+
+    auto [libmesh_volumes, libmesh_surfaces] = summarise(MeshLibrary::LIBMESH);
+    auto [mfem_volumes, mfem_surfaces] = summarise(MeshLibrary::MFEM);
+
+    REQUIRE(mfem_volumes == libmesh_volumes);
+    REQUIRE(mfem_surfaces.size() == libmesh_surfaces.size());
+    for (size_t i = 0; i < libmesh_surfaces.size(); i++) {
+      const auto& [lm_vol1, lm_vol2, lm_faces, lm_area] = libmesh_surfaces[i];
+      const auto& [mf_vol1, mf_vol2, mf_faces, mf_area] = mfem_surfaces[i];
+      CAPTURE(i, lm_vol1, lm_vol2, lm_faces);
+      REQUIRE(mf_vol1 == lm_vol1);
+      REQUIRE(mf_vol2 == lm_vol2);
+      REQUIRE(mf_faces == lm_faces);
+      REQUIRE_THAT(mf_area, Catch::Matchers::WithinRel(lm_area, 1e-10));
+    }
+  }
+}
 
 TEST_CASE("Test Mesh Backend Cross-Check Tallies -- Simple Cubes, Tet Mesh")
 {
@@ -178,6 +229,73 @@ TEST_CASE("Test Mesh Backend Cross-Check Tallies -- Simple Cubes, Tet Mesh")
     for (size_t j = 0; j < moab_tracks.size(); j++) {
       REQUIRE(xdg_moab->mesh_manager()->element_index(moab_tracks[j].first) == xdg_libmesh->mesh_manager()->element_index(libmesh_tracks[j].first));
       REQUIRE_THAT(moab_tracks[j].second, Catch::Matchers::WithinAbs(libmesh_tracks[j].second, 1e-10));
+    }
+  }
+}
+
+TEST_CASE("Test Mesh Backend Cross-Check Tallies -- JEZEBEL")
+{
+  // Attempt to build all supported test fixtures, but skip the test if fewer than two are available
+  const auto test_fixtures = make_mesh_lib_cases({
+    {MeshLibrary::MOAB, "jezebel.h5m"}, // MOAB passed first so it becomes the reference case
+    {MeshLibrary::LIBMESH, "jezebel.exo"},
+    {MeshLibrary::MFEM, "jezebel.exo"},
+  });
+  if (test_fixtures.size() < 2) {
+    SKIP("Fewer than two mesh backends are available; skipping cross-check.");
+  }
+
+  const auto& mesh_backend_ref = test_fixtures[0].xdg;
+  auto ref_bounding_box = mesh_backend_ref->mesh_manager()->global_bounding_box();
+
+  // check that the global bounding box of the model and various model counts are the same
+  for (size_t f = 1; f < test_fixtures.size(); f++) {
+    const auto& xdg_other = test_fixtures[f].xdg;
+    CAPTURE(test_fixtures[0].label(), test_fixtures[f].label());
+
+    REQUIRE(mesh_backend_ref->mesh_manager()->num_vertices() == xdg_other->mesh_manager()->num_vertices());
+    REQUIRE(mesh_backend_ref->mesh_manager()->num_volume_elements() == xdg_other->mesh_manager()->num_volume_elements());
+    REQUIRE(mesh_backend_ref->mesh_manager()->num_volumes() == xdg_other->mesh_manager()->num_volumes());
+
+    auto other_bounding_box = xdg_other->mesh_manager()->global_bounding_box();
+    REQUIRE_THAT(ref_bounding_box.min_x, Catch::Matchers::WithinAbs(other_bounding_box.min_x, 1e-6));
+    REQUIRE_THAT(ref_bounding_box.min_y, Catch::Matchers::WithinAbs(other_bounding_box.min_y, 1e-6));
+    REQUIRE_THAT(ref_bounding_box.min_z, Catch::Matchers::WithinAbs(other_bounding_box.min_z, 1e-6));
+    REQUIRE_THAT(ref_bounding_box.max_x, Catch::Matchers::WithinAbs(other_bounding_box.max_x, 1e-6));
+    REQUIRE_THAT(ref_bounding_box.max_y, Catch::Matchers::WithinAbs(other_bounding_box.max_y, 1e-6));
+    REQUIRE_THAT(ref_bounding_box.max_z, Catch::Matchers::WithinAbs(other_bounding_box.max_z, 1e-6));
+  }
+
+  // sample start and end locations within the bounding box of these models
+  int num_samples = 10000;
+  for (int i = 0; i < num_samples; i++) {
+    Position start = ref_bounding_box.sample_location();
+    Position end = ref_bounding_box.sample_location();
+
+    auto ref_element = mesh_backend_ref->find_element(start);
+    auto ref_tracks = ref_element == ID_NONE ? decltype(mesh_backend_ref->segments(start, end)){}
+                                             : mesh_backend_ref->segments(start, end);
+
+    for (size_t f = 1; f < test_fixtures.size(); f++) {
+      const auto& xdg_other = test_fixtures[f].xdg;
+      CAPTURE(test_fixtures[0].label(), test_fixtures[f].label());
+
+      auto other_element = xdg_other->find_element(start);
+      if (ref_element == ID_NONE) {
+        REQUIRE(other_element == ID_NONE);
+        continue;
+      }
+      REQUIRE(other_element != ID_NONE);
+
+      // check element equivalence by index b/c IDs may be different depending on the library conventions
+      REQUIRE(mesh_backend_ref->mesh_manager()->element_index(ref_element) == xdg_other->mesh_manager()->element_index(other_element));
+
+      auto other_tracks = xdg_other->segments(start, end);
+      REQUIRE(ref_tracks.size() == other_tracks.size());
+      for (size_t j = 0; j < ref_tracks.size(); j++) {
+        REQUIRE(mesh_backend_ref->mesh_manager()->element_index(ref_tracks[j].first) == xdg_other->mesh_manager()->element_index(other_tracks[j].first));
+        REQUIRE_THAT(ref_tracks[j].second, Catch::Matchers::WithinAbs(other_tracks[j].second, 1e-10));
+      }
     }
   }
 }

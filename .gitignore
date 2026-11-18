@@ -1,6 +1,7 @@
 bld
-build
+build*
 .vscode
 docs/_build
 docs/Doxyfile
 .vscode
+*.jou
