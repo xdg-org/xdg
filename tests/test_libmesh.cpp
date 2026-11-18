@@ -895,6 +895,11 @@ TEST_CASE("Hex8 AMR mesh")
     REQUIRE_THAT(enter_vol1.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
     auto exit_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, -1.0}, {0.0, 0.0, 1.0}, xdg::INFTY, xdg::HitOrientation::EXITING);
     REQUIRE_THAT(exit_vol1.first, Catch::Matchers::WithinAbs(3.0, 1e-6));
+
+    enter_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, 3.0}, {0.0, 0.0, -1.0}, xdg::INFTY, xdg::HitOrientation::EXITING);
+    REQUIRE_THAT(enter_vol1.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
+    exit_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, 3.0}, {0.0, 0.0, -1.0}, xdg::INFTY, xdg::HitOrientation::ENTERING);
+    REQUIRE_THAT(exit_vol1.first, Catch::Matchers::WithinAbs(1.0, 1e-6));
   }
 
   const std::array<double, 11> valid_segments {0.5, 0.25, 0.25, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125, 0.125};
