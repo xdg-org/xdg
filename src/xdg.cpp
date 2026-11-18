@@ -242,16 +242,14 @@ XDG::segments(MeshID volume,
     // Bound this element walk by the next exit from the requested volume.
     auto exit = ray_fire(volume, r, u, remaining_distance, HitOrientation::EXITING, &hit_primitives);
 
-    const bool exits_before_end = exit.second != ID_NONE && exit.first < remaining_distance;
-    double interval_distance = remaining_distance;
-    if (exits_before_end) interval_distance = exit.first;
-
+    double interval_distance = std::min(remaining_distance, exit.first);
     // Stop just short of a volume boundary so roundoff between the surface
     // and element intersection calculations cannot step into the next volume.
     double walk_distance = interval_distance;
     double boundary_remainder = 0.0;
-    if (exits_before_end) {
-      boundary_remainder = std::min(TINY_BIT, interval_distance * 0.5);
+    if (interval_distance < remaining_distance) {
+      // boundary_remainder = std::min(TINY_BIT, interval_distance * 0.5);
+      boundary_remainder = TINY_BIT;
       walk_distance -= boundary_remainder;
     }
 
@@ -263,9 +261,7 @@ XDG::segments(MeshID volume,
 
     r += u * interval_distance;
     remaining_distance -= interval_distance;
-
-    if (!exits_before_end) break;
-
+    
     // After an exit, restart the loop searching for a possible re-entry.
     starting_element = ID_NONE;
   }

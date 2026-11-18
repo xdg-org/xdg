@@ -7,6 +7,7 @@ point_in_volume
 overlap_check
 walk_elements
 tally_segments
+segments_volume_reproducer
 )
 
 #===============================================================================
