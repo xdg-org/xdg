@@ -23,15 +23,21 @@
 using namespace xdg;
 using namespace xdg::test;
 
-
-TEST_CASE("Volume segments stay within the requested volume")
+TEMPLATE_TEST_CASE("Volume specified segments call with interior volume and cavity",
+                   "[tracks][segments]",
+                   MOAB_Interface,
+                   LibMesh_Interface)
 {
-  check_mesh_library_supported(MeshLibrary::MOAB);
+  constexpr auto mesh_backend = TestType::value;
+
+  check_mesh_library_supported(mesh_backend);
   check_ray_tracer_supported(RTLibrary::EMBREE);
 
-  auto xdg = XDG::create(MeshLibrary::MOAB, RTLibrary::EMBREE);
+  auto xdg = XDG::create(mesh_backend, RTLibrary::EMBREE);
   const auto& mesh_manager = xdg->mesh_manager();
-  mesh_manager->load_file("cube-w-multiblock-sideset.h5m");
+  std::string file = "interior-volume-and-cavity-tet";
+  file += (mesh_backend == MeshLibrary::MOAB ? ".h5m" : ".exo");
+  mesh_manager->load_file(file);
   mesh_manager->init();
   mesh_manager->parse_metadata();
   xdg->prepare_raytracer();
@@ -43,15 +49,15 @@ TEST_CASE("Volume segments stay within the requested volume")
     }
   }
 
-  const Position start {-10.0, 0.0, 0.0};
-  const Position end {10.0, 0.0, 0.0};
+  const Position start {-25.0, 0.0, 0.0};
+  const Position end {25.0, 0.0, 0.0};
 
-  const std::vector<std::pair<MeshID, double>> expected_segments {
-    {1, 2.0},
-    {2, 8.0}
+  const std::vector<std::pair<MeshID, double>> expected_track_lengths {
+    {1, 30.0},
+    {2, 5.0}
   };
 
-  for (const auto& [volume, expected_length] : expected_segments) {
+  for (const auto& [volume, expected_length] : expected_track_lengths) {
     const auto segments = xdg->segments(volume, start, end);
     double total_length = 0.0;
     for (const auto& [element, length] : segments) {
@@ -61,7 +67,6 @@ TEST_CASE("Volume segments stay within the requested volume")
     REQUIRE_THAT(total_length, Catch::Matchers::WithinAbs(expected_length, 1e-10));
   }
 }
-
 
 TEST_CASE("Test Internal Tracks")
 {
