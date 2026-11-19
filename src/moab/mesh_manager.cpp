@@ -539,6 +539,13 @@ MOABMeshManager::adjacent_element(MeshID element, int face) const
   return ID_NONE;
 }
 
+std::pair<MeshID, int>
+MOABMeshManager::adjacent_subelement(MeshID element, int face, int subface_idx) const
+{
+  fatal_error("'adjacent_subelement' has not been implemented for the MOABMeshManager!");
+  return {ID_NONE, ID_NONE};
+}
+
 xdg::Vertex
 MOABMeshManager::vertex_coordinates(MeshID vertex_id) const
 {

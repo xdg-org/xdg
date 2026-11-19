@@ -192,9 +192,9 @@ XDG::segments(const Position& start,
     double segment_sum = std::accumulate(vol_segments.begin(), vol_segments.end(), 0.0,
                                          [](double total, const auto& segment) { return total + segment.second; });
     // upate location of the track start
-    r += u * segment_sum;
+    r += u * std::max(segment_sum, TINY_BIT);
     // decrement distance by total distance traveled in the volume
-    distance -= segment_sum;
+    distance -= std::max(segment_sum, TINY_BIT);
   }
   return segments;
 }

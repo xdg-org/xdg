@@ -218,6 +218,10 @@ public:
     return element_adjacencies_.at(element)[face];
   }
 
+  virtual std::pair<MeshID, int> adjacent_subelement(MeshID element, int face, int subface_idx) const override {
+    return {ID_NONE, ID_NONE};
+  }
+
   virtual Vertex vertex_coordinates(MeshID vertex_id) const override {
     return vertices().at(vertex_id);
   }
@@ -442,6 +446,10 @@ public:
 
   MeshID adjacent_element(MeshID element, int face) const override {
     return element_adjacencies_.at(element).at(face);
+  }
+
+  virtual std::pair<MeshID, int> adjacent_subelement(MeshID element, int face, int subface_idx) const override {
+    return {ID_NONE, ID_NONE};
   }
 
   Vertex vertex_coordinates(MeshID vertex_id) const override {
