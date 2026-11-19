@@ -75,7 +75,8 @@ endif()
 
 set(
 TEST_FILES
-amr_mesh.exo
+amr_mesh_tet.exo
+amr_mesh_hex.exo
 pwr_pincell.h5m
 cube.h5m
 cube-mesh-no-geom.h5m

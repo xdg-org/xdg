@@ -18,7 +18,6 @@
 // libMesh includes
 #include "libmesh/mesh_base.h"
 #include "libmesh/mesh_refinement.h"
-#include "libmesh/mesh_modification.h"
 #include "libmesh/elem.h"
 #include "libmesh/mesh.h"
 #include "libmesh/node.h"
@@ -631,9 +630,7 @@ TEST_CASE("Tet4 AMR mesh")
   const libMesh::Point top_right = {2.0, 1.0, 2.0};
 
   auto mesh = std::make_unique<libMesh::Mesh>(*XDGConfig::config().libmesh_comm(), 3);
-  mesh->read("amr_mesh.exo");
-  // Convert the Hex8 mesh to Tet4s.
-  libMesh::MeshTools::Modification::all_tri((*mesh.get()));
+  mesh->read("amr_mesh_tet.exo");
 
   mesh->allow_renumbering(false);
   libMesh::MeshRefinement mesh_refinement((*mesh.get()));
@@ -808,7 +805,7 @@ TEST_CASE("Hex8 AMR mesh")
   const libMesh::Point top_right = {2.0, 1.0, 2.0};
 
   auto mesh = std::make_unique<libMesh::Mesh>(*XDGConfig::config().libmesh_comm(), 3);
-  mesh->read("amr_mesh.exo");
+  mesh->read("amr_mesh_hex.exo");
   mesh->allow_renumbering(false);
   libMesh::MeshRefinement mesh_refinement((*mesh.get()));
 
