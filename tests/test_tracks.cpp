@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <map>
 #include <numeric>
 #include <random>
 #include <string>
@@ -22,6 +23,51 @@
 using namespace xdg;
 using namespace xdg::test;
 
+// TODO - Add hex version
+TEMPLATE_TEST_CASE("Volume specified segments call with interior volume and cavity",
+                   "[tracks][segments]",
+                   MOAB_Interface,
+                   LibMesh_Interface)
+{
+  constexpr auto mesh_backend = TestType::value;
+
+  check_mesh_library_supported(mesh_backend);
+  check_ray_tracer_supported(RTLibrary::EMBREE);
+
+  auto xdg = XDG::create(mesh_backend, RTLibrary::EMBREE);
+  const auto& mesh_manager = xdg->mesh_manager();
+  std::string file = "interior-volume-and-cavity-tet";
+  file += (mesh_backend == MeshLibrary::MOAB ? ".h5m" : ".exo");
+  mesh_manager->load_file(file);
+  mesh_manager->init();
+  mesh_manager->parse_metadata();
+  xdg->prepare_raytracer();
+
+  std::map<MeshID, MeshID> element_volumes;
+  for (const auto candidate_volume : mesh_manager->volumes()) {
+    for (const auto element : mesh_manager->get_volume_elements(candidate_volume)) {
+      element_volumes[element] = candidate_volume;
+    }
+  }
+
+  const Position start {-25.0, 0.0, 0.0};
+  const Position end {25.0, 0.0, 0.0};
+
+  const std::vector<std::pair<MeshID, double>> expected_track_lengths {
+    {1, 30.0},
+    {2, 5.0}
+  };
+
+  for (const auto& [volume, expected_length] : expected_track_lengths) {
+    const auto segments = xdg->segments(volume, start, end);
+    double total_length = 0.0;
+    for (const auto& [element, length] : segments) {
+      REQUIRE(element_volumes.at(element) == volume);
+      total_length += length;
+    }
+    REQUIRE_THAT(total_length, Catch::Matchers::WithinAbs(expected_length, 1e-10));
+  }
+}
 
 TEST_CASE("Test Internal Tracks")
 {
