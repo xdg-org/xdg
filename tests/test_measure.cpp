@@ -79,9 +79,7 @@ TEST_CASE("Test Area and Volume Surface Mesh")
   }
 }
 
-TEMPLATE_TEST_CASE("Test Area and Volume Cube Mesh", "[measure][cube]",
-                   MOAB_Interface,
-                   LibMesh_Interface)
+TEMPLATE_LIST_TEST_CASE("Test Area and Volume Cube Mesh", "[measure][cube]", MeshManagerBackends)
 {
   constexpr auto mesh_library = TestType::value;
   const std::string file = mesh_library == MeshLibrary::MOAB ? "cube-mesh-no-geom.h5m"
@@ -135,9 +133,7 @@ TEMPLATE_TEST_CASE("Test Area and Volume Cube Mesh", "[measure][cube]",
   }
 }
 
-TEMPLATE_TEST_CASE("Test Area and Volume Spherical Mesh", "[measure][sphere]",
-                   MOAB_Interface,
-                   LibMesh_Interface) {
+TEMPLATE_LIST_TEST_CASE("Test Area and Volume Spherical Mesh", "[measure][sphere]", MeshManagerBackends) {
   constexpr auto mesh_library = TestType::value;
   const std::string file = mesh_library == MeshLibrary::MOAB ? "jezebel.h5m"
                                                             : "jezebel.exo";
@@ -187,7 +183,7 @@ TEMPLATE_TEST_CASE("Test Area and Volume Spherical Mesh", "[measure][sphere]",
   }
 }
 
-TEMPLATE_TEST_CASE("TEST Quad Measurements", "[model_properties][quads]", MOAB_Interface, LibMesh_Interface)
+TEMPLATE_LIST_TEST_CASE("TEST Quad Measurements", "[model_properties][quads]", MeshManagerBackends)
 {
   constexpr auto mesh_backend = TestType::value;
 

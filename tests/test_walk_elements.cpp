@@ -13,10 +13,9 @@
 using namespace xdg;
 using namespace xdg::test;
 
-TEMPLATE_TEST_CASE("Test Hex Element Random Walk Jezebel Hexes",
+TEMPLATE_LIST_TEST_CASE("Test Hex Element Random Walk Jezebel Hexes",
                    "[walk_elements][hex][quads]",
-                   MOAB_Interface,
-                   LibMesh_Interface)
+                   MeshManagerBackends)
 {
   constexpr auto mesh_backend = TestType::value;
 
@@ -45,10 +44,9 @@ TEMPLATE_TEST_CASE("Test Hex Element Random Walk Jezebel Hexes",
 }
 
 
-TEMPLATE_TEST_CASE("Test Hex Element Random Walk Jezebel Tets",
+TEMPLATE_LIST_TEST_CASE("Test Hex Element Random Walk Jezebel Tets",
                    "[walk_elements][tet][tris]",
-                   MOAB_Interface,
-                   LibMesh_Interface)
+                   MeshManagerBackends)
 {
   constexpr auto mesh_backend = TestType::value;
 
