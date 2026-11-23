@@ -458,6 +458,13 @@ MeshManager::surface_bounding_box(MeshID surface) const
   return bb;
 }
 
+std::pair<MeshID, int> 
+MeshManager::adjacent_subelement(MeshID element, int face, int subface_idx) const
+{
+  fatal_error("'adjacent_subelement' has not been implemented for this mesh manager!");
+  return {ID_NONE, ID_NONE};
+}
+
 double MeshManager::element_volume(MeshID element) const
 {
   // create an element face accessor
