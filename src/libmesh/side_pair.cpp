@@ -146,7 +146,7 @@ std::vector<MeshID> SidePair::face_connectivity() const {
     std::reverse(conn.begin(), conn.end());
   }
 
-  return std::move(conn);
+  return conn;
 }
 
 std::vector<MeshID> SidePair::face_vertices() const {
@@ -183,6 +183,6 @@ std::vector<MeshID> SidePair::face_vertices() const {
     std::reverse(vertex_ids.begin(), vertex_ids.end());
   }
 
-  return std::move(vertex_ids);
+  return vertex_ids;
 }
 }

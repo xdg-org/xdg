@@ -32,9 +32,7 @@ public:
   SidePair(const libMesh::Elem* elem1, const libMesh::Elem* elem2);
   SidePair(std::pair<const libMesh::Elem*, const libMesh::Elem*> side_pair);
 
-  //! Mutators
-  void set_order();
-  void set_side_num();
+  //! Mutator
   void swap();
 
   //! Operator overloads
@@ -54,6 +52,10 @@ public:
   std::vector<MeshID> face_vertices() const;
 
 private:
+  //! Mutators
+  void set_order();
+  void set_side_num();
+
   std::pair<const libMesh::Elem*, const libMesh::Elem*> side_ {nullptr, nullptr};
   int32_t side_num_ {SIDE_NONE};
   //! Whether second() should be used for fetching face vertices or not. If so, the

@@ -180,12 +180,12 @@ LibMeshManager::element_connectivity(MeshID element) const {
   for (unsigned int i = 0; i < elem_ptr->n_nodes(); i++) {
     conn.push_back(elem_ptr->node_ptr(i)->id());
   }
-  return std::move(conn);
+  return conn;
 }
 
 std::vector<MeshID>
 LibMeshManager::face_connectivity(MeshID face) const {
-  return std::move(sidepair(face).face_connectivity());
+  return sidepair(face).face_connectivity();
 }
 
 MeshID
@@ -581,7 +581,7 @@ LibMeshManager::get_volume_elements(MeshID volume) const {
   for (; it != it_end; ++it) {
     elements.push_back((*it)->id());
   }
-  return std::move(elements);
+  return elements;
 }
 
 int
@@ -607,12 +607,12 @@ LibMeshManager::element_vertices(MeshID element) const {
     const auto& node = elem.node_ref(i);
     vertices[i] = {node(0), node(1), node(2)};
   }
-  return std::move(vertices);
+  return vertices;
 }
 
 std::vector<MeshID>
 LibMeshManager::face_vertices(MeshID face) const {
-  return std::move(sidepair(face).face_vertices());
+  return sidepair(face).face_vertices();
 }
 
 SurfaceFaceType
@@ -676,7 +676,7 @@ LibMeshManager::get_volume_surfaces(MeshID volume) const {
       surfaces.push_back(surface);
     }
   }
-  return std::move(surfaces);
+  return surfaces;
 }
 
 std::pair<MeshID, MeshID>
