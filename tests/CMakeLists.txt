@@ -32,6 +32,7 @@ endif()
 
 if (XDG_ENABLE_LIBMESH)
     list(APPEND TEST_NAMES test_libmesh)
+    list(APPEND TEST_NAMES test_amr_connectivity)
 endif()
 
 if (XDG_ENABLE_MOAB)
