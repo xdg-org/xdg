@@ -208,72 +208,81 @@ MeshManager::next_element(MeshID current_element,
 
   const int num_faces = element_face_accessor->num_faces();
 
-  for (int i = 0; i < num_faces; i++) {
-    auto coords = element_face_accessor->face_vertices(i);
-    double exiting_dot;
-    PluckerIntersectionResult result {false, INFTY};
-    if (coords.size() == 3) {
-      exiting_dot = u.dot(triangle_normal(coords));
-      if (exiting_dot < 0) continue;
-      result = plucker_ray_tri_intersect(
-          coords.data(), r, u, INFTY, -1e-10, false, 0);
-    } else if (coords.size() == 4) {
-      std::array<Vertex, 3> tri0;
-      std::array<Vertex, 3> tri1;
-      if (canonical_diagonal(coords)) {
-        tri0 = {coords[0], coords[1], coords[2]};
-        tri1 = {coords[0], coords[2], coords[3]};
+  // collect the faces the ray exits through at a distance of at least t_min
+  auto collect_candidates = [&](double t_min) {
+    for (int i = 0; i < num_faces; i++) {
+      auto coords = element_face_accessor->face_vertices(i);
+      double exiting_dot;
+      PluckerIntersectionResult result {false, INFTY};
+      if (coords.size() == 3) {
+        exiting_dot = u.dot(triangle_normal(coords));
+        if (exiting_dot < 0) continue;
+        result = plucker_ray_tri_intersect(
+            coords.data(), r, u, INFTY, t_min, false, 0);
+      } else if (coords.size() == 4) {
+        std::array<Vertex, 3> tri0;
+        std::array<Vertex, 3> tri1;
+        if (canonical_diagonal(coords)) {
+          tri0 = {coords[0], coords[1], coords[2]};
+          tri1 = {coords[0], coords[2], coords[3]};
+        } else {
+          tri0 = {coords[1], coords[2], coords[3]};
+          tri1 = {coords[1], coords[3], coords[0]};
+        }
+        PluckerIntersectionResult result0, result1;
+        double exiting_dot0 = u.dot(triangle_normal(tri0));
+        if (exiting_dot0 >= 0.0) {
+          result0 = plucker_ray_tri_intersect(tri0.data(),
+                                              r,
+                                              u,
+                                              INFTY,
+                                              t_min,
+                                              false,
+                                              0);
+        }
+
+        double exiting_dot1 = u.dot(triangle_normal(tri1));
+        if (exiting_dot1 >= 0.0) {
+          result1 = plucker_ray_tri_intersect(tri1.data(),
+                                              r,
+                                              u,
+                                              INFTY,
+                                              t_min,
+                                              false,
+                                              0);
+        }
+        if (!result0.hit && !result1.hit) continue;
+        // we hit one or both triangles, so we will return a hit
+        result.hit = true;
+        // if we hit both triangles, use the closer triangle distance
+        if (result0.hit) {
+          result.t = result0.t;
+          exiting_dot = exiting_dot0;
+        }
+        if (result1.hit && result1.t < result.t) {
+          result.t = result1.t;
+          exiting_dot = exiting_dot1;
+        }
       } else {
-        tri0 = {coords[1], coords[2], coords[3]};
-        tri1 = {coords[1], coords[3], coords[0]};
-      }
-      PluckerIntersectionResult result0, result1;
-      double exiting_dot0 = u.dot(triangle_normal(tri0));
-      if (exiting_dot0 >= 0.0) {
-        result0 = plucker_ray_tri_intersect(tri0.data(),
-                                            r,
-                                            u,
-                                            INFTY,
-                                            -1e-10,
-                                            false,
-                                            0);
+        fatal_error("Unsupported face vertex count {} in next_element", coords.size());
       }
 
-      double exiting_dot1 = u.dot(triangle_normal(tri1));
-      if (exiting_dot1 >= 0.0) {
-        result1 = plucker_ray_tri_intersect(tri1.data(),
-                                            r,
-                                            u,
-                                            INFTY,
-                                            -1e-10,
-                                            false,
-                                            0);
-      }
-      if (!result0.hit && !result1.hit) continue;
-      // we hit one or both triangles, so we will return a hit
-      result.hit = true;
-      // if we hit both triangles, use the closer triangle distance
-      if (result0.hit) {
-        result.t = result0.t;
-        exiting_dot = exiting_dot0;
-      }
-      if (result1.hit && result1.t < result.t) {
-        result.t = result1.t;
-        exiting_dot = exiting_dot1;
-      }
-    } else {
-      fatal_error("Unsupported face vertex count {} in next_element", coords.size());
+      if (!result.hit) continue;
+      if (exiting_dot < 0.0) continue;
+
+      MeshID next_element = this->adjacent_element(current_element, i);
+
+      candidates.push_back({next_element,
+                            std::max(0.0, result.t),
+                            exiting_dot});
     }
+  };
 
-    if (!result.hit) continue;
-    if (exiting_dot < 0.0) continue;
-
-    MeshID next_element = this->adjacent_element(current_element, i);
-
-    candidates.push_back({next_element,
-                          std::max(0.0, result.t),
-                          exiting_dot});
-  }
+  collect_candidates(-1e-10);
+  // A point just outside this element, though within point location's tolerance, that
+  // leaves at a grazing angle has its exit face behind it, further back than the tolerance
+  // above. Take that face at distance zero, so the walk carries on across it.
+  if (candidates.empty()) collect_candidates(-INFTY);
 
   if (candidates.empty()) return {ID_NONE, INFTY};
 

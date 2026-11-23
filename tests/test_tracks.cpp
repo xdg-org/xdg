@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include <numeric>
 #include <random>
 #include <string>
@@ -290,5 +291,80 @@ TEMPLATE_TEST_CASE("Test Single-Tet Vertex Intersection Tracks", "[tracks]",
       REQUIRE(reverse_length == Catch::Approx(expected_length).epsilon(0.00001));
       REQUIRE(forward_length == Catch::Approx(reverse_length).epsilon(0.00001));
     }
+  }
+}
+
+// A track that starts just outside a hex, though close enough to it for point location
+// to place it inside, and leaves at a grazing angle has the face it is outside of behind
+// it, further back than next_element accepts. The walk used to stop there with a warning
+// and return nothing, and segments(start, end) then located the same element again and
+// looped forever.
+TEST_CASE("Tracks starting just outside a hex at a grazing angle")
+{
+  check_ray_tracer_supported(RTLibrary::EMBREE);
+
+  // two 0.4 x 0.014 x 0.012 hexes side by side along x, sharing the face at x = 0.4
+  auto mm = std::make_shared<MockedQuadHexMesh>(Direction {0.4, 0.014, 0.012});
+  mm->init();
+  mm->create_implicit_complement();
+  auto xdg = std::make_shared<XDG>(mm);
+  xdg->prepare_raytracer();
+
+  auto total_length = [](const std::vector<std::pair<MeshID, double>>& segments) {
+    return std::accumulate(segments.begin(), segments.end(), 0.0,
+      [](double sum, const auto& segment) { return sum + segment.second; });
+  };
+
+  // at 0.1 degrees, a face 5e-13 from the start is 2.9e-10 behind it along the track
+  const double theta = 0.1 * M_PI / 180.0;
+
+  SECTION("Leaving the mesh through the top face")
+  {
+    // 5e-13 above the top face of element 0, which point location still accepts
+    const Position start {0.2, 0.007, 0.012 + 5e-13};
+    const Direction u {std::cos(theta), 0.0, std::sin(theta)};
+
+    // the exit is the top face, at distance zero
+    auto [next, distance] = xdg->next_element(0, start, u);
+    REQUIRE(next == ID_NONE);
+    REQUIRE(distance == 0.0);
+
+    // the track never enters the mesh
+    auto segments = xdg->segments(start, start + 0.01 * u);
+    CHECK(total_length(segments) == Catch::Approx(0.0).margin(1e-12));
+  }
+
+  SECTION("Crossing the shared face from the element on the other side")
+  {
+    // 5e-13 inside element 0, heading further into it, but starting from element 1
+    const Position start {0.4 - 5e-13, 0.007, 0.006};
+    const Direction u {-std::sin(theta), std::cos(theta), 0.0};
+
+    // the exit is the shared face, at distance zero
+    auto [next, distance] = xdg->next_element(1, start, u);
+    REQUIRE(next == 0);
+    REQUIRE(distance == 0.0);
+
+    // the whole track lies in element 0
+    auto walk = mm->walk_elements(1, start, u, 0.005);
+    REQUIRE(walk.size() == 2);
+    CHECK(walk[0].first == 1);
+    CHECK(walk[0].second == 0.0);
+    CHECK(walk[1].first == 0);
+    CHECK(walk[1].second == Catch::Approx(0.005).margin(1e-12));
+
+    auto segments = xdg->segments(start, start + 0.005 * u);
+    CHECK(total_length(segments) == Catch::Approx(0.005).margin(1e-12));
+  }
+
+  SECTION("Parallel to the top face, just outside it")
+  {
+    // the track crosses no face of element 0, so the walk finds no exit at all and warns,
+    // but segments must still return
+    const Position start {0.2, 0.007, 0.012 + 5e-13};
+    const Direction u {1.0, 0.0, 0.0};
+
+    auto segments = xdg->segments(start, start + 0.01 * u);
+    CHECK(total_length(segments) == Catch::Approx(0.0).margin(1e-12));
   }
 }

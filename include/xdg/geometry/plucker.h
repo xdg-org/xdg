@@ -160,7 +160,7 @@ inline PluckerIntersectionResult plucker_ray_tri_intersect(dp::vec3 vertices[3],
 
   // Barycentric coords check
   if (u < -dp::DBL_ZERO_TOL || v < - dp::DBL_ZERO_TOL || (u + v) > 1.0 + dp::DBL_ZERO_TOL) {
-      dist_out = -1.0;
+      return EXIT_EARLY;
   }
 
   // is the intersection within distance limits?
