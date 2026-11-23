@@ -711,7 +711,7 @@ LibMeshManager::build_amr_connectivity_map()
     // If there are more active neigbors than the element has faces, we've encountered a
     // one-to-many AMR mapping that needs to be cached.
     if (num_active_neighbors > elem->n_sides()) {
-      amr_conn_map_[elem->id()] = CoarseToFineElemMap();
+      amr_conn_map_[elem->id()] = CoarseToFineElementConn();
       auto& elem_data = amr_conn_map_.at(elem->id());
 
       elem_data.num_faces_ = elem->n_sides();

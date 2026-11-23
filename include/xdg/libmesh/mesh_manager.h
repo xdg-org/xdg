@@ -51,9 +51,9 @@ public:
     }
   }
 
-  bool has_amr_conn() const { return amr_conn_map_.size() > 0; }
+  bool mesh_has_subfaces() const { return !amr_conn_map_.empty(); }
 
-  bool is_elem_adaptive(MeshID element) const {
+  bool element_has_subfaces(MeshID element) const {
     return amr_conn_map_.count(element);
   }
 
@@ -148,13 +148,13 @@ private:
     }
   };
   // A helper struct to store AMR connectivity.
-  struct CoarseToFineElemMap {
+  struct CoarseToFineElementConn {
     int num_faces_ {-1};
     int max_face_neighbors_ {-1};
     // Vector of neighboring elements with the side pointing to this element
     std::vector<std::pair<MeshID, int>> neighboring_elems_;
 
-    CoarseToFineElemMap() = default;
+    CoarseToFineElementConn() = default;
 
     std::pair<MeshID, int> refined_neighbor(int face, int neighbor_idx) const {
       return neighboring_elems_[face * max_face_neighbors_ + neighbor_idx];
@@ -235,7 +235,7 @@ private:
 
   // mapping elements to their neighbors when a mesh is adaptive
   // key is an element that was found to have AMR connectivity
-  std::unordered_map<MeshID, CoarseToFineElemMap> amr_conn_map_;
+  std::unordered_map<MeshID, CoarseToFineElementConn> amr_conn_map_;
 
   // Ugh, double mapping
   std::unordered_map<MeshID, SidePair> mesh_id_to_sidepair_;
@@ -285,7 +285,7 @@ struct LibMeshElementFaceAccessor : public ElementFaceAccessor {
     mesh_ = mesh_manager_->mesh();
     elem_ptr_ = mesh_->elem_ptr(element);
     // Early out of the hash-map lookup if the mesh doesn't have AMR connectivity.
-    adaptive_ = mesh_manager_->has_amr_conn() ? mesh_manager_->is_elem_adaptive(element) : false;
+    adaptive_ = mesh_manager_->mesh_has_subfaces() ? mesh_manager_->element_has_subfaces(element) : false;
   }
 
   std::vector<Vertex> face_vertices(int i) const override {
