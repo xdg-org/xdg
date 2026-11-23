@@ -154,14 +154,11 @@ MeshID LibMeshManager::adjacent_element(MeshID element, int face) const {
 
 std::pair<MeshID, int>
 LibMeshManager::adjacent_subelement(MeshID element, int face, int subface_idx) const {
-  const auto elem_ptr = mesh()->elem_ptr(element);
-  if (!elem_ptr) return {ID_NONE, ID_NONE};
-
-  if (amr_conn_map_.count(element)) {
-    return amr_conn_map_.at(element).refined_neighbor(face, subface_idx);
-  } else {
+  const auto element_conn_it = amr_conn_map_.find(element);
+  if (element_conn_it == amr_conn_map_.end()) {
     return {ID_NONE, ID_NONE};
   }
+  return element_conn_it->second.refined_neighbor(face, subface_idx);
 }
 
 xdg::Vertex
