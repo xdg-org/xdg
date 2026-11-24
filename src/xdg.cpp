@@ -204,27 +204,68 @@ XDG::segments(MeshID volume,
               const Position& start,
               const Position& end) const
 {
-  Position start_copy = start;
-  Direction u = (end - start).normalize();
-  TreeID volume_tree = volume_to_point_location_tree_map_.at(volume);
-  MeshID starting_element = ray_tracing_interface()->find_element(volume_tree, start);
+  Direction u = end - start;
+  double remaining_distance = u.length();
+  u.normalize();
 
-  // if we're outside of the region of interest, determine the distance to an entering intersection
-  // with the model
-  if (starting_element == ID_NONE) {
-    auto hit = ray_fire(volume, start, u, INFTY, HitOrientation::ENTERING);
-    if (hit.second == ID_NONE) return {};
-    // TODO: use mesh adjaccies to find the element on the other side of the hit face
-    starting_element = ray_tracing_interface()->find_element(volume_tree, start + u * (hit.first + TINY_BIT));
+  Position r = start;
+  TreeID volume_tree = volume_to_point_location_tree_map_.at(volume);
+  MeshID starting_element = ray_tracing_interface()->find_element(volume_tree, r);
+
+  std::vector<std::pair<MeshID, double>> segments;
+
+  // Loop over the ray until the remaining distance between start and end is exhausted.
+  while (remaining_distance > 0.0) {
+    // If we're outside of the volume of interest, find the next entry point into the volume.
+    // this handles both outside the volume and inside an interior shell volume/void
     if (starting_element == ID_NONE) {
-      warning("Ray fire hit surface {}, but could not find element on the other side of the surface.", hit.second);
-      return {};
+      auto [entry_hit_distance, entry_hit_surface] = ray_fire(volume, r, u, remaining_distance, HitOrientation::ENTERING);
+      if (entry_hit_surface == ID_NONE) break;
+
+      r += u * entry_hit_distance;
+      remaining_distance -= entry_hit_distance;
+      if (remaining_distance <= 0.0) break;
+
+      // TODO: use mesh adjacencies to find the element on the other
+      // side of the hit face.
+
+      starting_element = ray_tracing_interface()->find_element(volume_tree, r + u * TINY_BIT);
+
+      if (starting_element == ID_NONE) {
+        warning("Ray fire hit surface {}, but could not find element on the other side of the surface.", entry_hit_surface);
+        break;
+      }
     }
-    start_copy += u * hit.first;
+
+    // Bound this element walk by the next exit from the requested volume.
+    auto [exit_hit_distance, exit_hit_surface] = ray_fire(volume, r, u, remaining_distance, HitOrientation::EXITING);
+
+    double interval_distance = std::min(remaining_distance, exit_hit_distance);
+    // Stop just short of a volume boundary so roundoff between the surface
+    // and element intersection calculations cannot step into the next volume.
+    
+    double walk_distance = interval_distance;
+
+    // if a ray_fire returns an exit hit before we have stepped the distance to the requested endpoint,
+    // we need to adjust the distance limit passed to walk_elements() so that it does not cross into 
+    // the next volume (therefore returning tracklength of a volume not requested)
+    if (interval_distance < remaining_distance) {
+      walk_distance -= TINY_BIT;
+    }
+
+    auto interval_segments = mesh_manager()->walk_elements(starting_element, r, u, walk_distance);
+    if (interval_distance < remaining_distance && !interval_segments.empty()) {
+      interval_segments.back().second += TINY_BIT; // Re-add the TINY_BIT adjustment to the actual segment length
+    }
+    segments.insert(segments.end(), interval_segments.begin(), interval_segments.end());
+
+    r += u * interval_distance;
+    remaining_distance -= interval_distance;
+    
+    // After an exit, restart the loop searching for a possible re-entry.
+    starting_element = ID_NONE;
   }
 
-  if (starting_element == ID_NONE) return {};
-  auto segments = mesh_manager()->walk_elements(starting_element, start_copy, end);
   return segments;
 }
 
