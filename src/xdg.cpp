@@ -157,9 +157,11 @@ XDG::segments(const Position& start,
   std::vector<xdg::MeshID> hit_primitives;
 
   std::vector<std::pair<MeshID, double>> segments;
+  // cleared after a walk that could not leave its starting element
+  bool locate = true;
   while (distance > 0) {
     // attempt to find an element at the start location
-    MeshID current_element = ray_tracing_interface()->find_element(r);
+    MeshID current_element = locate ? ray_tracing_interface()->find_element(r) : ID_NONE;
     // at this point we may be on the face of an element, if we're declared inside that element, ignore it
     if (segments.size() > 0 && current_element == segments.back().first) current_element = ID_NONE;
     MeshID volume = ID_NONE;
@@ -187,6 +189,10 @@ XDG::segments(const Position& start,
       hit_primitives.clear();
     }
     auto vol_segments = mesh_manager()->walk_elements(current_element, r, u, distance);
+    // A walk that cannot leave its starting element means r is just outside that element,
+    // though within point location's tolerance. Locating r again would return the same
+    // element and repeat the walk forever, so look for the next entry along the ray instead.
+    locate = !vol_segments.empty();
     // add to current set of segments
     segments.insert(segments.end(), vol_segments.begin(), vol_segments.end());
     double segment_sum = std::accumulate(vol_segments.begin(), vol_segments.end(), 0.0,

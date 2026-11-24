@@ -345,10 +345,15 @@ using MeshMock = MockedTriTetMesh;
 
 namespace xdg {
 
-// A lightweight two-element hexahedral mesh.
+// A lightweight two-element hexahedral mesh: two unit cubes side by side along x,
+// optionally stretched along each axis by the components of `scale`.
 class MockedQuadHexMesh : public MeshManager {
 public:
-  MockedQuadHexMesh() {
+  explicit MockedQuadHexMesh(const Direction& scale = {1.0, 1.0, 1.0}) {
+    for (auto& v : vertices_) {
+      v = {v.x * scale.x, v.y * scale.y, v.z * scale.z};
+    }
+
     volumes_ = {0};
     surfaces_ = {0, 1, 2, 3, 4, 5};
     volume_surfaces_map_[0] = surfaces_;
@@ -500,7 +505,7 @@ private:
   std::unordered_map<MeshID, std::pair<MeshID, MeshID>> surface_sense_map_;
   std::unordered_map<MeshID, std::vector<MeshID>> volume_surfaces_map_;
 
-  const std::vector<Vertex> vertices_ {
+  std::vector<Vertex> vertices_ {
     {0.0, 0.0, 0.0},
     {1.0, 0.0, 0.0},
     {1.0, 1.0, 0.0},
