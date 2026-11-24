@@ -7,13 +7,12 @@
 #include "xdg/config.h"
 #include "xdg/error.h"
 #include "xdg/fmt_formatters.h"
-#include "xdg/geometry/plucker.h"
-#include "xdg/geometry/measure.h"
-#include "xdg/geometry/face_common.h"
-#include "xdg/element_face_accessor.h"
 #include "xdg/error.h"
 #include "xdg/geometry/face_common.h"
+#include "xdg/geometry/measure.h"
 #include "xdg/geometry/plucker.h"
+#include "xdg/element_face_accessor.h"
+#include "xdg/geometry/element_face_intersect.h"
 
 namespace xdg {
 
@@ -201,142 +200,14 @@ MeshManager::next_element(MeshID current_element,
     double distance;
     double exiting_dot;
   };
-
-  // A helper functor to resolve subfaces. 'subelement' is an element adjacent to 'current_element'.
-  // 'adjacent_face' is a face in 'subelement' that boarders 'current_element'. 'ret_val' is a list
-  // of candidate elements to advance into.
-  auto resolve_subface = [&](MeshID subelement, int adjacent_face, std::vector<FaceCandidate> & ret_val) {
-    auto subelement_face_accessor = ElementFaceAccessor::create(this, subelement);
-
-    // Get the face directly adjacent to 'current_element'
-    auto coords = subelement_face_accessor->face_vertices(adjacent_face);
-    double entering_dot;
-    PluckerIntersectionResult result {false, INFTY};
-    if (coords.size() == 3) {
-      entering_dot = -1.0 * u.dot(triangle_normal(coords));
-      if (entering_dot < 0) return;
-      result = plucker_ray_tri_intersect(
-          coords.data(), r, u, INFTY, -1e-10, false, 0);
-    } else if (coords.size() == 4) {
-      std::array<Vertex, 3> tri0;
-      std::array<Vertex, 3> tri1;
-      if (canonical_diagonal(coords)) {
-        tri0 = {coords[0], coords[1], coords[2]};
-        tri1 = {coords[0], coords[2], coords[3]};
-      } else {
-        tri0 = {coords[1], coords[2], coords[3]};
-        tri1 = {coords[1], coords[3], coords[0]};
-      }
-      PluckerIntersectionResult result0, result1;
-      double entering_dot0 = -1.0 * u.dot(triangle_normal(tri0));
-      if (entering_dot0 >= 0.0) {
-        result0 = plucker_ray_tri_intersect(tri0.data(),
-                                            r,
-                                            u,
-                                            INFTY,
-                                            -1e-10,
-                                            false,
-                                            0);
-      }
-
-      double entering_dot1 = -1.0 * u.dot(triangle_normal(tri1));
-      if (entering_dot1 >= 0.0) {
-        result1 = plucker_ray_tri_intersect(tri1.data(),
-                                            r,
-                                            u,
-                                            INFTY,
-                                            -1e-10,
-                                            false,
-                                            0);
-      }
-      if (!result0.hit && !result1.hit) return;
-      // we hit one or both triangles, so we will return a hit
-      result.hit = true;
-      // if we hit both triangles, use the closer triangle distance
-      if (result0.hit) {
-        result.t = result0.t;
-        entering_dot = entering_dot0;
-      }
-      if (result1.hit && result1.t < result.t) {
-        result.t = result1.t;
-        entering_dot = entering_dot1;
-      }
-    } else {
-      fatal_error("Unsupported face vertex count {} in next_element", coords.size());
-    }
-
-    if (!result.hit) return;
-    if (entering_dot < 0.0) return;
-
-    // If we've gotten this far, we have a candidate.
-    ret_val.push_back({subelement, std::max(0.0, result.t), entering_dot});
-  };
-
-  auto element_face_accessor = ElementFaceAccessor::create(this, current_element);
   std::vector<FaceCandidate> candidates;
-  const auto element_vertices = this->element_vertices(current_element);
 
+  const auto element_face_accessor = ElementFaceAccessor::create(this, current_element);
   const int num_faces = element_face_accessor->num_faces();
-
   for (int i = 0; i < num_faces; i++) {
-    auto coords = element_face_accessor->face_vertices(i);
-    double exiting_dot;
-    PluckerIntersectionResult result {false, INFTY};
-    if (coords.size() == 3) {
-      exiting_dot = u.dot(triangle_normal(coords));
-      if (exiting_dot < 0) continue;
-      result = plucker_ray_tri_intersect(
-          coords.data(), r, u, INFTY, -1e-10, false, 0);
-    } else if (coords.size() == 4) {
-      std::array<Vertex, 3> tri0;
-      std::array<Vertex, 3> tri1;
-      if (canonical_diagonal(coords)) {
-        tri0 = {coords[0], coords[1], coords[2]};
-        tri1 = {coords[0], coords[2], coords[3]};
-      } else {
-        tri0 = {coords[1], coords[2], coords[3]};
-        tri1 = {coords[1], coords[3], coords[0]};
-      }
-      PluckerIntersectionResult result0, result1;
-      double exiting_dot0 = u.dot(triangle_normal(tri0));
-      if (exiting_dot0 >= 0.0) {
-        result0 = plucker_ray_tri_intersect(tri0.data(),
-                                            r,
-                                            u,
-                                            INFTY,
-                                            -1e-10,
-                                            false,
-                                            0);
-      }
-
-      double exiting_dot1 = u.dot(triangle_normal(tri1));
-      if (exiting_dot1 >= 0.0) {
-        result1 = plucker_ray_tri_intersect(tri1.data(),
-                                            r,
-                                            u,
-                                            INFTY,
-                                            -1e-10,
-                                            false,
-                                            0);
-      }
-      if (!result0.hit && !result1.hit) continue;
-      // we hit one or both triangles, so we will return a hit
-      result.hit = true;
-      // if we hit both triangles, use the closer triangle distance
-      if (result0.hit) {
-        result.t = result0.t;
-        exiting_dot = exiting_dot0;
-      }
-      if (result1.hit && result1.t < result.t) {
-        result.t = result1.t;
-        exiting_dot = exiting_dot1;
-      }
-    } else {
-      fatal_error("Unsupported face vertex count {} in next_element", coords.size());
-    }
-
+    // Intersect the face. If no intersection is recorded, skip checking subfaces.
+    const auto result = intersect_elem_face(r, u, *element_face_accessor, i, false);
     if (!result.hit) continue;
-    if (exiting_dot < 0.0) continue;
 
     // If the element has subfaces we need to figure out which face is composed of
     // multiple subfaces. Then, we resolve which subface we're entering into.
@@ -345,19 +216,26 @@ MeshManager::next_element(MeshID current_element,
       // This face isn't split, so we can just push back into the candidates vector.
       if (num_subfaces == 1) {
         candidates.push_back({this->adjacent_element(current_element, i),
-                              std::max(0.0, result.t),
-                              exiting_dot});
+                              std::max(0.0, result.distance),
+                              result.exiting_dot});
       } else {
         // This face has subfaces.
         for (int sf = 0; sf < num_subfaces; ++sf) {
-          auto [subelement, adjacent_face] = this->adjacent_subelement(current_element, i, sf);
-          resolve_subface(subelement, adjacent_face, candidates);
+          const auto [subelement, adjacent_face] = this->adjacent_subelement(current_element, i, sf);
+          const auto subelement_face_accessor = ElementFaceAccessor::create(this, subelement);
+          const auto sub_result = intersect_elem_face(r, u, *subelement_face_accessor, adjacent_face, true);
+          if (sub_result.hit) {
+            candidates.push_back({subelement, 
+                                  std::max(0.0, sub_result.distance), 
+                                  sub_result.exiting_dot});
+          }
         }
       }
     } else {
+      // If there are no subfaces, we can just push back the adjacent element.
       candidates.push_back({this->adjacent_element(current_element, i),
-                            std::max(0.0, result.t),
-                            exiting_dot});
+                            std::max(0.0, result.distance),
+                            result.exiting_dot});
     }
   }
 
