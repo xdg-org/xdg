@@ -23,13 +23,6 @@ EmbreeRayTracer::EmbreeRayTracer()
 
 EmbreeRayTracer::~EmbreeRayTracer()
 {
-  while (!surface_volume_tree_to_scene_map_.empty()) {
-  release_surface_tree(surface_volume_tree_to_scene_map_.begin()->first);
-  }
-  while (!element_volume_tree_to_scene_map_.empty()) {
-  release_element_tree(element_volume_tree_to_scene_map_.begin()->first);
-  }
-
   while (!surface_user_data_map_.empty()) {
     rtcReleaseGeometry(surface_user_data_map_.begin()->first);
     surface_user_data_map_.erase(surface_user_data_map_.begin()->first);
@@ -38,6 +31,13 @@ EmbreeRayTracer::~EmbreeRayTracer()
   while (!volume_user_data_map_.empty()) {
     rtcReleaseGeometry(volume_user_data_map_.begin()->first);
     volume_user_data_map_.erase(volume_user_data_map_.begin()->first);
+  }
+
+  while (!surface_volume_tree_to_scene_map_.empty()) {
+  release_surface_tree(surface_volume_tree_to_scene_map_.begin()->first);
+  }
+  while (!element_volume_tree_to_scene_map_.empty()) {
+  release_element_tree(element_volume_tree_to_scene_map_.begin()->first);
   }
 
   if (device_) {
