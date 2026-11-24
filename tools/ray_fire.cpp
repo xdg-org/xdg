@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
     .help("Ray direction").scan<'g', double>().nargs(3);
 
   args.add_argument("-m", "--mesh-library")
-      .help("Mesh library to use. One of (MOAB, LIBMESH)")
+      .help("Mesh library to use. One of (MOAB, LIBMESH, OPENFOAM)")
       .default_value("MOAB");
 
   args.add_argument("-r", "--rt-library")
@@ -70,6 +70,11 @@ else if (mesh_str == "LIBMESH") {
   mesh_lib = MeshLibrary::LIBMESH;
   if (rt_lib == RTLibrary::GPRT)
     fatal_error("LibMesh is not currently supported with GPRT");
+}
+else if (mesh_str == "OPENFOAM") {
+  mesh_lib = MeshLibrary::OPENFOAM;
+  if (rt_lib == RTLibrary::GPRT)
+    fatal_error("OpenFOAM is not currently supported with GPRT");
 }
 else
   fatal_error("Invalid mesh library '{}' specified", mesh_str);

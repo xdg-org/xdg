@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <memory>
 #include <random>
 #include <string>
@@ -45,6 +46,7 @@ inline XDGBackendFixture make_xdg_backend_fixture(
 
 using MOAB_Interface = std::integral_constant<MeshLibrary, MeshLibrary::MOAB>;
 using LibMesh_Interface = std::integral_constant<MeshLibrary, MeshLibrary::LIBMESH>;
+using OpenFOAM_Interface = std::integral_constant<MeshLibrary, MeshLibrary::OPENFOAM>;
 
 using Embree_Raytracer = std::integral_constant<RTLibrary, RTLibrary::EMBREE>;
 using GPRT_Raytracer = std::integral_constant<RTLibrary, RTLibrary::GPRT>;
@@ -103,6 +105,13 @@ inline bool mesh_library_available(xdg::MeshLibrary mesh) {
     #else
       return false;
     #endif
+
+    case xdg::MeshLibrary::OPENFOAM:
+    #ifdef XDG_ENABLE_OPENFOAM
+      return true;
+    #else
+      return false;
+    #endif
   }
 
   return false;
@@ -120,6 +129,19 @@ inline void check_mesh_library_supported(xdg::MeshLibrary mesh) {
   }
 }
 
+//! The path of an OpenFOAM polyMesh fixture, skipping the test if it is absent
+//!
+//! The polyMesh fixtures are directories in the separate test files repository,
+//! so a checkout predating them skips the OpenFOAM case rather than failing,
+//! which would say nothing about the backend.
+inline std::string openfoam_fixture(const std::string& dir) {
+  if (!std::filesystem::exists(std::filesystem::path(dir) / "points")) {
+    SKIP("polyMesh fixture '" + dir +
+         "' is not present in this checkout of the test files; skipping.");
+  }
+  return dir;
+}
+
 // Factories
 
 inline std::unique_ptr<xdg::MeshManager>
@@ -132,6 +154,11 @@ create_mesh_manager(xdg::MeshLibrary mesh) {
   #ifdef XDG_ENABLE_LIBMESH
   if (mesh == xdg::MeshLibrary::LIBMESH)
     return std::make_unique<xdg::LibMeshManager>();
+  #endif
+
+  #ifdef XDG_ENABLE_OPENFOAM
+  if (mesh == xdg::MeshLibrary::OPENFOAM)
+    return std::make_unique<xdg::OpenFOAMMeshManager>();
   #endif
 
   return nullptr;

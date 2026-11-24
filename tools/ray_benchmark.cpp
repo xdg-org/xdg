@@ -56,7 +56,7 @@ int main(int argc, char** argv)
     .help("Use the queried volume bounding box center as the ray origin");
 
   args.add_argument("-m", "--mesh-library")
-    .help("Mesh library to use. One of (MOAB, LIBMESH)")
+    .help("Mesh library to use. One of (MOAB, LIBMESH, OPENFOAM)")
     .default_value("MOAB");
 
   args.add_argument("-rt", "--rt-library")
@@ -107,6 +107,8 @@ int main(int argc, char** argv)
     mesh_lib = MeshLibrary::MOAB;
   } else if (mesh_str == "LIBMESH") {
     mesh_lib = MeshLibrary::LIBMESH;
+  } else if (mesh_str == "OPENFOAM") {
+    mesh_lib = MeshLibrary::OPENFOAM;
   } else {
     fatal_error("Invalid mesh library '{}' specified", mesh_str);
   }

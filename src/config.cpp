@@ -129,5 +129,8 @@ bool XDGConfig::mesh_manager_enabled(MeshLibrary mesh_lib) const {
   #ifdef XDG_ENABLE_LIBMESH
   if (mesh_lib == MeshLibrary::LIBMESH) return true;
   #endif
+  #ifdef XDG_ENABLE_OPENFOAM
+  if (mesh_lib == MeshLibrary::OPENFOAM) return true;
+  #endif
   return false;
 }

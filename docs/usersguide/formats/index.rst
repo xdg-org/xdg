@@ -13,4 +13,5 @@ File Formats
 
     moab
     libmesh
+    openfoam
 

@@ -16,7 +16,8 @@ using namespace xdg::test;
 TEMPLATE_TEST_CASE("Test Hex Element Random Walk Jezebel Hexes",
                    "[walk_elements][hex][quads]",
                    MOAB_Interface,
-                   LibMesh_Interface)
+                   LibMesh_Interface,
+                   OpenFOAM_Interface)
 {
   constexpr auto mesh_backend = TestType::value;
 
@@ -28,7 +29,10 @@ TEMPLATE_TEST_CASE("Test Hex Element Random Walk Jezebel Hexes",
     REQUIRE(xdg->mesh_manager()->mesh_library() == mesh_backend);
     const auto& mesh_manager = xdg->mesh_manager();
     std::string file = "jezebel-quads";
-    file += (mesh_backend == MeshLibrary::MOAB ? ".h5m" : ".exo");
+    if (mesh_backend == MeshLibrary::OPENFOAM)
+      file = openfoam_fixture("polymesh-" + file);
+    else
+      file += (mesh_backend == MeshLibrary::MOAB ? ".h5m" : ".exo");
     mesh_manager->load_file(file);
     mesh_manager->init();
     xdg->prepare_raytracer();
@@ -48,7 +52,8 @@ TEMPLATE_TEST_CASE("Test Hex Element Random Walk Jezebel Hexes",
 TEMPLATE_TEST_CASE("Test Hex Element Random Walk Jezebel Tets",
                    "[walk_elements][tet][tris]",
                    MOAB_Interface,
-                   LibMesh_Interface)
+                   LibMesh_Interface,
+                   OpenFOAM_Interface)
 {
   constexpr auto mesh_backend = TestType::value;
 
@@ -60,7 +65,10 @@ TEMPLATE_TEST_CASE("Test Hex Element Random Walk Jezebel Tets",
     REQUIRE(xdg->mesh_manager()->mesh_library() == mesh_backend);
     const auto& mesh_manager = xdg->mesh_manager();
     std::string file = "jezebel";
-    file += (mesh_backend == MeshLibrary::MOAB ? ".h5m" : ".exo");
+    if (mesh_backend == MeshLibrary::OPENFOAM)
+      file = openfoam_fixture("polymesh-" + file);
+    else
+      file += (mesh_backend == MeshLibrary::MOAB ? ".h5m" : ".exo");
     mesh_manager->load_file(file);
     mesh_manager->init();
     xdg->prepare_raytracer();
