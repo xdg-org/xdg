@@ -23,7 +23,69 @@ EmbreeRayTracer::EmbreeRayTracer()
 
 EmbreeRayTracer::~EmbreeRayTracer()
 {
-  rtcReleaseDevice(device_);
+  while (!surface_user_data_map_.empty()) {
+    rtcReleaseGeometry(surface_user_data_map_.begin()->first);
+    surface_user_data_map_.erase(surface_user_data_map_.begin()->first);
+  }
+
+  while (!volume_user_data_map_.empty()) {
+    rtcReleaseGeometry(volume_user_data_map_.begin()->first);
+    volume_user_data_map_.erase(volume_user_data_map_.begin()->first);
+  }
+
+  while (!surface_volume_tree_to_scene_map_.empty()) {
+  release_surface_tree(surface_volume_tree_to_scene_map_.begin()->first);
+  }
+  while (!element_volume_tree_to_scene_map_.empty()) {
+  release_element_tree(element_volume_tree_to_scene_map_.begin()->first);
+  }
+
+  if (device_) {
+    rtcReleaseDevice(device_);
+    device_ = nullptr;
+  }
+}
+
+void EmbreeRayTracer::release_surface_tree(SurfaceTreeID tree) {
+  release_tree(tree, surface_volume_tree_to_scene_map_, global_surface_scene_);
+}
+
+void EmbreeRayTracer::release_element_tree(ElementTreeID tree) {
+  release_tree(tree, element_volume_tree_to_scene_map_, global_element_scene_);
+}
+
+void EmbreeRayTracer::release_tree(TreeID tree, std::unordered_map<TreeID, RTCScene>& tree_to_scene_map, RTCScene global_scene) {
+  if (tree == TREE_NONE) return;
+
+  // get the scene associated with this tree
+  RTCScene scene = nullptr;
+  if (tree_to_scene_map.count(tree)) {
+    scene = tree_to_scene_map[tree];
+    tree_to_scene_map.erase(tree);
+  }
+
+  // if the scene is already released or null, do nothing
+  if (scene == nullptr) return;
+
+  // release the embree scene
+  rtcReleaseScene(scene);
+
+  // remove the primitive references associated with this scene if needed
+  if (primitive_ref_storage_.count(scene)) {
+    primitive_ref_storage_.erase(scene);
+  }
+
+  // if this is a global scene, reset the associated data members
+  if (scene == global_scene) {
+    if (scene == global_surface_scene_) {
+      global_surface_scene_ = nullptr;
+      global_surface_tree_ = TREE_NONE;
+    }
+    if (scene == global_element_scene_) {
+      global_element_scene_ = nullptr;
+      global_element_tree_ = TREE_NONE;
+    }
+  }
 }
 
 void EmbreeRayTracer::init()
@@ -210,9 +272,7 @@ EmbreeRayTracer::create_element_tree(const std::shared_ptr<MeshManager>& mesh_ma
 
 void EmbreeRayTracer::create_global_surface_tree()
 {
-  if (global_surface_scene_ != nullptr) {
-    rtcReleaseScene(global_surface_scene_);
-  }
+  release_surface_tree(global_surface_tree_);
   global_surface_scene_ = create_embree_scene();
 
   for(auto& [geom, surface_data] : surface_user_data_map_) {
@@ -228,9 +288,7 @@ void EmbreeRayTracer::create_global_surface_tree()
 
 void EmbreeRayTracer::create_global_element_tree()
 {
-  if (global_element_scene_ != nullptr) {
-    rtcReleaseScene(global_element_scene_);
-  }
+  release_element_tree(global_element_tree_);
   global_element_scene_ = create_embree_scene();
 
   for (auto& [vol_geom, data] : volume_user_data_map_) {

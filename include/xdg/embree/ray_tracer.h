@@ -24,7 +24,12 @@ public:
   RTLibrary library() const override { return RTLibrary::EMBREE; }
 
   void init() override;
+
   RTCScene create_embree_scene();
+
+  void release_surface_tree(SurfaceTreeID tree);
+
+  void release_element_tree(ElementTreeID tree);
 
   std::pair<TreeID, TreeID> register_volume(const std::shared_ptr<MeshManager>& mesh_manager, MeshID volume) override;
 
@@ -65,7 +70,6 @@ public:
 
   // Embree members
   RTCDevice device_;
-  std::vector<RTCGeometry> geometries_; //<! All geometries created by this ray tracer
 
   // Mesh-to-Scene maps
   std::map<MeshID, RTCGeometry> surface_to_geometry_map_; //<! Map from mesh surface to embree geometry
@@ -85,6 +89,8 @@ private:
                                                                              MeshID surface,
                                                                              RTCScene& volume_scene,
                                                                              int& storage_offset);
+
+  void release_tree(TreeID tree, std::unordered_map<TreeID, RTCScene>& tree_to_scene_map, RTCScene global_scene);
   // Global Tree IDs
   RTCScene global_surface_scene_ {nullptr};
   RTCScene global_element_scene_ {nullptr};
