@@ -48,7 +48,9 @@ in the user's home directory, for example:
 cuBQL GPU builder
 -----------------
 
-With ``XDG_ENABLE_CUBQL=ON``, XDG builds BVHs on the GPU and copies them into
+With ``XDG_ENABLE_CUBQL=ON`` the `CuBQLRayTracer` becomes an available ray tracing 
+backend to construct an XDG instance with. When an XDG instance is constructed with
+cuBQL, all of the BVHs are built directly on the GPU and transferred into
 OpenMP-owned storage for traversal. CUDA is the default builder. For AMD GPUs,
 set ``CUBQL_USE_HIP=ON`` and ``CMAKE_HIP_ARCHITECTURES`` to the target GPU
 architecture. HIP builds require CMake 3.21 or newer and a ROCm HIP toolchain.

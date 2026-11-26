@@ -266,17 +266,15 @@ XDGRayHitBuffer XDG::allocate_ray_hits(std::size_t count) const
 }
 
 void XDG::upload_ray_hits(const XDGRayHitBuffer& buffer,
-                          const XDGRayHit* host_data,
-                          std::size_t count) const
+                          const XDGRayHit* host_data) const
 {
-  ray_tracing_interface()->upload_ray_hits(buffer, host_data, count);
+  ray_tracing_interface()->upload_ray_hits(buffer, host_data);
 }
 
 void XDG::download_ray_hits(const XDGRayHitBuffer& buffer,
-                            XDGRayHit* host_destination,
-                            std::size_t count) const
+                            XDGRayHit* host_destination) const
 {
-  ray_tracing_interface()->download_ray_hits(buffer, host_destination, count);
+  ray_tracing_interface()->download_ray_hits(buffer, host_destination);
 }
 
 void XDG::free_ray_hits(XDGRayHitBuffer& ray_hits) const

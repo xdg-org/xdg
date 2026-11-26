@@ -46,7 +46,7 @@ TEST_CASE("Test Pincell RT libraries Cross-Check ray_fire queries", "[moab][rayf
   }
 
   srand48(12345); // set fixed seed for rng 
-  std::vector<Direction> directions(100);
+  std::vector<Direction> directions(1000);
   for (auto &dir : directions) {
     dir = rand_dir();
   }

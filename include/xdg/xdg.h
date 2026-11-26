@@ -86,19 +86,15 @@ XDGRayHitBuffer allocate_ray_hits(std::size_t count) const;
 //! Each backend will have it's own preferred way to copy data to the device, so this method is provided to abstract that away.
 //! @param buffer Device buffer handle to copy into. Must have been allocated with allocate_ray_hits().
 //! @param host_data Pointer to the host-side array of XDGRayHit records to copy.
-//! @param count Number of XDGRayHit records to copy. Must not exceed buffer
 void upload_ray_hits(const XDGRayHitBuffer& buffer,
-                     const XDGRayHit* host_data,
-                     std::size_t count) const;
+                     const XDGRayHit* host_data) const;
 
 //! Convenience method to copy a device buffer of XDGRayHit records back to the host.
 //! Each backend will have it's own preferred way to copy data from the device, so this method is provided to abstract that away.
 //! @param buffer Device buffer handle to copy from. Must have been allocated with allocate_ray_hits().
-//! @param host_destination Pointer to the host-side array of XDGRayHit records to copy into. Must be large enough to hold count records.
-//! @param count Number of XDGRayHit records to copy. Must not exceed buffer
+//! @param host_destination Pointer to the host-side array of XDGRayHit records to copy into. Must be large enough to hold buffer.count records.
 void download_ray_hits(const XDGRayHitBuffer& buffer,
-                       XDGRayHit* host_destination,
-                       std::size_t count) const;
+                       XDGRayHit* host_destination) const;
                        
 //! Releases a device ray-hit buffer allocated by allocate_ray_hits().
 //! @param ray_hits Buffer handle to release. The handle is cleared after release.

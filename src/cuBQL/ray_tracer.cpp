@@ -1,7 +1,6 @@
 #include "xdg/cuBQL/ray_tracer.h"
 #include "xdg/cuBQL/intersection.h"
 #include "xdg/error.h"
-#include "xdg/geometry/plucker.h"
 #include "xdg/available_device_probe.h"
 
 #include "device_bvh_builder_bridge.h"
@@ -60,11 +59,11 @@ void CuBQLRayTracer::upload_volume_to_group_table()
     return;
   }
 
-  d_volume_to_group_ = static_cast<CuBQLVolumeGroup::DD*>
-    (omp_target_alloc(volume_to_group_.size() * sizeof(CuBQLVolumeGroup::DD), context_.gpuID));
+  d_volume_to_group_ = static_cast<CuBQLVolumeGroup::DeviceData*>
+    (omp_target_alloc(volume_to_group_.size() * sizeof(CuBQLVolumeGroup::DeviceData), context_.gpuID));
   omp_target_memcpy(d_volume_to_group_,
                     volume_to_group_.data(),
-                    volume_to_group_.size() * sizeof(CuBQLVolumeGroup::DD),
+                    volume_to_group_.size() * sizeof(CuBQLVolumeGroup::DeviceData),
                     0,
                     0,
                     context_.gpuID,
@@ -172,7 +171,7 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
     num_volume_primitives += surface_mesh.num_primitives;
   }
 
-  std::vector<CuBQLVolumeGroup::SurfaceDD> h_surfaces;
+  std::vector<CuBQLVolumeGroup::SurfaceDeviceData> h_surfaces;
   std::vector<CuBQLVolumeGroup::PrimRef> h_prim_refs;
   h_surfaces.reserve(volume_surfaces.size());
   h_prim_refs.reserve(static_cast<std::size_t>(num_volume_primitives));
@@ -181,7 +180,7 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
     const auto [forward_parent, reverse_parent] = mesh_manager->get_parent_volumes(surface);
     const CuBQLSurfaceMesh& surface_mesh = surface_to_mesh_.at(surface);
 
-    CuBQLVolumeGroup::SurfaceDD surface_data;
+    CuBQLVolumeGroup::SurfaceDeviceData surface_data;
     surface_data.mesh = surface_mesh.get_device_data();
 
     if (volume_id == forward_parent) {
@@ -214,11 +213,11 @@ CuBQLRayTracer::create_surface_tree(const std::shared_ptr<MeshManager>& mesh_man
 
   auto* d_aabbs = static_cast<cuBQL::box3f*>
     (omp_target_alloc(h_prim_refs.size() * sizeof(cuBQL::box3f), context_.gpuID));
-  auto* d_surfaces = static_cast<CuBQLVolumeGroup::SurfaceDD*>
-    (omp_target_alloc(h_surfaces.size() * sizeof(CuBQLVolumeGroup::SurfaceDD), context_.gpuID));
+  auto* d_surfaces = static_cast<CuBQLVolumeGroup::SurfaceDeviceData*>
+    (omp_target_alloc(h_surfaces.size() * sizeof(CuBQLVolumeGroup::SurfaceDeviceData), context_.gpuID));
   omp_target_memcpy(d_surfaces,
                     h_surfaces.data(),
-                    h_surfaces.size() * sizeof(CuBQLVolumeGroup::SurfaceDD),
+                    h_surfaces.size() * sizeof(CuBQLVolumeGroup::SurfaceDeviceData),
                     0,
                     0,
                     context_.gpuID,
@@ -438,17 +437,16 @@ XDGRayHitBuffer CuBQLRayTracer::allocate_ray_hits(std::size_t count) const
 }
 
 void CuBQLRayTracer::upload_ray_hits(const XDGRayHitBuffer& buffer,
-                     const XDGRayHit* host_data,
-                     std::size_t count) const
+                     const XDGRayHit* host_data) const
 {
-  if (count == 0) {
+  if (buffer.count == 0) {
     warning("Request to upload empty XDG ray-hit buffer; returning without action");
     return;
   }
 
   omp_target_memcpy(buffer.data,
                     host_data,
-                    count * sizeof(XDGRayHit),
+                    buffer.count * sizeof(XDGRayHit),
                     0,
                     0,
                     buffer.device_id,
@@ -456,17 +454,16 @@ void CuBQLRayTracer::upload_ray_hits(const XDGRayHitBuffer& buffer,
 }
 
 void CuBQLRayTracer::download_ray_hits(const XDGRayHitBuffer& buffer,
-                                      XDGRayHit* host_destination,
-                                      std::size_t count) const
+                                      XDGRayHit* host_destination) const
 {
-  if (count == 0) {
+  if (buffer.count == 0) {
     warning("Request to download empty XDG ray-hit buffer; returning without action");
     return;
   }
 
   omp_target_memcpy(host_destination,
                     buffer.data,
-                    count * sizeof(XDGRayHit),
+                    buffer.count * sizeof(XDGRayHit),
                     0,
                     0,
                     context_.hostID,

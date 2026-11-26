@@ -274,7 +274,6 @@ endif()
 # We need a precompile definition to switch to using the cuBQL math types in the shared
 # plucker intersection code. The compile definition is used in dp__math.h
 set_source_files_properties(
-  src/cuBQL/ray_tracer.cpp
   src/cuBQL/intersection.cpp
   PROPERTIES COMPILE_DEFINITIONS XDG_DP_MATH_CUBQL
 )
@@ -330,21 +329,18 @@ add_library(xdg SHARED ${xdg_sources})
 if(XDG_ENABLE_CUBQL)
   if(CUBQL_USE_HIP)
     message(STATUS "cuBQL BVHs will be built with HIP and traversed with OpenMP")
-    target_compile_definitions(xdg PRIVATE XDG_CUBQL_USE_HIP)
     # Keep the OpenMP offload flags from CMAKE_CXX_FLAGS on the final link.
     # CMake supplies the HIP runtime for the HIP object in this mixed target.
     set_target_properties(xdg PROPERTIES
       LINKER_LANGUAGE CXX
       HIP_STANDARD 17
       HIP_STANDARD_REQUIRED YES
-      HIP_EXTENSIONS NO
     )
   else()
     message(STATUS "cuBQL BVHs will be built with CUDA and traversed with OpenMP")
     set_target_properties(xdg PROPERTIES
       CUDA_STANDARD 17
       CUDA_STANDARD_REQUIRED YES
-      CUDA_EXTENSIONS NO
     )
   endif()
 endif()
@@ -425,7 +421,7 @@ target_link_libraries(xdg PRIVATE fmt::fmt)
 # ==========================
 
 if (XDG_ENABLE_EMBREE)
-  target_link_libraries(xdg PUBLIC embree)
+  target_link_libraries(xdg PRIVATE embree)
 endif()
 
 if (XDG_ENABLE_GPRT)

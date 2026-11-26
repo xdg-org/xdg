@@ -90,12 +90,10 @@ public:
   virtual XDGRayHitBuffer allocate_ray_hits(std::size_t count) const;
 
   virtual void upload_ray_hits(const XDGRayHitBuffer& buffer,
-                               const XDGRayHit* host_data,
-                               std::size_t count) const;
+                               const XDGRayHit* host_data) const;
 
   virtual void download_ray_hits(const XDGRayHitBuffer& buffer,
-                                 XDGRayHit* host_destination,
-                                 std::size_t count) const;
+                                 XDGRayHit* host_destination) const;
 
   virtual void free_ray_hits(XDGRayHitBuffer& ray_hits) const;
 

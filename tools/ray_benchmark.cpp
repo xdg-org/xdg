@@ -272,7 +272,7 @@ int main(int argc, char** argv)
     XDGRayHitBuffer device_ray_hits = xdg->allocate_ray_hits(num_rays);
 
     upload_timer.start();
-    xdg->upload_ray_hits(device_ray_hits, ray_hits.data(), ray_hits.size());
+    xdg->upload_ray_hits(device_ray_hits, ray_hits.data());
     upload_timer.stop();
 
     // Warm up ray fire to catch any initial first time setup costs incurred by the GPU backend
@@ -289,7 +289,7 @@ int main(int argc, char** argv)
     trace_timer.stop();
 
     download_timer.start();
-    xdg->download_ray_hits(device_ray_hits, ray_hits.data(), ray_hits.size());
+    xdg->download_ray_hits(device_ray_hits, ray_hits.data());
     download_timer.stop();
 
     // Count hits outside of the timed query stages.

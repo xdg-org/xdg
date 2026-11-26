@@ -19,12 +19,6 @@ struct CuBQLRay {
   MeshID volume {ID_NONE}; // volume we are tracing ray against
 };
 
-// TODO - Consider whether this is useful/necessary as its own struct
-// struct CuBQLExcludeList {
-//   const MeshID* primitives {nullptr};
-//   int count {0};
-// };
-
 struct CuBQLSurfaceHit {
   double distance {INFTY};
   MeshID surface {ID_NONE};
@@ -66,9 +60,9 @@ intersect_surface_tree_scalar(const xdg::cubql::Context& context,
 
 void
 intersect_surface_tree_batch(const xdg::cubql::Context& context,
-                             const CuBQLVolumeGroup::DD* d_volume_to_group,
+                             const CuBQLVolumeGroup::DeviceData* d_volume_to_group,
                              XDGRayHit* d_ray_hits,
-                             std::size_t num_rays,
+                             size_t num_rays,
                              HitOrientation hit_orientation);
 
 } // namespace xdg

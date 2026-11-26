@@ -10,33 +10,31 @@ RayTracer::~RayTracer() {}
 
 XDGRayHitBuffer RayTracer::allocate_ray_hits(std::size_t) const
 {
-  fatal_error("Selected ray tracer does not support device batch ray fire");
+  fatal_error("{} ray tracer does not support device batch ray fire", library());
   return {};
 }
 
 void RayTracer::upload_ray_hits(const XDGRayHitBuffer& buffer,
-                                const XDGRayHit* host_data,
-                                std::size_t count) const
+                                const XDGRayHit* host_data) const
 {
-  fatal_error("Selected ray tracer does not support device batch ray fire");
+  fatal_error("{} ray tracer does not support device batch ray fire", library());
 }
 
 void RayTracer::download_ray_hits(const XDGRayHitBuffer& buffer,
-                                  XDGRayHit* host_destination,
-                                  std::size_t count) const
+                                  XDGRayHit* host_destination) const
 {
-  fatal_error("Selected ray tracer does not support device batch ray fire");
+  fatal_error("{} ray tracer does not support device batch ray fire", library());
 }
 
 void RayTracer::free_ray_hits(XDGRayHitBuffer&) const
 {
-  fatal_error("Selected ray tracer does not support device batch ray fire");
+  fatal_error("{} ray tracer does not support device batch ray fire", library());
 }
 
 void RayTracer::ray_fire_batch(const XDGRayHitBuffer&,
                                HitOrientation) const
 {
-  fatal_error("Selected ray tracer does not support device batch ray fire");
+  fatal_error("{} ray tracer does not support device batch ray fire", library());
 }
 
 SurfaceTreeID RayTracer::next_surface_tree_id()

@@ -17,11 +17,11 @@
 namespace xdg {
 
 /**
-  Owns the primitive buffers for one topological surface. The nested DD type is
-  the compact, non-owning device-data view used in OpenMP target regions.
+  Owns the primitive buffers for one topological surface. The nested DeviceData
+  type is the compact, non-owning device-data view used in OpenMP target regions.
 */
 struct CuBQLSurfaceMesh {
-  struct DD {
+  struct DeviceData {
     // Topological metadata
     MeshID surface_id {ID_NONE};
     double max_parent_volume_bump {0.0};
@@ -46,7 +46,7 @@ struct CuBQLSurfaceMesh {
   int gpu_id {0};
 
   // Return the non-owning view used by device traversal and intersection code.
-  DD get_device_data() const
+  DeviceData get_device_data() const
   {
     return {
       surface_id,
@@ -63,12 +63,13 @@ struct CuBQLSurfaceMesh {
 /**
   Owns the flattened cuBQL BVH for one topological volume. The BVH is built over
   all primitives belonging to the volume's surfaces, while PrimRef maps each
-  BVH primitive back to its surface and surface-local primitive. The nested DD
-  type is the compact, non-owning device-data view used during traversal.
+  BVH primitive back to its surface and surface-local primitive. The nested
+  DeviceData type is the compact, non-owning device-data view used during
+  traversal.
 */
 struct CuBQLVolumeGroup {
-  struct SurfaceDD {
-    CuBQLSurfaceMesh::DD mesh;
+  struct SurfaceDeviceData {
+    CuBQLSurfaceMesh::DeviceData mesh;
 
     bool reverse_sense {false};
     MeshID next_volume {ID_NONE};
@@ -83,14 +84,14 @@ struct CuBQLVolumeGroup {
     std::uint32_t primitive_index {0};
   };
 
-  struct DD {
-    const SurfaceDD* surfaces {nullptr};
+  struct DeviceData {
+    const SurfaceDeviceData* surfaces {nullptr};
     const PrimRef* prim_refs {nullptr};
     cuBQL::bvh3f bvh;
   };
 
   cuBQL::bvh3f bvh;
-  SurfaceDD* d_surfaces {nullptr};
+  SurfaceDeviceData* d_surfaces {nullptr};
   PrimRef* d_prim_refs {nullptr};
 
   std::uint32_t num_surfaces {0};
@@ -98,7 +99,7 @@ struct CuBQLVolumeGroup {
   int gpu_id {0};
 
   // Return the non-owning view used by device traversal and intersection code.
-  DD get_device_data() const
+  DeviceData get_device_data() const
   {
     return {d_surfaces, d_prim_refs, bvh};
   }

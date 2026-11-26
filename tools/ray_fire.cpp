@@ -70,8 +70,8 @@ if (mesh_str == "MOAB")
   mesh_lib = MeshLibrary::MOAB;
 else if (mesh_str == "LIBMESH") {
   mesh_lib = MeshLibrary::LIBMESH;
-  if (rt_lib == RTLibrary::GPRT || rt_lib == RTLibrary::CUBQL)
-    fatal_error("LibMesh is not currently supported with GPRT");
+  // if (rt_lib == RTLibrary::GPRT || rt_lib == RTLibrary::CUBQL)
+  //   fatal_error("LibMesh is not currently supported with GPRT");
 }
 else
   fatal_error("Invalid mesh library '{}' specified", mesh_str);
