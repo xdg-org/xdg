@@ -41,6 +41,9 @@ struct TetAMRMesh {
   static constexpr double h1_elem_volume = h0_elem_volume / 8.0;
   // the volume of an element sampled at (0.0625, 0.0625, 1.0625)
   static constexpr double h2_elem_volume = h1_elem_volume / 8.0;
+  // the id of the subface intersected by a ray fired from (0.0625, 0.0625, -1.0) 
+  // along (0.0, 0.0, 1.0) (entering volume 1)
+  static constexpr MeshID intersected_subface = 76;
   // valid segments along a line from (1.9375, 0.0625, -1.0) to (1.9375, 0.0625, 3.0)
   // this contains elements at different refinement states
   static constexpr std::array<double, 22> valid_segments_1 {
@@ -82,6 +85,9 @@ struct HexAMRMesh {
   static constexpr double h1_elem_volume = h0_elem_volume / 8.0;
   // the volume of an element sampled at (0.0625, 0.0625, 1.0625)
   static constexpr double h2_elem_volume = h1_elem_volume / 8.0;
+  // the id of the subface intersected by a ray fired from (0.0625, 0.0625, -1.0) 
+  // along (0.0, 0.0, 1.0) (entering volume 1)
+  static constexpr MeshID intersected_subface = 27;
   // valid segments along a line from (1.9375, 0.0625, -1.0) to (1.9375, 0.0625, 3.0)
   // this contains elements at different refinement states
   static constexpr std::array<double, 11> valid_segments_1 {
@@ -202,19 +208,27 @@ TEMPLATE_TEST_CASE("Test libMesh AMR Mesh", "[libmesh][amr]",
 
     // Test ray fire on an interface with AMR connectivity.
     {
-      auto enter_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, -1.0}, {0.0, 0.0, 1.0}, xdg::INFTY, xdg::HitOrientation::ENTERING);
+      std::vector<MeshID> hit_primitives;
+      auto enter_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, -1.0}, {0.0, 0.0, 1.0}, xdg::INFTY, xdg::HitOrientation::ENTERING, &hit_primitives);
       REQUIRE_THAT(enter_vol1.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
       REQUIRE(enter_vol1.second == 6);
+      REQUIRE(hit_primitives.size() > 0);
+      REQUIRE(hit_primitives[0] == AMRMesh::intersected_subface);
+      hit_primitives.clear();
+
       auto exit_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, -1.0}, {0.0, 0.0, 1.0}, xdg::INFTY, xdg::HitOrientation::EXITING);
       REQUIRE_THAT(exit_vol1.first, Catch::Matchers::WithinAbs(3.0, 1e-6));
       REQUIRE(exit_vol1.second == 7);
 
-      enter_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, 3.0}, {0.0, 0.0, -1.0}, xdg::INFTY, xdg::HitOrientation::EXITING);
-      REQUIRE_THAT(enter_vol1.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
-      REQUIRE(enter_vol1.second == 6);
-      exit_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, 3.0}, {0.0, 0.0, -1.0}, xdg::INFTY, xdg::HitOrientation::ENTERING);
-      REQUIRE_THAT(exit_vol1.first, Catch::Matchers::WithinAbs(1.0, 1e-6));
-      REQUIRE(exit_vol1.second == 7);
+      exit_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, 3.0}, {0.0, 0.0, -1.0}, xdg::INFTY, xdg::HitOrientation::EXITING, &hit_primitives);
+      REQUIRE_THAT(exit_vol1.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
+      REQUIRE(exit_vol1.second == 6);
+      REQUIRE(hit_primitives.size() > 0);
+      REQUIRE(hit_primitives[0] == AMRMesh::intersected_subface);
+
+      enter_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, 3.0}, {0.0, 0.0, -1.0}, xdg::INFTY, xdg::HitOrientation::ENTERING);
+      REQUIRE_THAT(enter_vol1.first, Catch::Matchers::WithinAbs(1.0, 1e-6));
+      REQUIRE(enter_vol1.second == 7);
     }
 
     auto zero_dist = [](const std::pair<xdg::MeshID, double>& p) { return p.second == 0.0; };

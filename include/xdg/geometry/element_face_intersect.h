@@ -8,15 +8,14 @@
 #include "xdg/geometry/measure.h"
 #include "xdg/geometry/plucker.h"
 #include "xdg/element_face_accessor.h"
-#include "xdg/geometry/element_face_intersect.h"
 
 namespace xdg {
 
 //! A helper struct to store information about an intersection with an element face.
 struct ElemFaceIntersectResult {
   bool hit {false};
-  double distance;
-  double exiting_dot;
+  double distance {-INFTY};
+  double exiting_dot {0.0};
 };
 
 //! \brief Determines the faces of a given element that are intersected by a ray.
@@ -29,9 +28,9 @@ struct ElemFaceIntersectResult {
 //!                    an entering check.
 //! \return Whether or not the ray hit the face, alongside the hit distance and 
 //!         exiting dot product (if a hit is registered).
-ElemFaceIntersectResult intersect_elem_face(const Position& r, const Position& u, 
-                                            const ElementFaceAccessor& efa, int face, 
-                                            bool flip_normal = false) 
+inline ElemFaceIntersectResult intersect_elem_face(const Position& r, const Position& u, 
+                                                   const ElementFaceAccessor& efa, int face, 
+                                                   bool flip_normal = false) 
 {
   const double nf = flip_normal ? -1.0 : 1.0;
 
