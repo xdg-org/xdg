@@ -42,8 +42,9 @@ struct TetAMRMesh {
   // the volume of an element sampled at (0.0625, 0.0625, 1.0625)
   static constexpr double h2_elem_volume = h1_elem_volume / 8.0;
   // the id of the subface intersected by a ray fired from (0.0625, 0.0625, -1.0) 
-  // along (0.0, 0.0, 1.0) (entering volume 1)
-  static constexpr MeshID intersected_subface = 76;
+  // along (0.0, 0.0, 1.0) (entering volume 1). This lands on an edge between
+  // two triangular subfaces, hence there are two valid results.
+  static constexpr std::array<MeshID, 2> intersected_subfaces = {75, 76};
   // valid segments along a line from (1.9375, 0.0625, -1.0) to (1.9375, 0.0625, 3.0)
   // this contains elements at different refinement states
   static constexpr std::array<double, 22> valid_segments_1 {
@@ -87,7 +88,7 @@ struct HexAMRMesh {
   static constexpr double h2_elem_volume = h1_elem_volume / 8.0;
   // the id of the subface intersected by a ray fired from (0.0625, 0.0625, -1.0) 
   // along (0.0, 0.0, 1.0) (entering volume 1)
-  static constexpr MeshID intersected_subface = 27;
+  static constexpr std::array<MeshID, 1> intersected_subfaces = {27};
   // valid segments along a line from (1.9375, 0.0625, -1.0) to (1.9375, 0.0625, 3.0)
   // this contains elements at different refinement states
   static constexpr std::array<double, 11> valid_segments_1 {
@@ -213,7 +214,10 @@ TEMPLATE_TEST_CASE("Test libMesh AMR Mesh", "[libmesh][amr]",
       REQUIRE_THAT(enter_vol1.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
       REQUIRE(enter_vol1.second == 6);
       REQUIRE(hit_primitives.size() > 0);
-      REQUIRE(hit_primitives[0] == AMRMesh::intersected_subface);
+      for (const auto h : hit_primitives) {
+        REQUIRE(std::find(AMRMesh::intersected_subfaces.begin(), AMRMesh::intersected_subfaces.end(), h) 
+                != AMRMesh::intersected_subfaces.end());
+      }
       hit_primitives.clear();
 
       auto exit_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, -1.0}, {0.0, 0.0, 1.0}, xdg::INFTY, xdg::HitOrientation::EXITING);
@@ -224,7 +228,10 @@ TEMPLATE_TEST_CASE("Test libMesh AMR Mesh", "[libmesh][amr]",
       REQUIRE_THAT(exit_vol1.first, Catch::Matchers::WithinAbs(2.0, 1e-6));
       REQUIRE(exit_vol1.second == 6);
       REQUIRE(hit_primitives.size() > 0);
-      REQUIRE(hit_primitives[0] == AMRMesh::intersected_subface);
+      for (const auto h : hit_primitives) {
+        REQUIRE(std::find(AMRMesh::intersected_subfaces.begin(), AMRMesh::intersected_subfaces.end(), h) 
+                != AMRMesh::intersected_subfaces.end());
+      }
 
       enter_vol1 = xdg->ray_fire(1, {0.0625, 0.0625, 3.0}, {0.0, 0.0, -1.0}, xdg::INFTY, xdg::HitOrientation::ENTERING);
       REQUIRE_THAT(enter_vol1.first, Catch::Matchers::WithinAbs(1.0, 1e-6));
