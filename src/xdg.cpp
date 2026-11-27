@@ -146,55 +146,51 @@ XDG::segments(const Position& start,
               const Position& end) const
 {
   MeshID ipc = mesh_manager()->implicit_complement();
-
-  std::vector<MeshID> prev_elements;
-
   Position r = start;
   Direction u = end - start;
-  double distance = u.length();
-  u /= distance;
+  double remaining_distance = u.length();
+  u.normalize();
 
-  std::vector<xdg::MeshID> hit_primitives;
-
+  MeshID current_element = ray_tracing_interface()->find_element(r);
   std::vector<std::pair<MeshID, double>> segments;
-  while (distance > 0) {
-    // attempt to find an element at the start location
-    MeshID current_element = ray_tracing_interface()->find_element(r);
-    // at this point we may be on the face of an element, if we're declared inside that element, ignore it
-    if (segments.size() > 0 && current_element == segments.back().first) current_element = ID_NONE;
-    MeshID volume = ID_NONE;
+  std::vector<xdg::MeshID> hit_primitives;
+  // Loop over the ray until the remaining distance between start and end is exhausted.
+  while (remaining_distance > 0.0) {
+    // If we're outside of the volume of interest, find the next entry point into the volume.
+    // this handles both outside the volume and inside an interior shell volume/void
     if (current_element == ID_NONE) {
-      // fire a ray against the implicit complement
-      auto hit = ray_fire(ipc, r + u * TINY_BIT, u, INFTY, HitOrientation::EXITING, &hit_primitives);
-      // if there is no entry point or the distance to the surface
-      // is past the end point, return
-      if (hit.second == ID_NONE || hit.first > distance) return segments;
+      auto [entry_hit_distance, entry_hit_surface] = ray_fire(ipc, r, u, remaining_distance, HitOrientation::EXITING, &hit_primitives);
+      if (entry_hit_surface == ID_NONE) break;
 
-      double hit_dist = hit.first + TINY_BIT;
-      // move up to the surface
-      r += u * hit_dist;
-      distance -= hit_dist;
-      // determine the volume we're moving into
-      mesh_manager()->next_volume(ipc, hit.second);
+      r += u * entry_hit_distance;
+      remaining_distance -= entry_hit_distance;
+      if (remaining_distance <= 0.0) break;
 
-      // Get the element on the other side of the hit face using adjacencies
-      auto adjacent_element = mesh_manager()->get_boundary_face_element(hit_primitives.back());
-      if (adjacent_element == ID_NONE) {
-        warning(fmt::format("Ray fire hit surface {}, but no adjacent elements were found on the other side of the surface.", hit.second));
+      // Cross over to the element on the other side of the hit face using adjacencies
+      current_element = mesh_manager()->get_boundary_face_element(hit_primitives.back());
+      if (current_element == ID_NONE) {
+        warning(fmt::format("Ray fire hit surface {}, but no adjacent elements were found on the other side of the surface.", entry_hit_surface));
         return segments;
       }
-      current_element = adjacent_element;
+    }
+
+    auto interval_walks = mesh_manager()->walk_elements(current_element, r, u, remaining_distance);
+    // add to current set of segments
+    segments.insert(segments.end(), interval_walks.begin(), interval_walks.end());
+    double segment_distance = std::accumulate(interval_walks.begin(), interval_walks.end(), 0.0,
+                                        [](double total, const auto& segment) { return total + segment.second; });
+    // upate location of the track start
+    r += u * segment_distance;
+    remaining_distance -= segment_distance; // decrement by distance traveled by walk_elements
+
+    // Clear the exclude_primitives vector for the next ray_fire call only if we have advanced the track
+    // this should stop an infinite loop occurring where ray_fire returns the same surface hit over and over again
+    if (segment_distance > 0.0) {
       hit_primitives.clear();
     }
-    auto vol_segments = mesh_manager()->walk_elements(current_element, r, u, distance);
-    // add to current set of segments
-    segments.insert(segments.end(), vol_segments.begin(), vol_segments.end());
-    double segment_sum = std::accumulate(vol_segments.begin(), vol_segments.end(), 0.0,
-                                         [](double total, const auto& segment) { return total + segment.second; });
-    // upate location of the track start
-    r += u * segment_sum;
-    // decrement distance by total distance traveled in the volume
-    distance -= segment_sum;
+
+    // if walk_elements returned with some distance left this loop will repeat so we need to clear current element so that we can find the next entry point into the volume
+    current_element = ID_NONE;
   }
   return segments;
 }
