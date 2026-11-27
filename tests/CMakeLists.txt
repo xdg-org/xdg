@@ -32,6 +32,7 @@ endif()
 
 if (XDG_ENABLE_LIBMESH)
     list(APPEND TEST_NAMES test_libmesh)
+    list(APPEND TEST_NAMES test_amr_connectivity)
 endif()
 
 if (XDG_ENABLE_MOAB)
@@ -75,6 +76,8 @@ endif()
 
 set(
 TEST_FILES
+amr_mesh_tet.exo
+amr_mesh_hex.exo
 pwr_pincell.h5m
 cube.h5m
 cube-mesh-no-geom.h5m

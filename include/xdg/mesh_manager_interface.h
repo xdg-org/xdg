@@ -158,6 +158,13 @@ public:
   //! \return The ID of the adjacent element, or ID_NONE if the face is on a boundary
   virtual MeshID adjacent_element(MeshID element, int face) const = 0;
 
+  //! \brief Get the adjacent sub-element across a given face
+  //! \param element The current element ID
+  //! \param face The local face index
+  //! \param subface_idx The index of a subface across 'face'
+  //! \return A pair containing the subelement ID and the face index adjacent to 'element'
+  virtual std::pair<MeshID, int> adjacent_subelement(MeshID element, int face, int subface_idx) const;
+
   //! \brief Get the volume of a given element
   //! \param element The element ID
   //! \return The volume of the element

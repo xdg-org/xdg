@@ -569,7 +569,7 @@ TEST_CASE("LibMesh Element ID and Index Mapping")
     mesh_manager->init();
     REQUIRE(mesh_manager->num_volume_elements() == 10333);
 
-      // check element ID to index mapping
+    // check element ID to index mapping
     int expected_index = 0;
     for (const auto* elem : mesh_manager->mesh()->active_element_ptr_range()) {
       MeshID element_id = elem->id();
