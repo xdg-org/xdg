@@ -48,7 +48,7 @@ in the user's home directory, for example:
 cuBQL GPU builder
 -----------------
 
-With ``XDG_ENABLE_CUBQL=ON`` the `CuBQLRayTracer` becomes an available ray tracing 
+With ``XDG_ENABLE_CUBQL=ON`` the `CuBQLRayTracer` becomes an available ray tracing
 backend to construct an XDG instance with. When an XDG instance is constructed with
 cuBQL, all of the BVHs are built directly on the GPU and transferred into
 OpenMP-owned storage for traversal. CUDA is the default builder. For AMD GPUs,

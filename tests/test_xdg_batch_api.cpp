@@ -99,14 +99,8 @@ TEST_CASE("XDG batch ray fire matches scalar queries on MeshMock",
       xdg->ray_fire_batch(ray_hits); // Perform device side ray tracing
 
       std::vector<XDGRayHit> batch_results(num_rays);
-      const int copy_status = omp_target_memcpy(batch_results.data(),
-                                                ray_hits.data,
-                                                num_rays * sizeof(XDGRayHit),
-                                                0,
-                                                0,
-                                                omp_get_initial_device(),
-                                                ray_hits.device_id);
-      REQUIRE(copy_status == 0); // Ensure omp memcpy was successful before checking results
+
+      xdg->download_ray_hits(ray_hits, batch_results.data());
 
       xdg->free_ray_hits(ray_hits);
 
@@ -190,24 +184,11 @@ TEST_CASE("XDG batch ray fire multi-volume check full rayhit results",
   }
 
   XDGRayHitBuffer ray_hits = xdg->allocate_ray_hits(host_ray_hits.size());
-  const std::size_t buffer_size = host_ray_hits.size() * sizeof(XDGRayHit);
-  REQUIRE(omp_target_memcpy(ray_hits.data,
-                            host_ray_hits.data(),
-                            buffer_size,
-                            0,
-                            0,
-                            ray_hits.device_id,
-                            omp_get_initial_device()) == 0);
 
+  xdg->upload_ray_hits(ray_hits, host_ray_hits.data());
   xdg->ray_fire_batch(ray_hits);
 
-  REQUIRE(omp_target_memcpy(host_ray_hits.data(),
-                            ray_hits.data,
-                            buffer_size,
-                            0,
-                            0,
-                            omp_get_initial_device(),
-                            ray_hits.device_id) == 0);
+  xdg->download_ray_hits(ray_hits, host_ray_hits.data());
 
   xdg->free_ray_hits(ray_hits);
   

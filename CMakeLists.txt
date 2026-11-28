@@ -405,13 +405,6 @@ endif()
 if (XDG_ENABLE_CUBQL)
   target_compile_definitions(xdg PUBLIC XDG_ENABLE_CUBQL)
   target_link_libraries(xdg PRIVATE $<BUILD_INTERFACE:cuBQL>)
-  # TODO: Stop relying on LD_LIBRARY_PATH for LLVM OpenMP offload runtimes.
-  # As a temporary measure whilst figuring out our way around cuBQL this is 
-  # okay but in the long run we should aim for a more robust solutions here.
-  # Clang injects libomptarget when offload flags are supplied by presets, but
-  # CMake does not currently add that compiler runtime directory to RPATH.
-  # Add targeted BUILD_RPATH handling for libomptarget/libomp, and decide
-  # whether install RPATH should remain environment-module based or be opt-in.
 endif()
 
 target_link_libraries(xdg PRIVATE fmt::fmt)
